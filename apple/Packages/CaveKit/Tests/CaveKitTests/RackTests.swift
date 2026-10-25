@@ -274,9 +274,9 @@ import Testing
     @Test func headToTailBackLayersShiftHalfAPlace() {
         // Each neck behind sits between two bases in front: the back band moves half a place right.
         let fridge = Rack(name: "F", kind: .staggered, rows: 2, columns: 4, depth: 2, shelfLayers: [2], backReversed: true)
-        #expect(fridge.bandShift(depth: 0) == 0)
-        #expect(fridge.bandShift(depth: 1) == 0.5)
-        #expect(fridge.bandShift(depth: nil) == 0)
+        #expect(fridge.bandShift(row: 0, depth: 0) == 0)
+        #expect(fridge.bandShift(row: 0, depth: 1) == 0.5)
+        #expect(fridge.bandShift(row: 0, depth: nil) == 0)
         // Not head-to-tail, one deep, a continuous honeycomb, a grid: never shifted.
         let others = [
             Rack(name: "B", kind: .staggered, rows: 2, columns: 4, depth: 2, shelfLayers: [2]),
@@ -286,7 +286,7 @@ import Testing
             Rack(name: "S", kind: .shelves, rows: 2, columns: 4, depth: 2),
         ]
         for rack in others {
-            #expect(rack.bandShift(depth: 0) == 0 && rack.bandShift(depth: 1) == 0)
+            #expect(rack.bandShift(row: 0, depth: 0) == 0 && rack.bandShift(row: 0, depth: 1) == 0)
         }
     }
 

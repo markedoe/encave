@@ -190,8 +190,9 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
     val zoom = rack?.let { rememberRackZoomState(it) }
     LaunchedEffect(highlighted, rack?.id) {
         if (highlighted == null || rack == null) return@LaunchedEffect
-        RackPlace.of(highlighted, rack).takeIf { it.holdsOne(rack) }?.let { selectedKey = it.key() }
-        zoom?.show(rack, highlighted.cell, highlighted.depth)
+        RackPlace.of(highlighted, rack).takeIf { it.holdsOne(rack, cellar) }?.let { selectedKey = it.key() }
+        // A back place only on a shelf drawn front and back.
+        zoom?.show(rack, highlighted.cell, RackPlace.of(highlighted, rack).depth)
         delay(4000)
         highlightId = null
     }
@@ -214,7 +215,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                         )
                         if (rack != null) {
                             Text(
-                                stringResource(R.string.rack_occupancy, cellar.occupancy(rack), rack.capacity),
+                                stringResource(R.string.rack_occupancy, cellar.occupancy(rack), cellar.capacity(rack)),
                                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
@@ -320,7 +321,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                                 val free = cellar.freeSlotAt(place)
                                 when {
                                     free != null -> viewModel.move(source.id, free)
-                                    from != null && place.holdsOne(rack) -> viewModel.swap(from, place.firstSlot)
+                                    from != null && place.holdsOne(rack, cellar) -> viewModel.swap(from, place.firstSlot)
                                     else -> viewModel.showMessage(UiText.Res(R.string.rack_cell_full))
                                 }
                             }
@@ -331,7 +332,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                                 )
                             }
                             // One bottle per place: show it in the card. Several: open the list of the place.
-                            place.holdsOne(rack) -> selectedKey = place.key()
+                            place.holdsOne(rack, cellar) -> selectedKey = place.key()
                             else -> {
                                 selectedKey = null
                                 openCell = place.cell.key()
@@ -358,7 +359,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                     },
                     customActions = { place, bottles ->
                         val bottle = bottles.singleOrNull()
-                        if (bottle == null || auditing || moving != null || !place.holdsOne(rack)) {
+                        if (bottle == null || auditing || moving != null || !place.holdsOne(rack, cellar)) {
                             emptyList()
                         } else {
                             listOf(
@@ -384,10 +385,10 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                                 val free = cellar.freeSlotAt(place)
                                 when {
                                     free != null -> viewModel.move(bottle.id, free)
-                                    place.holdsOne(rack) -> viewModel.swap(from, place.firstSlot)
+                                    place.holdsOne(rack, cellar) -> viewModel.swap(from, place.firstSlot)
                                     else -> viewModel.showMessage(UiText.Res(R.string.rack_cell_full))
                                 }
-                                if (place.holdsOne(rack)) selectedKey = place.key()
+                                if (place.holdsOne(rack, cellar)) selectedKey = place.key()
                             }
                         }
                     },
@@ -447,7 +448,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                 // Chosen in the list: close it and point to the bottle in the drawing.
                 showsList = false
                 highlightId = bottle.id.toString()
-                bottle.slot?.let { RackPlace.of(it, rack).takeIf { place -> place.holdsOne(rack) }?.let { place -> selectedKey = place.key() } }
+                bottle.slot?.let { RackPlace.of(it, rack).takeIf { place -> place.holdsOne(rack, cellar) }?.let { place -> selectedKey = place.key() } }
             },
         )
     }
@@ -685,7 +686,7 @@ private fun RackKey(rack: Rack, cellar: Cellar, focusWine: UUID?, onFocus: (UUID
         ) {
             Icon(rack.icon, contentDescription = null, modifier = Modifier.size(18.dp))
             Text(
-                stringResource(R.string.rack_key_count, bottles.size, rack.capacity),
+                stringResource(R.string.rack_key_count, bottles.size, cellar.capacity(rack)),
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier.padding(end = Dimens.xs),
             )
@@ -750,10 +751,10 @@ private fun BottleListSheet(rack: Rack, cellar: Cellar, onDismiss: () -> Unit, o
                 ListItem(
                     leadingContent = { Icon(rack.icon, contentDescription = null) },
                     headlineContent = { Text(rack.name, style = MaterialTheme.typography.titleLarge) },
-                    supportingContent = { Text(stringResource(R.string.rack_key_count, bottles.size, rack.capacity)) },
+                    supportingContent = { Text(stringResource(R.string.rack_key_count, bottles.size, cellar.capacity(rack))) },
                 )
                 LinearProgressIndicator(
-                    progress = { bottles.size.toFloat() / rack.capacity.coerceAtLeast(1) },
+                    progress = { bottles.size.toFloat() / cellar.capacity(rack).coerceAtLeast(1) },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.l).padding(bottom = Dimens.s),
                 )
             }
@@ -923,7 +924,7 @@ private fun CheckOneByOneSheet(
                     headlineContent = { Text(wine?.displayName ?: stringResource(R.string.unknown_wine)) },
                     supportingContent = {
                         Text(
-                            if (rack.kind == RackKind.Bins) stringResource(R.string.rack_check_bottle, index + 1) else rack.depthName(slot.depth, resources),
+                            if (rack.kind == RackKind.Bins) stringResource(R.string.rack_check_bottle, index + 1) else rack.depthName(slot.row, slot.depth, resources),
                         )
                     },
                     trailingContent = { Switch(checked = found, onCheckedChange = null) },

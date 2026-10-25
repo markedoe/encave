@@ -6,17 +6,22 @@ import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import app.encave.EncaveApplication
 import app.encave.MainActivity
 import app.encave.R
 import app.encave.core.RackKind
 import app.encave.core.SampleData
+import app.encave.core.RackLayout
+import app.encave.core.StorageRowSettings
 import app.encave.core.StorageSettings
 import app.encave.core.StorageType
 import kotlinx.coroutines.runBlocking
 import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -66,6 +71,50 @@ class RackWizardTest {
         assertEquals(List(5) { 2 }, fridge.shelfLayers)
         assertTrue(fridge.isBackReversed)
         assertTrue(fridge.name, fridge.name.startsWith("Wine fridge"))
+    }
+
+    private fun scrollTap(tag: String) {
+        compose.onNodeWithTag(tag).performScrollTo().performClick()
+        compose.waitForIdle()
+    }
+
+    @Test
+    fun wizardSetsEachShelfOfAFridgeOnItsOwn() {
+        val before = cellar.racks.size
+        tap("racks.add")
+        tap("wizard.type.winefridge")
+        tap("wizard.next")
+        scrollTap("wizard.rows_differ")
+        // Each shelf's own settings take the place of those for all shelves.
+        compose.onNodeWithTag("wizard.head_to_tail").assertDoesNotExist()
+        compose.onNodeWithTag("wizard.row.0.head_to_tail").assertExists()
+        // The second shelf one deep: no head-to-tail to set on it.
+        scrollTap("wizard.row.1.depth.1")
+        compose.onNodeWithTag("wizard.row.1.head_to_tail").assertDoesNotExist()
+        tap("wizard.next")
+        tap("wizard.create")
+        compose.waitUntil(5_000) { cellar.racks.size == before + 1 }
+        val fridge = cellar.racks.last()
+        assertEquals(List(5) { 2 }, fridge.shelfLayers)
+        assertEquals(2, fridge.depthOfShelf(0))
+        assertEquals(1, fridge.depthOfShelf(1))
+        assertTrue(fridge.isBackReversedShelf(0))
+        assertFalse(fridge.hasDepthBandsOnShelf(1))
+        assertEquals(5 * (6 + 5) * 2 - (6 + 5), fridge.capacity)
+    }
+
+    @Test
+    fun rowsSetOneByOneAreKeptAndStartAgainWithAnotherLayout() {
+        val rows = listOf(StorageRowSettings(6, 2, true, 2), StorageRowSettings(4, 1, false, 1))
+        assertEquals(rows, decodeRows(encodeRows(rows)))
+        assertNull(decodeRows(encodeRows(null)))
+        // A grid whose middle row is single; as diamond bins, its rows start again from the uniform settings.
+        val grid = StorageSettings(StorageType.Rack, rows = 3, columns = 4, depth = 2).withRowsDiffer(true)
+        val mixed = grid.withRow(1, grid.rowSettings!![1].copy(depth = 1))
+        assertEquals(listOf(2, 1, 2), (0 until 3).map { mixed.rack(name = "G").depthOfRow(it) })
+        val bins = withLayout(mixed, RackLayout.Diamond)
+        assertEquals(3, bins.rowSettings?.size)
+        assertEquals(mixed, withLayout(mixed, RackLayout.Grid))
     }
 
     @Test

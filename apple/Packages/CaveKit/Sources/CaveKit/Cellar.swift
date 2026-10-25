@@ -409,12 +409,21 @@ public extension Cellar {
     func freeSlot(in cell: RackCell) -> Slot? {
         guard let rack = rack(cell.rackID), rack.contains(cell) else { return nil }
         let taken = Set(bottles(in: cell).compactMap { $0.slot?.depth })
-        return (0..<rack.positionsPerCell).first { !taken.contains($0) }
+        return (0..<rack.positions(inRow: cell.row)).first { !taken.contains($0) }
             .map { Slot(rackID: cell.rackID, row: cell.row, column: cell.column, depth: $0) }
     }
 
     func occupancy(of rack: Rack) -> Int {
         bottlesInCellar.filter { $0.slot?.rackID == rack.id }.count
+    }
+
+    /// The positions a count of this rack shows: its capacity, plus each place behind a row's
+    /// depth holding a bottle an older version put there, so a count never reads more
+    /// bottles than positions (the same on Android).
+    func capacity(of rack: Rack) -> Int {
+        rack.capacity + bottlesInCellar.filter { bottle in
+            bottle.slot.map { $0.rackID == rack.id && rack.contains($0) && !rack.hasPosition($0) } ?? false
+        }.count
     }
 
     func rack(_ id: UUID) -> Rack? { racks.first { $0.id == id } }
@@ -761,10 +770,14 @@ public extension Cellar {
     /// Bottles of this rack that an update with `rowMap` would leave without a place,
     /// in the order of their places.
     func displacedBottles(by rack: Rack, rowMap: [Int: Int?] = [:]) -> [Bottle] {
-        bottlesInCellar.filter { bottle in
+        let old = self.rack(rack.id)
+        return bottlesInCellar.filter { bottle in
             guard let slot = bottle.slot, slot.rackID == rack.id else { return false }
             guard let moved = Rack.moved(slot, rowMap: rowMap) else { return true }
-            return !rack.contains(moved)
+            if !rack.contains(moved) { return true }
+            // A position the edit removes; a bottle already behind its row's depth (put there
+            // by an older version) stays where it is while the edit keeps that place.
+            return !rack.hasPosition(moved) && old?.hasPosition(slot) != false
         }
         .sorted { a, b in
             let x = a.slot!, y = b.slot!

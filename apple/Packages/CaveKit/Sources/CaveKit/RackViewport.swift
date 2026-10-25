@@ -65,21 +65,26 @@ public enum RackViewport {
     }
 
     /// Where a place is in the drawing, as fractions of it (its middle, roughly: captions and
-    /// shelf bars aside). On a fridge drawn front and back, each shelf shows its front layers,
-    /// then its back ones, half a place right when head-to-tail.
+    /// shelf bars aside). On a fridge drawn front and back, each shelf two deep shows its front
+    /// layers, then its back ones, half a place right when head-to-tail; a shelf one deep
+    /// shows its layers once.
     public static func center(of cell: RackCell, depth: Int? = nil, in rack: Rack) -> CGPoint {
-        let columns = CGFloat(max(1, rack.maxColumns)) + CGFloat(rack.bandShift(depth: 1))
+        let columns = CGFloat(max(1, rack.maxColumns)) + CGFloat(rack.maxBandShift)
             + (rack.kind == .staggered ? 0.5 : 0)
-        let shift = (rack.kind == .staggered && rack.isOffset(row: cell.row) ? 0.5 : 0) + CGFloat(rack.bandShift(depth: depth))
+        let shift = (rack.kind == .staggered && rack.isOffset(row: cell.row) ? 0.5 : 0)
+            + CGFloat(rack.bandShift(row: cell.row, depth: depth))
         let x = (CGFloat(cell.column) + 0.5 + shift) / columns
         guard rack.hasDepthBands, let shelf = rack.shelfRows.firstIndex(where: { $0.contains(cell.row) }) else {
             return CGPoint(x: min(1, x), y: (CGFloat(cell.row) + 0.5) / CGFloat(max(1, rack.rows)))
         }
-        // Each shelf is drawn twice: its front layers, then its back ones.
-        let before = rack.shelfRows[..<shelf].reduce(0) { $0 + 2 * $1.count }
+        // Each shelf two deep is drawn twice: its front layers, then its back ones.
+        let lines = { (index: Int) in rack.shelfRows[index].count * (rack.hasDepthBands(shelf: index) ? 2 : 1) }
+        let before = (0..<shelf).reduce(0) { $0 + lines($1) }
+        let total = rack.shelfRows.indices.reduce(0) { $0 + lines($1) }
         let rows = rack.shelfRows[shelf]
-        let line = before + (depth == 1 ? rows.count : 0) + (cell.row - rows.lowerBound)
-        return CGPoint(x: min(1, x), y: (CGFloat(line) + 0.5) / CGFloat(max(1, 2 * rack.rows)))
+        let back = depth == 1 && rack.hasDepthBands(shelf: shelf)
+        let line = before + (back ? rows.count : 0) + (cell.row - rows.lowerBound)
+        return CGPoint(x: min(1, x), y: (CGFloat(line) + 0.5) / CGFloat(max(1, total)))
     }
 }
 

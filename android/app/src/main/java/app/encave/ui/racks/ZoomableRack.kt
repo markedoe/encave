@@ -65,12 +65,12 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
 /**
- * What changes the drawing's shape: kind, depth, cells per row, layers per shelf, zones and head-to-tail
- * backs (drawn half a place wider). Zoom starts again when it changes.
+ * What changes the drawing's shape: kind, depth, cells and depth of each row, layers per shelf, zones and
+ * head-to-tail backs, shelf by shelf (drawn half a place wider). Zoom starts again when it changes.
  */
 val Rack.shape: String
-    get() = "$kind $positionsPerCell " + (0 until rows).joinToString(",") { columnsInRow(it).toString() } +
-        " ${shelfLayers.orEmpty()} ${zoneBreaks.orEmpty()} $isBackReversed"
+    get() = "$kind $positionsPerCell " + (0 until rows).joinToString(",") { "${columnsInRow(it)}x${positionsInRow(it)}" } +
+        " ${shelfLayers.orEmpty()} ${zoneBreaks.orEmpty()} ${(0 until rows).map { isBackReversedRow(it) }} $isBackReversed"
 
 /**
  * How far a rack is zoomed in (1 = the whole rack fits) and which spot of it is in the

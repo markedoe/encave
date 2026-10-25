@@ -113,6 +113,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
   soon); a tap opens the wine or the section. An Add Bottles control for
   Control Center, the lock screen and the Action button opens the label
   scanner. The widgets read a short summary kept on the device
+- Rows of a storage can differ again, and in depth too: when adding or
+  editing one, "Rows are not all the same" (for a wine fridge, "Shelves are
+  not all the same") sets each row's positions and depth, and on a fridge in
+  layers each shelf's layers, depth and head-to-tail, so one shelf can be two
+  deep head-to-tail and the next single. Synced as rack.rowDepths and
+  rack.rowBackReversed (docs/SYNC.md); older versions show every position
 - Mac: drop a wine or a bottle onto a storage in the sidebar to put one bottle
   in its first free position, with Undo (never into a full one); Open in New
   Window for a wine (Mac and iPad, ⌥⌘O); Android tablets and foldables show

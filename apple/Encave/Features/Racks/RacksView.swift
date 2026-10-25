@@ -119,9 +119,9 @@ private struct RackCard: View {
             // The count at the bottom, level with the other cards of the row.
             Spacer(minLength: 0)
             VStack(alignment: .leading, spacing: 6) {
-                ProgressView(value: Double(used), total: Double(max(1, rack.capacity)))
+                ProgressView(value: Double(used), total: Double(max(1, model.cellar.capacity(of: rack))))
                     .tint(Color.accentColor)
-                Text("\(used) of \(rack.capacity) bottles")
+                Text("\(used) of \(model.cellar.capacity(of: rack)) bottles")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }

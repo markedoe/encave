@@ -118,6 +118,12 @@
           5,
           4
         ],
+        "rowDepths": [
+          2,
+          2,
+          1,
+          2
+        ],
         "rows": 4
       },
       {
@@ -138,6 +144,11 @@
         "id": "00000000-0000-4000-8000-000000000033",
         "kind": "staggered",
         "name": "Fridge",
+        "rowBackReversed": [
+          true,
+          true,
+          false
+        ],
         "rows": 3,
         "shelfLayers": [
           2,

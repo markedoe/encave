@@ -62,6 +62,21 @@ class PlaceLabelsTest {
     }
 
     @Test
+    fun rowsOfDifferentDepthsNameTheSideOnlyWhereThereIsOne() {
+        // The shared vectors' grid: rows two, one and two deep.
+        val grid = Rack(name = "G", rows = 3, columns = 4, depth = 2, rowDepths = listOf(2, 1, 2)).normalized()
+        assertEquals("A1, front", grid.displayLabel(Slot(grid.id, 0, 0, 0), resources))
+        assertEquals("B3", grid.displayLabel(Slot(grid.id, 1, 2, 0), resources))
+        // A bottle an older version put behind that single row is named as the back.
+        assertEquals("B3, back", grid.displayLabel(Slot(grid.id, 1, 2, 1), resources))
+        assertEquals("C4, back", grid.displayLabel(Slot(grid.id, 2, 3, 1), resources))
+        // Shelves three deep above a shelf two deep: the second one's back is its second bottle.
+        val shelves = Rack(name = "S", kind = RackKind.Shelves, rows = 2, columns = 4, depth = 3, rowDepths = listOf(3, 2)).normalized()
+        assertEquals("Shelf\u00A01, middle, position\u00A01", shelves.displayLabel(Slot(shelves.id, 0, 0, 1), resources))
+        assertEquals("Shelf\u00A02, back, position\u00A01", shelves.displayLabel(Slot(shelves.id, 1, 0, 1), resources))
+    }
+
+    @Test
     @Config(qualifiers = "fr")
     fun positionsInFrench() {
         val fridge = Rack(name = "Armoire", kind = RackKind.Shelves, rows = 4, columns = 6)

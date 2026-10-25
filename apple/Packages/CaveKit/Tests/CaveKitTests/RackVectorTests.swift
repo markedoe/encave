@@ -27,6 +27,8 @@ import Testing
             var rowColumns: [Int]?
             var shelfLayers: [Int]?
             var backReversed: Bool?
+            var rowDepths: [Int]?
+            var rowBackReversed: [Bool]?
             var storageType: String
             var storageCount: Int
             var columnsInRow: [Int]
@@ -48,7 +50,7 @@ import Testing
         let kind = try #require(RackKind(rawValue: layout.kind), "\(layout.kind)")
         return Rack(name: "Rack", kind: kind, rows: layout.rows, columns: layout.columns, depth: layout.depth ?? 1,
                     binCapacity: layout.binCapacity ?? 12, rowColumns: layout.rowColumns, shelfLayers: layout.shelfLayers,
-                    backReversed: layout.backReversed)
+                    backReversed: layout.backReversed, rowDepths: layout.rowDepths, rowBackReversed: layout.rowBackReversed)
     }
 
     @Test func cellsPerRowAndFillOrder() throws {
@@ -82,7 +84,7 @@ import Testing
                 #expect(rack.label(for: slot) == place.label, "\(about)")
                 #expect(rack.placeName(for: slot) == place.en, "\(about)")
                 #expect(rack.emptyCaption(for: slot.cell) == place.emptyCaption, "\(about)")
-                #expect(rack.bandShift(depth: place.depth) == place.bandShift, "\(about)")
+                #expect(rack.bandShift(row: place.row, depth: place.depth) == place.bandShift, "\(about)")
                 count += 1
             }
         }

@@ -304,7 +304,7 @@ struct RackDetailView: View {
     /// card. Several: no card.
     private func select(_ slot: Slot, in rack: Rack) {
         let place = RackPlace(slot, in: rack)
-        selectedPlace = place.holdsOne(in: rack) ? place : nil
+        selectedPlace = place.holdsOne(in: rack, cellar: model.cellar) ? place : nil
     }
 
     private func auditTotal(_ rack: Rack) -> Int {
@@ -335,13 +335,13 @@ struct RackDetailView: View {
         guard !(bottle.slot.map(place.contains) ?? false) else { return false }
         if let free = model.cellar.freeSlot(at: place) {
             model.move(bottle.id, to: free)
-        } else if place.holdsOne(in: rack), let from = bottle.slot, from.rackID == rack.id {
+        } else if place.holdsOne(in: rack, cellar: model.cellar), let from = bottle.slot, from.rackID == rack.id {
             model.swap(from, place.firstSlot)
         } else {
             model.showToast(String(localized: "This position is full."))
             return false
         }
-        withAnimation(.snappy) { selectedPlace = place.holdsOne(in: rack) ? place : nil }
+        withAnimation(.snappy) { selectedPlace = place.holdsOne(in: rack, cellar: model.cellar) ? place : nil }
         return true
     }
 
@@ -360,7 +360,7 @@ struct RackDetailView: View {
                   let from = bottle.slot, !place.contains(from) else { return }
             if let free = model.cellar.freeSlot(at: place) {
                 model.move(bottle.id, to: free)
-            } else if place.holdsOne(in: rack) {
+            } else if place.holdsOne(in: rack, cellar: model.cellar) {
                 model.swap(from, place.firstSlot)
             } else {
                 model.showToast(String(localized: "This position is full."))
@@ -370,7 +370,7 @@ struct RackDetailView: View {
         if bottles.isEmpty, let free = model.cellar.freeSlot(at: place) {
             selectedPlace = nil
             router?.sheet = .addBottle(AddBottleContext(slot: free))
-        } else if place.holdsOne(in: rack), !bottles.isEmpty {
+        } else if place.holdsOne(in: rack, cellar: model.cellar), !bottles.isEmpty {
             withAnimation(.snappy) { selectedPlace = place }
         } else {
             selectedPlace = nil
@@ -505,7 +505,7 @@ private struct RackKey: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     Label {
-                        Text("\(bottles.count) of \(rack.capacity) bottles")
+                        Text("\(bottles.count) of \(model.cellar.capacity(of: rack)) bottles")
                     } icon: {
                         Image(systemName: rack.systemImage)
                     }
@@ -640,8 +640,9 @@ private struct CellSheet: View {
                         BottleInCellRow(rack: rack, bottle: bottle, onAction: onAction)
                     }
                 } header: {
-                    if rack.positionsPerCell > 1 {
-                        Text("\(bottles.count) of \(rack.positionsPerCell) bottles")
+                    let positions = rack.shownPositions(inRow: cell.row, deepest: bottles.compactMap(\.slot?.depth).max())
+                    if positions > 1 {
+                        Text("\(bottles.count) of \(positions) bottles")
                     }
                 }
                 if let free {
@@ -687,7 +688,10 @@ private struct BottleInCellRow: View {
                     Text(wine?.displayName ?? String(localized: "Unknown wine"))
                         .font(.headline)
                     // One text, so the gap is the same on both sides of the dot.
-                    let depth = rack.kind != .bins && rack.positionsPerCell > 1 ? bottle.slot.map { rack.depthName($0.depth) } : nil
+                    let depth = bottle.slot.flatMap { slot in
+                        rack.kind != .bins && rack.shownPositions(inRow: slot.row, deepest: slot.depth) > 1
+                            ? rack.depthName(slot.depth, row: slot.row) : nil
+                    }
                     let subtitle = [wine?.producer, depth].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
                     if !subtitle.isEmpty {
                         Text(verbatim: subtitle)
@@ -837,7 +841,7 @@ private struct CheckPlaceSheet: View {
     private func row(_ bottle: Bottle, _ slot: Slot) -> some View {
         let wine = model.cellar.wines[bottle.wineID]
         let number = slot.depth + 1
-        let position = rack.kind == .bins ? String(localized: "Bottle \(number)") : rack.depthName(slot.depth)
+        let position = rack.kind == .bins ? String(localized: "Bottle \(number)") : rack.depthName(slot.depth, row: slot.row)
         return HStack(spacing: 12) {
             BottleEnd(color: wine?.color, size: 28)
             VStack(alignment: .leading, spacing: 2) {

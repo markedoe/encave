@@ -144,6 +144,41 @@ implementations:
     left out (and dropped when read) when false, when `shelfLayers` is left out
     and when `depth` is not 2. Apps that do not know it keep it as an unknown
     field (below);
+  - `rack.rowDepths` (optional array of integers) gives each row its own depth
+    when rows differ (one row single, the next two deep): one value per row, from
+    the top, like `rowColumns` (on a fridge with `shelfLayers`, one per layer, every
+    layer of a shelf taking the value of the shelf's bottom layer, its last row).
+    An array whose length is not `rows` is stale (a version that does not know it
+    added or removed rows or shelves, keeping it as an unknown field) and is read
+    as left out: every row is `depth` deep. An older version's edit that keeps
+    the number of rows (a shelf deleted and another duplicated, or layers moved
+    between shelves with the same total) cannot be told apart: the depths may then
+    land on the wrong shelves. Nothing is lost: bottles keep their places (judged
+    against `depth`, below) and stay shown; editing the shelves' depths puts it
+    right. Readers bring each value into
+    1…`depth`, and leave it out when every row is `depth` deep, when none is (an
+    older version made the rack deeper: every row is then that deep) and for
+    `bins`. Writers set `depth` to the deepest row, so a version that does not
+    know `rowDepths` still shows every position, and also the back positions of
+    the single rows, where it can put bottles. Places stay judged against `depth`
+    (or `binCapacity`) whatever the row's own depth: the merge's repair (step 5)
+    and imports keep a bottle behind a single row, so every version repairs the
+    same way. The newer apps never offer such a place, show a bottle there (named
+    as the back, `B3, back`), count that place among the rack's positions, and
+    list the bottle among those whose position an edit of the storage removes only
+    when the edit removes the place itself (taken out once the person agrees,
+    with Undo). A row one deep names its other positions without a side (`B3`, not `B3-1` or
+    `B3, front`);
+  - `rack.rowBackReversed` (optional array of booleans) says, on a fridge with
+    `shelfLayers` whose shelves two deep differ, which ones lie head-to-tail: one
+    value per row, from the top, read like `rowDepths` (an array whose length is
+    not `rows` is stale and read as left out); a row lies head-to-tail when `backReversed` is kept, its depth is 2
+    and its value is true. It is kept only while `backReversed` is: writers set
+    `backReversed` to true when any shelf lies head-to-tail, so older versions
+    show every shelf two deep head-to-tail. Readers write `false` for rows not two
+    deep, and leave it out when every row two deep lies head-to-tail, or none does
+    (`backReversed` then says it for all). Shared vectors for both fields:
+    `fixtures/storage-row-vectors.json`;
   - `rack.binStyle` (optional string) says what a `bins` rack was made as:
     `"diamond"` (diamond bins, shown under Rack) or `"crates"` (shown as Crates).
     Apps write it when a storage of bins is created, and when its type is picked

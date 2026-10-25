@@ -33,6 +33,8 @@ class RackVectorTest {
             depth = layout["depth"]?.jsonPrimitive?.int ?: 1, binCapacity = layout["binCapacity"]?.jsonPrimitive?.int ?: 12,
             rowColumns = layout.ints("rowColumns"), shelfLayers = layout.ints("shelfLayers"),
             backReversed = layout["backReversed"]?.jsonPrimitive?.boolean,
+            rowDepths = layout.ints("rowDepths"),
+            rowBackReversed = layout["rowBackReversed"]?.jsonArray?.map { it.jsonPrimitive.boolean },
         ).normalized()
     }
 
@@ -73,7 +75,7 @@ class RackVectorTest {
                 assertEquals(place.getValue("label").jsonPrimitive.content, rack.label(slot), about)
                 assertEquals(place.getValue("en").jsonPrimitive.content, rack.placeName(slot), about)
                 assertEquals(place.getValue("emptyCaption").jsonPrimitive.content, rack.emptyCaption(slot.cell), about)
-                assertEquals(place.getValue("bandShift").jsonPrimitive.double, rack.bandShift(slot.depth).toDouble(), about)
+                assertEquals(place.getValue("bandShift").jsonPrimitive.double, rack.bandShift(slot.row, slot.depth).toDouble(), about)
                 count++
             }
         }

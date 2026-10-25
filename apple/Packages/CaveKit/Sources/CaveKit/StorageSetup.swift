@@ -19,6 +19,24 @@ public enum RackLayout: String, CaseIterable, Sendable {
     case diamond
 }
 
+/// One row of a storage (a shelf of a wine fridge) set on its own, when rows are not all
+/// the same: one single, the next two deep head-to-tail, a shorter top row…
+public struct StorageRowSettings: Equatable, Sendable {
+    /// Positions in the row (bins in a row of diamond bins); on a fridge in layers, in the
+    /// bottom layer: each layer above rests in its gaps, one fewer, then as many.
+    public var positions: Int
+    /// Bottles one behind the other (not for diamond bins).
+    public var depth: Int
+    /// Wine fridge, two deep, in layers: the back bottles lie head-to-tail.
+    public var headToTail: Bool
+    /// Wine fridge: layers stacked in quincunx on this shelf, 1 to 3.
+    public var layers: Int
+
+    public init(positions: Int, depth: Int = 1, headToTail: Bool = false, layers: Int = 1) {
+        self.positions = positions; self.depth = depth; self.headToTail = headToTail; self.layers = layers
+    }
+}
+
 /// What the storage wizard asks for, type by type. Only the settings of `type` are read.
 public struct StorageSettings: Equatable, Sendable {
     public var type: StorageType
@@ -39,6 +57,9 @@ public struct StorageSettings: Equatable, Sendable {
     public var headToTail = true
     // Crates.
     public var bins = 6
+    /// Rows (a fridge's shelves) set one by one when they are not all the same; nil while
+    /// they are (the usual case). Not for crates. See `setRowsDiffer(_:)`.
+    public var rowSettings: [StorageRowSettings]?
 
     /// Crates are drawn this many to a row.
     public static let binsPerRow = 4
@@ -86,13 +107,99 @@ public struct StorageSettings: Equatable, Sendable {
             bins = rack.cellCount
             bottlesPerBin = rack.binCapacity
         }
+        guard offersRowSettings, !Self.sameShape(self.rack(name: ""), rack) else { return }
+        if rack.hasShelfLayers {
+            rowSettings = rack.shelfRows.indices.map { shelf in
+                let rows = rack.shelfRows[shelf]
+                return StorageRowSettings(positions: rack.columns(inRow: rows.upperBound - 1), depth: rack.depth(ofShelf: shelf),
+                                          headToTail: rack.isBackReversed(shelf: shelf), layers: rows.count)
+            }
+        } else {
+            rowSettings = (0..<rack.rows).map { StorageRowSettings(positions: rack.columns(inRow: $0), depth: rack.depth(ofRow: $0)) }
+        }
+    }
+
+    /// Same places, depths and head-to-tail, row by row.
+    static func sameShape(_ a: Rack, _ b: Rack) -> Bool {
+        a.kind == b.kind && a.rows == b.rows && a.shelfLayers == b.shelfLayers && a.binCapacity == b.binCapacity
+            && (0..<a.rows).allSatisfy { row in
+                a.columns(inRow: row) == b.columns(inRow: row) && a.positions(inRow: row) == b.positions(inRow: row)
+                    && a.isBackReversed(row: row) == b.isBackReversed(row: row)
+            }
     }
 
     /// Head-to-tail applies to a fridge with layers, two deep.
     public var offersHeadToTail: Bool { type == .wineFridge && layersPerShelf > 1 && depth == 2 }
 
+    /// Rows can be set one by one: racks and wine fridges (crates have no rows).
+    public var offersRowSettings: Bool { type != .crates }
+
+    /// Each row has a depth: every storage but diamond bins and crates.
+    public var offersRowDepth: Bool {
+        switch type {
+        case .rack: layout != .diamond
+        case .wineFridge: true
+        case .crates: false
+        }
+    }
+
+    /// Deepest a row can be in the wizard.
+    public static let maxRowDepth = 2
+
+    /// A shelf set on its own lies head-to-tail only on a fridge in layers (a shelf at least
+    /// has several), two deep.
+    public func offersHeadToTail(_ row: StorageRowSettings) -> Bool {
+        type == .wineFridge && row.depth == 2 && (rowSettings ?? [row]).contains { $0.layers > 1 }
+    }
+
+    /// The rows of a rack, or the shelves of a fridge.
+    public var rowCount: Int {
+        get { type == .wineFridge ? shelves : rows }
+        set {
+            if type == .wineFridge { shelves = newValue } else { rows = newValue }
+            fitRowSettings()
+        }
+    }
+
+    /// Rows set one by one start as the uniform settings make them; turned off, the
+    /// uniform settings apply again.
+    public mutating func setRowsDiffer(_ differ: Bool) {
+        guard differ, offersRowSettings else {
+            rowSettings = nil
+            return
+        }
+        guard rowSettings == nil else { return fitRowSettings() }
+        var uniform = self
+        uniform.rowSettings = nil
+        let rack = uniform.rack(name: "")
+        switch type {
+        case .wineFridge where rack.hasShelfLayers:
+            rowSettings = rack.shelfRows.indices.map { shelf in
+                let rows = rack.shelfRows[shelf]
+                return StorageRowSettings(positions: rack.columns(inRow: rows.upperBound - 1), depth: rack.depth(ofShelf: shelf),
+                                          headToTail: rack.isBackReversed(shelf: shelf), layers: rows.count)
+            }
+        default:
+            rowSettings = (0..<rack.rows).map {
+                StorageRowSettings(positions: rack.columns(inRow: $0), depth: rack.depth(ofRow: $0))
+            }
+        }
+    }
+
+    /// Rows set one by one follow the number of rows: new ones copy the last one.
+    public mutating func fitRowSettings() {
+        guard var rows = rowSettings, let last = rows.last else { return }
+        let count = min(type == .wineFridge ? Self.maxShelves : Self.maxCount, max(1, rowCount))
+        if rows.count < count { rows += Array(repeating: last, count: count - rows.count) }
+        if rows.count > count { rows.removeLast(rows.count - count) }
+        rowSettings = rows
+    }
+
     /// The rack these settings describe.
     public func rack(id: UUID = UUID(), name: String) -> Rack {
+        if let rowSettings, !rowSettings.isEmpty, offersRowSettings {
+            return rack(id: id, name: name, rows: Array(rowSettings.prefix(type == .wineFridge ? Self.maxShelves : Self.maxCount)))
+        }
         let count = { (value: Int) in min(Self.maxCount, max(1, value)) }
         switch type {
         case .rack:
@@ -117,6 +224,54 @@ public struct StorageSettings: Equatable, Sendable {
                         backReversed: headToTail && depth == 2)
         case .crates:
             return Self.crates(id: id, name: name, bins: count(bins), bottlesPerBin: count(bottlesPerBin))
+        }
+    }
+
+    /// A rack whose rows (a fridge's shelves) are set one by one. Places and depths are
+    /// written per row only where they differ from the rack's (docs/SYNC.md).
+    private func rack(id: UUID, name: String, rows: [StorageRowSettings]) -> Rack {
+        let count = { (value: Int) in min(Self.maxCount, max(1, value)) }
+        let depthOf = { (row: StorageRowSettings) in min(Self.maxRowDepth, max(1, row.depth)) }
+        let positions = rows.map { count($0.positions) }, depths = rows.map(depthOf)
+        let widest = positions.max() ?? 1, deepest = depths.max() ?? 1
+        switch type {
+        case .rack:
+            let kind: RackKind = switch layout {
+            case .grid: .grid
+            case .honeycomb: .staggered
+            case .diamond: .bins
+            }
+            var rack = Rack(id: id, name: name, kind: kind, rows: rows.count, columns: widest,
+                            depth: kind == .bins ? 1 : deepest, binCapacity: count(bottlesPerBin),
+                            binStyle: kind == .bins ? .diamond : nil,
+                            rowDepths: kind == .bins ? nil : depths)
+            // Left out when the rows are as wide as the rack makes them anyway.
+            if (0..<rack.rows).map(rack.columns(inRow:)) != positions {
+                rack = Rack(id: id, name: name, kind: kind, rows: rows.count, columns: widest,
+                            depth: rack.depth, binCapacity: rack.binCapacity, rowColumns: positions,
+                            binStyle: rack.binStyle, rowDepths: rack.rowDepths)
+            }
+            return rack
+        case .crates:
+            return Self.crates(id: id, name: name, bins: count(bins), bottlesPerBin: count(bottlesPerBin))
+        case .wineFridge:
+            let layers = rows.map { min(Rack.maxLayers, max(1, $0.layers)) }
+            if layers.allSatisfy({ $0 == 1 }) {
+                return Rack(id: id, name: name, kind: .shelves, rows: rows.count, columns: widest, depth: deepest,
+                            rowColumns: positions.allSatisfy { $0 == widest } ? nil : positions, rowDepths: depths)
+            }
+            // Each shelf from its top layer: one fewer on the layer above the bottom one.
+            var widths: [Int] = [], layerDepths: [Int] = [], reversed: [Bool] = []
+            for (index, row) in rows.enumerated() {
+                let bottom = positions[index]
+                let fromBottom = [bottom, max(1, bottom - 1), bottom].prefix(layers[index])
+                widths += fromBottom.reversed()
+                layerDepths += Array(repeating: depths[index], count: layers[index])
+                reversed += Array(repeating: row.headToTail && depths[index] == 2, count: layers[index])
+            }
+            return Rack(id: id, name: name, kind: .staggered, rows: widths.count, columns: widest, depth: deepest,
+                        rowColumns: widths, shelfLayers: layers, backReversed: reversed.contains(true),
+                        rowDepths: layerDepths, rowBackReversed: reversed)
         }
     }
 

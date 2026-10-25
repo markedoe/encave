@@ -41,6 +41,8 @@ class RackVectorLabelsTest {
                 depth = layout["depth"]?.jsonPrimitive?.int ?: 1, binCapacity = layout["binCapacity"]?.jsonPrimitive?.int ?: 12,
                 rowColumns = ints("rowColumns"), shelfLayers = ints("shelfLayers"),
                 backReversed = layout["backReversed"]?.jsonPrimitive?.boolean,
+                rowDepths = ints("rowDepths"),
+                rowBackReversed = layout["rowBackReversed"]?.jsonArray?.map { it.jsonPrimitive.boolean },
             ).normalized()
             layout.getValue("places").jsonArray.map { it.jsonObject }.map { place ->
                 val slot = Slot(rack.id, place.getValue("row").jsonPrimitive.int, place.getValue("column").jsonPrimitive.int,

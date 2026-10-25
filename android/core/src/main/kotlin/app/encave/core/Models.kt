@@ -270,7 +270,10 @@ data class Rack(
     val rows: Int,
     /** Cells per row (the widest row for honeycomb racks). */
     val columns: Int,
-    /** Bottles one behind the other in a cell (grid, honeycomb and shelves). */
+    /**
+     * Bottles one behind the other in a cell (grid, honeycomb and shelves); when rows differ
+     * ([rowDepths]), the deepest row, so older versions still show every place.
+     */
     val depth: Int = 1,
     /** Bottles per bin (bins only). */
     val binCapacity: Int = 12,
@@ -298,6 +301,18 @@ data class Rack(
      * writing the rack back does not lose it (docs/SYNC.md). See [binStyle].
      */
     @SerialName("binStyle") val binStyleValue: String? = null,
+    /**
+     * Bottles one behind the other in each row, from the top, when rows differ (one row
+     * single, the next two deep); each 1 to [depth], the same for every layer of a shelf.
+     * Null when every row is [depth] deep. See [depthOfRow] and [normalized].
+     */
+    val rowDepths: List<Int>? = null,
+    /**
+     * Fridge with shelf layers: whether each row lies head-to-tail, from the top, when the
+     * shelves two deep differ; the same for every layer of a shelf, false where a row is not
+     * two deep. Null when every shelf two deep follows [backReversed]. See [isBackReversedRow].
+     */
+    val rowBackReversed: List<Boolean>? = null,
     /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
     @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {
@@ -308,18 +323,54 @@ data class Rack(
      */
     val binStyle: BinStyle? get() = BinStyle.entries.firstOrNull { it.raw == binStyleValue }
 
-    /** A fridge with shelf layers two deep: drawn as a front band and a back band per shelf. */
+    /**
+     * A fridge with shelf layers two deep (on some shelves at least): drawn as a front band
+     * and a back band on each shelf two deep (see [hasDepthBandsOnShelf]).
+     */
     val hasDepthBands: Boolean get() = hasShelfLayers && depth == 2
 
-    /** The back bottles of a fridge drawn in bands lie head-to-tail (see [backReversed]). */
+    /**
+     * The back bottles of a fridge drawn in bands lie head-to-tail, on some shelves at least
+     * (see [backReversed] and [isBackReversedRow]).
+     */
     val isBackReversed: Boolean get() = backReversed == true && hasDepthBands
+
+    /** Bottles one behind the other in this row: its own when rows differ, else [depth]. 1 for bins. */
+    fun depthOfRow(row: Int): Int {
+        if (kind == RackKind.Bins) return 1
+        return rowDepths?.getOrNull(row) ?: depth
+    }
+
+    /** Bottles one behind the other on a shelf of a fridge with shelf layers (0 is the top one). */
+    fun depthOfShelf(shelf: Int): Int = shelfRows.getOrNull(shelf)?.let { depthOfRow(it.last) } ?: depth
+
+    /** Bottles that fit in one cell of this row: its depth, or a bin's capacity. */
+    fun positionsInRow(row: Int): Int = if (kind == RackKind.Bins) binCapacity else depthOfRow(row)
+
+    /** Rows that are not all the same beyond their number of places: their depth or how they lie. */
+    val rowsDiffer: Boolean get() = rowDepths != null || rowBackReversed != null
+
+    /** This shelf of a fridge with shelf layers is two deep: drawn as a front and a back band. */
+    fun hasDepthBandsOnShelf(shelf: Int): Boolean = hasDepthBands && depthOfShelf(shelf) == 2
+
+    /** The back bottles of this row lie head-to-tail: a fridge with shelf layers, the row two deep, its shelf head-to-tail. */
+    fun isBackReversedRow(row: Int): Boolean {
+        if (!isBackReversed || depthOfRow(row) != 2) return false
+        return rowBackReversed?.getOrNull(row) ?: true
+    }
+
+    /** The back bottles of this shelf lie head-to-tail (0 is the top shelf). */
+    fun isBackReversedShelf(shelf: Int): Boolean = shelfRows.getOrNull(shelf)?.let { isBackReversedRow(it.last) } ?: false
 
     /**
      * How far the layers of a band are drawn right of the same layers in front, in places:
      * head-to-tail, each neck behind sits between two front bases, half a place along.
      * Drawing only: places, numbering and counts stay the same.
      */
-    fun bandShift(depth: Int?): Float = if (isBackReversed && depth == 1) 0.5f else 0f
+    fun bandShift(row: Int, depth: Int?): Float = if (isBackReversedRow(row) && depth == 1) 0.5f else 0f
+
+    /** The largest shift of a band ([bandShift]), for the width of the drawing. */
+    val maxBandShift: Float get() = if (isBackReversed) 0.5f else 0f
 
     /** The temperature zone of each shelf, 0 for the top one (only with shelf layers). */
     fun zoneOfShelf(shelf: Int): Int = zoneBreaks.orEmpty().count { it <= shelf }
@@ -370,7 +421,7 @@ data class Rack(
     /** The widest row, for drawing. */
     val maxColumns: Int get() = (0 until rows).maxOfOrNull { columnsInRow(it) } ?: columns
 
-    /** Bottles that fit in one cell. */
+    /** Bottles that fit in one cell, in the deepest row when rows differ ([positionsInRow] gives each row's). */
     val positionsPerCell: Int
         get() = when (kind) {
             RackKind.Bins -> binCapacity
@@ -379,10 +430,26 @@ data class Rack(
 
     val cellCount: Int get() = (0 until rows).sumOf { columnsInRow(it) }
 
-    val capacity: Int get() = cellCount * positionsPerCell
+    val capacity: Int get() = (0 until rows).sumOf { columnsInRow(it) * positionsInRow(it) }
 
+    /**
+     * A place of this rack as every version reads it: within the rack's [depth] (or a bin's
+     * capacity), whatever its row's own depth. Sync repair and imports judge places with it,
+     * so a version that does not know [rowDepths] and one that does keep the same bottles in
+     * place (docs/SYNC.md). A place behind a row's depth ([hasPosition]) holds a bottle an
+     * older version put there: it is kept and shown. Mirrors CaveKit.
+     */
     fun contains(slot: Slot): Boolean = slot.rackId == id && slot.row in 0 until rows &&
         slot.column in 0 until columnsInRow(slot.row) && slot.depth in 0 until positionsPerCell
+
+    /** A position the row really has, within its own depth: what the apps offer, and what an edit keeps. */
+    fun hasPosition(slot: Slot): Boolean = contains(slot) && slot.depth < positionsInRow(slot.row)
+
+    /**
+     * The places drawn and named for a cell of this row: its own depth, and as deep as the
+     * bottles there go (a bottle an older version put behind a single row stays in view).
+     */
+    fun shownPositions(row: Int, deepest: Int?): Int = maxOf(positionsInRow(row), (deepest ?: -1) + 1)
 
     fun contains(cell: RackCell): Boolean =
         cell.rackId == id && cell.row in 0 until rows && cell.column in 0 until columnsInRow(cell.row)
@@ -399,10 +466,11 @@ data class Rack(
     val allSlots: List<Slot>
         get() = (if (hasShelfLayers) shelfRows.flatMap { it.reversed() } else (0 until rows).toList()).flatMap { row ->
             val width = columnsInRow(row)
+            val positions = positionsInRow(row)
             if (kind == RackKind.Bins) {
-                (0 until width).flatMap { column -> (0 until positionsPerCell).map { Slot(id, row, column, it) } }
+                (0 until width).flatMap { column -> (0 until positions).map { Slot(id, row, column, it) } }
             } else {
-                (0 until positionsPerCell).flatMap { depth -> (0 until width).map { Slot(id, row, it, depth) } }
+                (0 until positions).flatMap { depth -> (0 until width).map { Slot(id, row, it, depth) } }
             }
         }
 
@@ -412,7 +480,7 @@ data class Rack(
     /** "B3", or "B3-2" for the second bottle of a cell that holds several. */
     fun label(slot: Slot): String {
         val base = label(slot.row, slot.column)
-        return if (positionsPerCell > 1) "$base-${slot.depth + 1}" else base
+        return if (shownPositions(slot.row, slot.depth) > 1) "$base-${slot.depth + 1}" else base
     }
 
     fun label(cell: RackCell): String = label(cell.row, cell.column)
@@ -471,7 +539,44 @@ data class Rack(
             zoneBreaks = breaks,
         )
         val reversed = fixed.copy(backReversed = if (backReversed == true && fixed.hasDepthBands) true else null)
-        return if (reversed == this) this else reversed
+        val rowed = reversed.withRowSettings(rowDepths, rowBackReversed)
+        return if (rowed == this) this else rowed
+    }
+
+    /**
+     * Keeps per-row depths and head-to-tail only where rows really differ, the same way on
+     * every device (docs/SYNC.md): one value per row (an array of another length is ignored),
+     * each depth brought into 1…[depth], every layer of a shelf taking the value of
+     * its bottom layer. Depths are dropped when every row is [depth] deep, or when none is (an
+     * older version made the rack deeper: it shows every row that deep). Head-to-tail applies
+     * only to rows two deep of a head-to-tail fridge, and is dropped when every such row lies
+     * head-to-tail, or none does ([backReversed] then says it for all). Mirrors CaveKit.
+     */
+    private fun withRowSettings(depths: List<Int>?, headToTail: List<Boolean>?): Rack {
+        var rack = copy(rowDepths = null, rowBackReversed = null)
+        if (kind == RackKind.Bins) return rack
+        // An array of another length is stale (an older version added or removed rows or
+        // shelves without knowing it): the rows are read as uniform.
+        if (depths != null && depths.size == rows) {
+            val read = (0 until rows).map { row -> depths.getOrNull(row)?.coerceIn(1, depth) ?: depth }
+            val kept = rack.alongShelves(read)
+            if (depth in kept && kept.any { it != depth }) rack = rack.copy(rowDepths = kept)
+        }
+        if (rack.isBackReversed && headToTail != null && headToTail.size == rows) {
+            val read = (0 until rows).map { row -> headToTail.getOrNull(row) ?: true }
+            val kept = rack.alongShelves(read).mapIndexed { row, reversed -> reversed && rack.depthOfRow(row) == 2 }
+            val deep = (0 until rows).filter { rack.depthOfRow(it) == 2 }
+            if (deep.any { kept[it] } && deep.any { !kept[it] }) rack = rack.copy(rowBackReversed = kept)
+        }
+        return rack
+    }
+
+    /** Every layer of a shelf takes the value of its bottom layer (the shelf's last row). */
+    private fun <T> alongShelves(values: List<T>): List<T> {
+        if (!hasShelfLayers) return values
+        val result = values.toMutableList()
+        for (rows in shelfRows) for (row in rows) result[row] = values[rows.last]
+        return result
     }
 
     companion object {

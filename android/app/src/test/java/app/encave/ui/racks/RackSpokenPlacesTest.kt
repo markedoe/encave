@@ -109,6 +109,40 @@ class RackSpokenPlacesTest {
     }
 
     @Test
+    fun aRowOneDeepBetweenDeeperOnesSaysNoSide() {
+        // Rows two, one and two deep: the single row reads as one position, the others side by side.
+        val rack = Rack(name = "Mixed", rows = 3, columns = 4, depth = 2, rowDepths = listOf(2, 1, 2)).normalized()
+        val cellar = Cellar()
+        cellar.addRack(rack)
+        cellar.addBottles(Wine(name = "Clos"), slots = listOf(Slot(rack.id, 1, 2)))
+        val single = RackCell(rack.id, 1, 2)
+        assertEquals("B3, Clos", cellDescription(rack, single, cellar.bottlesIn(single), cellar, resources))
+        cellar.addBottles(Wine(name = "Clos"), slots = listOf(Slot(rack.id, 0, 0, 1)))
+        val deep = RackCell(rack.id, 0, 0)
+        assertEquals("A1: front empty; back Clos", cellDescription(rack, deep, cellar.bottlesIn(deep), cellar, resources))
+        // Taps on the single row reach a position of one bottle; on the others, a cell of two.
+        assertEquals(true, RackPlace.of(Slot(rack.id, 1, 2), rack).holdsOne(rack))
+        assertEquals(false, RackPlace.of(Slot(rack.id, 0, 0, 1), rack).holdsOne(rack))
+    }
+
+    @Test
+    @Config(qualifiers = "fr")
+    fun aShelfOneDeepOfALayeredFridgeIsReadOnceInFrench() {
+        val fridge = Rack(
+            name = "F", kind = RackKind.Staggered, rows = 5, columns = 6, depth = 2, shelfLayers = listOf(2, 1, 2),
+            rowDepths = listOf(2, 2, 1, 2, 2), backReversed = true,
+        ).normalized()
+        val cellar = Cellar()
+        cellar.addRack(fridge)
+        val single = RackCell(fridge.id, 2, 1)
+        assertEquals("Étagère\u00A02, position\u00A02, vide", cellDescription(fridge, single, emptyList(), cellar, resources))
+        assertEquals(
+            "Étagère\u00A01, fond, couche du bas, position\u00A03, vide",
+            cellDescription(fridge, RackCell(fridge.id, 1, 2), emptyList(), cellar, resources, depth = 1),
+        )
+    }
+
+    @Test
     fun fridgesOnShelvesAreNotCalledHoneycombs() {
         val fridge = Rack(name = "F", kind = RackKind.Staggered, rows = 4, columns = 6, depth = 2, shelfLayers = listOf(2, 2), backReversed = true)
         assertEquals("Wine fridge", resources.getString(fridge.storageType.labelRes))

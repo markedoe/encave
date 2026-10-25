@@ -2797,6 +2797,16 @@
         }
       }
     },
+    "Apply to All Rows": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appliquer à toutes les rangées"
+          }
+        }
+      }
+    },
     "Apply to All Shelves": {
       "localizations": {
         "fr": {
@@ -6207,12 +6217,42 @@
         }
       }
     },
+    "For a fridge whose shelves differ: one two deep head-to-tail, another single, a shelf of fewer bottles.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour une cave à vin réfrigérée dont les étagères diffèrent : l’une sur deux rangs tête-bêche, une autre simple, une étagère de moins de bouteilles."
+          }
+        }
+      }
+    },
+    "For a rack whose rows differ: a shorter top row, a single row between rows two deep.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour un casier dont les rangées diffèrent : une rangée du haut plus courte, une rangée simple entre des rangées doubles."
+          }
+        }
+      }
+    },
     "For a rack with a sloped top, a staircase or an irregular cellar wall.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Pour un casier sous pente, sous un escalier ou contre un mur irrégulier."
+          }
+        }
+      }
+    },
+    "For a rack with a sloped top, a staircase, or rows of their own depth: a single row between rows two deep. Touch and hold a row to apply it to all rows.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour un casier sous pente, sous un escalier, ou des rangées de profondeurs différentes : une rangée simple entre des rangées doubles. Touchez longuement une rangée pour l’appliquer à toutes les rangées."
           }
         }
       }
@@ -6847,22 +6887,12 @@
         }
       }
     },
-    "Holds %lld bottles. Shelves are numbered from the top, positions from the left. Each shelf shows its front bottles, then the ones behind; head-to-tail, their necks face you.": {
+    "Holds %lld bottles. Shelves are numbered from the top, positions from the left. Each shelf has its layers, its depth and, two deep, whether its back bottles lie head-to-tail: it then shows its front bottles, then the ones behind. Touch and hold a shelf to duplicate it or apply it to all shelves.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Contient %lld bouteilles. Les étagères sont numérotées depuis le haut, les positions depuis la gauche. Chaque étagère montre ses bouteilles de devant, puis celles du fond ; tête-bêche, leur goulot est vers vous."
-          }
-        }
-      }
-    },
-    "Holds %lld bottles. Touch and hold a shelf to duplicate it or apply it to all shelves.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Contient %lld bouteilles. Touchez longuement une étagère pour la dupliquer ou l’appliquer à toutes les étagères."
+            "value": "Contient %lld bouteilles. Les étagères sont numérotées depuis le haut, les positions depuis la gauche. Chaque étagère a ses couches, sa profondeur et, sur deux rangs, ses bouteilles du fond tête-bêche ou non : elle montre alors ses bouteilles de devant, puis celles du fond. Touchez longuement une étagère pour la dupliquer ou l’appliquer à toutes les étagères."
           }
         }
       }
@@ -11397,12 +11427,32 @@
         }
       }
     },
+    "Rows are not all the same": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les rangées ne sont pas toutes pareilles"
+          }
+        }
+      }
+    },
     "Rows deep": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Rangées en profondeur"
+          }
+        }
+      }
+    },
+    "Rows do not all have to be the same. When adding a storage, turn on **Rows are not all the same** (for a wine fridge, **Shelves are not all the same**), then set each row: its positions (bins, for diamond bins) and in **Rows deep** whether it is one or two deep. On a wine fridge in layers, each shelf also has its **Layers per shelf** and, two deep, **Back bottles head-to-tail**. Touch and hold a row and choose **Apply to All Rows** to copy it to the others. In the editor, the same switch sets each row of a rack under a sloped ceiling, a staircase or an irregular wall; a wine fridge in layers sets each shelf in its list. A position in a row one deep is named without front or back, like **B3**. When a row or a shelf becomes single, the editor counts the bottles behind; saving asks first, they stay in your cellar without a position, and **Undo** puts them back.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les rangées n’ont pas à être toutes pareilles. En ajoutant un rangement, activez **Les rangées ne sont pas toutes pareilles** (pour une cave à vin réfrigérée, **Les étagères ne sont pas toutes pareilles**), puis réglez chaque rangée : ses positions (ses cases, pour des cases en losange) et dans **Rangées en profondeur** si elle est sur un ou deux rangs. Sur une cave à vin réfrigérée en couches, chaque étagère a aussi ses **Couches par étagère** et, sur deux rangs, **Bouteilles du fond tête-bêche**. Touchez longuement une rangée et choisissez **Appliquer à toutes les rangées** pour la recopier sur les autres. Dans l’éditeur, le même réglage règle chaque rangée d’un casier sous pente, sous un escalier ou contre un mur irrégulier ; une cave à vin réfrigérée en couches règle chaque étagère dans sa liste. Une position d’une rangée simple est nommée sans devant ni fond, comme **B3**. Quand une rangée ou une étagère devient simple, l’éditeur compte les bouteilles du fond ; l’enregistrement demande d’abord, elles restent dans votre cave sans position, et **Annuler** les remet en place."
           }
         }
       }
@@ -11417,12 +11467,12 @@
         }
       }
     },
-    "Rows of different lengths": {
+    "Rows that differ": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rangées de longueurs différentes"
+            "value": "Rangées différentes"
           }
         }
       }
@@ -11433,6 +11483,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lignes sans nom de vin, ignorées : %lld"
+          }
+        }
+      }
+    },
+    "Rows, from the top": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rangées, depuis le haut"
           }
         }
       }
@@ -12173,6 +12233,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Étagères"
+          }
+        }
+      }
+    },
+    "Shelves are not all the same": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les étagères ne sont pas toutes pareilles"
           }
         }
       }
@@ -14827,6 +14897,26 @@
         }
       }
     },
+    "Touch and hold a row to apply it to all rows.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez longuement une rangée pour l’appliquer à toutes les rangées."
+          }
+        }
+      }
+    },
+    "Touch and hold a shelf to apply it to all shelves.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez longuement une étagère pour l’appliquer à toutes les étagères."
+          }
+        }
+      }
+    },
     "Touch and hold an empty area of the Home Screen, tap Edit, then Add Widget, and choose Encave. **Tonight** shows the bottle to open tonight, the same as in the app, and where it is; **Drink Soon** lists the first wines to drink soon; **Cellar** counts your bottles, those to keep and those to drink soon. Tap a widget to open the wine or the section. On the Lock Screen, Tonight shows the bottle's name and position, and Drink Soon how many bottles to drink soon. The widgets update when your cellar changes and at midnight. They show only a short summary that Encave keeps on this device; nothing is sent anywhere. Anyone who sees your Lock Screen sees the wine's name: Encave marks it as private, so iOS hides it while the device is locked if your settings ask for it.": {
       "localizations": {
         "fr": {
@@ -14933,16 +15023,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Activez **Rappels** dans les réglages, ou avec **Activer** quand Ce soir le propose : au début de chaque mois (vers 10 h le 1ᵉʳ), si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, une notification indique combien ; une autre arrive le matin du jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil. Si les notifications sont désactivées pour Encave, **Ouvrir les réglages** mène aux réglages du système pour les activer."
-          }
-        }
-      }
-    },
-    "Turn on **Rows of different lengths** for a rack under a sloped ceiling or a staircase, and set the length of each row (not for honeycomb racks).": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Activez **Rangées de longueurs différentes** pour un casier sous pente ou sous un escalier, et réglez la longueur de chaque rangée (sauf pour les casiers nid d’abeille)."
           }
         }
       }
@@ -15587,12 +15667,12 @@
         }
       }
     },
-    "When a wine fridge with bottles in layers is two deep, each shelf shows two bands: **Front**, the bottles whose base faces you, then **Back**, the bottles behind them, drawn smaller. Many wine fridges keep the back bottles head-to-tail, their necks facing you between the bases of the front ones: turn on **Back bottles head-to-tail** in the editor, and the back band shows their necks and capsules. Its layers are drawn half a position to the right, so each neck sits between two bases. Tap any position of either band to see, add or move its bottle; on iPad and Mac, drag bottles between them. Positions read like **Shelf 3, front, bottom layer, position 2**, and the one behind it **Shelf 3, back, bottom layer, position 2**. Other storage two deep shows the dots described below.": {
+    "When a wine fridge with bottles in layers is two deep, each shelf shows two bands: **Front**, the bottles whose base faces you, then **Back**, the bottles behind them, drawn smaller. Many wine fridges keep the back bottles head-to-tail, their necks facing you between the bases of the front ones: turn on **Back bottles head-to-tail** on a shelf, and its back band shows their necks and capsules. Each shelf has its own: one can be two deep head-to-tail, the next two deep the same way round, another single, drawn once without bands. Its layers are drawn half a position to the right, so each neck sits between two bases. Tap any position of either band to see, add or move its bottle; on iPad and Mac, drag bottles between them. Positions read like **Shelf 3, front, bottom layer, position 2**, and the one behind it **Shelf 3, back, bottom layer, position 2**. Other storage two deep shows the dots described below.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quand une cave à vin réfrigérée avec bouteilles en couches a deux rangs de profondeur, chaque étagère montre deux bandes : **Devant**, les bouteilles dont le culot est vers vous, puis **Fond**, les bouteilles derrière elles, dessinées plus petites. Beaucoup de caves à vin réfrigérées rangent les bouteilles du fond tête-bêche, le goulot vers vous entre les culots de celles de devant : activez **Bouteilles du fond tête-bêche** dans l’éditeur, et la bande du fond montre leurs goulots et leurs capsules. Ses couches sont dessinées une demi-position plus à droite, chaque goulot entre deux culots. Touchez n’importe quelle position de l’une ou l’autre bande pour voir, ajouter ou déplacer sa bouteille ; sur iPad et Mac, faites glisser les bouteilles de l’une à l’autre. Les positions se lisent comme **Étagère 3, devant, couche du bas, position 2**, et celle derrière **Étagère 3, fond, couche du bas, position 2**. Les autres rangements à deux rangs montrent les points décrits plus bas."
+            "value": "Quand une cave à vin réfrigérée avec bouteilles en couches a deux rangs de profondeur, chaque étagère montre deux bandes : **Devant**, les bouteilles dont le culot est vers vous, puis **Fond**, les bouteilles derrière elles, dessinées plus petites. Beaucoup de caves à vin réfrigérées rangent les bouteilles du fond tête-bêche, le goulot vers vous entre les culots de celles de devant : activez **Bouteilles du fond tête-bêche** sur une étagère, et sa bande du fond montre leurs goulots et leurs capsules. Chaque étagère a le sien : l’une peut être sur deux rangs tête-bêche, la suivante sur deux rangs dans le même sens, une autre simple, dessinée une seule fois, sans bandes. Ses couches sont dessinées une demi-position plus à droite, chaque goulot entre deux culots. Touchez n’importe quelle position de l’une ou l’autre bande pour voir, ajouter ou déplacer sa bouteille ; sur iPad et Mac, faites glisser les bouteilles de l’une à l’autre. Les positions se lisent comme **Étagère 3, devant, couche du bas, position 2**, et celle derrière **Étagère 3, fond, couche du bas, position 2**. Les autres rangements à deux rangs montrent les points décrits plus bas."
           }
         }
       }

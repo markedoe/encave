@@ -288,7 +288,8 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     public var rows: Int
     /// Cells per row (the widest row for honeycomb racks).
     public var columns: Int
-    /// Bottles one behind the other in a cell (grid, honeycomb and shelves).
+    /// Bottles one behind the other in a cell (grid, honeycomb and shelves); when rows
+    /// differ (`rowDepths`), the deepest row, so older versions still show every place.
     public var depth: Int
     /// Honeycomb on shelves (a wine fridge): how many layers each shelf holds, from the top
     /// shelf, each 1 to 3; nil for a continuous honeycomb. Rows are the layers, lettered from
@@ -299,8 +300,16 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     public var zoneBreaks: [Int]?
     /// Fridge with shelf layers, two deep: the back bottles lie the other way round
     /// ("head-to-tail"), necks facing you between the front bottles' bases. Nil (false)
-    /// elsewhere.
+    /// elsewhere. When shelves differ (`rowBackReversed`), true if any shelf does.
     public var backReversed: Bool?
+    /// Bottles one behind the other in each row, from the top, when rows differ (one row
+    /// single, the next two deep); each 1 to `depth`, the same for every layer of a shelf.
+    /// Nil when every row is `depth` deep. See `depth(ofRow:)`.
+    public var rowDepths: [Int]?
+    /// Fridge with shelf layers: whether each row lies head-to-tail, from the top, when the
+    /// shelves two deep differ; the same for every layer of a shelf, false where a row is not
+    /// two deep. Nil when every shelf two deep follows `backReversed`. See `isBackReversed(row:)`.
+    public var rowBackReversed: [Bool]?
     /// Bottles per bin (bins only).
     public var binCapacity: Int
     /// Cells in each row when rows differ (a triangle top, an irregular cellar).
@@ -325,7 +334,8 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     public init(
         id: UUID = UUID(), name: String, kind: RackKind = .grid, rows: Int, columns: Int,
         depth: Int = 1, binCapacity: Int = 12, rowColumns: [Int]? = nil, shelfLayers: [Int]? = nil,
-        zoneBreaks: [Int]? = nil, backReversed: Bool? = nil, binStyle: BinStyle? = nil
+        zoneBreaks: [Int]? = nil, backReversed: Bool? = nil, binStyle: BinStyle? = nil,
+        rowDepths: [Int]? = nil, rowBackReversed: [Bool]? = nil
     ) {
         self.id = id; self.name = name; self.kind = kind
         self.rows = Rack.bounded(rows); self.columns = Rack.bounded(columns)
@@ -333,6 +343,7 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         self.rowColumns = rowColumns.map { $0.prefix(Rack.maxSize).map(Rack.bounded) }
         applyShelfLayers(shelfLayers, zoneBreaks: zoneBreaks)
         self.backReversed = backReversed == true && hasDepthBands ? true : nil
+        applyRowSettings(depths: rowDepths, headToTail: rowBackReversed)
         self.binStyleValue = binStyle?.rawValue
     }
 
@@ -346,6 +357,7 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
 
     private enum CodingKeys: String, CodingKey, CaseIterable {
         case id, name, kind, rows, columns, depth, binCapacity, rowColumns, shelfLayers, zoneBreaks, backReversed, binStyle
+        case rowDepths, rowBackReversed
         /// Version 0.1 and 0.2 had "grid" and a decorative "diamond" layout, both one bottle per cell.
         case layout
     }
@@ -365,6 +377,9 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
                          zoneBreaks: try c.decodeIfPresent([Int].self, forKey: .zoneBreaks))
         // Absent from older racks; kept only where it applies, true or left out.
         backReversed = try c.decodeIfPresent(Bool.self, forKey: .backReversed) == true && hasDepthBands ? true : nil
+        // Absent from older racks; kept only where rows really differ.
+        applyRowSettings(depths: try c.decodeIfPresent([Int].self, forKey: .rowDepths),
+                         headToTail: try c.decodeIfPresent([Bool].self, forKey: .rowBackReversed))
         // Absent from older racks; any string is kept, even one this version does not know.
         binStyleValue = try c.decodeIfPresent(String.self, forKey: .binStyle)
         // "layout" is a known key (read as a grid), so it is not kept.
@@ -402,6 +417,42 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         zoneBreaks = between.isEmpty ? nil : between
     }
 
+    /// Keeps per-row depths and head-to-tail only where rows really differ, the same way on
+    /// every device (docs/SYNC.md): one value per row (an array of another length is
+    /// ignored), each depth brought into 1…`depth`, every layer of a shelf taking the value
+    /// of its bottom layer. Depths are dropped when every row is `depth` deep, or when none is
+    /// (an older version made the rack deeper: it shows every row that deep). Head-to-tail
+    /// applies only to rows two deep of a head-to-tail fridge, and is dropped when every such
+    /// row lies head-to-tail, or none does (`backReversed` then says it for all).
+    private mutating func applyRowSettings(depths: [Int]?, headToTail: [Bool]?) {
+        rowDepths = nil
+        rowBackReversed = nil
+        guard kind != .bins else { return }
+        // An array of another length is stale (an older version added or removed rows or
+        // shelves without knowing it): the rows are read as uniform.
+        if let depths, depths.count == rows {
+            let read = (0..<rows).map { row in depths.indices.contains(row) ? min(depth, max(1, depths[row])) : depth }
+            let kept = alongShelves(read)
+            if kept.contains(depth), kept.contains(where: { $0 != depth }) { rowDepths = kept }
+        }
+        if isBackReversed, let headToTail, headToTail.count == rows {
+            let read = (0..<rows).map { row in headToTail.indices.contains(row) ? headToTail[row] : true }
+            let kept = alongShelves(read).enumerated().map { row, reversed in reversed && depth(ofRow: row) == 2 }
+            let deep = (0..<rows).filter { depth(ofRow: $0) == 2 }
+            if deep.contains(where: { kept[$0] }), deep.contains(where: { !kept[$0] }) { rowBackReversed = kept }
+        }
+    }
+
+    /// Every layer of a shelf takes the value of its bottom layer (the shelf's last row).
+    private func alongShelves<Value>(_ values: [Value]) -> [Value] {
+        guard hasShelfLayers else { return values }
+        var result = values
+        for rows in shelfRows {
+            for row in rows { result[row] = values[rows.upperBound - 1] }
+        }
+        return result
+    }
+
     public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(id, forKey: .id)
@@ -416,6 +467,8 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         try c.encodeIfPresent(zoneBreaks, forKey: .zoneBreaks)
         try c.encodeIfPresent(backReversed == true && hasDepthBands ? true : nil, forKey: .backReversed)
         try c.encodeIfPresent(binStyleValue, forKey: .binStyle)
+        try c.encodeIfPresent(rowDepths, forKey: .rowDepths)
+        try c.encodeIfPresent(rowBackReversed, forKey: .rowBackReversed)
         try unknownFields.encode(to: encoder, known: CodingKeys.self)
     }
 
@@ -429,16 +482,57 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     /// A honeycomb on shelves, as a wine fridge with bottles laid in layers.
     public var hasShelfLayers: Bool { kind == .staggered && shelfLayers != nil }
 
-    /// A fridge with shelf layers two deep: drawn as a front band and a back band per shelf.
+    /// A fridge with shelf layers two deep (on some shelves at least): drawn as a front band
+    /// and a back band on each shelf two deep (see `hasDepthBands(shelf:)`).
     public var hasDepthBands: Bool { hasShelfLayers && depth == 2 }
 
-    /// The back bottles of a fridge drawn in bands lie head-to-tail (see `backReversed`).
+    /// The back bottles of a fridge drawn in bands lie head-to-tail, on some shelves at least
+    /// (see `backReversed` and `isBackReversed(row:)`).
     public var isBackReversed: Bool { backReversed == true && hasDepthBands }
+
+    /// Bottles one behind the other in this row: its own when rows differ, else `depth`.
+    /// 1 for bins, whose bottles are piled (`positions(inRow:)`).
+    public func depth(ofRow row: Int) -> Int {
+        guard kind != .bins else { return 1 }
+        if let rowDepths, rowDepths.indices.contains(row) { return rowDepths[row] }
+        return depth
+    }
+
+    /// Bottles one behind the other on a shelf of a fridge with shelf layers (0 is the top one).
+    public func depth(ofShelf shelf: Int) -> Int {
+        shelfRows.indices.contains(shelf) ? depth(ofRow: shelfRows[shelf].upperBound - 1) : depth
+    }
+
+    /// Bottles that fit in one cell of this row: its depth, or a bin's capacity.
+    public func positions(inRow row: Int) -> Int { kind == .bins ? binCapacity : depth(ofRow: row) }
+
+    /// Rows that are not all the same beyond their number of places: their depth or how
+    /// they lie (`rowDepths`, `rowBackReversed`).
+    public var rowsDiffer: Bool { rowDepths != nil || rowBackReversed != nil }
+
+    /// This shelf of a fridge with shelf layers is two deep: drawn as a front and a back band.
+    public func hasDepthBands(shelf: Int) -> Bool { hasDepthBands && depth(ofShelf: shelf) == 2 }
+
+    /// The back bottles of this row lie head-to-tail: a fridge with shelf layers, the row two
+    /// deep, its shelf head-to-tail.
+    public func isBackReversed(row: Int) -> Bool {
+        guard isBackReversed, depth(ofRow: row) == 2 else { return false }
+        if let rowBackReversed, rowBackReversed.indices.contains(row) { return rowBackReversed[row] }
+        return true
+    }
+
+    /// The back bottles of this shelf lie head-to-tail (0 is the top shelf).
+    public func isBackReversed(shelf: Int) -> Bool {
+        shelfRows.indices.contains(shelf) && isBackReversed(row: shelfRows[shelf].upperBound - 1)
+    }
 
     /// How far the layers of a band are drawn right of the same layers in front, in places:
     /// head-to-tail, each neck behind sits between two front bases, half a place along.
     /// Drawing only: places, numbering and counts stay the same.
-    public func bandShift(depth: Int?) -> Double { isBackReversed && depth == 1 ? 0.5 : 0 }
+    public func bandShift(row: Int, depth: Int?) -> Double { isBackReversed(row: row) && depth == 1 ? 0.5 : 0 }
+
+    /// The largest shift of a band (`bandShift(row:depth:)`), for the width of the drawing.
+    public var maxBandShift: Double { isBackReversed ? 0.5 : 0 }
 
     /// The temperature zone of each shelf, 0 for the top one (only with shelf layers).
     public func zone(ofShelf shelf: Int) -> Int { (zoneBreaks ?? []).filter { $0 <= shelf }.count }
@@ -481,17 +575,35 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     /// The widest row, for drawing.
     public var maxColumns: Int { (0..<rows).map(columns(inRow:)).max() ?? columns }
 
-    /// Bottles that fit in one cell.
+    /// Bottles that fit in one cell, in the deepest row when rows differ
+    /// (`positions(inRow:)` gives each row's).
     public var positionsPerCell: Int { kind == .bins ? binCapacity : depth }
 
     public var cellCount: Int { (0..<rows).reduce(0) { $0 + columns(inRow: $1) } }
 
-    public var capacity: Int { cellCount * positionsPerCell }
+    public var capacity: Int { (0..<rows).reduce(0) { $0 + columns(inRow: $1) * positions(inRow: $1) } }
 
+    /// A place of this rack as every version reads it: within the rack's `depth` (or a bin's
+    /// capacity), whatever its row's own depth. Sync repair and imports judge places with
+    /// it, so a version that does not know `rowDepths` and one that does keep the same
+    /// bottles in place (docs/SYNC.md). A place behind a row's depth (`hasPosition`) holds a
+    /// bottle an older version put there: it is kept and shown.
     public func contains(_ slot: Slot) -> Bool {
         slot.rackID == id && (0..<rows).contains(slot.row)
             && (0..<columns(inRow: slot.row)).contains(slot.column)
             && (0..<positionsPerCell).contains(slot.depth)
+    }
+
+    /// A position the row really has, within its own depth: what the apps offer to put a
+    /// bottle in, and what an edit keeps (`Cellar.displacedBottles`).
+    public func hasPosition(_ slot: Slot) -> Bool {
+        contains(slot) && slot.depth < positions(inRow: slot.row)
+    }
+
+    /// The places drawn and named for a cell of this row: its own depth, and as deep as the
+    /// bottles there go (a bottle an older version put behind a single row stays in view).
+    public func shownPositions(inRow row: Int, deepest: Int?) -> Int {
+        max(positions(inRow: row), (deepest ?? -1) + 1)
     }
 
     public func contains(_ cell: RackCell) -> Bool {
@@ -509,13 +621,13 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     public var allSlots: [Slot] {
         let order: [Int] = hasShelfLayers ? shelfRows.flatMap { $0.reversed() } : Array(0..<rows)
         return order.flatMap { row -> [Slot] in
-            let width = columns(inRow: row)
+            let width = columns(inRow: row), positions = positions(inRow: row)
             if kind == .bins {
                 return (0..<width).flatMap { column in
-                    (0..<positionsPerCell).map { Slot(rackID: id, row: row, column: column, depth: $0) }
+                    (0..<positions).map { Slot(rackID: id, row: row, column: column, depth: $0) }
                 }
             }
-            return (0..<positionsPerCell).flatMap { depth in
+            return (0..<positions).flatMap { depth in
                 (0..<width).map { Slot(rackID: id, row: row, column: $0, depth: depth) }
             }
         }
@@ -558,7 +670,7 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     /// "B3", or "B3-2" for the second bottle of a cell that holds several.
     public func label(for slot: Slot) -> String {
         let base = label(row: slot.row, column: slot.column)
-        return positionsPerCell > 1 ? "\(base)-\(slot.depth + 1)" : base
+        return shownPositions(inRow: slot.row, deepest: slot.depth) > 1 ? "\(base)-\(slot.depth + 1)" : base
     }
 
     public func label(for cell: RackCell) -> String { label(row: cell.row, column: cell.column) }

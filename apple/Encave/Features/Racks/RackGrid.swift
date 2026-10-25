@@ -119,7 +119,7 @@ struct RackGrid: View {
     /// The widest layer with its half-place nesting, and half a place more when the back
     /// band of a head-to-tail fridge moves right.
     private var bandsWidth: CGFloat {
-        (CGFloat(rack.maxColumns) + 0.5 + CGFloat(rack.bandShift(depth: 1))) * (size + spacing)
+        (CGFloat(rack.maxColumns) + 0.5 + CGFloat(rack.maxBandShift)) * (size + spacing)
     }
 
     private var headerWidth: CGFloat {
@@ -144,7 +144,7 @@ struct RackGrid: View {
                 )
             }
         }
-        .padding(.leading, ((rack.isOffset(row: row) ? 0.5 : 0) + CGFloat(rack.bandShift(depth: depth))) * (size + spacing))
+        .padding(.leading, ((rack.isOffset(row: row) ? 0.5 : 0) + CGFloat(rack.bandShift(row: row, depth: depth))) * (size + spacing))
     }
 
     /// A fridge with bottles in layers: each shelf's layers nest into each other in
@@ -167,7 +167,7 @@ struct RackGrid: View {
                             .accessibilityHidden(true)
                     }
                     Group {
-                        if rack.hasDepthBands {
+                        if rack.hasDepthBands(shelf: shelf) {
                             bands(shelf: shelf, rows: rows, bottlesByCell, selectedByCell)
                         } else {
                             VStack(alignment: .leading, spacing: rowSpacing) {
@@ -218,7 +218,7 @@ struct RackGrid: View {
     private func bandCaption(_ depth: Int, shelf: Int) -> some View {
         let caption: Text = if depth == 0 {
             Text("**Front** · Bases facing you")
-        } else if rack.isBackReversed {
+        } else if rack.isBackReversed(shelf: shelf) {
             Text("**Back** · Necks facing you")
         } else {
             Text("**Back** · Bases facing you")
@@ -325,13 +325,14 @@ extension RackGrid {
         case .staggered where rack.hasShelfLayers:
             // Each shelf: its first layer, the others nesting at 0.87 of a place, the shelf
             // bar, and a gap to the next shelf.
-            width = (columns + 0.5 + CGFloat(rack.bandShift(depth: 1))) * 1.04
+            width = (columns + 0.5 + CGFloat(rack.maxBandShift)) * 1.04
             height = rack.shelfRows.reduce(CGFloat(0)) { $0 + 1 + CGFloat($1.count - 1) * 0.87 + 0.15 }
                 + CGFloat(max(0, rack.shelfRows.count - 1)) * shelfGap
             if rack.hasDepthBands {
-                // Each shelf also has its back band and two captions.
-                let shelves = CGFloat(rack.shelfRows.count)
-                height += rack.shelfRows.reduce(CGFloat(0)) { $0 + backBandHeight(layers: $1.count) }
+                // Each shelf two deep also has its back band and two captions.
+                let banded = rack.shelfRows.indices.filter(rack.hasDepthBands(shelf:))
+                let shelves = CGFloat(banded.count)
+                height += banded.reduce(CGFloat(0)) { $0 + backBandHeight(layers: rack.shelfRows[$1].count) }
                     + shelves * 2 * bandCaptionHeight
                 reserved += shelves * 2 * bandCaptionMinHeight
             }
@@ -511,7 +512,7 @@ final class RackViewportTracker {
 
     /// Brings a bottle's place into view (a bottle to find).
     func show(_ slot: Slot, in rack: Rack) {
-        pending = RackViewport.center(of: slot.cell, depth: rack.hasDepthBands ? slot.depth : nil, in: rack)
+        pending = RackViewport.center(of: slot.cell, depth: RackPlace(slot, in: rack).depth, in: rack)
         showPending()
     }
 
@@ -646,7 +647,11 @@ struct RackCellView: View {
     /// A back place of a fridge drawn front and back.
     private var isBack: Bool { (place.depth ?? 0) > 0 }
     /// Bottles this place holds at most.
-    private var capacity: Int { place.depth == nil ? rack.positionsPerCell : 1 }
+    /// A cell's places: its row's depth, and as deep as its bottles go (one an older version
+    /// put behind a single row stays in view).
+    private var capacity: Int {
+        place.depth == nil ? rack.shownPositions(inRow: cell.row, deepest: bottles.compactMap(\.slot?.depth).max()) : 1
+    }
 
     private var showsName: Bool { size >= Self.nameSize && (rack.kind == .grid || rack.kind == .shelves) }
     private var showsVintage: Bool { size >= Self.vintageSize && rack.kind != .bins }
@@ -821,7 +826,7 @@ struct RackCellView: View {
             }
         }
         .overlay(alignment: .bottom) {
-            if rack.positionsPerCell > 1 { depthDots.offset(y: rack.kind == .shelves && !showsName ? size * 0.16 : size * 0.02) }
+            if capacity > 1 { depthDots.offset(y: rack.kind == .shelves && !showsName ? size * 0.16 : size * 0.02) }
         }
     }
 
@@ -837,7 +842,7 @@ struct RackCellView: View {
             Circle().fill(Color.secondary.opacity(0.1))
                 .frame(width: backdrop, height: backdrop)
             if let bottle {
-                if isBack, rack.isBackReversed {
+                if isBack, rack.isBackReversed(row: cell.row) {
                     BottleNeck(color: color(bottle), size: diameter, isHighlighted: isHighlighted || isFocused, showsStyle: true)
                 } else {
                     BottleEnd(color: color(bottle), size: diameter, isHighlighted: isHighlighted || isFocused, showsStyle: true)
@@ -883,7 +888,7 @@ struct RackCellView: View {
     /// One dot per place in the cell, front first: filled when a bottle is there.
     private var depthDots: some View {
         HStack(spacing: max(2, size * 0.05)) {
-            ForEach(0..<rack.positionsPerCell, id: \.self) { depth in
+            ForEach(0..<capacity, id: \.self) { depth in
                 let bottle = bottles.first { $0.slot?.depth == depth }
                 Circle()
                     .fill(bottle.map { color($0)?.tint ?? Color.neutral } ?? Color.clear)
@@ -897,7 +902,7 @@ struct RackCellView: View {
     // MARK: Bin
 
     private var bin: some View {
-        let capacity = rack.positionsPerCell
+        let capacity = self.capacity
         let isFull = bottles.count >= capacity
         return ZStack {
             RoundedRectangle(cornerRadius: size * 0.08, style: .continuous)
@@ -1003,7 +1008,7 @@ struct RackCellView: View {
         let place = self.place.slot.map(rack.displayLabel(for:)) ?? rack.displayLabel(for: cell)
         var label: String
         if rack.kind == .bins {
-            label = String(localized: "\(place), \(bottles.count) of \(rack.positionsPerCell) bottles")
+            label = String(localized: "\(place), \(bottles.count) of \(capacity) bottles")
             if let contentsLabel = binContents { label = String(localized: "\(label): \(contentsLabel)") }
         } else if capacity == 1 {
             if let words = bottles.first.flatMap(wineWords) {
@@ -1029,8 +1034,8 @@ struct RackCellView: View {
 
     /// Each place of the cell, front first: "front Château X, Red; back empty".
     private var depthsLabel: String {
-        (0..<rack.positionsPerCell).map { depth -> String in
-            let depthName = rack.depthName(depth)
+        (0..<capacity).map { depth -> String in
+            let depthName = rack.depthName(depth, row: cell.row)
             if let words = bottles.first(where: { $0.slot?.depth == depth }).flatMap(wineWords) {
                 return "\(depthName) \(words)"
             }

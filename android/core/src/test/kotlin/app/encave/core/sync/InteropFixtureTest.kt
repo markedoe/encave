@@ -99,11 +99,15 @@ object InteropFixture {
             currency = "EUR", wantsToBuy = true, boughtAt = date(781_600_000.0),
         )
         val racks = listOf(
-            Rack(grid, "Cave/left wall", RackKind.Grid, rows = 4, columns = 6, depth = 2, rowColumns = listOf(6, 6, 5, 4)),
+            // Rows of their own: row C single; the fridge's top shelf head-to-tail, the bottom one not.
+            Rack(
+                grid, "Cave/left wall", RackKind.Grid, rows = 4, columns = 6, depth = 2, rowColumns = listOf(6, 6, 5, 4),
+                rowDepths = listOf(2, 2, 1, 2),
+            ),
             Rack(bins, "Bins", RackKind.Bins, rows = 2, columns = 3, binCapacity = 10, binStyleValue = BinStyle.Diamond.raw),
             Rack(
                 fridge, "Fridge", RackKind.Staggered, rows = 3, columns = 6, depth = 2, shelfLayers = listOf(2, 1),
-                zoneBreaks = listOf(1), backReversed = true,
+                zoneBreaks = listOf(1), backReversed = true, rowBackReversed = listOf(true, true, false),
             ),
         )
         val searches = listOf(

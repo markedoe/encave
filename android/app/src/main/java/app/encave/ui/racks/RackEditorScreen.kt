@@ -58,10 +58,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
@@ -104,7 +106,7 @@ private const val MAX_SIZE = 40
 /**
  * One shelf of a fridge with bottles in layers, while editing: 1 to 3 layers, and the
  * bottles of each layer from the bottom (always three values, so changing the number of
- * layers keeps what was typed).
+ * layers keeps what was typed), how many deep, and whether its back bottles lie head-to-tail.
  */
 data class ShelfDraft(
     val layers: Int = 2,
@@ -115,7 +117,18 @@ data class ShelfDraft(
     val id: String = UUID.randomUUID().toString(),
     /** The shelf of the saved fridge this one was (0 is the top one); null for a new shelf. */
     val originalShelf: Int? = null,
+    /** Bottles one behind the other on this shelf, 1 or 2. */
+    val depth: Int = 2,
+    /** Two deep: the back bottles lie head-to-tail, necks facing you (only read when [depth] is 2). */
+    val headToTail: Boolean = true,
 ) {
+    /**
+     * This shelf as changed in the editor; turned two deep, it lies head-to-tail when another
+     * shelf two deep of [shelves] does (the same rule as the Apple editor).
+     */
+    fun changedFrom(old: ShelfDraft, shelves: List<ShelfDraft>): ShelfDraft =
+        if (depth == 2 && old.depth != 2) copy(headToTail = shelves.any { it.id != id && it.depth == 2 && it.headToTail }) else this
+
     /** A new shelf like this one (Duplicate, Add shelf): its own identity, no zone break. */
     fun duplicated(): ShelfDraft = copy(startsZone = false, id = UUID.randomUUID().toString(), originalShelf = null)
 
@@ -145,21 +158,30 @@ data class ShelfDraft(
         fun of(rack: Rack): List<ShelfDraft> = rack.shelfRows.mapIndexed { shelf, rows ->
             val fromBottom = rows.reversed().map { rack.columnsInRow(it) }
             val bottom = fromBottom.first()
+            val depth = rack.depthOfShelf(shelf).coerceIn(1, Rack.MAX_STAGGERED_DEPTH)
             ShelfDraft(
                 rows.count(), (fromBottom + quincunx(bottom).drop(fromBottom.size)).take(3), rack.zoneBreaks.orEmpty().contains(shelf),
-                originalShelf = shelf,
+                originalShelf = shelf, depth = depth,
+                // A shelf one deep turned two deep later follows the fridge's other shelves (see [ShelfDraft.withDepth]).
+                headToTail = depth == 2 && rack.isBackReversedShelf(shelf),
             )
         }
 
-        /** The rack these shelves make (rows are the layers, from the top). */
-        fun rack(id: UUID, name: String, depth: Int, shelves: List<ShelfDraft>, backReversed: Boolean = false): Rack {
+        /**
+         * The rack these shelves make (rows are the layers, from the top): each layer as deep as
+         * its shelf, head-to-tail as its shelf; the rack as deep as its deepest shelf.
+         */
+        fun rack(id: UUID, name: String, shelves: List<ShelfDraft>): Rack {
             val widths = shelves.flatMap { it.widths }
+            val depths = shelves.flatMap { shelf -> List(shelf.layers) { shelf.depth.coerceIn(1, Rack.MAX_STAGGERED_DEPTH) } }
+            val reversed = shelves.flatMap { shelf -> List(shelf.layers) { shelf.headToTail && shelf.depth == 2 } }
             return Rack(
                 id = id, name = name, kind = RackKind.Staggered, rows = widths.size.coerceAtLeast(1),
-                columns = shelves.maxOfOrNull { it.counts[0] } ?: 1, depth = depth, rowColumns = widths,
+                columns = shelves.maxOfOrNull { it.counts[0] } ?: 1, depth = depths.maxOrNull() ?: 1, rowColumns = widths,
                 shelfLayers = shelves.map { it.layers },
                 zoneBreaks = shelves.indices.filter { it > 0 && shelves[it].startsZone },
-                backReversed = backReversed,
+                backReversed = true in reversed,
+                rowDepths = depths, rowBackReversed = reversed,
             ).normalized()
         }
     }
@@ -184,8 +206,8 @@ val StorageType.icon: ImageVector
 val Rack.icon: ImageVector get() = if (storageType == StorageType.Rack) kind.icon else storageType.icon
 
 /**
- * Edit a storage: the settings of its type, its size, rows of different lengths, with a live
- * preview. New storages are made step by step in [RackWizardScreen].
+ * Edit a storage: the settings of its type, its size, rows (a fridge's shelves) set one by one
+ * (positions, depth, head-to-tail), with a live preview. New storages are made step by step in [RackWizardScreen].
  */
 @Composable
 fun RackEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, rackId: String) {
@@ -206,13 +228,17 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
     var rows by rememberSaveable { mutableIntStateOf(existing.rows) }
     var columns by rememberSaveable { mutableIntStateOf(existing.columns) }
     var depth by rememberSaveable { mutableIntStateOf(existing.depth) }
-    // A fridge on shelves two deep: the back bottles lie head-to-tail.
-    var backReversed by rememberSaveable { mutableStateOf(existing.isBackReversed) }
     var binCapacity by rememberSaveable { mutableIntStateOf(existing.binCapacity) }
-    var customRows by rememberSaveable { mutableStateOf(existing.rowColumns != null) }
-    val rowColumns = rememberRetained("rack.rowColumns") { mutableStateListOf<Int>().apply { existing.rowColumns?.let { addAll(it) } } }
     // A fridge with bottles in layers (a honeycomb on shelves), edited shelf by shelf.
     val onShelves = existing.hasShelfLayers
+    // Rows set one by one: their positions and, but for bins, their depth.
+    var customRows by rememberSaveable { mutableStateOf(!onShelves && (existing.rowColumns != null || existing.rowsDiffer)) }
+    val rowColumns = rememberRetained("rack.rowColumns") {
+        mutableStateListOf<Int>().apply { if (customRows) addAll((0 until existing.rows).map { existing.columnsInRow(it) }) }
+    }
+    val rowDepths = rememberRetained("rack.rowDepths") {
+        mutableStateListOf<Int>().apply { if (customRows) addAll((0 until existing.rows).map { existing.depthOfRow(it) }) }
+    }
     val shelves = rememberRetained("rack.shelves") { mutableStateListOf<ShelfDraft>().apply { addAll(ShelfDraft.of(existing)) } }
     val layered = kind == RackKind.Staggered && onShelves
     // The type of the storage being edited: only its settings are shown.
@@ -231,9 +257,17 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
     // lays them out when their count changes.
     val isCrates = existing.editsAsCrates(chosenStyle)
     var bins by rememberSaveable { mutableIntStateOf(existing.cellCount) }
-    // Rows of different lengths fit a rack; a fridge only keeps the ones it has, crates have none.
-    val offersCustomRows = kind != RackKind.Staggered && !isCrates &&
-        (storageType != StorageType.WineFridge || existing.rowColumns != null)
+    // Rows set one by one fit a rack and a fridge's shelves (in layers, each shelf is set below); crates have none.
+    val offersCustomRows = !layered && !isCrates
+    val custom = customRows && offersCustomRows
+    // Each row's depth, but for bins: 1 to 3 (grid, shelves) or 2 (honeycomb), as on Apple platforms.
+    val maxRowDepth = when (kind) {
+        RackKind.Shelves, RackKind.Grid -> Rack.MAX_DEPTH
+        RackKind.Bins -> 1
+        else -> Rack.MAX_STAGGERED_DEPTH
+    }
+    val rowDepthRange = 1..maxRowDepth
+    val perRowDepth = custom && kind != RackKind.Bins
     var showErrors by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     var confirmDisplaced by remember { mutableStateOf(false) }
@@ -242,16 +276,17 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
     fun resizeRows(count: Int) {
         while (rowColumns.size < count) rowColumns.add(rowColumns.lastOrNull() ?: columns)
         while (rowColumns.size > count) rowColumns.removeAt(rowColumns.lastIndex)
+        while (rowDepths.size < count) rowDepths.add(rowDepths.lastOrNull() ?: depth)
+        while (rowDepths.size > count) rowDepths.removeAt(rowDepths.lastIndex)
     }
 
     fun preview(): Rack {
-        if (layered) return ShelfDraft.rack(id, name.trim(), depth, shelves, backReversed)
-        val shape = Rack(
-            id = id, name = name.trim(), kind = kind, rows = rows,
-            columns = if (customRows && kind != RackKind.Staggered) rowColumns.maxOrNull() ?: columns else columns,
-            depth = depth, binCapacity = binCapacity,
-            rowColumns = if (customRows && kind != RackKind.Staggered) rowColumns.toList() else null,
-        ).normalized()
+        if (layered) return ShelfDraft.rack(id, name.trim(), shelves)
+        val shape = if (custom) {
+            customShape(id, name.trim(), kind, rowColumns.toList(), if (kind == RackKind.Bins) null else rowDepths.toList(), depth, binCapacity)
+        } else {
+            Rack(id = id, name = name.trim(), kind = kind, rows = rows, columns = columns, depth = depth, binCapacity = binCapacity).normalized()
+        }
         // Bins keep their saved type unless one is picked; crates keep their shape unless their count changes.
         return if (kind == RackKind.Bins) existing.savingBins(name.trim(), binCapacity, chosenStyle, bins, shape) else shape
     }
@@ -327,10 +362,9 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                     kinds.forEach { option ->
                         KindCard(option, selected = kind == option, Modifier.weight(1f)) {
                             kind = option
-                            if (option == RackKind.Staggered) {
-                                customRows = false
-                                depth = depth.coerceAtMost(Rack.MAX_STAGGERED_DEPTH)
-                            }
+                            // Grids and honeycombs hold at most two bottles one behind the other; rows set one by one stay.
+                            depth = depth.coerceAtMost(Rack.MAX_STAGGERED_DEPTH)
+                            rowDepths.indices.forEach { rowDepths[it] = rowDepths[it].coerceAtMost(Rack.MAX_STAGGERED_DEPTH) }
                         }
                     }
                 }
@@ -362,12 +396,12 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                 SizeRow(stringResource(kind.rowsRes), rows, { rows = it; if (customRows) resizeRows(it) }, 1..MAX_SIZE)
                 Hint(stringResource(if (kind == RackKind.Shelves) R.string.rack_field_shelves else R.string.help_field_rows))
             }
-            if (!customRows && !layered && !isCrates) {
+            if (!custom && !layered && !isCrates) {
                 SizeRow(stringResource(kind.columnsRes), columns, { columns = it }, 1..MAX_SIZE)
                 Hint(stringResource(R.string.help_field_columns))
             }
             when (kind) {
-                RackKind.Grid -> {
+                RackKind.Grid -> if (!perRowDepth) {
                     Text(stringResource(R.string.rack_bottles_per_cell), style = MaterialTheme.typography.bodyLarge)
                     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                         listOf(1 to R.string.rack_depth_one, 2 to R.string.rack_depth_two).forEachIndexed { index, (value, label) ->
@@ -379,7 +413,7 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                     }
                     Hint(stringResource(R.string.help_field_grid_depth))
                 }
-                RackKind.Shelves -> {
+                RackKind.Shelves -> if (!perRowDepth) {
                     Text(stringResource(R.string.rack_rows_deep), style = MaterialTheme.typography.bodyLarge)
                     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                         (1..Rack.MAX_DEPTH).forEach { value ->
@@ -395,7 +429,8 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                     SizeRow(stringResource(R.string.rack_bottles_per_bin), binCapacity, { binCapacity = it }, 2..40)
                     Hint(stringResource(if (storageType == StorageType.Crates) R.string.wizard_crate_body else R.string.help_field_bin))
                 }
-                RackKind.Staggered -> {
+                // A fridge in layers sets its depth and head-to-tail shelf by shelf, below.
+                RackKind.Staggered -> if (!layered && !perRowDepth) {
                     Text(stringResource(R.string.rack_rows_deep), style = MaterialTheme.typography.bodyLarge)
                     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                         (1..Rack.MAX_STAGGERED_DEPTH).forEach { value ->
@@ -405,23 +440,7 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                             ) { Text("$value") }
                         }
                     }
-                    Hint(stringResource(if (layered) R.string.help_field_layer_depth else R.string.help_field_staggered_depth))
-                    if (layered && depth == 2) {
-                        Row(
-                            Modifier.fillMaxWidth().toggleable(backReversed, role = Role.Switch) { backReversed = it }
-                                .testTag("rack.back_reversed"),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(Modifier.weight(1f).padding(end = Dimens.l)) {
-                                Text(stringResource(R.string.rack_back_reversed), style = MaterialTheme.typography.bodyLarge)
-                                Text(
-                                    stringResource(R.string.help_field_back_reversed),
-                                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            Switch(checked = backReversed, onCheckedChange = null)
-                        }
-                    }
+                    Hint(stringResource(R.string.help_field_staggered_depth))
                 }
             }
 
@@ -429,7 +448,7 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                 Header(R.string.rack_shelves_title)
                 shelves.forEachIndexed { index, shelf ->
                     ShelfCard(
-                        number = index + 1, shelf = shelf, onChange = { shelves[index] = it },
+                        number = index + 1, shelf = shelf, onChange = { shelves[index] = it.changedFrom(shelves[index], shelves) },
                         canAdd = layerCount() + shelf.layers <= Rack.MAX_SIZE,
                         onDuplicate = { shelves.add(index + 1, shelf.duplicated()) },
                         onApplyToAll = {
@@ -459,17 +478,26 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
 
             if (offersCustomRows) {
                 Row(
-                    Modifier.fillMaxWidth().toggleable(customRows, role = Role.Switch) { on ->
-                        customRows = on
+                    Modifier.fillMaxWidth().heightIn(min = 48.dp).toggleable(customRows, role = Role.Switch) { on ->
                         if (on) {
+                            // Each row starts as the rack makes it now.
+                            val uniform = preview()
                             rowColumns.clear()
-                            repeat(rows) { rowColumns.add(columns) }
+                            rowDepths.clear()
+                            repeat(rows) { row ->
+                                rowColumns.add(uniform.columnsInRow(row))
+                                rowDepths.add(uniform.depthOfRow(row).coerceIn(rowDepthRange))
+                            }
                         }
-                    },
+                        customRows = on
+                    }.testTag("rack.rows_differ"),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f).padding(end = Dimens.l)) {
-                        Text(stringResource(R.string.rack_custom_rows), style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            stringResource(if (kind == RackKind.Shelves) R.string.rack_custom_shelves else R.string.rack_custom_rows),
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
                         Text(
                             stringResource(R.string.rack_custom_rows_body),
                             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -477,14 +505,24 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                     }
                     Switch(checked = customRows, onCheckedChange = null)
                 }
-                if (customRows) {
+                if (custom) {
                     rowColumns.forEachIndexed { row, count ->
                         val title = if (kind == RackKind.Shelves) {
                             stringResource(R.string.rack_shelf, row + 1)
                         } else {
                             stringResource(R.string.rack_row, Rack.rowLetters(row))
                         }
-                        SizeRow(title, count, { rowColumns[row] = it }, 1..60)
+                        if (kind == RackKind.Bins) {
+                            // Bins: only how many in the row.
+                            SizeRow(title, count, { rowColumns[row] = it }, 1..60)
+                        } else {
+                            RowEditor(
+                                title = title, kind = kind, positions = count, onPositions = { rowColumns[row] = it },
+                                depth = rowDepths.getOrElse(row) { depth }, depthRange = rowDepthRange,
+                                onDepth = { if (row in rowDepths.indices) rowDepths[row] = it },
+                                tag = "rack.edit_row.$row",
+                            )
+                        }
                     }
                 }
             }
@@ -545,6 +583,45 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
     }
 }
 
+/**
+ * A rack whose rows are set one by one: [widths] places in each row and, but for bins, [depths]
+ * bottles one behind the other in each; the rack as wide as its widest row and as deep as its
+ * deepest ([depth] when the rows have none). Widths are left out when the rack makes them anyway
+ * (a honeycomb's usual rows, a grid's equal ones), depths when they are all the same.
+ */
+internal fun customShape(
+    id: UUID, name: String, kind: RackKind, widths: List<Int>, depths: List<Int>?, depth: Int, binCapacity: Int,
+): Rack {
+    val base = Rack(
+        id = id, name = name, kind = kind, rows = widths.size.coerceAtLeast(1), columns = widths.maxOrNull() ?: 1,
+        depth = depths?.maxOrNull() ?: depth, binCapacity = binCapacity, rowDepths = depths,
+    ).normalized()
+    if ((0 until base.rows).map { base.columnsInRow(it) } == widths) return base
+    return base.copy(rowColumns = widths).normalized()
+}
+
+/** One row of a rack (a shelf of a fridge) set on its own: its positions and its depth, each said with the row's name. */
+@Composable
+private fun RowEditor(
+    title: String,
+    kind: RackKind,
+    positions: Int,
+    onPositions: (Int) -> Unit,
+    depth: Int,
+    depthRange: IntRange,
+    onDepth: (Int) -> Unit,
+    tag: String,
+) {
+    val resources = LocalResources.current
+    fun spoken(label: Int) = resources.getString(R.string.rack_row_control, title, resources.getString(label))
+    val positionsLabel = if (kind == RackKind.Shelves) R.string.rack_row_bottles else R.string.rack_row_positions
+    Column(Modifier.fillMaxWidth().testTag(tag), verticalArrangement = Arrangement.spacedBy(Dimens.xs)) {
+        Text(title, style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
+        SizeRow(stringResource(positionsLabel), positions, onPositions, 1..60, spokenLabel = spoken(positionsLabel))
+        RowChoice(R.string.rack_rows_deep, spoken(R.string.rack_rows_deep), depth, depthRange.last, "$tag.depth", onDepth)
+    }
+}
+
 /** The rack being edited with the bottles already in it (those that still fit). */
 private fun previewCellar(cellar: Cellar, rack: Rack): Cellar {
     val inRack = cellar.bottlesInCellar.filter { it.slot?.rackId == rack.id && rack.contains(it.slot!!) }
@@ -579,10 +656,14 @@ private fun ShelfCard(
     onApplyToAll: () -> Unit,
     onDelete: (() -> Unit)?,
 ) {
+    val title = stringResource(R.string.rack_shelf, number)
+    val resources = LocalResources.current
+    // "Shelf 2, Rows deep": TalkBack names the shelf each control sets.
+    fun spoken(label: Int) = resources.getString(R.string.rack_row_control, title, resources.getString(label))
     OutlinedCard(Modifier.fillMaxWidth().testTag("rack.shelf")) {
         Column(Modifier.padding(Dimens.m), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
             Text(
-                stringResource(R.string.rack_shelf, number), style = MaterialTheme.typography.titleSmall,
+                title, style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier.semantics { heading() },
             )
             Text(stringResource(R.string.rack_layers_per_shelf), style = MaterialTheme.typography.bodyLarge)
@@ -594,13 +675,22 @@ private fun ShelfCard(
                     ) { Text("$value") }
                 }
             }
-            SizeRow(stringResource(R.string.rack_layer_bottom), shelf.counts[0], { onChange(shelf.withLayer(0, it)) }, 1..MAX_SIZE)
+            SizeRow(
+                stringResource(R.string.rack_layer_bottom), shelf.counts[0], { onChange(shelf.withLayer(0, it)) }, 1..MAX_SIZE,
+                spokenLabel = spoken(R.string.rack_layer_bottom),
+            )
             if (shelf.layers == 3) {
-                SizeRow(stringResource(R.string.rack_layer_middle), shelf.counts[1], { onChange(shelf.withLayer(1, it)) }, 1..MAX_SIZE)
+                SizeRow(
+                    stringResource(R.string.rack_layer_middle), shelf.counts[1], { onChange(shelf.withLayer(1, it)) }, 1..MAX_SIZE,
+                    spokenLabel = spoken(R.string.rack_layer_middle),
+                )
             }
             if (shelf.layers > 1) {
                 val top = shelf.layers - 1
-                SizeRow(stringResource(R.string.rack_layer_top), shelf.counts[top], { onChange(shelf.withLayer(top, it)) }, 1..MAX_SIZE)
+                SizeRow(
+                    stringResource(R.string.rack_layer_top), shelf.counts[top], { onChange(shelf.withLayer(top, it)) }, 1..MAX_SIZE,
+                    spokenLabel = spoken(R.string.rack_layer_top),
+                )
             }
             Hint(
                 when (shelf.layers) {
@@ -609,6 +699,30 @@ private fun ShelfCard(
                     else -> stringResource(R.string.rack_layers_hint_3, shelf.counts[0], shelf.counts[1], shelf.counts[2])
                 },
             )
+            // This shelf's depth and, two deep, how its back bottles lie.
+            RowChoice(
+                R.string.rack_rows_deep, spoken(R.string.rack_rows_deep), shelf.depth, Rack.MAX_STAGGERED_DEPTH, "rack.shelf.$number.depth",
+            ) { onChange(shelf.copy(depth = it)) }
+            Hint(stringResource(R.string.help_field_layer_depth))
+            if (shelf.depth == 2) {
+                val label = spoken(R.string.rack_back_reversed)
+                Row(
+                    Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                        .toggleable(shelf.headToTail, role = Role.Switch) { onChange(shelf.copy(headToTail = it)) }
+                        .semantics { contentDescription = label }
+                        .testTag("rack.shelf.$number.head_to_tail"),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f).padding(end = Dimens.l).clearAndSetSemantics { }) {
+                        Text(stringResource(R.string.rack_back_reversed), style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            stringResource(R.string.help_field_back_reversed),
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(checked = shelf.headToTail, onCheckedChange = null)
+                }
+            }
             if (number > 1) {
                 Row(
                     Modifier.fillMaxWidth().toggleable(shelf.startsZone, role = Role.Switch) { onChange(shelf.copy(startsZone = it)) },
@@ -647,13 +761,14 @@ internal fun Header(id: Int) {
 }
 
 @Composable
-internal fun SizeRow(label: String, value: Int, onChange: (Int) -> Unit, range: IntRange) {
+internal fun SizeRow(label: String, value: Int, onChange: (Int) -> Unit, range: IntRange, spokenLabel: String = label) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(label, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+        // [spokenLabel] names the row or shelf a control sets ("Row B, Positions").
         Stepper(
             value = value, onChange = onChange, range = range,
-            decreaseLabel = stringResource(R.string.value_decrease, label),
-            increaseLabel = stringResource(R.string.value_increase, label),
+            decreaseLabel = stringResource(R.string.value_decrease, spokenLabel),
+            increaseLabel = stringResource(R.string.value_increase, spokenLabel),
         )
     }
 }
