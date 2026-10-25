@@ -611,6 +611,46 @@
         }
       }
     },
+    "%lld bottles to drink soon": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottle to drink soon"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottles to drink soon"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteille à boire bientôt"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteilles à boire bientôt"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld devices": {
       "localizations": {
         "fr": {
@@ -1187,6 +1227,26 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "%lld to drink soon": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld à boire bientôt"
+          }
+        }
+      }
+    },
+    "%lld to keep": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld à garder"
           }
         }
       }
@@ -2153,6 +2213,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajoutez des bouteilles pour voir les statistiques."
+          }
+        }
+      }
+    },
+    "Add bottles to see what to open tonight.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutez des bouteilles pour voir quoi ouvrir ce soir."
           }
         }
       }
@@ -4303,6 +4373,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Contenant"
+          }
+        }
+      }
+    },
+    "Control Center (iPhone and iPad)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Centre de contrôle (iPhone et iPad)"
           }
         }
       }
@@ -6907,6 +6987,16 @@
         }
       }
     },
+    "In Control Center, tap +, then Add a Control, and choose **Add Bottles**: it opens Encave on the label scanner. You can also put it on the Lock Screen or on the Action button.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans le centre de contrôle, touchez +, puis Ajouter une commande, et choisissez **Ajouter des bouteilles** : cette commande ouvre Encave pour scanner l’étiquette. Vous pouvez aussi la placer sur l’écran verrouillé ou sur le bouton Action."
+          }
+        }
+      }
+    },
     "In LM Studio, load a vision model and start the server; turn on “Serve on Local Network” to use it from iPhone or iPad.": {
       "localizations": {
         "fr": {
@@ -7453,6 +7543,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Raccourcis clavier, Siri, Raccourcis et Spotlight."
+          }
+        }
+      }
+    },
+    "Keyboard shortcuts, Siri, Shortcuts, Spotlight and widgets.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raccourcis clavier, Siri, Raccourcis, Spotlight et widgets."
           }
         }
       }
@@ -8333,6 +8433,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucune bouteille n’est à son apogée en ce moment."
+          }
+        }
+      }
+    },
+    "No bottle to drink soon.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune bouteille à boire bientôt."
           }
         }
       }
@@ -9507,6 +9617,16 @@
         }
       }
     },
+    "Open Encave to show your cellar here.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrez Encave pour afficher votre cave ici."
+          }
+        }
+      }
+    },
     "Open Settings": {
       "localizations": {
         "fr": {
@@ -9623,6 +9743,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Compatible OpenAI"
+          }
+        }
+      }
+    },
+    "Opens Encave on the label scanner to add bottles.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvre Encave pour scanner l’étiquette et ajouter des bouteilles."
           }
         }
       }
@@ -13237,12 +13367,32 @@
         }
       }
     },
+    "The bottle to open tonight and where it is.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La bouteille à ouvrir ce soir et où elle se trouve."
+          }
+        }
+      }
+    },
     "The bottle you choose leaves your cellar, and its position becomes free.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "La bouteille choisie sort de votre cave et sa position se libère."
+          }
+        }
+      }
+    },
+    "The bottles in your cellar, to keep and to drink soon.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les bouteilles de votre cave, à garder et à boire bientôt."
           }
         }
       }
@@ -13763,6 +13913,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La région viticole, comme Bordeaux ou la Toscane."
+          }
+        }
+      }
+    },
+    "The wines to drink soon, the most urgent first.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les vins à boire bientôt, les plus urgents d’abord."
           }
         }
       }
@@ -14383,6 +14543,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Touchez longuement une bouteille ouverte de votre cave pour afficher son vin, modifier la note, en ajouter des bouteilles, ou la remettre en cave si elle a été notée par erreur (avec Annuler). Balayez-la vers la droite pour ajouter des bouteilles, vers la gauche pour la remettre en cave. Dans la note, touchez le nom du vin pour l’ouvrir."
+          }
+        }
+      }
+    },
+    "Touch and hold an empty area of the Home Screen, tap Edit, then Add Widget, and choose Encave. **Tonight** shows the bottle to open tonight, the same as in the app, and where it is; **Drink Soon** lists the first wines to drink soon; **Cellar** counts your bottles, those to keep and those to drink soon. Tap a widget to open the wine or the section. On the Lock Screen, Tonight shows the bottle's name and position, and Drink Soon how many bottles to drink soon. The widgets update when your cellar changes and at midnight. They show only a short summary that Encave keeps on this device; nothing is sent anywhere. Anyone who sees your Lock Screen sees the wine's name: Encave marks it as private, so iOS hides it while the device is locked if your settings ask for it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez longuement une zone vide de l’écran d’accueil, touchez Modifier, puis Ajouter un widget, et choisissez Encave. **Ce soir** montre la bouteille à ouvrir ce soir, la même que dans l’app, et où elle se trouve ; **À boire bientôt** liste les premiers vins à boire bientôt ; **Cave** compte vos bouteilles, celles à garder et celles à boire bientôt. Touchez un widget pour ouvrir le vin ou la section. Sur l’écran verrouillé, Ce soir affiche le nom et la position de la bouteille, et À boire bientôt le nombre de bouteilles à boire bientôt. Les widgets se mettent à jour quand votre cave change et à minuit. Ils n’affichent qu’un court résumé qu’Encave garde sur cet appareil ; rien n’est envoyé nulle part. Toute personne qui voit votre écran verrouillé voit le nom du vin : Encave l’indique comme privé, pour qu’iOS le masque tant que l’appareil est verrouillé si vos réglages le demandent."
           }
         }
       }
@@ -15263,6 +15433,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pourquoi cette fenêtre"
+          }
+        }
+      }
+    },
+    "Widgets (iPhone and iPad)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widgets (iPhone et iPad)"
           }
         }
       }

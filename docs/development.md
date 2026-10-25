@@ -15,6 +15,20 @@ open Encave.xcodeproj
 
 Schemes: `Encave` (iPhone and iPad) and `EncaveMac` (macOS).
 
+### Widgets
+
+`apple/EncaveWidgets` is the widget extension of the iPhone and iPad app
+(Tonight, Drink Soon, Cellar, lock screen widgets, and the Add Bottles control
+for Control Center). It reads only `widget-snapshot.json` in the App Group
+`group.app.encave`, the summary (`WidgetSnapshot` in CaveKit, with its tests)
+that `WidgetPublisher` writes a second after each change of the cellar and when
+the app comes to the front; the widgets draw a new entry at each midnight for
+Tonight's suggestion of the day. Taps open `encave://wine/<id>`, `tonight`,
+`cellar` or `add` (`WidgetLink`). The extension has its own colors
+(`design/generate_apple_assets.py`), strings (`l10n.py` writes its catalog) and
+privacy manifest. Builds without signing have no App Group: the widgets then
+ask to open Encave.
+
 ### Model tests
 
 The cellar logic lives in `apple/Packages/CaveKit`, which has no UI code and
@@ -43,7 +57,7 @@ English is the source language; French translations live in
 `apple/tools/l10n.py`, which writes the String Catalogs:
 
 ```bash
-python3 apple/tools/l10n.py           # regenerate Localizable and InfoPlist catalogs
+python3 apple/tools/l10n.py           # regenerate Localizable and InfoPlist catalogs (and the widgets')
 python3 apple/tools/l10n.py --check   # fails if a string has no French (run in CI)
 ```
 
@@ -113,7 +127,7 @@ cd android
   ./gradlew :core:test` also syncs two devices through it, as CI does.
 - Home screen widgets (Jetpack Glance) are in `android/app/.../widget`. They
   read `files/widget-snapshot.json`, a summary (`WidgetSnapshot` in core; the Apple
-  app has no widgets yet) that the app rewrites after each saved or synced change; the cellar
+  app has its own, see the Apple section) that the app rewrites after each saved or synced change; the cellar
   is loaded only when it is missing or from last year. `WidgetContentTest` renders them with `glance-appwidget-testing`.
 - `ScreenTourTest` (Robolectric, no emulator) opens every main screen with the
   sample cellar, saves screenshots to `android/app/build/screens` (never commit

@@ -54,6 +54,17 @@ targets:
   Encave:
     templates: [App]
     platform: iOS
+    # The widgets and the Control Center control, embedded in the app (added to the
+    # template's CaveKit dependency).
+    dependencies:
+      - target: EncaveWidgets
+    # The App Group shared with the widget extension: the app writes the widgets' summary
+    # there (WidgetPublisher). Also in the archive, signed by CI before the export
+    # (.github/workflows/apple.yml, docs/RELEASING.md).
+    entitlements:
+      path: Generated/Encave.entitlements
+      properties:
+        com.apple.security.application-groups: [group.app.encave]
     settings:
       base:
         TARGETED_DEVICE_FAMILY: "1,2"
@@ -163,6 +174,47 @@ targets:
           - UTTypeIdentifier: app.encave.wine
             UTTypeDescription: Encave wine
             UTTypeConformsTo: [public.data]
+
+  # Home screen and lock screen widgets, and the Control Center control (iPhone and iPad).
+  # They read only the summary the app writes to the App Group (CaveKit WidgetSnapshot).
+  EncaveWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: EncaveWidgets
+        excludes: [Resources/PrivacyInfo.xcprivacy]
+      - path: EncaveWidgets/Resources/PrivacyInfo.xcprivacy
+        buildPhase: resources
+      # Shared with the app: maturity words, symbols and colors, and the Add Bottles
+      # intent of the control (its perform runs in the app, see WIDGET_EXTENSION).
+      - path: Encave/DesignSystem/Maturity+UI.swift
+      - path: Encave/App/AddBottleIntent.swift
+    dependencies:
+      - package: CaveKit
+    entitlements:
+      path: Generated/EncaveWidgets.entitlements
+      properties:
+        com.apple.security.application-groups: [group.app.encave]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.encave.widgets
+        PRODUCT_NAME: EncaveWidgets
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SKIP_INSTALL: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+        # Its own catalog holds colors only (design/generate_apple_assets.py), no app icon.
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) WIDGET_EXTENSION
+    info:
+      path: Generated/Info-Widgets.plist
+      properties:
+        CFBundleDisplayName: Encave
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, fr]
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
 
   # Screen tour with screenshots and layout checks (see EncaveUITests).
   EncaveUITests:

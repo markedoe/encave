@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """French translations for the Apple app.
 
-Writes apple/Encave/Resources/Localizable.xcstrings and InfoPlist.xcstrings.
+Writes apple/Encave/Resources/Localizable.xcstrings and InfoPlist.xcstrings, and the
+widget extension's apple/EncaveWidgets/Resources/Localizable.xcstrings (the strings its
+sources use, translated here like the app's).
   python3 apple/tools/l10n.py           # regenerate catalogs
   python3 apple/tools/l10n.py --check   # fail if a UI string has no translation
 """
@@ -13,6 +15,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
+WIDGETS_RES = ROOT / "EncaveWidgets" / "Resources"
+# The app's files the widget extension compiles too (apple/project.yml, EncaveWidgets).
+WIDGET_SHARED = [ROOT / "Encave" / "DesignSystem" / "Maturity+UI.swift", ROOT / "Encave" / "App" / "AddBottleIntent.swift"]
+
+
+def app_sources():
+    return glob.glob(str(ROOT / "Encave" / "**" / "*.swift"), recursive=True)
+
+
+def widget_sources():
+    return glob.glob(str(ROOT / "EncaveWidgets" / "**" / "*.swift"), recursive=True) + [str(p) for p in WIDGET_SHARED]
 
 FR = {
     "**Weekly Backup on This Device** is on from the start: once a week, Encave makes a backup by itself. On iPhone and iPad, it is made when you open Encave, and in the background only while sync away from home is on (iOS decides when); on a Mac, when you open Encave. It keeps the last two on this device, as ZIP files that are not encrypted. On iPhone and iPad they are in the Files app, in **On My iPhone › Encave** (or **On My iPad**); on a Mac, once one is made, choose **Show Weekly Backups in Finder**. On iPhone and iPad they are left out of the device's backups, which already hold your cellar, and are removed with Encave; on a Mac, Time Machine leaves them out. **Erase all data** erases them too, unless you turn off **Also erase previous versions and backups**. Settings show when the last backup was made, and suggest one when there was none for a month. A backup kept on the device is lost with it: copy one elsewhere from time to time. Turn the switch off if you do not want them.": '**Sauvegarde hebdomadaire sur cet appareil** est activée au départ : une fois par semaine, Encave fait une sauvegarde de lui-même. Sur iPhone et iPad, elle est faite quand vous ouvrez Encave, et en arrière-plan seulement tant que la synchronisation loin de la maison est activée (iOS décide quand) ; sur un Mac, quand vous ouvrez Encave. Il garde les deux dernières sur cet appareil, en fichiers ZIP non chiffrés. Sur iPhone et iPad, elles sont dans l’app Fichiers, dans **Sur mon iPhone › Encave** (ou **Sur mon iPad**) ; sur un Mac, une fois la première faite, choisissez **Afficher les sauvegardes hebdomadaires dans le Finder**. Sur iPhone et iPad, elles ne font pas partie des sauvegardes de l’appareil, qui contiennent déjà votre cave, et sont supprimées avec Encave ; sur un Mac, Time Machine ne les sauvegarde pas. **Effacer toutes les données** les efface aussi, sauf si vous désactivez **Effacer aussi les versions précédentes et les sauvegardes**. Les réglages indiquent la date de la dernière sauvegarde, et en proposent une s’il n’y en a pas eu depuis un mois. Une sauvegarde gardée sur l’appareil disparaît avec lui : copiez-en une ailleurs de temps en temps. Désactivez l’option si vous n’en voulez pas.',
@@ -501,6 +514,21 @@ FR = {
     'Ask Siri “What should I open tonight in Encave?”, “Where is Chablis in Encave?” or “Add a bottle to Encave”. The same actions are in the Shortcuts app. Wines also appear in Spotlight search. The answers are worked out on this device.': 'Demandez à Siri « Que boire ce soir avec Encave ? », « Où est Chablis dans Encave ? » ou « Ajouter une bouteille à Encave ». Les mêmes actions sont dans l’app Raccourcis. Les vins apparaissent aussi dans la recherche Spotlight. Les réponses sont calculées sur cet appareil.',
     'Shortcuts and Siri': 'Raccourcis et Siri',
     'Keyboard shortcuts, Siri, Shortcuts and Spotlight.': 'Raccourcis clavier, Siri, Raccourcis et Spotlight.',
+    'Keyboard shortcuts, Siri, Shortcuts, Spotlight and widgets.': 'Raccourcis clavier, Siri, Raccourcis, Spotlight et widgets.',
+    # Widgets and the Control Center control (apple/EncaveWidgets).
+    'Widgets (iPhone and iPad)': 'Widgets (iPhone et iPad)',
+    "Touch and hold an empty area of the Home Screen, tap Edit, then Add Widget, and choose Encave. **Tonight** shows the bottle to open tonight, the same as in the app, and where it is; **Drink Soon** lists the first wines to drink soon; **Cellar** counts your bottles, those to keep and those to drink soon. Tap a widget to open the wine or the section. On the Lock Screen, Tonight shows the bottle's name and position, and Drink Soon how many bottles to drink soon. The widgets update when your cellar changes and at midnight. They show only a short summary that Encave keeps on this device; nothing is sent anywhere. Anyone who sees your Lock Screen sees the wine's name: Encave marks it as private, so iOS hides it while the device is locked if your settings ask for it.": 'Touchez longuement une zone vide de l’écran d’accueil, touchez Modifier, puis Ajouter un widget, et choisissez Encave. **Ce soir** montre la bouteille à ouvrir ce soir, la même que dans l’app, et où elle se trouve ; **À boire bientôt** liste les premiers vins à boire bientôt ; **Cave** compte vos bouteilles, celles à garder et celles à boire bientôt. Touchez un widget pour ouvrir le vin ou la section. Sur l’écran verrouillé, Ce soir affiche le nom et la position de la bouteille, et À boire bientôt le nombre de bouteilles à boire bientôt. Les widgets se mettent à jour quand votre cave change et à minuit. Ils n’affichent qu’un court résumé qu’Encave garde sur cet appareil ; rien n’est envoyé nulle part. Toute personne qui voit votre écran verrouillé voit le nom du vin : Encave l’indique comme privé, pour qu’iOS le masque tant que l’appareil est verrouillé si vos réglages le demandent.',
+    'Control Center (iPhone and iPad)': 'Centre de contrôle (iPhone et iPad)',
+    'In Control Center, tap +, then Add a Control, and choose **Add Bottles**: it opens Encave on the label scanner. You can also put it on the Lock Screen or on the Action button.': 'Dans le centre de contrôle, touchez +, puis Ajouter une commande, et choisissez **Ajouter des bouteilles** : cette commande ouvre Encave pour scanner l’étiquette. Vous pouvez aussi la placer sur l’écran verrouillé ou sur le bouton Action.',
+    'The bottle to open tonight and where it is.': 'La bouteille à ouvrir ce soir et où elle se trouve.',
+    'The wines to drink soon, the most urgent first.': 'Les vins à boire bientôt, les plus urgents d’abord.',
+    'The bottles in your cellar, to keep and to drink soon.': 'Les bouteilles de votre cave, à garder et à boire bientôt.',
+    'Opens Encave on the label scanner to add bottles.': 'Ouvre Encave pour scanner l’étiquette et ajouter des bouteilles.',
+    'Open Encave to show your cellar here.': 'Ouvrez Encave pour afficher votre cave ici.',
+    'Add bottles to see what to open tonight.': 'Ajoutez des bouteilles pour voir quoi ouvrir ce soir.',
+    'No bottle to drink soon.': 'Aucune bouteille à boire bientôt.',
+    '%lld to keep': '%lld à garder',
+    '%lld to drink soon': '%lld à boire bientôt',
     'Already in your cellar': 'Déjà dans votre cave',
     'Use This Wine': 'Utiliser ce vin',
     'Bottles to Drink Soon': 'Bouteilles à boire bientôt',
@@ -1561,6 +1589,8 @@ PLURALS = {
     "%lld other changes": (("%lld other change", "%lld other changes"),
                            ("%lld autre modification", "%lld autres modifications")),
     "%lld bottles": (("%lld bottle", "%lld bottles"), ("%lld bouteille", "%lld bouteilles")),
+    "%lld bottles to drink soon": (("%lld bottle to drink soon", "%lld bottles to drink soon"),
+                                   ("%lld bouteille à boire bientôt", "%lld bouteilles à boire bientôt")),
     "%lld bottles in the cellar": (("%lld bottle in the cellar", "%lld bottles in the cellar"),
                                    ("%lld bouteille en cave", "%lld bouteilles en cave")),
     "%lld results": (("%lld result", "%lld results"), ("%lld résultat", "%lld résultats")),
@@ -1660,7 +1690,7 @@ APP_SHORTCUTS = {
 UI_CALL = re.compile(r'(?<![A-Za-z0-9_])(?:Text|Label|Button|Section|LabeledContent|navigationTitle|Toggle|TextField|Picker|Stepper|'
                      r'DisclosureGroup|SecureField|LabeledField|ActionLabel|fieldHelp|title:|body:|summary:|ContentUnavailableView|Tab|ChoiceChip\(title:|RackPreset\(title:|caption:|ChartCard\(title:|DatePicker|'
                      r'String\(localized:|alert|confirmationDialog|Link|prompt: Text|LocalizedStringResource =|TypeDisplayRepresentation =|'
-                     r'IntentDescription|dialog:|shortTitle:|TableColumn|footer:|header:)\s*\(?\s*"((?:[^"\\]|\\.)*)"')
+                     r'IntentDescription|dialog:|shortTitle:|TableColumn|footer:|header:|configurationDisplayName|displayName|description)\s*\(?\s*"((?:[^"\\]|\\.)*)"')
 CASE_STRING = re.compile(r'case \.[a-zA-Z]+: "((?:[^"\\]|\\.)*)"')
 
 
@@ -1744,9 +1774,9 @@ def to_key(literal):
     return re.sub(r"\\\((.*?)\)(?=[^)]*(?:\\\(|$))", repl, literal) if "\\(" in literal else literal
 
 
-def extract():
+def extract(paths=None):
     keys = set()
-    for path in glob.glob(str(ROOT / "Encave" / "**" / "*.swift"), recursive=True):
+    for path in paths if paths is not None else app_sources():
         source = Path(path).read_text()
         keys.update(UI_CALL.findall(source))
         if "LocalizedStringKey" in source:
@@ -1774,6 +1804,10 @@ def catalogs():
             "fr": {"variations": {"plural": {"one": unit(french(fr_one)), "other": unit(french(fr_other))}}},
         }}
     catalog = {"sourceLanguage": "en", "strings": dict(sorted(strings.items())), "version": "1.0"}
+    # The widget extension's catalog: the same translations, for the keys its sources use.
+    used = extract(widget_sources())
+    used |= {to_key(k) for k in used}
+    widgets = {"sourceLanguage": "en", "strings": {k: v for k, v in catalog["strings"].items() if k in used}, "version": "1.0"}
     info = {key: {"localizations": {"en": unit(en), "fr": unit(french(fr))}} for key, (en, fr) in INFO_PLIST.items()}
     shortcuts = {key: {"localizations": {"fr": unit(french(value))}} for key, value in APP_SHORTCUTS.items()}
 
@@ -1783,6 +1817,7 @@ def catalogs():
         RES / "Localizable.xcstrings": text(catalog),
         RES / "InfoPlist.xcstrings": text({"sourceLanguage": "en", "strings": info, "version": "1.0"}),
         RES / "AppShortcuts.xcstrings": text({"sourceLanguage": "en", "strings": shortcuts, "version": "1.0"}),
+        WIDGETS_RES / "Localizable.xcstrings": text(widgets),
     }
 
 
@@ -1820,7 +1855,7 @@ def old_french_words(text):
 def check():
     known = set(FR) | set(PLURALS) | set(VARIANTS)
     problems = []
-    for key in sorted(k for k in extract() if to_key(k) not in known and k not in known):
+    for key in sorted(k for k in extract() | extract(widget_sources()) if to_key(k) not in known and k not in known):
         problems.append(f"missing French: {key!r} (key {to_key(key)!r})")
     # A translation must use the same placeholders as its key, or it shows the wrong value or crashes.
     for key, value in FR.items():

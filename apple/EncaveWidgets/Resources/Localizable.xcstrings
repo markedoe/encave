@@ -1,0 +1,416 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%lld bottles": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottle"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottles"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteille"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteilles"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld bottles to drink soon": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottle to drink soon"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottles to drink soon"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteille à boire bientôt"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteilles à boire bientôt"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld to drink soon": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld à boire bientôt"
+          }
+        }
+      }
+    },
+    "%lld to keep": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld à garder"
+          }
+        }
+      }
+    },
+    "Add Bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter des bouteilles"
+          }
+        }
+      }
+    },
+    "Add bottles to see what to open tonight.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutez des bouteilles pour voir quoi ouvrir ce soir."
+          }
+        }
+      }
+    },
+    "Cabinet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Armoire"
+          }
+        }
+      }
+    },
+    "Cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cave"
+          }
+        }
+      }
+    },
+    "Diamond bins": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cases en losange"
+          }
+        }
+      }
+    },
+    "Double-depth rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Casier double profondeur"
+          }
+        }
+      }
+    },
+    "Drink Soon": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À boire bientôt"
+          }
+        }
+      }
+    },
+    "Drink soon": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À boire bientôt"
+          }
+        }
+      }
+    },
+    "Head-to-tail cabinet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Armoire tête-bêche"
+          }
+        }
+      }
+    },
+    "Honeycomb rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Casier nid d’abeille"
+          }
+        }
+      }
+    },
+    "Keep": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À garder"
+          }
+        }
+      }
+    },
+    "Keep for later": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À garder"
+          }
+        }
+      }
+    },
+    "Kitchen": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuisine"
+          }
+        }
+      }
+    },
+    "Large cabinet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grande armoire"
+          }
+        }
+      }
+    },
+    "Main rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Casier principal"
+          }
+        }
+      }
+    },
+    "No bottle is at its best right now.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune bouteille n’est à son apogée en ce moment."
+          }
+        }
+      }
+    },
+    "No bottle to drink soon.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune bouteille à boire bientôt."
+          }
+        }
+      }
+    },
+    "No drinking window": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas de fenêtre de dégustation"
+          }
+        }
+      }
+    },
+    "Open Encave to show your cellar here.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrez Encave pour afficher votre cave ici."
+          }
+        }
+      }
+    },
+    "Opens Encave on the label scanner to add bottles.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvre Encave pour scanner l’étiquette et ajouter des bouteilles."
+          }
+        }
+      }
+    },
+    "Opens Encave to add bottles, by scanning the label or typing.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvre Encave pour ajouter des bouteilles, en scannant l’étiquette ou en saisissant."
+          }
+        }
+      }
+    },
+    "Past its peak": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Après l’apogée"
+          }
+        }
+      }
+    },
+    "Past peak": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Après l’apogée"
+          }
+        }
+      }
+    },
+    "Ready": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prêt"
+          }
+        }
+      }
+    },
+    "Ready to drink": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prêt à boire"
+          }
+        }
+      }
+    },
+    "The bottle to open tonight and where it is.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La bouteille à ouvrir ce soir et où elle se trouve."
+          }
+        }
+      }
+    },
+    "The bottles in your cellar, to keep and to drink soon.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les bouteilles de votre cave, à garder et à boire bientôt."
+          }
+        }
+      }
+    },
+    "The wines to drink soon, the most urgent first.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les vins à boire bientôt, les plus urgents d’abord."
+          }
+        }
+      }
+    },
+    "Tonight": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce soir"
+          }
+        }
+      }
+    },
+    "Under the stairs": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sous l’escalier"
+          }
+        }
+      }
+    },
+    "Unknown": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inconnue"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

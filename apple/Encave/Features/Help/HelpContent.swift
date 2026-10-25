@@ -190,7 +190,7 @@ struct HelpArticle: Identifiable {
                 HelpSection(body: "Encave is open source: anyone can check what the app does."),
             ]),
             HelpArticle(topic: .shortcuts, title: "Shortcuts and Siri",
-                        summary: "Keyboard shortcuts, Siri, Shortcuts and Spotlight.", systemImage: "keyboard", sections: [
+                        summary: "Keyboard shortcuts, Siri, Shortcuts, Spotlight and widgets.", systemImage: "keyboard", sections: [
                 HelpSection(title: "⌘N", body: "Add bottles"),
                 HelpSection(title: "⌥⌘N", body: "Note a wine tasted elsewhere"),
                 HelpSection(title: "⇧⌘N", body: "Add storage"),
@@ -208,6 +208,8 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "Drag to a storage (Mac)", body: "Drag a wine from the Cellar, or a bottle from a wine’s page, onto a storage in the sidebar: one bottle goes to its first free position, with Undo. A full storage takes none.", systemImage: "arrow.down.to.line"),
                 HelpSection(title: "Menu bar (Mac)", body: "The glass in the menu bar lists the bottles to open now and where they are; click one to open it. Turn on **Show Tonight in the Menu Bar** in the Tonight toolbar or in **Settings**.", systemImage: "menubar.arrow.up.rectangle"),
                 HelpSection(title: "Other apps and AI assistants", body: "In Shortcuts, **Get Cellar Contents** gives your bottles as text or JSON (all of them, those to open now, on order…), and **Get Wine Details** gives one wine with its tasting notes. An app on this device that runs shortcuts, such as a local AI assistant, can use them to answer questions about your cellar. Encave itself sends nothing.", systemImage: "square.stack.3d.up"),
+                HelpSection(title: "Widgets (iPhone and iPad)", body: "Touch and hold an empty area of the Home Screen, tap Edit, then Add Widget, and choose Encave. **Tonight** shows the bottle to open tonight, the same as in the app, and where it is; **Drink Soon** lists the first wines to drink soon; **Cellar** counts your bottles, those to keep and those to drink soon. Tap a widget to open the wine or the section. On the Lock Screen, Tonight shows the bottle's name and position, and Drink Soon how many bottles to drink soon. The widgets update when your cellar changes and at midnight. They show only a short summary that Encave keeps on this device; nothing is sent anywhere. Anyone who sees your Lock Screen sees the wine's name: Encave marks it as private, so iOS hides it while the device is locked if your settings ask for it.", systemImage: "square.grid.2x2"),
+                HelpSection(title: "Control Center (iPhone and iPad)", body: "In Control Center, tap +, then Add a Control, and choose **Add Bottles**: it opens Encave on the label scanner. You can also put it on the Lock Screen or on the Action button.", systemImage: "switch.2"),
                 HelpSection(title: "Siri and Shortcuts", body: "Ask Siri “What should I open tonight in Encave?”, “Where is Chablis in Encave?” or “Add a bottle to Encave”. The same actions are in the Shortcuts app. Wines also appear in Spotlight search. The answers are worked out on this device."),
             ]),
         ]

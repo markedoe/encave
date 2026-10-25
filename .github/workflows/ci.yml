@@ -75,8 +75,10 @@ jobs:
           python3 -c 'import yaml' 2>/dev/null || pip install --quiet pyyaml
           scripts/check-workflow-secrets.py
 
-      - name: Design tokens only (no system colors in the Apple features)
-        run: scripts/check-system-colors.sh
+      - name: Design tokens only (no system colors in the Apple features and widgets)
+        run: |
+          scripts/check-system-colors.sh
+          scripts/check-system-colors.sh apple/EncaveWidgets
 
       - name: Public-safety check tests
         # Throwaway repositories the check must refuse (keys, paths, merge resolutions).

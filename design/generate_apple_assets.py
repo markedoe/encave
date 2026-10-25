@@ -9,6 +9,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 TOKENS = ROOT / "design" / "tokens.json"
 ASSETS = ROOT / "apple" / "Encave" / "Resources" / "Assets.xcassets"
+# The widget extension's own catalog: only the colors the widgets use (no app icon).
+WIDGET_ASSETS = ROOT / "apple" / "EncaveWidgets" / "Resources" / "Assets.xcassets"
+WIDGET_COLORS = ["AccentColor", "MaturityDrinkSoon", "MaturityReady", "MaturityPastPeak", "MaturityKeep"]
 
 # token name -> asset name used in Swift (Color("WineRed")); accent uses Xcode's AccentColor.
 NAMES = {
@@ -72,13 +75,16 @@ def colorset(light: str, dark: str) -> dict:
 
 def main() -> None:
     tokens = json.loads(TOKENS.read_text())["color"]
-    for token, asset in NAMES.items():
-        value = tokens[token]["$value"]
-        folder = ASSETS / f"{asset}.colorset"
-        folder.mkdir(parents=True, exist_ok=True)
-        (folder / "Contents.json").write_text(json.dumps(colorset(value["light"], value["dark"]), indent=2) + "\n")
-    (ASSETS / "Contents.json").write_text(json.dumps({"info": {"author": "xcode", "version": 1}}, indent=2) + "\n")
-    print(f"Wrote {len(NAMES)} colors to {ASSETS.relative_to(ROOT)}")
+    for catalog, names in ((ASSETS, list(NAMES.values())), (WIDGET_ASSETS, WIDGET_COLORS)):
+        for token, asset in NAMES.items():
+            if asset not in names:
+                continue
+            value = tokens[token]["$value"]
+            folder = catalog / f"{asset}.colorset"
+            folder.mkdir(parents=True, exist_ok=True)
+            (folder / "Contents.json").write_text(json.dumps(colorset(value["light"], value["dark"]), indent=2) + "\n")
+        (catalog / "Contents.json").write_text(json.dumps({"info": {"author": "xcode", "version": 1}}, indent=2) + "\n")
+        print(f"Wrote {len(names)} colors to {catalog.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

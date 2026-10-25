@@ -198,7 +198,7 @@ kept within the privacy rules: everything is worked out on the device.
 | Printable PDF inventory | Done | Done |
 | Menu bar glass with tonight's bottles | Mac | — |
 | Sortable table with an inspector | Mac and iPad | Wide screens |
-| Widgets, Control Center | Planned (needs an App Group) | Home screen widgets done (Glance: Tonight, Cellar) |
+| Widgets, Control Center | Done on iPhone and iPad (Tonight, Drink Soon, Cellar, lock screen; Add Bottles control) | Home screen widgets done (Glance: Tonight, Cellar) |
 | Saved searches | Done | Done |
 | Several photos per wine | Done | Done |
 | Documents attached to a wine or a bottle (invoice, certificate, technical sheet; synced, encrypted; up to 8 MB each) | Done (document scanner on iPhone and iPad) | Done |

@@ -40,6 +40,14 @@ Shortcuts and Spotlight, and the on-device features of Apple Intelligence
 (asking your cellar, suggesting details, estimating a price) are worked out on
 the device.
 
+The iPhone and iPad widgets read a short summary the app keeps on the device,
+in a folder shared only with its widgets: counts of bottles, and the names,
+vintages, producers and positions of tonight's bottle and of the first wines to
+drink soon. They never read the cellar, keys or notes, and use no network. The
+lock screen widgets show what you choose to place there, the wine's name
+included; Encave marks names and positions as private, so iOS hides them while
+the device is locked when your settings ask for it.
+
 The device also keeps earlier versions of your cellar (one for each of the
 last 7 days it changed, then one a week for 4 weeks), in the same storage.
 
@@ -167,6 +175,15 @@ Les rappels, les notifications de modifications venant de vos autres
 appareils, les widgets, Siri, Raccourcis et Spotlight, ainsi que les fonctions
 d'Apple Intelligence sur l'appareil (interroger votre cave, suggérer des
 détails, estimer un prix) sont calculés sur l'appareil.
+
+Les widgets de l'iPhone et de l'iPad lisent un court résumé que l'app garde sur
+l'appareil, dans un dossier partagé seulement avec ses widgets : le nombre de
+bouteilles, et les noms, millésimes, producteurs et positions de la bouteille
+de ce soir et des premiers vins à boire bientôt. Ils ne lisent jamais la cave,
+les clés ni les notes, et n'utilisent pas le réseau. Les widgets de l'écran
+verrouillé montrent ce que vous choisissez d'y placer, nom du vin compris ;
+Encave indique les noms et les positions comme privés, pour qu'iOS les masque
+tant que l'appareil est verrouillé si vos réglages le demandent.
 
 L'appareil garde aussi des versions précédentes de votre cave (une pour
 chacun des 7 derniers jours où elle a changé, puis une par semaine pendant

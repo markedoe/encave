@@ -18,6 +18,12 @@ struct TonightView: View {
     @State private var firstPick = UserDefaults.standard.string(forKey: Self.firstPickKey) ?? ""
     static let firstPickKey = "tonight.firstPick"
 
+    /// The wine Tonight showed first on `day` ("yyyy-MM-dd"), as saved; nil if none yet.
+    static func savedFirstPick(on day: String) -> UUID? {
+        let saved = UserDefaults.standard.string(forKey: firstPickKey) ?? ""
+        return saved.hasPrefix(day + "|") ? UUID(uuidString: String(saved.dropFirst(day.count + 1))) : nil
+    }
+
     var body: some View {
         if let selection {
             list(selection: selection)

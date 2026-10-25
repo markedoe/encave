@@ -184,8 +184,7 @@ struct MacRoot: View {
         // The same wine as Tonight's card, including the one it keeps for the day.
         let day = Cellar.tonightDay(.now)
         // Read, not @AppStorage: at the root of the window that redraws it without end (DefaultsFlag).
-        let firstPick = UserDefaults.standard.string(forKey: TonightView.firstPickKey) ?? ""
-        let kept = firstPick.hasPrefix(day + "|") ? UUID(uuidString: String(firstPick.dropFirst(day.count + 1))) : nil
+        let kept = TonightView.savedFirstPick(on: day)
         return model.cellar.tonightSuggestion(year: model.currentYear, day: day, keeping: kept)?.wine.id
     }
 

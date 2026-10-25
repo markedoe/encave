@@ -133,6 +133,17 @@ Apple:
 - App Privacy questionnaire in App Store Connect (answers in `docs/STORE.md`).
 - Be in the "Internal" TestFlight group (App Store Connect › TestFlight ›
   Internal Testing) to get every build first. Done: the owner is in it.
+- Widgets: the iPhone and iPad app embeds a widget extension,
+  `app.encave.widgets`, and both share the App Group `group.app.encave`
+  (`apple/project.yml`). The export's automatic signing (`-allowProvisioningUpdates`
+  with the API key) normally registers the extension's identifier and its
+  App Group capability itself. If the first upload with them fails on
+  signing, in the Apple Developer account (Certificates, Identifiers &
+  Profiles): register the identifier `app.encave.widgets`, create the App
+  Group `group.app.encave`, enable App Groups on `app.encave` and
+  `app.encave.widgets` with that group, then run the workflow again. The CI
+  signs the unsigned iOS archive to run locally first, so the App Group
+  entitlement reaches the export (as for the Mac app's sandbox).
 
 Google: see "Google Play: one-time setup" below.
 
