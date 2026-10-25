@@ -829,7 +829,7 @@
     <string name="remote_address">Relay address</string>
     <string name="remote_check">Check and turn on</string>
     <string name="remote_relay_footer">For any devices, iPhone and Mac included. A relay is a small open-source service: run your own on a home server or a free Cloudflare account, or use one run by someone you trust.</string>
-    <string name="remote_invalid">Use an https:// address (http only for this device or a .local name).</string>
+    <string name="remote_invalid">Use an https:// address (http only for a server on your local network).</string>
     <string name="remote_not_relay">This address does not answer as an Encave relay.</string>
     <string name="remote_webdav">WebDAV folder (NAS, Nextcloud, pCloud…)</string>
     <string name="remote_webdav_address">Server address</string>
@@ -945,7 +945,7 @@
     <string name="help_devices_away_title">Away from home</string>
     <string name="help_devices_away">Once another device has been added, to sync when your devices are not on the same Wi-Fi, open **Devices › Sync away from home** and choose a **WebDAV folder** you already have, or enter the address of a relay: a small open-source service that only stores encrypted files. You can run your own (instructions in the link on that page) or use one run by someone you trust. Devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi; turning it off or changing it applies to this device only. Android can’t use iCloud: if your Apple devices sync through iCloud, choose a WebDAV folder or a relay on every device.</string>
     <string name="help_devices_webdav_title">WebDAV folder</string>
-    <string name="help_devices_webdav">A NAS (Synology, QNAP), Nextcloud, pCloud and many other services offer WebDAV. Enter the folder’s address, for example https://…/remote.php/dav/files/username/Encave for Nextcloud or https://webdav.pcloud.com/Encave for pCloud, with a username and an app password if the service offers one. Encave creates the folder if needed and checks that it can write there. Only encrypted files are stored in it. The username and password stay on this device: the other devices receive only the address, and show **Sign in to this WebDAV folder** until you enter a login on them too. If the server later refuses the login (a changed password), the device shows it again at once. If the server refuses the username or password, Encave stops trying on its own until you sign in again or tap **Sync now**, so the server does not lock the account. “The server refused access to this folder” means the login works, but this account may not read and write the folder.</string>
+    <string name="help_devices_webdav">A NAS (Synology, QNAP), Nextcloud, pCloud and many other services offer WebDAV. Enter the folder’s address, for example https://…/remote.php/dav/files/username/Encave for Nextcloud or https://webdav.pcloud.com/Encave for pCloud, with a username and an app password if the service offers one. Encave creates the folder if needed and checks that it can write there. Only encrypted files are stored in it. The username and password stay on this device: the other devices receive only the address, and show **Sign in to this WebDAV folder** until you enter a login on them too. If the server later refuses the login (a changed password), the device shows it again at once. If the server refuses the username or password, Encave stops trying on its own until you sign in again or tap **Sync now**, so the server does not lock the account. “The server refused access to this folder” means the login works, but this account may not read and write the folder. Over plain http, a name of your home network is reached only at one of its local addresses.</string>
     <string name="help_devices_privacy_title">Privacy</string>
     <string name="help_devices_privacy">On the same Wi-Fi, devices talk directly; no server is involved. Through a WebDAV folder or a relay, only encrypted files are stored there. Every exchange is encrypted from end to end. The 6-digit code only helps the devices find each other: the comparison is what protects you.</string>
     <string name="sample_main_rack">Main rack</string>
@@ -1173,7 +1173,7 @@
     <string name="search_open_in_browser">Open in browser</string>
     <string name="search_wine_word">wine</string>
     <string name="search_price_word">price</string>
-    <string name="local_name_not_local">http:// is only for a server on your local network: use https:// or a local address.</string>
+    <string name="local_name_not_local">This name points outside your network. Use https, or the server’s local address.</string>
     <string name="local_name_not_found">This server name could not be found on this network.</string>
     <string name="search_err_server_url">Enter the full server address, starting with https:// (http:// only for a server on your local network).</string>
     <string name="search_err_unauthorized">The search service refused the key. Check it in Settings.</string>
@@ -1204,7 +1204,7 @@
     <string name="help_web_off_title">Off by default</string>
     <string name="help_web_off">Nothing is looked up online until you choose a service in **Settings › Web search**.</string>
     <string name="help_web_service_title">Choose a service</string>
-    <string name="help_web_service">**Brave Search** and **Tavily** need an API key, created on their website; both offer a free monthly allowance. **SearXNG** is a search engine you can run yourself, for example on a NAS: enter its address, such as `http://nas.local:8080` (plain `http://` only for a server on your local network, including a name of your home network that points to a local address, which Encave then reaches by that address; `https://` otherwise). Its JSON format must be on: add `json` under `search: formats:` in its `settings.yml`. Tap **Test search** to check.</string>
+    <string name="help_web_service">**Brave Search** and **Tavily** need an API key, created on their website; both offer a free monthly allowance. **SearXNG** is a search engine you can run yourself, for example on a NAS: enter its address, such as `http://nas.local:8080` (plain `http://` only for a server on your local network, including a name of your home network, which Encave reaches only at one of its local addresses; `https://` otherwise). Its JSON format must be on: add `json` under `search: formats:` in its `settings.yml`. Tap **Test search** to check.</string>
     <string name="help_web_search_title">Search online</string>
     <string name="help_web_search">On a wine’s page, or while adding or editing a wine, tap **Search online**. The search terms are shown first and you can change them; nothing is sent until you tap **Search**. Each result shows its title, a snippet and the site, and opens in your browser. Touch and hold the producer or the appellation on a wine’s page to search the web for it alone.</string>
     <string name="help_web_price_title">Current price</string>

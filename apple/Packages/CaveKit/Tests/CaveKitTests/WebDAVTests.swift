@@ -11,6 +11,7 @@ import Testing
 final class FakeWebDAV: @unchecked Sendable {
     enum HrefStyle { case absolutePath, absoluteURL, relative }
 
+    /// Over https: an http name would be resolved first (LocalName).
     let host = "nas-\(UUID().uuidString.prefix(8).lowercased()).local"
     /// Decoded; a space and an "@" exercise percent-encoding.
     let basePath = "/remote.php/dav/files/jean dupont@example.com/Encave/"
@@ -47,7 +48,7 @@ final class FakeWebDAV: @unchecked Sendable {
     }
 
     var baseURL: URL {
-        URL(string: "http://\(host)" + basePath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed.subtracting(["@"]))!)!
+        URL(string: "https://\(host)" + basePath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed.subtracting(["@"]))!)!
     }
 
     func store(password: String? = nil) -> WebDAVMailboxStore {
@@ -119,7 +120,7 @@ final class FakeWebDAV: @unchecked Sendable {
             let href: String
             switch hrefStyle {
             case .absolutePath: href = encode(path)
-            case .absoluteURL: href = "http://\(host)" + encode(path).replacingOccurrences(of: "@", with: "%40")
+            case .absoluteURL: href = "https://\(host)" + encode(path).replacingOccurrences(of: "@", with: "%40")
             case .relative: href = path == requested ? "./" : encode(String(path.dropFirst(requested.count)))
             }
             let type = isFolder ? "<d:resourcetype><d:collection/></d:resourcetype>" : "<d:resourcetype/>"

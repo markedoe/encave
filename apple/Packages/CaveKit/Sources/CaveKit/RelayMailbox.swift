@@ -19,22 +19,29 @@ import FoundationNetworking
 public struct RelayMailboxStore: MailboxStore {
     public let baseURL: URL
     let session: URLSession
+    /// For plain HTTP (only ever local): the same, without a proxy (`NoRedirects.direct`).
+    let localSession: URLSession
 
     public init(baseURL: URL, session: URLSession = RelayMailboxStore.session) {
         self.baseURL = baseURL
         self.session = session
+        localSession = session === Self.session ? Self.localSession : NoRedirects.direct(session)
     }
 
     /// Requests never follow redirects: one to another host would carry the token
     /// there. No cookies or cache either.
     public static let session = NoRedirects.session()
 
+    /// Plain HTTP (only ever local) without a proxy; HTTPS with the system's.
+    var sessionForBase: URLSession { baseURL.scheme?.lowercased() == "http" ? localSession : session }
+    static let localSession = NoRedirects.direct(session)
+
     public func mailbox(id: String, token: String) -> Mailbox {
-        RelayMailbox(base: baseURL, id: id, token: token, session: session)
+        RelayMailbox(base: baseURL, id: id, token: token, session: sessionForBase)
     }
 
     public func inbox(id: String, token: String) -> Mailbox {
-        RelayMailbox(base: baseURL, id: id, token: token, session: session)
+        RelayMailbox(base: baseURL, id: id, token: token, session: sessionForBase)
     }
 
     /// A relay address the app accepts: https, or http only for a server on this device or
@@ -54,7 +61,7 @@ public struct RelayMailboxStore: MailboxStore {
         // A name that is not on the local network says so, rather than "not a relay".
         var request = URLRequest(url: try await LocalName.resolve(baseURL.appendingPathComponent("v1/health")))
         request.timeoutInterval = 15
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await CappedRead.data(sessionForBase, for: request, limit: CappedRead.jsonLimit)
         guard (response as? HTTPURLResponse)?.statusCode == 200,
               let body = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               body["service"] as? String == "encave-relay" else {
@@ -91,11 +98,7 @@ struct RelayMailbox: Mailbox {
         let (data, response): (Data, URLResponse)
         do {
             if let url = request.url { request.url = try await LocalName.resolve(url) }
-            if let body {
-                (data, response) = try await session.upload(for: request, from: body)
-            } else {
-                (data, response) = try await session.data(for: request)
-            }
+            (data, response) = try await CappedRead.data(session, for: request, body: body, limit: CappedRead.syncLimit)
         } catch {
             throw RemoteSyncError.unavailable(error.localizedDescription)
         }
@@ -149,6 +152,8 @@ struct RelayMailbox: Mailbox {
     }
 
     func create(_ path: String, data: Data) async throws -> Bool {
+        // Never more than a device reads back (`CappedRead`).
+        guard data.count <= CappedRead.syncLimit else { throw RemoteSyncError.fileTooLarge }
         var request = request(try url(path), method: "PUT")
         request.setValue("*", forHTTPHeaderField: "If-None-Match")
         request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")

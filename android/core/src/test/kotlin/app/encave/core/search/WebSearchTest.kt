@@ -60,6 +60,9 @@ class WebSearchTest {
         assertFalse(allows("https://192.168.1.10/a", "http://192.168.1.10/a")) // public-safety: allow
         // A local HTTP server: to itself (HTTP or HTTPS), never to another host.
         assertTrue(allows("http://nas.local:8080/search", "http://nas.local:8080/searxng/search"))
+        // A home name over http: the next hop is resolved again (LocalName); not a public address.
+        assertTrue(allows("http://searxng.home:8888/search", "http://searxng.home:8888/searxng/search"))
+        assertFalse(allows("http://203.0.113.7/search", "http://203.0.113.7/other"))
         assertTrue(allows("http://192.168.1.10/search", "https://192.168.1.10/search")) // public-safety: allow
         assertFalse(allows("http://nas.local/search", "http://192.168.1.11/search")) // public-safety: allow
         assertFalse(allows("http://nas.local/search", "https://search.example.com/search"))

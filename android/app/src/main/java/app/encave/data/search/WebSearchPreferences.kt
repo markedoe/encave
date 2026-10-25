@@ -2,6 +2,7 @@ package app.encave.data.search
 
 import android.content.Context
 import androidx.core.content.edit
+import app.encave.core.CappedRead
 import app.encave.core.Http
 import app.encave.core.search.WebImageDownload
 import app.encave.core.search.WebImageResult
@@ -134,7 +135,7 @@ object WebSearchClient {
         var body = request.body
         repeat(SameHostRedirect.MAX + 1) {
             // A SearXNG server named on the home network gets the request at its local address.
-            val connection = Http.open(LocalName.resolve(url))
+            val connection = Http.openChecked(LocalName.resolve(url))
             try {
                 connection.instanceFollowRedirects = false
                 connection.requestMethod = method
@@ -159,7 +160,7 @@ object WebSearchClient {
                     return@repeat
                 }
                 val stream = if (status in 200..299) connection.inputStream else connection.errorStream
-                return status to stream?.use { it.readBytes().toString(Charsets.UTF_8) }.orEmpty()
+                return status to stream?.use { CappedRead.bytes(it, connection.contentLengthLong, CappedRead.JSON_LIMIT).toString(Charsets.UTF_8) }.orEmpty()
             } catch (error: IOException) {
                 throw WebSearchError.Server(0)
             } finally {

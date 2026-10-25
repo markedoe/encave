@@ -7,33 +7,33 @@ import Glibc
 
 /// Why plain HTTP to a server name was refused.
 public enum LocalNetworkError: Error, Equatable, Sendable {
-    /// The name points to an address outside the local network (or to some outside it):
-    /// use https, or a local address.
+    /// The name has no address on the local network: use https, or the server's local address.
     case notLocal
     /// The name could not be found on this network (away from home, a typo).
     case notFound
 }
 
 /// Plain HTTP to a server on the local network reached by a name of the home network
-/// ("http://nas.lan:8080", a name the router or a local DNS gives), not only by the names
-/// and addresses `LocalAddress` recognizes without asking.
+/// ("http://nas.lan:8080", "http://nas.local", a name the router or a local DNS gives).
 ///
-/// The name is resolved before each request (the answer is kept a minute): it is accepted
-/// only if every address it has is local, and the request then goes to that address, not
-/// to the name, so a later DNS answer cannot send it elsewhere (DNS rebinding), and
-/// App Transport Security treats it as a local address. HTTPS is left as it is: by name,
-/// with the certificate checked.
+/// The name is resolved before each request (the answer is kept a few seconds): it is accepted
+/// only if it has a local address, and the request then goes to that address, not to the
+/// name, so neither a public address of the same name nor a later DNS answer can receive it
+/// (DNS rebinding), and App Transport Security treats it as a local address. Only addresses
+/// and "localhost" are used as they are. HTTPS is left as it is: by name, with the
+/// certificate checked.
 ///
-/// A server that tells sites apart by their name (virtual hosts) may answer differently
-/// by address; SearXNG, Ollama and WebDAV on a NAS answer the same.
+/// A server that tells sites apart by their name (virtual hosts, Nextcloud's
+/// trusted_domains) may answer differently by address; SearXNG, Ollama and WebDAV on a NAS
+/// answer the same.
 public enum LocalName {
     /// The addresses of a name, as numeric text (IPv4 dotted, or IPv6).
     public typealias Resolver = @Sendable (String) async throws -> [String]
 
     /// How long resolving a name may take.
     public static let timeout: TimeInterval = 5
-    /// How long an answer is kept.
-    public static let cacheLifetime: TimeInterval = 60
+    /// How long an answer is kept: short, so that a change of network is soon seen.
+    public static let cacheLifetime: TimeInterval = 10
 
     /// True when plain HTTP to `host` may be accepted: a local name or address, or another
     /// name, which `resolve` checks before each request. False for an address outside the
@@ -42,14 +42,18 @@ public enum LocalName {
         LocalAddress.isLocal(host: host) || isName(host)
     }
 
-    /// The URL to send `url` to: unchanged for HTTPS and for a host `LocalAddress` already
-    /// knows as local; for plain HTTP to another name, the same URL with the name replaced by
-    /// its local address. Throws `LocalNetworkError` if the name is not found or is not
-    /// only on the local network.
+    /// The URL to send `url` to: unchanged for HTTPS, a local address and "localhost"; for
+    /// plain HTTP to a name, the same URL with the name replaced by its best local address.
+    /// Throws `LocalNetworkError` if the name is not found or has no local address.
     public static func resolve(_ url: URL, resolver: Resolver? = nil) async throws -> URL {
-        guard url.scheme?.lowercased() == "http", let host = url.host?.lowercased(), !host.isEmpty,
-              !LocalAddress.isLocal(host: host) else { return url }
-        guard isName(host) else { throw LocalNetworkError.notLocal }
+        guard url.scheme?.lowercased() == "http", let host = url.host?.lowercased(), !host.isEmpty else { return url }
+        guard isName(host) else {
+            if LocalAddress.isLocal(host: host) { return url }
+            throw LocalNetworkError.notLocal
+        }
+        if host == "localhost" { return url }
+        // "nas..lan" or ".lan" is no name of the network.
+        guard !host.hasPrefix("."), !host.contains("..") else { throw LocalNetworkError.notLocal }
         let addresses: [String]
         if let resolver {
             addresses = try await resolver(host)
@@ -63,8 +67,10 @@ public enum LocalName {
         guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
             throw LocalNetworkError.notFound
         }
+        // No path becomes "/", as OkHttp writes it in Kotlin.
+        if components.percentEncodedPath.isEmpty { components.percentEncodedPath = "/" }
         if address.contains(":") {
-            components.percentEncodedHost = "[" + address.replacingOccurrences(of: "%", with: "%25") + "]"
+            components.percentEncodedHost = "[" + address + "]"
         } else {
             components.host = address
         }
@@ -72,16 +78,50 @@ public enum LocalName {
         return resolved
     }
 
-    /// The address to use, if all of them are local: IPv4 first, then IPv6 (link-local last).
+    /// How an address of a name may be used.
+    enum Use: Equatable {
+        /// Local; a lower rank is preferred.
+        case local(rank: Int)
+        /// Link-local with an interface ("fe80::1%en0"): not usable in a URL.
+        case scoped
+        /// Outside the local network.
+        case outside
+    }
+
+    /// The best local address: private or loopback IPv4 first, then unique local or loopback
+    /// IPv6, then link-local IPv4, then link-local IPv6 without an interface. Addresses
+    /// outside the local network (a public IPv6 next to a local IPv4, CGNAT) are left
+    /// out. `notLocal` if none is local, `notFound` if there is none, or only link-local
+    /// ones with an interface.
     static func choose(_ addresses: [String]) throws -> String {
-        guard !addresses.isEmpty else { throw LocalNetworkError.notFound }
-        // A link-local IPv6 address carries its interface ("fe80::1%en0"): checked without it.
-        func bare(_ address: String) -> String { String(address.split(separator: "%", maxSplits: 1).first ?? "") }
-        guard addresses.allSatisfy({ LocalAddress.isLocal(host: bare($0)) && !isName(bare($0)) }) else {
-            throw LocalNetworkError.notLocal
+        var best: (rank: Int, address: String)?
+        var scoped = false
+        for address in addresses {
+            switch use(of: address) {
+            case .local(let rank): if best == nil || rank < best!.rank { best = (rank, address) }
+            case .scoped: scoped = true
+            case .outside: break
+            }
         }
-        func rank(_ address: String) -> Int { !address.contains(":") ? 0 : address.contains("%") ? 2 : 1 }
-        return addresses.min { rank($0) < rank($1) }!
+        if let best { return best.address }
+        throw addresses.isEmpty || scoped ? LocalNetworkError.notFound : LocalNetworkError.notLocal
+    }
+
+    /// Classifies a numeric address by its bytes (IPv6 however written).
+    static func use(of address: String) -> Use {
+        let parts = address.split(separator: "%", maxSplits: 1, omittingEmptySubsequences: false)
+        let bare = String(parts.first ?? "")
+        if !bare.contains(":") {
+            guard parts.count == 1, !isName(bare), LocalAddress.isLocal(host: bare) else { return .outside }
+            return bare.hasPrefix("169.254.") ? .local(rank: 2) : .local(rank: 0)
+        }
+        var raw = in6_addr()
+        guard inet_pton(AF_INET6, bare, &raw) == 1 else { return .outside }
+        let bytes = withUnsafeBytes(of: &raw) { Array($0) }
+        let linkLocal = bytes[0] == 0xFE && bytes[1] & 0xC0 == 0x80
+        if parts.count == 2 { return linkLocal ? .scoped : .outside }
+        if bytes[0] & 0xFE == 0xFC || (bytes[0..<15].allSatisfy { $0 == 0 } && bytes[15] == 1) { return .local(rank: 1) }
+        return linkLocal ? .local(rank: 3) : .outside
     }
 
     /// A name rather than an address: not digits and dots only (IPv4, however written) and
@@ -157,7 +197,7 @@ public enum LocalName {
             var buffer = [CChar](repeating: 0, count: 1025) // NI_MAXHOST
             if let address = info.pointee.ai_addr,
                getnameinfo(address, info.pointee.ai_addrlen, &buffer, socklen_t(buffer.count), nil, 0, NI_NUMERICHOST) == 0 {
-                let text = String(cString: buffer)
+                let text = String(decoding: buffer.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }, as: UTF8.self)
                 if !addresses.contains(text) { addresses.append(text) }
             }
             next = info.pointee.ai_next

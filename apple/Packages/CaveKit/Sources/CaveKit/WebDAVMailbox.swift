@@ -24,11 +24,14 @@ public struct WebDAVMailboxStore: MailboxStore {
     public let baseURL: URL
     let authorization: String
     let session: URLSession
+    /// For plain HTTP (only ever local): the same, without a proxy (`NoRedirects.direct`).
+    let localSession: URLSession
 
     public init(baseURL: URL, username: String, password: String, session: URLSession = WebDAVMailboxStore.session) {
         self.baseURL = Self.normalized(baseURL)
         authorization = "Basic " + Data("\(username):\(password)".utf8).base64EncodedString()
         self.session = session
+        localSession = session === Self.session ? Self.localSession : NoRedirects.direct(session)
     }
 
     public func mailbox(id: String, token: String) -> Mailbox { WebDAVMailbox(store: self, id: id) }
@@ -37,6 +40,7 @@ public struct WebDAVMailboxStore: MailboxStore {
     /// Requests never follow redirects: one to another host, or to plain HTTP,
     /// would carry the password there.
     public static let session = NoRedirects.session()
+    static let localSession = NoRedirects.direct(session)
 
     // MARK: Addresses
 
@@ -50,8 +54,8 @@ public struct WebDAVMailboxStore: MailboxStore {
     }
 
     /// HTTPS, or HTTP only for a server on the local network (no certificate there):
-    /// localhost, `.local` and `.home.arpa` names, private and link-local addresses, and
-    /// other names that point only to such addresses (checked before each request, `LocalName`).
+    /// localhost, private and link-local addresses, and names (`.local`, `.home.arpa` and
+    /// others), sent only to a local address of the name (checked before each request, `LocalName`).
     public static func isAllowed(_ url: URL) -> Bool {
         guard let host = url.host?.lowercased(), !host.isEmpty, url.user == nil, url.password == nil else { return false }
         switch url.scheme?.lowercased() {
@@ -78,17 +82,24 @@ public struct WebDAVMailboxStore: MailboxStore {
     /// if needed, then writes, reads back and deletes a test file.
     public func check() async throws {
         // A name that is not on the local network says so, rather than "does not answer".
-        _ = try await LocalName.resolve(baseURL)
+        let byAddress = try await LocalName.resolve(baseURL) != baseURL
+        func refused(_ status: Int) -> Bool { byAddress && (status == 400 || status == 404) }
         // Look first: some servers refuse MKCOL (403) on a folder that exists, such as a share's root.
         let propfind = { try await self.send("PROPFIND", self.baseURL, headers: ["Depth": "0", "Content-Type": "application/xml; charset=utf-8"],
                                              body: Self.propfindBody, timeout: 15).1 }
         var found = try await propfind()
         if found == 404 {
             let (_, made) = try await send("MKCOL", baseURL, timeout: 15)
-            guard [200, 201, 204, 405].contains(made) else { throw RemoteSyncError.unavailable("cannot create the folder (\(made))") }
+            guard [200, 201, 204, 405].contains(made) else {
+                if refused(made) { throw WebDAVRefusedByAddress(status: made) }
+                throw RemoteSyncError.unavailable("cannot create the folder (\(made))")
+            }
             found = try await propfind()
         }
-        guard found == 207 else { throw RemoteSyncError.unavailable("not a WebDAV folder (\(found))") }
+        guard found == 207 else {
+            if refused(found) { throw WebDAVRefusedByAddress(status: found) }
+            throw RemoteSyncError.unavailable("not a WebDAV folder (\(found))")
+        }
         let name = "encave-check-" + Data((0..<4).map { _ in UInt8.random(in: .min ... .max) }).hexString
         let file = baseURL.appendingPathComponent(name)
         let content = Data("Encave checks that it can write here. This file can be deleted.\n".utf8)
@@ -125,11 +136,15 @@ public struct WebDAVMailboxStore: MailboxStore {
         request.httpBody = body
         let (data, response): (Data, URLResponse)
         do {
-            (data, response) = try await session.data(for: request)
+            (data, response) = try await CappedRead.data(target.scheme?.lowercased() == "http" ? localSession : session,
+                                                         for: request, limit: CappedRead.syncLimit)
         } catch {
             throw RemoteSyncError.unavailable(error.localizedDescription)
         }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        // Sent to the local address of a home name: a server that accepts only its name
+        // (Nextcloud's trusted_domains) answers 400 to every request.
+        if status == 400, target != url { throw WebDAVRefusedByAddress(status: status) }
         switch status {
         case 401: throw RemoteSyncError.unauthorized
         case 403: throw RemoteSyncError.forbidden
@@ -142,8 +157,24 @@ public struct WebDAVMailboxStore: MailboxStore {
     }
 }
 
+/// A server named on the home network over plain http, reached at its local address
+/// (`LocalName`), answered 400 or 404 when checked: some servers accept only their name
+/// (Nextcloud's trusted_domains, a reverse proxy that tells sites apart by name).
+public struct WebDAVRefusedByAddress: Error, Equatable, Sendable {
+    public let status: Int
+}
+
 /// Refuses every redirect (see `WebDAVMailboxStore.session`).
 final class NoRedirects: NSObject, URLSessionTaskDelegate, Sendable {
+    /// The same settings as `session`, without a proxy: plain HTTP, only ever to the local
+    /// network, must not go through one, which would read it in clear text. HTTPS keeps the
+    /// system's proxy.
+    static func direct(_ session: URLSession) -> URLSession {
+        let configuration = session.configuration
+        configuration.connectionProxyDictionary = [:]
+        return URLSession(configuration: configuration, delegate: NoRedirects(), delegateQueue: nil)
+    }
+
     /// A session that follows no redirect and keeps no cookies, cache or credentials.
     static func session(_ configuration: URLSessionConfiguration = .ephemeral) -> URLSession {
         configuration.httpShouldSetCookies = false
@@ -235,6 +266,8 @@ struct WebDAVMailbox: Mailbox {
     }
 
     func create(_ path: String, data: Data) async throws -> Bool {
+        // Never more than a device reads back (`CappedRead`).
+        guard data.count <= CappedRead.syncLimit else { throw RemoteSyncError.fileTooLarge }
         let target = try url(path)
         for attempt in 0..<2 {
             let (_, status) = try await store.send("PUT", target, headers: ["If-None-Match": "*",
@@ -383,6 +416,9 @@ enum WebDAVMultistatus {
 /// Addresses on this device or the local network, where a server has no certificate
 /// and plain HTTP is accepted.
 public enum LocalAddress {
+    /// True for a local address, localhost, or a `.local` or `.home.arpa` name, without
+    /// asking DNS. Never enough to send plain HTTP: a name can point anywhere, so requests go
+    /// through `LocalName.resolve`, which checks the addresses.
     public static func isLocal(host: String) -> Bool {
         var host = host.lowercased()
         if host.hasPrefix("["), host.hasSuffix("]") { host = String(host.dropFirst().dropLast()) }

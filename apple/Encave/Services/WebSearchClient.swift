@@ -59,6 +59,13 @@ enum WebSearchClient {
         configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
         return configuration
     }
+    /// The same for plain HTTP to a SearXNG server on the local network: no proxy, which would
+    /// read the search terms in clear text.
+    private static let localSession: URLSession = {
+        let configuration = privateConfiguration()
+        configuration.connectionProxyDictionary = [:]
+        return URLSession(configuration: configuration)
+    }()
 
     /// Sends the query, and nothing else, to the service set up in Settings.
     static func search(_ query: String, settings: WebSearchSettings = .load(), apiKey: String? = nil,
@@ -73,7 +80,8 @@ enum WebSearchClient {
             request.setValue(value, forHTTPHeaderField: field)
         }
         request.httpBody = described.body
-        let (data, response) = try await session.data(for: request, delegate: SameHostRedirects.shared)
+        let (data, response) = try await CappedRead.data(request.url?.scheme == "http" ? localSession : session, for: request,
+                                                         limit: CappedRead.jsonLimit, delegate: SameHostRedirects.shared)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         return try provider.results(from: data, status: status)
     }
@@ -89,7 +97,8 @@ enum WebSearchClient {
             request.setValue(value, forHTTPHeaderField: field)
         }
         request.httpBody = described.body
-        let (data, response) = try await session.data(for: request, delegate: SameHostRedirects.shared)
+        let (data, response) = try await CappedRead.data(request.url?.scheme == "http" ? localSession : session, for: request,
+                                                         limit: CappedRead.jsonLimit, delegate: SameHostRedirects.shared)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         return try provider.imageResults(from: data, status: status)
     }
@@ -269,7 +278,7 @@ extension LocalNetworkError: @retroactive LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .notLocal:
-            String(localized: "http:// is only for a server on your local network: use https:// or a local address.")
+            String(localized: "This name points outside your network. Use https, or the server’s local address.")
         case .notFound:
             String(localized: "This server name could not be found on this network.")
         }

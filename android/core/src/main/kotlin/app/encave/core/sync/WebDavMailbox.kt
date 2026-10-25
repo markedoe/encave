@@ -1,8 +1,10 @@
 package app.encave.core.sync
 
+import app.encave.core.CappedRead
 import app.encave.core.Http
 import java.io.ByteArrayInputStream
 import java.io.IOException
+import java.net.Proxy
 import java.util.Base64
 import java.util.concurrent.TimeUnit
 import javax.xml.parsers.SAXParserFactory
@@ -32,7 +34,14 @@ import org.xml.sax.helpers.DefaultHandler
  * mailbox tokens are not sent. Credentials stay on each device; only the folder URL
  * travels to other devices. HTTPS, or HTTP only on the local network.
  */
-class WebDavMailboxStore(baseUrl: String, username: String, password: String, private val client: OkHttpClient = defaultClient) : MailboxStore {
+class WebDavMailboxStore(
+    baseUrl: String,
+    username: String,
+    password: String,
+    private val client: OkHttpClient = defaultClient,
+    /** For tests: the addresses of a name over http ([LocalName]); the system's otherwise. */
+    private val resolver: LocalName.Resolver? = null,
+) : MailboxStore {
     /** The folder, ending with "/". */
     val baseUrl: HttpUrl = normalized(baseUrl) ?: throw IllegalArgumentException("not a WebDAV folder address")
     private val authorization = "Basic " + Base64.getEncoder().encodeToString("$username:$password".toByteArray(Charsets.UTF_8))
@@ -46,7 +55,7 @@ class WebDavMailboxStore(baseUrl: String, username: String, password: String, pr
      */
     suspend fun check() {
         // A name that is not on the local network says so, rather than "does not answer".
-        withContext(Dispatchers.IO) { LocalName.resolve(baseUrl.toString()) }
+        withContext(Dispatchers.IO) { LocalName.resolve(baseUrl.toString(), resolver) }
         val quick = client.newBuilder().callTimeout(CHECK_TIMEOUT_S, TimeUnit.SECONDS).build()
         // Look first: some servers refuse MKCOL (403) on a folder that exists, such as a share's root.
         suspend fun propfind() = send("PROPFIND", baseUrl, mapOf("Depth" to "0"), PROPFIND_BODY, XML, quick).second
@@ -78,19 +87,28 @@ class WebDavMailboxStore(baseUrl: String, username: String, password: String, pr
         contentType: String = OCTET_STREAM,
         client: OkHttpClient = this.client,
     ): Pair<ByteArray, Int> = withContext(Dispatchers.IO) {
-        // A server named on the home network over http gets it at its local address.
-        val target = try {
-            LocalName.resolve(url.toString())
+        // A server named on the home network over http: checked first, then reached by its
+        // name (the server sees it: Nextcloud's trusted_domains, virtual hosts) through a
+        // resolver that gives only its local addresses.
+        try {
+            LocalName.resolve(url.toString(), resolver)
         } catch (error: LocalNetworkException) {
             throw RemoteSyncException(RemoteSyncError.Unavailable("not on the local network"))
         }
-        val request = Request.Builder().url(target)
+        // Plain HTTP (only ever local) never goes through a proxy, which would read it in clear
+        // text (and look a name up itself); HTTPS uses the system's proxy as usual.
+        val caller = when {
+            LocalName.needsLookup(url) -> client.newBuilder().dns(localDns).proxy(Proxy.NO_PROXY).build()
+            !url.isHttps -> client.newBuilder().proxy(Proxy.NO_PROXY).build()
+            else -> client
+        }
+        val request = Request.Builder().url(url)
             .method(method, body?.toRequestBody(contentType.toMediaType()))
             .header("Authorization", authorization)
             .apply { headers.forEach { (name, value) -> header(name, value) } }
             .build()
         val (data, status) = try {
-            client.newCall(request).execute().use { it.body.bytes() to it.code }
+            caller.newCall(request).execute().use { CappedRead.bytes(it.body.byteStream(), it.body.contentLength(), CappedRead.SYNC_LIMIT) to it.code }
         } catch (error: IOException) {
             throw RemoteSyncException(RemoteSyncError.Unavailable(error.message ?: "no connection"))
         }
@@ -105,6 +123,9 @@ class WebDavMailboxStore(baseUrl: String, username: String, password: String, pr
         }
         data to status
     }
+
+    /** One instance, so that OkHttp reuses connections to the same server. */
+    private val localDns = if (resolver == null) LocalName.systemDns else LocalName.dns(resolver)
 
     companion object {
         internal const val XML = "application/xml; charset=utf-8"
@@ -142,8 +163,8 @@ class WebDavMailboxStore(baseUrl: String, username: String, password: String, pr
 
         /**
          * HTTPS, or HTTP only for a server on the local network (no certificate there):
-         * localhost, `.local` and `.home.arpa` names, private and link-local addresses, and
-         * other names that point only to such addresses (checked before each request, [LocalName]).
+         * localhost, private and link-local addresses, and names (`.local`, `.home.arpa` and
+         * others), sent only to a local address of the name (checked before each request, [LocalName]).
          */
         fun isAllowed(url: String): Boolean {
             val scheme = url.trim().substringBefore("://", "").lowercase()
@@ -232,6 +253,8 @@ private class WebDavMailbox(val store: WebDavMailboxStore, val id: String) : Mai
     }
 
     override suspend fun create(path: String, data: ByteArray): Boolean {
+        // Never more than a device reads back (CappedRead).
+        if (data.size > CappedRead.SYNC_LIMIT) throw RemoteSyncException(RemoteSyncError.FileTooLarge)
         val target = url(path)
         repeat(2) { attempt ->
             val (_, status) = store.send("PUT", target, mapOf("If-None-Match" to "*"), data)
@@ -377,6 +400,11 @@ internal object WebDavMultistatus {
 
 /** Addresses on this device or the local network, where a server has no certificate and plain HTTP is accepted. */
 object LocalAddress {
+    /**
+     * True for a local address, localhost, or a `.local` or `.home.arpa` name, without asking
+     * DNS. Never enough to send plain HTTP: a name can point anywhere, so requests go through
+     * [LocalName.resolve] (or its [LocalName.dns]), which checks the addresses.
+     */
     fun isLocal(host: String): Boolean {
         val name = host.lowercase().removePrefix("[").removeSuffix("]")
         if (name == "localhost" || name.endsWith(".local") || name.endsWith(".home.arpa")) return true

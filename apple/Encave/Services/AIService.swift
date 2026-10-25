@@ -569,13 +569,21 @@ enum AIService {
 
     /// No cookies, cache or saved credentials: the label photo is never kept on disk.
     private static let session = URLSession(configuration: WebSearchClient.privateConfiguration())
+    /// The same for plain HTTP to a server on the local network, without a proxy.
+    private static let localSession: URLSession = {
+        let configuration = WebSearchClient.privateConfiguration()
+        configuration.connectionProxyDictionary = [:]
+        return URLSession(configuration: configuration)
+    }()
 
     /// Every request goes through here.
     private static func send(_ request: URLRequest) async throws -> [String: Any] {
         guard let url = request.url, isAllowed(url) else { throw AIServiceError.insecureURL }
         var request = request
         request.url = try await LocalName.resolve(url)
-        let (data, response) = try await session.data(for: request, delegate: SameHostRedirects.shared)
+        // Plain HTTP (only ever local) never goes through a proxy, which would read it in clear text.
+        let session = request.url?.scheme?.lowercased() == "http" ? localSession : Self.session
+        let (data, response) = try await CappedRead.data(session, for: request, limit: CappedRead.jsonLimit, delegate: SameHostRedirects.shared)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
         guard (200..<300).contains(status) else {

@@ -29,14 +29,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 - Tonight suggests the bottles to drink soon first, then the ready ones, each
   in the day's order
 - Plain http also works with a server name of your home network (such as
-  http://searxng.home:8888) for web search, AI, WebDAV and relay, when every
-  address it points to is local; Encave then connects to that address
+  http://searxng.home:8888 or a .local name) for web search, AI, WebDAV and
+  relay; Encave connects only to a local address of that name (a public IPv6
+  next to it is left out) and refuses a name that has none
+- iPhone, iPad and Mac: a Nextcloud server reached over plain http by a home
+  name (a .local name too) now gets requests at its local address; if Encave
+  asks for it, add that address to Nextcloud's trusted_domains, or use https
 
 ### Fixed
 - CSV import reads "12,50 €", "45.00€" or "45.0000" as the price (not 100
   times more), and skips prices over 100,000; "4/5", "16/20" and "8/10"
   ratings are that share of 5 stars
 - "Free shipping from €59.95" is no longer read as a bottle's price
+- Plain http to the local network never goes through a proxy set up on the
+  device; answers from a relay, WebDAV, AI or search server are limited in size
 - Replace This Cellar and Erase All keep a previous version first; with
   "also erase backups", photos and documents go once Undo has passed
 - Removing a device changes the cellar key on every device that has it, also
@@ -77,6 +83,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
   it is found from its paper, and a photo without a label is shown whole
 
 ### Added
+- Mac: drop a wine or a bottle onto a storage in the sidebar to put one bottle
+  in its first free position, with Undo (never into a full one); Open in New
+  Window for a wine (Mac and iPad, ⌥⌘O); Android tablets and foldables show
+  Storage, Tonight and Journal as list and detail panes
 - Find Current Price also opens the first five result pages from the device
   and reads the bottle's price on them (product data, then the page text near
   the wine's name), for shops whose search result shows no price; pages are

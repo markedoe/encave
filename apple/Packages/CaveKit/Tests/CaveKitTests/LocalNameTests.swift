@@ -16,7 +16,13 @@ struct LocalNameTests {
             var accepted: [String]
             var refused: [String]
         }
+        struct Choice: Decodable {
+            var addresses: [String]
+            var expect: String?
+            var error: String?
+        }
         var resolve: [Case]
+        var choose: [Choice]
         var mayBeLocal: Hosts
     }
 
@@ -43,15 +49,28 @@ struct LocalNameTests {
         }
     }
 
+    @Test func sharedChoices() throws {
+        for item in try Self.vectors().choose {
+            do {
+                let address = try LocalName.choose(item.addresses)
+                #expect(item.error == nil && address == item.expect, "\(item.addresses)")
+            } catch let error as LocalNetworkError {
+                let name = error == .notLocal ? "notLocal" : "notFound"
+                #expect(name == item.error, "\(item.addresses): \(error)")
+            }
+        }
+    }
+
     @Test func mayBeLocal() throws {
         let hosts = try Self.vectors().mayBeLocal
         for host in hosts.accepted { #expect(LocalName.mayBeLocal(host: host), "\(host)") }
         for host in hosts.refused { #expect(!LocalName.mayBeLocal(host: host), "\(host)") }
     }
 
-    /// The resolver is not asked for https or a host already known as local.
-    @Test func resolvesOnlyOtherNamesOverHTTP() async throws {
-        for text in ["https://searxng.home/search", "http://nas.local:8080/", "http://localhost:11434/"] {
+    /// The resolver is not asked for https, an address or localhost; .local and .home.arpa
+    /// names are resolved like the others.
+    @Test func resolvesOnlyNamesOverHTTP() async throws {
+        for text in ["https://searxng.home/search", "http://localhost:11434/", "http://[fd12:3456::20]:8080/"] {
             let url = try #require(URL(string: text))
             let resolved = try await LocalName.resolve(url) { _ in
                 Issue.record("resolved \(text)")
@@ -61,11 +80,12 @@ struct LocalNameTests {
         }
     }
 
-    /// A link-local address keeps its interface, percent-encoded, and comes after the others.
+    /// A link-local address with an interface is skipped; one without comes after the others.
     @Test func linkLocalLast() throws {
         #expect(try LocalName.choose(["fe80::1%en0", "fd12:3456::20"]) == "fd12:3456::20")
-        #expect(try LocalName.choose(["fe80::1%en0"]) == "fe80::1%en0")
-        #expect(throws: LocalNetworkError.notLocal) { try LocalName.choose(["fe80::1%en0", "2001:db8::7"]) }
+        #expect(try LocalName.choose(["fe80::1", "fd12:3456::20"]) == "fd12:3456::20")
+        #expect(throws: LocalNetworkError.notFound) { try LocalName.choose(["fe80::1%en0"]) }
+        #expect(throws: LocalNetworkError.notLocal) { try LocalName.choose(["2001:db8::7"]) }
     }
 
     /// The addresses that accept http for a name: settings fields accept such names.

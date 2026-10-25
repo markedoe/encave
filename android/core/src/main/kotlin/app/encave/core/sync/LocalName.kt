@@ -1,19 +1,23 @@
 package app.encave.core.sync
 
+import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.URL
+import java.net.UnknownHostException
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import okhttp3.Dns
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /** Why plain HTTP to a server name was refused. */
 class LocalNetworkException(val reason: Reason) : Exception(reason.name) {
     enum class Reason {
-        /** The name points to an address outside the local network (or to some outside it): use https, or a local address. */
+        /** The name has no address on the local network: use https, or the server's local address. */
         NotLocal,
 
         /** The name could not be found on this network (away from home, a typo). */
@@ -23,16 +27,18 @@ class LocalNetworkException(val reason: Reason) : Exception(reason.name) {
 
 /**
  * Plain HTTP to a server on the local network reached by a name of the home network
- * ("http://nas.lan:8080", a name the router or a local DNS gives), not only by the names
- * and addresses [LocalAddress] recognizes without asking. The same rules as CaveKit's `LocalName`.
+ * ("http://nas.lan:8080", "http://nas.local", a name the router or a local DNS gives).
+ * The same rules as CaveKit's `LocalName`.
  *
- * The name is resolved before each request (the answer is kept a minute): it is accepted only
- * if every address it has is local, and the request then goes to that address, not to the
- * name, so a later DNS answer cannot send it elsewhere (DNS rebinding). HTTPS is left as it
- * is: by name, with the certificate checked.
+ * The name is resolved before each request (the answer is kept a few seconds): it is accepted only
+ * if it has a local address, and the request then goes only to such an address, so neither a
+ * public address of the same name nor a later DNS answer can receive it (DNS rebinding).
+ * Only addresses and "localhost" are used as they are. HTTPS is left as it is: by name, with
+ * the certificate checked.
  *
- * A server that tells sites apart by their name (virtual hosts) may answer differently by
- * address; SearXNG, Ollama and WebDAV on a NAS answer the same.
+ * OkHttp (WebDAV) keeps the name in the URL, so the server sees it (virtual hosts, Nextcloud's
+ * trusted_domains), and connects through [systemDns], which gives only the checked local addresses.
+ * HttpURLConnection callers (relay, AI, web search) get the URL with the address instead.
  */
 object LocalName {
     /** The addresses of a name, as numeric text (IPv4 dotted, or IPv6). Blocking. */
@@ -43,8 +49,8 @@ object LocalName {
     /** How long resolving a name may take. */
     const val TIMEOUT_MS = 5_000L
 
-    /** How long an answer is kept. */
-    const val CACHE_MS = 60_000L
+    /** How long an answer is kept: short, so that a change of network is soon seen. */
+    const val CACHE_MS = 10_000L
 
     /**
      * True when plain HTTP to [host] may be accepted: a local name or address, or another
@@ -53,24 +59,31 @@ object LocalName {
      */
     fun mayBeLocal(host: String): Boolean = LocalAddress.isLocal(host) || isName(host)
 
+    /** True when [url] is plain HTTP to a name that [resolve] looks up (not an address, not localhost). */
+    fun needsLookup(url: HttpUrl): Boolean = url.scheme == "http" && isName(url.host) && !url.host.equals("localhost", ignoreCase = true)
+
     /**
-     * The URL to send [url] to: unchanged for HTTPS and for a host [LocalAddress] already knows
-     * as local; for plain HTTP to another name, the same URL with the name replaced by its
-     * local address. Throws [LocalNetworkException] if the name is not found or is not only
-     * on the local network. Blocking: call it off the main thread.
+     * The URL to send [url] to: unchanged for HTTPS, a local address and "localhost"; for
+     * plain HTTP to a name, the same URL with the name replaced by its best local address.
+     * Throws [LocalNetworkException] if the name is not found or has no local address.
+     * Blocking: call it off the main thread.
      */
     fun resolve(url: String, resolver: Resolver? = null): String {
-        val parsed = url.toHttpUrlOrNull() ?: return url
+        val parsed = url.toHttpUrlOrNull()
+            // Plain HTTP that OkHttp cannot read ("http://nas..lan/") is refused, never sent as it is.
+            ?: if (url.trim().startsWith("http:", ignoreCase = true)) throw LocalNetworkException(LocalNetworkException.Reason.NotLocal) else return url
         val host = parsed.host.lowercase()
-        if (parsed.scheme != "http" || host.isEmpty() || LocalAddress.isLocal(host)) return url
-        if (!isName(host)) throw LocalNetworkException(LocalNetworkException.Reason.NotLocal)
-        val addresses = if (resolver != null) {
-            resolver.addresses(host)
-        } else {
-            cache[host]?.takeIf { it.second > System.nanoTime() }?.first
-                ?: system(host).also { cache[host] = it to System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(CACHE_MS) }
+        if (parsed.scheme != "http" || host.isEmpty()) return url
+        // Plain HTTP is sent as OkHttp reads it, the host checked here, never as java.net.URL
+        // might read the same text ("http://127.0.0.1\@evil.example/").
+        if (!isName(host)) {
+            if (LocalAddress.isLocal(host)) return parsed.toString()
+            throw LocalNetworkException(LocalNetworkException.Reason.NotLocal)
         }
-        val address = choose(addresses)
+        if (host == "localhost") return parsed.toString()
+        // "nas..lan" or ".lan" is no name of the network.
+        if (host.startsWith(".") || host.contains("..")) throw LocalNetworkException(LocalNetworkException.Reason.NotLocal)
+        val address = choose(addresses(host, resolver))
         return runCatching { parsed.newBuilder().host(address).build().toString() }
             .getOrElse { throw LocalNetworkException(LocalNetworkException.Reason.NotFound) }
     }
@@ -82,17 +95,68 @@ object LocalName {
         return if (resolved == text) url else URL(resolved)
     }
 
-    /** The address to use, if all of them are local: IPv4 first, then IPv6 (link-local last). */
-    internal fun choose(addresses: List<String>): String {
-        if (addresses.isEmpty()) throw LocalNetworkException(LocalNetworkException.Reason.NotFound)
-        // A link-local IPv6 address may carry its interface ("fe80::1%wlan0"): checked without it.
-        val bare = { address: String -> address.substringBefore('%') }
-        if (!addresses.all { LocalAddress.isLocal(bare(it)) && !isName(bare(it)) }) {
-            throw LocalNetworkException(LocalNetworkException.Reason.NotLocal)
+    /**
+     * For OkHttp, on requests that [needsLookup]: the local addresses of a name, best first;
+     * [UnknownHostException] if it has none. Use it only for plain HTTP to such names.
+     */
+    fun dns(resolver: Resolver? = null): Dns = object : Dns {
+        override fun lookup(hostname: String): List<InetAddress> = try {
+            localAddresses(addresses(hostname.lowercase(), resolver)).map { InetAddress.getByName(it) }
+        } catch (error: LocalNetworkException) {
+            throw UnknownHostException("$hostname: ${error.reason}")
         }
-        val rank = { address: String -> if (!address.contains(':')) 0 else if (address.contains('%')) 2 else 1 }
-        return addresses.minBy(rank)
     }
+
+    /** [dns] with the system resolver: one instance, so that OkHttp reuses its connections. */
+    val systemDns: Dns = dns(null)
+
+    /**
+     * The best local address: private or loopback IPv4 first, then unique local or loopback
+     * IPv6, then link-local IPv4, then link-local IPv6 without an interface. Addresses outside
+     * the local network (a public IPv6 next to a local IPv4, CGNAT) are left out.
+     * NotLocal if none is local, NotFound if there is none, or only link-local ones with an
+     * interface ("fe80::1%wlan0", which a URL cannot hold).
+     */
+    internal fun choose(addresses: List<String>): String = localAddresses(addresses).first()
+
+    /** Every usable local address, best first, as [choose] ranks them. */
+    private fun localAddresses(addresses: List<String>): List<String> {
+        val ranked = addresses.mapNotNull { address -> rank(address)?.takeIf { it >= 0 }?.let { address to it } }
+        if (ranked.isNotEmpty()) return ranked.sortedBy { it.second }.map { it.first }
+        val scoped = addresses.any { rank(it) == SCOPED }
+        throw LocalNetworkException(if (addresses.isEmpty() || scoped) LocalNetworkException.Reason.NotFound else LocalNetworkException.Reason.NotLocal)
+    }
+
+    private const val SCOPED = -1
+
+    /**
+     * How an address may be used, by its bytes (IPv6 however written, "0:0:0:0:0:0:0:1" as
+     * Inet6Address gives it): a rank (lower is better), [SCOPED], or null outside the local network.
+     */
+    internal fun rank(address: String): Int? {
+        val bare = address.substringBefore('%')
+        val scoped = address.contains('%')
+        if (!bare.contains(':')) {
+            if (scoped || isName(bare) || !LocalAddress.isLocal(bare)) return null
+            return if (bare.startsWith("169.254.")) 2 else 0
+        }
+        if (bare.isEmpty() || !bare.all { it in '0'..'9' || it.lowercaseChar() in 'a'..'f' || it == ':' || it == '.' }) return null
+        // A literal with ":" is parsed, never looked up; an IPv4-mapped one is left out, as in Swift.
+        val bytes = (runCatching { InetAddress.getByName(bare) }.getOrNull() as? Inet6Address)?.address ?: return null
+        val linkLocal = bytes[0] == 0xFE.toByte() && (bytes[1].toInt() and 0xC0) == 0x80
+        if (scoped) return if (linkLocal) SCOPED else null
+        val loopback = (0 until 15).all { bytes[it] == 0.toByte() } && bytes[15] == 1.toByte()
+        if ((bytes[0].toInt() and 0xFE) == 0xFC || loopback) return 1
+        return if (linkLocal) 3 else null
+    }
+
+    private fun addresses(host: String, resolver: Resolver?): List<String> =
+        if (resolver != null) {
+            resolver.addresses(host)
+        } else {
+            cache[host]?.takeIf { it.second > System.nanoTime() }?.first
+                ?: system(host).also { cache[host] = it to System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(CACHE_MS) }
+        }
 
     /** A name rather than an address: not digits and dots only (IPv4, however written) and without ":" (IPv6). */
     internal fun isName(host: String): Boolean {

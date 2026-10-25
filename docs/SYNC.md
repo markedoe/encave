@@ -757,9 +757,11 @@ so devices pick up the setting when they meet.
 A device uses a storage told by another device only if it has none yet and its
 user has not turned remote sync off on it (Android: the turned-off choice is not
 kept, so a storage told by another device is taken up again). It accepts only an
-`https://` relay, a WebDAV folder over `https://` (or `http://` for a
-local-network address: `localhost`, a `.local` or `.home.arpa` name, a private
-or link-local IP address), or iCloud on Apple devices that support it and are
+`https://` relay, a WebDAV folder over `https://` (or `http://` for a server
+on the local network: `localhost`, a private or link-local IP address, or a
+name of the home network, `.local` and `.home.arpa` names included, which is
+resolved before each request and reached only at one of its local addresses,
+or refused if it has none), or iCloud on Apple devices that support it and are
 signed in to iCloud. A device that receives a new key in a grant also moves to
 the grant's storage.
 
