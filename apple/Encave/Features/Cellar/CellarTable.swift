@@ -183,18 +183,21 @@ struct CellarTable: View {
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
-        // The picker keeps its full width in its own item, and Add Bottle always stays:
-        // Show Wine goes to the overflow menu when the iPad toolbar is full.
+        // Add Bottle and the List/Table picker always stay in the toolbar; the filter and
+        // Show Wine go to the overflow menu, so the iPad toolbar (beside the tabs) never
+        // hides Add Bottle.
         ToolbarItem(placement: .primaryAction) {
-            CellarLayoutPicker().fixedSize()
-        }
-        ToolbarItemGroup(placement: .primaryAction) {
-            CellarFilterMenu(filter: filter)
             Button {
                 router?.sheet = .addBottle(AddBottleContext())
             } label: {
                 Label("Add Bottle", systemImage: "plus")
             }
+        }
+        ToolbarItem(placement: .primaryAction) {
+            CellarLayoutPicker().fixedSize()
+        }
+        ToolbarItem(placement: .secondaryAction) {
+            CellarFilterMenu(filter: filter)
         }
         ToolbarItem(placement: .secondaryAction) {
             Button {
