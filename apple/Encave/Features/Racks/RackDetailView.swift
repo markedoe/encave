@@ -106,17 +106,17 @@ struct RackDetailView: View {
                     // Chosen in the list: close it and point to the bottle in the drawing.
                     if id != nil { showsList = false }
                 }
-                .onChange(of: model.highlightedSlot, initial: true) { _, slot in
+                .onChange(of: router?.highlightedSlot, initial: true) { _, slot in
                     guard let slot, slot.rackID == rackID else { return }
                     withAnimation(.snappy) { select(slot, in: rack) }
                 }
                 .onChange(of: selectedPlace.map { model.cellar.bottles(at: $0) } ?? []) { _, bottles in
                     if bottles.isEmpty { selectedPlace = nil }
                 }
-                .task(id: model.highlightedSlot) {
-                    guard model.highlightedSlot?.rackID == rackID else { return }
+                .task(id: router?.highlightedSlot) {
+                    guard router?.highlightedSlot?.rackID == rackID else { return }
                     try? await Task.sleep(for: .seconds(4))
-                    withAnimation { model.highlightedSlot = nil }
+                    withAnimation { router?.highlightedSlot = nil }
                 }
         } else {
             ContentUnavailableView("Storage not found", systemImage: "questionmark")
@@ -128,7 +128,7 @@ struct RackDetailView: View {
         let grid = FittedRackGrid(
             rack: rack, zoom: RackZoom.clamped(zoom * pinch, minimum: minimumZoom),
             selected: auditing ? foundSlots(rack) : (moving?.slot.map { [$0] } ?? []),
-            highlighted: model.highlightedSlot,
+            highlighted: router?.highlightedSlot,
             selectedPlace: selectedPlace, focusWine: focusWine,
             onTap: { place, bottles in tap(rack, place, bottles) },
             // Nothing moves while checking: a bottle found must stay where it was seen.

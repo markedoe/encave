@@ -342,7 +342,7 @@
     <string name="settings_erase_backups">Effacer aussi les versions précédentes et les sauvegardes</string>
     <string name="settings_erase_backups_on">Les versions précédentes, et les sauvegardes hebdomadaires écrites par Encave dans Download/Encave, sont aussi effacées. Les fichiers que vous avez exportés ou enregistrés ailleurs ne sont jamais touchés.</string>
     <string name="settings_erase_backups_off">Les versions précédentes et les sauvegardes hebdomadaires dans Download/Encave restent. Les fichiers que vous avez exportés ou enregistrés ailleurs ne sont jamais touchés.</string>
-    <string name="versions_before_replacing">Enregistrée avant de rejoindre une autre cave</string>
+    <string name="versions_before_replacing">Enregistrée avant de remplacer ou d’effacer la cave</string>
     <string name="join_replace_version">Cet appareil n’affichera que la cave de l’autre appareil. Sa cave telle qu’elle est maintenant est d’abord enregistrée : vous la retrouvez dans Réglages › Vos données › Versions précédentes.</string>
     <string name="join_replace_confirm_version">Cet appareil n’affichera que la cave de l’autre appareil. Sa cave telle qu’elle est maintenant est d’abord enregistrée : vous la retrouvez dans Réglages › Vos données › Versions précédentes.</string>
     <string name="restore_footer_settings">Ajouter ce qui manque ajoute les vins, bouteilles, rangements et entrées du Journal absents de votre cave, et les recherches enregistrées dont vous n’avez pas le nom ; rien d’autre ne change, la devise non plus. Remplacer cette cave rend votre cave exactement comme dans cette sauvegarde, réglages compris (devise, recherches enregistrées). Vous pouvez annuler juste après.</string>

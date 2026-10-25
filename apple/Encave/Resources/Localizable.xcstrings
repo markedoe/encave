@@ -3511,6 +3511,16 @@
         }
       }
     },
+    "Cancels the move": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annule le déplacement"
+          }
+        }
+      }
+    },
     "Celebration": {
       "localizations": {
         "fr": {
@@ -6401,6 +6411,46 @@
         }
       }
     },
+    "Holds %lld bottles. Bins are named like “Bin B3”: rows lettered from the top, bins numbered from the left.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Holds %lld bottle. Bins are named like “Bin B3”: rows lettered from the top, bins numbered from the left."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Holds %lld bottles. Bins are named like “Bin B3”: rows lettered from the top, bins numbered from the left."
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Contient %lld bouteille. Les cases sont nommées comme « Case B3 » : rangées par lettre depuis le haut, cases numérotées depuis la gauche."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Contient %lld bouteilles. Les cases sont nommées comme « Case B3 » : rangées par lettre depuis le haut, cases numérotées depuis la gauche."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Holds %lld bottles. Positions are named like B3; with two bottles in a position, “B3, back” is the one behind.": {
       "localizations": {
         "en": {
@@ -7697,6 +7747,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Marque comme trouvée"
+          }
+        }
+      }
+    },
+    "Marks as not found": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marque comme non trouvée"
           }
         }
       }
@@ -9941,6 +10001,16 @@
         }
       }
     },
+    "Price removed": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prix retiré"
+          }
+        }
+      }
+    },
     "Price seen": {
       "localizations": {
         "fr": {
@@ -10951,12 +11021,12 @@
         }
       }
     },
-    "Saved before joining another cellar": {
+    "Saved before replacing or erasing the cellar": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enregistrée avant de rejoindre une autre cave"
+            "value": "Enregistrée avant de remplacer ou d’effacer la cave"
           }
         }
       }
@@ -11797,6 +11867,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "N’affiche que les vins à boire bientôt."
+          }
+        }
+      }
+    },
+    "Shows the bottles here": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche les bouteilles de cette position"
           }
         }
       }
@@ -16169,6 +16249,16 @@
         }
       }
     },
+    "⌃⌘T": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌃⌘T"
+          }
+        }
+      }
+    },
     "⌘+ / ⌘–": {
       "localizations": {
         "fr": {
@@ -16265,16 +16355,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "⌥⌘O"
-          }
-        }
-      }
-    },
-    "⌥⌘T": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "⌥⌘T"
           }
         }
       }

@@ -45,7 +45,7 @@ struct RackBottleList: View {
             }
             .navigationTitle(rack.name)
             .onChange(of: selection) { _, id in
-                if let id, let slot = model.cellar.bottles[id]?.slot { model.highlightedSlot = slot }
+                if let id, let slot = model.cellar.bottles[id]?.slot { router?.highlightedSlot = slot }
             }
         } else {
             ContentUnavailableView("Storage not found", systemImage: "questionmark")

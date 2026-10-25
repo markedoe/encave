@@ -298,7 +298,7 @@ private struct TonightPick: View {
                 let location = model.locationLabel(for: bottle) ?? String(localized: "Not in storage")
                 if bottle.slot != nil {
                     Button {
-                        router?.showInRack(bottle, model: model)
+                        router?.showInRack(bottle)
                     } label: {
                         Label(location, systemImage: model.locationIcon(for: bottle))
                             .font(.subheadline)

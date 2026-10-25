@@ -204,7 +204,7 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "⌘Z", body: "Undo, while the banner with Undo shows"),
                 HelpSection(title: "⌘R", body: "Sync now, on the same Wi-Fi and away from home"),
                 HelpSection(title: "⌘?", body: "Open this help (Mac)"),
-                HelpSection(title: "⌥⌘T", body: "Show the cellar as a table or a list (Mac)"),
+                HelpSection(title: "⌃⌘T", body: "Show the cellar as a table or a list (Mac)"),
                 HelpSection(title: "Drag to a storage (Mac)", body: "Drag a wine from the Cellar, or a bottle from a wine’s page, onto a storage in the sidebar: one bottle goes to its first free position, with Undo. A full storage takes none.", systemImage: "arrow.down.to.line"),
                 HelpSection(title: "Menu bar (Mac)", body: "The glass in the menu bar lists the bottles to open now and where they are; click one to open it. Turn on **Show Tonight in the Menu Bar** in the Tonight toolbar or in **Settings**.", systemImage: "menubar.arrow.up.rectangle"),
                 HelpSection(title: "Other apps and AI assistants", body: "In Shortcuts, **Get Cellar Contents** gives your bottles as text or JSON (all of them, those to open now, on order…), and **Get Wine Details** gives one wine with its tasting notes. An app on this device that runs shortcuts, such as a local AI assistant, can use them to answer questions about your cellar. Encave itself sends nothing.", systemImage: "square.stack.3d.up"),

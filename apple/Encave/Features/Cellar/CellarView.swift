@@ -93,20 +93,22 @@ struct CellarList: View {
     private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
     #endif
 
-    /// Shared with the table, so switching between them keeps the search and the filters.
+    /// Shared with the table, so switching between them keeps the search and the filters;
+    /// each window has its own.
     private var filter: CellarFilter {
-        get { model.cellarFilter }
-        nonmutating set { model.cellarFilter = newValue }
+        get { router?.cellarFilter ?? CellarFilter() }
+        nonmutating set { router?.cellarFilter = newValue }
     }
+    private var sort: CellarSort { router?.cellarSort ?? .name }
     private var filterBinding: Binding<CellarFilter> {
-        Binding(get: { model.cellarFilter }, set: { model.cellarFilter = $0 })
+        Binding(get: { filter }, set: { filter = $0 })
     }
     private var sortBinding: Binding<CellarSort> {
-        Binding(get: { model.cellarSort }, set: { model.cellarSort = $0 })
+        Binding(get: { sort }, set: { router?.cellarSort = $0 })
     }
 
     var body: some View {
-        let groups = model.cellar.groups(filter: filter, sort: model.cellarSort, year: model.currentYear)
+        let groups = model.cellar.groups(filter: filter, sort: sort, year: model.currentYear)
         Group {
             if isSelecting {
                 CellarSelectionList(groups: groups, picked: $picked)
@@ -132,7 +134,7 @@ struct CellarList: View {
             #endif
             .alert("Save This Search", isPresented: $namingSearch) {
                 TextField("Name", text: $searchName)
-                Button("Save") { model.update { $0.saveSearch(searchName, filter: model.cellarFilter) } }
+                Button("Save") { model.update { $0.saveSearch(searchName, filter: filter) } }
                     .disabled(searchName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 Button("Cancel", role: .cancel) {}
             } message: {
@@ -361,7 +363,7 @@ extension CellarList {
             Menu {
                 ForEach(model.cellar.racks) { rack in
                     Button(rack.name) {
-                        model.place(picked, inRack: rack.id)
+                        model.place(bottles: Set(pickedBottles(groups).map(\.id)), inRack: rack.id)
                         endSelection()
                     }
                 }
@@ -370,7 +372,7 @@ extension CellarList {
             }
             .disabled(picked.isEmpty || model.cellar.racks.isEmpty)
             Button {
-                model.unplace(picked)
+                model.unplace(bottles: Set(pickedBottles(groups).map(\.id)))
                 endSelection()
             } label: {
                 Label("Take Out of Storage", systemImage: "tray.and.arrow.up")
@@ -672,6 +674,7 @@ extension View {
 
 private struct DeletedWineSelection: ViewModifier {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     @Binding var selection: UUID?
     let selectsFirst: Bool
 
@@ -679,7 +682,8 @@ private struct DeletedWineSelection: ViewModifier {
         content.onChange(of: selection.map { model.cellar.wines[$0] == nil } ?? false) { _, gone in
             guard gone else { return }
             selection = selectsFirst
-                ? model.cellar.groups(filter: model.cellarFilter, sort: model.cellarSort, year: model.currentYear).first?.wine.id
+                ? model.cellar.groups(filter: router?.cellarFilter ?? CellarFilter(), sort: router?.cellarSort ?? .name,
+                                     year: model.currentYear).first?.wine.id
                 : nil
         }
     }
@@ -697,7 +701,7 @@ struct WineContextMenu: View {
         if let bottle = group.bottles.bottleToOpen {
             Button("Drink a Bottle", systemImage: "wineglass") { router?.sheet = .drink(bottleID: bottle.id) }
             if bottle.slot != nil {
-                Button("Show in Storage", systemImage: "square.grid.3x3") { router?.showInRack(bottle, model: model) }
+                Button("Show in Storage", systemImage: "square.grid.3x3") { router?.showInRack(bottle) }
             }
             Button("Move…", systemImage: "arrow.up.and.down.and.arrow.left.and.right") {
                 router?.sheet = .moveBottle(bottleID: bottle.id)

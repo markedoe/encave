@@ -759,9 +759,16 @@ public extension Cellar {
     /// rack, in order. Returns how many were placed.
     @discardableResult
     mutating func place(wines wineIDs: Set<UUID>, in rackID: UUID) throws -> Int {
+        try place(bottles: Set(bottles.values.filter { wineIDs.contains($0.wineID) }.map(\.id)), in: rackID)
+    }
+
+    /// Puts these bottles, those in the cellar without a place, into the free places
+    /// of a rack, in order. Returns how many were placed.
+    @discardableResult
+    mutating func place(bottles bottleIDs: Set<UUID>, in rackID: UUID) throws -> Int {
         guard let rack = rack(rackID) else { throw CellarError.unknownRack }
         let waiting = bottlesInCellar
-            .filter { wineIDs.contains($0.wineID) && $0.slot == nil }
+            .filter { bottleIDs.contains($0.id) && $0.slot == nil }
             .sorted { a, b in
                 let wa = wines[a.wineID], wb = wines[b.wineID]
                 if a.wineID != b.wineID, let wa, let wb { return Cellar.nameOrder(wa, wb) }
@@ -779,8 +786,15 @@ public extension Cellar {
     /// Returns how many moved.
     @discardableResult
     mutating func unplace(wines wineIDs: Set<UUID>) -> Int {
+        unplace(bottles: Set(bottles.values.filter { wineIDs.contains($0.wineID) }.map(\.id)))
+    }
+
+    /// Takes these bottles out of their places (they stay in the cellar). Returns how many moved.
+    @discardableResult
+    mutating func unplace(bottles bottleIDs: Set<UUID>) -> Int {
         var count = 0
-        for (id, bottle) in bottles where wineIDs.contains(bottle.wineID) && bottle.status == .inCellar && bottle.slot != nil {
+        for id in bottleIDs {
+            guard let bottle = bottles[id], bottle.status == .inCellar, bottle.slot != nil else { continue }
             bottles[id]?.slot = nil
             count += 1
         }

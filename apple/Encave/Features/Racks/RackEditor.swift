@@ -110,6 +110,11 @@ struct RackEditor: View {
                             Text("Holds \(preview.capacity) bottles. Shelves are numbered from the top, positions from the left.")
                             outsideWarning
                         }
+                    } else if kind == .bins {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Holds \(preview.capacity) bottles. Bins are named like “Bin B3”: rows lettered from the top, bins numbered from the left.")
+                            outsideWarning
+                        }
                     } else {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Holds \(preview.capacity) bottles. Positions are named like B3; with two bottles in a position, “B3, back” is the one behind.")

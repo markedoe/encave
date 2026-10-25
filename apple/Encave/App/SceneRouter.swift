@@ -7,6 +7,8 @@ import SwiftUI
 enum SceneAction {
     case openWine(UUID)
     case show(AppTab)
+    /// Storage, with this position highlighted ("Show in Storage").
+    case showInStorage(Slot)
     case present(AppSheet)
 }
 
@@ -24,12 +26,19 @@ final class SceneRouter {
     var openWineRequest: UUID?
     /// Wines to delete once the alert of this window confirms it (`deleteFollowingRule`).
     var confirmingWineDeletion: Set<UUID> = []
+    /// The Cellar's search, filters and sort, shared by its list and its table; each
+    /// window has its own.
+    var cellarFilter = CellarFilter()
+    var cellarSort: CellarSort = .name
+    /// Position to highlight when jumping to a storage ("Show in Storage"), in this window.
+    var highlightedSlot: Slot?
     /// Asked while a sheet was open: done once it closes, so a form being filled in is
     /// never closed to show something else.
     @ObservationIgnored private var deferred: SceneAction?
     /// A window without sections (a wine's window) shows them in the main window instead,
     /// the Cellar too: setting `selectedTab` to the tab it already has would do nothing.
-    @ObservationIgnored var showsSectionElsewhere: ((AppTab) -> Void)?
+    /// Told `.show` and `.showInStorage`.
+    @ObservationIgnored var showsSectionElsewhere: ((SceneAction) -> Void)?
 
     func perform(_ action: SceneAction) {
         if sheet != nil {
@@ -41,7 +50,14 @@ final class SceneRouter {
             selectedTab = .cellar
             openWineRequest = id
         case .show(let tab):
-            if let showsSectionElsewhere { showsSectionElsewhere(tab) } else { selectedTab = tab }
+            if let showsSectionElsewhere { showsSectionElsewhere(action) } else { selectedTab = tab }
+        case .showInStorage(let slot):
+            if let showsSectionElsewhere {
+                showsSectionElsewhere(action)
+            } else {
+                highlightedSlot = slot
+                selectedTab = .racks
+            }
         case .present(let sheet):
             self.sheet = sheet
         }
@@ -55,10 +71,9 @@ final class SceneRouter {
     }
 
     /// Racks, with the bottle's place highlighted.
-    func showInRack(_ bottle: Bottle, model: CellarModel) {
+    func showInRack(_ bottle: Bottle) {
         guard let slot = bottle.slot else { return }
-        model.highlightedSlot = slot
-        selectedTab = .racks
+        perform(.showInStorage(slot))
     }
 }
 

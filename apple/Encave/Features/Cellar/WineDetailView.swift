@@ -318,7 +318,7 @@ struct WineDetailView: View {
             }
             if wine.currentPrice != nil {
                 Button("Remove Price", systemImage: "xmark.circle", role: .destructive) {
-                    setPrice(nil, currency: nil)
+                    model.removePrice(of: wineID)
                 }
             }
         } header: {
@@ -522,7 +522,7 @@ struct BottleRow: View {
             }
             if bottle.slot != nil {
                 Button {
-                    router?.showInRack(bottle, model: model)
+                    router?.showInRack(bottle)
                 } label: {
                     Image(systemName: "scope")
                 }
@@ -571,7 +571,7 @@ struct BottleRow: View {
                 Button("Free This Bottle", systemImage: "gift.slash") { model.reserve([bottle.id], for: nil) }
             }
             if bottle.slot != nil {
-                Button("Show in Storage", systemImage: "scope") { router?.showInRack(bottle, model: model) }
+                Button("Show in Storage", systemImage: "scope") { router?.showInRack(bottle) }
             }
             BottleDocumentButtons(bottle: bottle) { router?.sheet = $0 }
             Divider()
@@ -690,7 +690,8 @@ struct OrderedBottleRow: View {
             }
             .tint(.accentColor)
         }
-        .swipeActions(edge: .trailing) {
+        // No full swipe, as for a bottle in the cellar: an order is cancelled only on purpose.
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button(role: .destructive) {
                 model.markGone(bottle.id)
             } label: {

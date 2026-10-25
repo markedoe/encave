@@ -336,7 +336,7 @@ struct TastingRow: View {
                 // The style in words, not only by the bottle's color.
                 let details = [
                     showsWine ? wine?.color?.name : nil,
-                    tasting?.occasion,
+                    tasting?.occasion.map(Occasion.displayName),
                     tasting?.isDetailed == true ? String(localized: "Full note") : nil,
                 ].compactMap { $0 }.filter { !$0.isEmpty }
                 if !details.isEmpty {
@@ -374,7 +374,7 @@ struct TastingRow: View {
         if let style = wine?.color?.name { parts.append(style) }
         if let rating = tasting?.rating { parts.append(String(localized: "\(rating) stars")) }
         parts.append((tasting?.date ?? bottle.addedAt).formatted(.dateTime.day().month(.wide)))
-        if let occasion = tasting?.occasion { parts.append(occasion) }
+        if let occasion = tasting?.occasion { parts.append(Occasion.displayName(occasion)) }
         if let note = tasting?.note, !note.isEmpty { parts.append(note) }
         if tasting?.isDetailed == true { parts.append(String(localized: "Full note")) }
         return parts.joined(separator: ", ")

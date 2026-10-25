@@ -13,6 +13,9 @@ struct WineImagePicker: View {
     let wineID: UUID
     @State private var creating = false
     @State private var working = false
+    /// The picture from the internet being downloaded: cancelled by any other choice and
+    /// on closing, so a late answer never replaces it.
+    @State private var download: Task<Void, Never>?
 
     var body: some View {
         NavigationStack {
@@ -31,7 +34,7 @@ struct WineImagePicker: View {
                     if let photoID = wine.photoID, PhotoStore.exists(photoID) {
                         Section {
                             Button {
-                                setCover(nil)
+                                choose(nil)
                             } label: {
                                 Label("Use the Label Photo", systemImage: wine.coverPhotoID == nil ? "checkmark.circle.fill" : "photo")
                             }
@@ -58,17 +61,18 @@ struct WineImagePicker: View {
                         }
                     }
 
-                    WebImageSection(wine: wine) { data in
+                    WebImageSection(wine: wine, download: $download) { data in
                         await useImage(data)
                     }
 
                     if wine.coverPhotoID != nil {
                         Section {
-                            Button("Remove This Picture", systemImage: "trash", role: .destructive) { setCover(nil) }
+                            Button("Remove This Picture", systemImage: "trash", role: .destructive) { choose(nil) }
                         }
                     }
                 }
                 .modifier(IllustrationSheet(isPresented: $creating, wine: wine) { data in
+                    cancelDownload()
                     Task { @MainActor in await useImage(data) }
                 })
             } else {
@@ -84,12 +88,25 @@ struct WineImagePicker: View {
             }
         }
         .macSheetFrame()
+        .onDisappear(perform: cancelDownload)
+    }
+
+    private func cancelDownload() {
+        download?.cancel()
+        download = nil
+    }
+
+    private func choose(_ id: String?) {
+        cancelDownload()
+        setCover(id)
     }
 
     private func useImage(_ data: Data) async {
         working = true
         defer { working = false }
         let id = await Task.detached(priority: .userInitiated) { PhotoStore.save(data) }.value
+        // Another choice was made meanwhile (in the download's task): it stays.
+        guard !Task.isCancelled else { return }
         if let id { setCover(id) }
     }
 
@@ -108,6 +125,8 @@ struct WineImagePicker: View {
 /// picture is downloaded from its host and becomes the cover. The label photo is kept.
 struct WebImageSection: View {
     let wine: Wine
+    /// The download running, kept by the picker so another choice cancels it.
+    @Binding var download: Task<Void, Never>?
     let onPick: @MainActor (Data) async -> Void
 
     @State private var settings = WebSearchSettings.load()
@@ -218,12 +237,15 @@ struct WebImageSection: View {
         guard downloading == nil else { return }
         downloading = image.id
         problem = nil
-        Task {
+        download = Task {
             defer { downloading = nil }
             do {
                 let data = try await WebSearchClient.downloadImage(image.imageURL)
+                try Task.checkCancellation()
                 await onPick(data)
             } catch {
+                // Cancelled by another choice or by closing: nothing to say.
+                guard !Task.isCancelled else { return }
                 problem = String(localized: "This picture could not be downloaded. Try another one.")
             }
         }

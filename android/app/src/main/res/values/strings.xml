@@ -343,7 +343,7 @@
     <string name="settings_erase_backups">Also erase previous versions and backups</string>
     <string name="settings_erase_backups_on">The previous versions, and the weekly backups Encave wrote in Download/Encave, are erased too. Files you exported or saved elsewhere are never touched.</string>
     <string name="settings_erase_backups_off">The previous versions and the weekly backups in Download/Encave stay. Files you exported or saved elsewhere are never touched.</string>
-    <string name="versions_before_replacing">Saved before joining another cellar</string>
+    <string name="versions_before_replacing">Saved before replacing or erasing the cellar</string>
     <string name="join_replace_version">This device will show only the other device’s cellar. Its cellar as it is now is saved first: you find it in Settings › Your data › Previous versions.</string>
     <string name="join_replace_confirm_version">This device will show only the other device’s cellar. Its cellar as it is now is saved first: you find it in Settings › Your data › Previous versions.</string>
     <string name="restore_footer_settings">Add what is missing adds the wines, bottles, storage and Journal entries that are not in your cellar, and the saved searches whose name you do not have; nothing else changes, the currency included. Replace this cellar makes your cellar exactly as in this backup, its settings (currency, saved searches) included. You can undo right after.</string>

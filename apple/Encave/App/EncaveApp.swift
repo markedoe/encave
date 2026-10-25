@@ -119,7 +119,7 @@ struct CellarCommands: Commands {
             Button("Show in Storage") {
                 withWine { wine in
                     guard let bottle = model.cellar.bottlesInCellar.first(where: { $0.wineID == wine.id && $0.slot != nil }) else { return }
-                    if let router { router.showInRack(bottle, model: model) } else { model.showInRack(bottle) }
+                    if let router { router.showInRack(bottle) } else { model.showInRack(bottle) }
                 }
             }
             .disabled(selectedWineID == nil)
@@ -185,13 +185,13 @@ private struct HelpMenuButton: View {
 }
 #endif
 
-/// Cellar › Show as Table (⌥⌘T): the same switch as in the Cellar toolbar.
+/// Cellar › Show as Table (⌃⌘T; ⌥⌘T is Show/Hide Toolbar): the same switch as in the Cellar toolbar.
 private struct CellarTableToggle: View {
     @Bindable private var layout = DefaultsFlag.cellarTable
 
     var body: some View {
         Toggle("Show as Table", isOn: $layout.isOn)
-            .keyboardShortcut("t", modifiers: [.command, .option])
+            .keyboardShortcut("t", modifiers: [.command, .control])
     }
 }
 

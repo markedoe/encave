@@ -330,6 +330,26 @@ import Testing
         #expect(cellar.unplace(wines: [a.id]) == 2)
         #expect(cellar.bottles(of: a.id).allSatisfy { $0.slot == nil })
     }
+
+    /// A filter (an occasion, a storage) shows only some bottles of a wine: only those move.
+    @Test func placingAndTakingOutChosenBottlesLeavesTheOthers() throws {
+        var cellar = Cellar()
+        let rack = Rack(name: "Small", rows: 1, columns: 4)
+        cellar.addRack(rack)
+        let wine = Wine(name: "A")
+        let slots = (0..<3).map { Slot(rackID: rack.id, row: 0, column: $0) }
+        let bottles = try cellar.addBottles(of: wine, quantity: 3, slots: slots)
+        try cellar.reserve([bottles[0].id], for: "Birthday")
+        #expect(cellar.unplace(bottles: [bottles[0].id]) == 1)
+        #expect(cellar.bottles[bottles[0].id]?.slot == nil)
+        #expect(cellar.bottles[bottles[1].id]?.slot == slots[1])
+        #expect(cellar.bottles[bottles[2].id]?.slot == slots[2])
+        #expect(cellar.unplace(bottles: [bottles[1].id, bottles[2].id]) == 2)
+        #expect(try cellar.place(bottles: [bottles[1].id], in: rack.id) == 1)
+        #expect(cellar.bottles[bottles[1].id]?.slot != nil)
+        #expect(cellar.bottles[bottles[0].id]?.slot == nil)
+        #expect(cellar.bottles[bottles[2].id]?.slot == nil)
+    }
 }
 
 @Suite struct YearInWineTests {

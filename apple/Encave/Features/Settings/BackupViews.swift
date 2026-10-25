@@ -234,7 +234,7 @@ struct PreviousVersionsView: View {
                                         .font(.subheadline)
                                         .foregroundStyle(.secondary)
                                     if row.version.isBeforeReplacing {
-                                        Text("Saved before joining another cellar")
+                                        Text("Saved before replacing or erasing the cellar")
                                             .font(.subheadline)
                                             .foregroundStyle(.secondary)
                                     }

@@ -176,12 +176,27 @@ struct AISettings: Equatable, Sendable {
 
     /// One key per provider, in the Keychain on this device.
     static func apiKey(for provider: AIProvider) -> String? {
-        let key = Keychain.get("ai.apiKey.\(provider.rawValue)") ?? (provider == .anthropic ? Keychain.get("ai.apiKey") : nil)
-        return key.map(cleanKey)
+        if provider == .anthropic { moveLegacyKey() }
+        return Keychain.get("ai.apiKey.\(provider.rawValue)").map(cleanKey)
     }
 
     static func setAPIKey(_ key: String?, for provider: AIProvider) {
+        if provider == .anthropic { moveLegacyKey() }
         Keychain.set(key.map(cleanKey), for: "ai.apiKey.\(provider.rawValue)")
+    }
+
+    /// The Anthropic key of earlier versions ("ai.apiKey"): moved once to its provider's
+    /// place, so clearing the field removes it for good.
+    private static func moveLegacyKey() {
+        let legacy = "ai.apiKey", current = "ai.apiKey.\(AIProvider.anthropic.rawValue)"
+        guard case .found(let data) = Keychain.read(legacy) else { return }
+        // Kept where it is when it cannot be copied (device locked): tried again next time.
+        switch Keychain.read(current) {
+        case .found: break
+        case .missing: guard Keychain.setData(data, for: current) else { return }
+        case .failed: return
+        }
+        Keychain.setData(nil, for: legacy)
     }
 
     /// Pasted keys often carry spaces, line breaks or quotes, which providers reject as invalid.
@@ -552,12 +567,15 @@ enum AIService {
         }
     }
 
+    /// No cookies, cache or saved credentials: the label photo is never kept on disk.
+    private static let session = URLSession(configuration: WebSearchClient.privateConfiguration())
+
     /// Every request goes through here.
     private static func send(_ request: URLRequest) async throws -> [String: Any] {
         guard let url = request.url, isAllowed(url) else { throw AIServiceError.insecureURL }
         var request = request
         request.url = try await LocalName.resolve(url)
-        let (data, response) = try await URLSession.shared.data(for: request, delegate: SameHostRedirects.shared)
+        let (data, response) = try await session.data(for: request, delegate: SameHostRedirects.shared)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
         guard (200..<300).contains(status) else {

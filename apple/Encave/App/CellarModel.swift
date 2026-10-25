@@ -25,15 +25,10 @@ final class CellarModel {
     var successCount = 0
     /// Bumped when something is switched on or off (the shopping list), for a lighter haptic.
     var selectionCount = 0
-    /// Slot to highlight when jumping to a rack ("Show in Storage").
-    var highlightedSlot: Slot?
     /// What the Journal shows; back to everything when a new entry would be hidden.
     var journalFilter: DiaryFilter = .all
     /// The Journal's tag chip; cleared, like the filter, when a new entry would be hidden.
     var journalTag: String?
-    /// The Cellar's search, filters and sort, shared by its list and its table.
-    var cellarFilter = CellarFilter()
-    var cellarSort: CellarSort = .name
 
     @ObservationIgnored private var store: any CellarStore = InMemoryCellarStore()
     /// Saves off the main thread, coalescing changes made during a write.
@@ -581,10 +576,11 @@ final class CellarModel {
 
     // MARK: Several wines at once (one Undo for all)
 
-    func place(_ wineIDs: Set<UUID>, inRack rackID: UUID) {
+    /// The bottles shown (a filter may hide some of a wine's bottles): only they move.
+    func place(bottles bottleIDs: Set<UUID>, inRack rackID: UUID) {
         let snapshot = cellar
         var total = 0
-        guard update({ total = try $0.place(wines: wineIDs, in: rackID) }) else { return }
+        guard update({ total = try $0.place(bottles: bottleIDs, in: rackID) }) else { return }
         guard total > 0 else {
             showToast(String(localized: "No free position in this storage for bottles without a position."))
             return
@@ -593,12 +589,34 @@ final class CellarModel {
         showToast(String(localized: "Bottles placed: \(total)")) { [weak self] in self?.update { $0 = snapshot } }
     }
 
-    func unplace(_ wineIDs: Set<UUID>) {
+    func unplace(bottles bottleIDs: Set<UUID>) {
         let snapshot = cellar
         var moved = 0
-        guard update({ moved = $0.unplace(wines: wineIDs) }), moved > 0 else { return }
+        guard update({ moved = $0.unplace(bottles: bottleIDs) }), moved > 0 else { return }
         showToast(String(localized: "Bottles taken out of their positions: \(moved)")) { [weak self] in
             self?.update { $0 = snapshot }
+        }
+    }
+
+    /// The wine's current price goes, with Undo (which puts it back unless a new one was set).
+    func removePrice(of wineID: UUID) {
+        guard let before = cellar.wines[wineID], before.currentPrice != nil else { return }
+        let ok = update { cellar in
+            guard var wine = cellar.wines[wineID] else { return }
+            wine.currentPrice = nil
+            wine.currentPriceCurrency = nil
+            wine.currentPriceDate = nil
+            try cellar.updateWine(wine)
+        }
+        guard ok else { return }
+        showToast(String(localized: "Price removed"), lasting: .afterChanges) { [weak self] in
+            self?.update { cellar in
+                guard var wine = cellar.wines[wineID], wine.currentPrice == nil else { return }
+                wine.currentPrice = before.currentPrice
+                wine.currentPriceCurrency = before.currentPriceCurrency
+                wine.currentPriceDate = before.currentPriceDate
+                try cellar.updateWine(wine)
+            }
         }
     }
 
@@ -833,7 +851,7 @@ final class CellarModel {
 
     /// Racks in the window used last. Screens use their window's router instead.
     func showInRack(_ bottle: Bottle) {
-        activeRouter?.showInRack(bottle, model: self)
+        activeRouter?.showInRack(bottle)
     }
 
     /// The sample cellar replaces everything, so it can be loaded only into an empty cellar
@@ -1035,7 +1053,10 @@ final class CellarModel {
     func setLabelFrame(_ frame: WineLabelFrame, for wineID: UUID) {
         guard var wine = cellar.wines[wineID], wine.photoID == frame.photoID, wine.labelFrame != frame else { return }
         wine.labelFrame = frame
+        // The bottles' "Added" banner still shown keeps its Undo (`completeWine` may replace it).
+        if isAddBannerShown(for: wineID) { undoing = true }
         _ = update { try $0.updateWine(wine) }
+        undoing = false
     }
 
     func aiFoundNothing(for wineID: UUID) {

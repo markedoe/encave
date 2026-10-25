@@ -24,13 +24,15 @@ struct CellarTable: View {
     /// The table's width, to leave out wide columns beside the inspector (iPad in portrait).
     @State private var tableWidth: CGFloat = .infinity
 
-    /// Shared with the list, so switching between them keeps the search and the filters.
+    /// Shared with the list, so switching between them keeps the search and the filters;
+    /// each window has its own.
+    private var current: CellarFilter { router?.cellarFilter ?? CellarFilter() }
     private var filter: Binding<CellarFilter> {
-        Binding(get: { model.cellarFilter }, set: { model.cellarFilter = $0 })
+        Binding(get: { current }, set: { router?.cellarFilter = $0 })
     }
 
     var body: some View {
-        let rows = model.cellar.groups(filter: model.cellarFilter, sort: .name, year: model.currentYear)
+        let rows = model.cellar.groups(filter: current, sort: .name, year: model.currentYear)
             .map { CellarTableRow(group: $0, model: model) }
             .sorted(using: sortOrder)
         table(rows)
@@ -152,7 +154,9 @@ struct CellarTable: View {
     @ViewBuilder
     private func menu(for ids: Set<UUID>, rows: [CellarTableRow]) -> some View {
         if ids.count > 1 {
-            SeveralWinesMenu(wineIDs: ids) { confirmingDelete = ids }
+            // The bottles the filters show, not every bottle of these wines.
+            let bottleIDs = Set(rows.filter { ids.contains($0.id) }.flatMap(\.group.bottles).map(\.id))
+            SeveralWinesMenu(bottleIDs: bottleIDs) { confirmingDelete = ids }
         } else if let row = rows.first(where: { ids.contains($0.id) }) {
             WineContextMenu(group: row.group)
         }
@@ -161,18 +165,18 @@ struct CellarTable: View {
     @ViewBuilder
     private func emptyState(_ isEmpty: Bool) -> some View {
         if isEmpty {
-            if model.cellarFilter.isActive {
+            if current.isActive {
                 ContentUnavailableView {
                     Label("No matching bottles", systemImage: "line.3.horizontal.decrease.circle")
                 } description: {
                     Text("Try removing a filter.")
                 } actions: {
-                    Button("Clear Filters") { model.cellarFilter = CellarFilter(query: model.cellarFilter.query) }
+                    Button("Clear Filters") { router?.cellarFilter = CellarFilter(query: current.query) }
                 }
-            } else if model.cellarFilter.query.trimmingCharacters(in: .whitespaces).isEmpty {
+            } else if current.query.trimmingCharacters(in: .whitespaces).isEmpty {
                 ContentUnavailableView("No bottles", systemImage: "wineglass")
             } else {
-                ContentUnavailableView.search(text: model.cellarFilter.query)
+                ContentUnavailableView.search(text: current.query)
             }
         }
     }
@@ -312,18 +316,19 @@ private struct CellarFilterMenu: View {
 /// Right-click on several rows of the table: what can be done to them at once.
 private struct SeveralWinesMenu: View {
     @Environment(CellarModel.self) private var model
-    let wineIDs: Set<UUID>
+    /// The bottles of the selected rows that the filters show.
+    let bottleIDs: Set<UUID>
     let onDelete: () -> Void
 
     var body: some View {
         if !model.cellar.racks.isEmpty {
             Menu("Put in Storage", systemImage: "square.grid.3x3") {
                 ForEach(model.cellar.racks) { rack in
-                    Button(rack.name) { model.place(wineIDs, inRack: rack.id) }
+                    Button(rack.name) { model.place(bottles: bottleIDs, inRack: rack.id) }
                 }
             }
         }
-        Button("Take Out of Storage", systemImage: "tray.and.arrow.up") { model.unplace(wineIDs) }
+        Button("Take Out of Storage", systemImage: "tray.and.arrow.up") { model.unplace(bottles: bottleIDs) }
         Divider()
         Button("Delete Wines…", systemImage: "trash", role: .destructive, action: onDelete)
     }

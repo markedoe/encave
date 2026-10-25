@@ -53,6 +53,10 @@ struct RackGrid: View {
     /// The smallest size of the fridge's captions (shelf numbers, front and back, zones),
     /// growing with Dynamic Type.
     @ScaledMetric(relativeTo: .caption2) private var captionFloor: CGFloat = 11
+    /// The smallest size of the row letters and column numbers, growing with Dynamic Type
+    /// up to a size that still leaves room for the places.
+    @ScaledMetric(relativeTo: .caption2) private var scaledHeaderFloor: CGFloat = 10
+    private var headerFloor: CGFloat { min(scaledHeaderFloor, 18) }
 
     private var size: CGFloat { rack.kind == .bins ? cellSize * 1.7 : cellSize }
     private var spacing: CGFloat {
@@ -118,7 +122,9 @@ struct RackGrid: View {
         (CGFloat(rack.maxColumns) + 0.5 + CGFloat(rack.bandShift(depth: 1))) * (size + spacing)
     }
 
-    private var headerWidth: CGFloat { max(18, cellSize * 0.42, rack.hasShelfLayers ? captionFloor * 1.7 : 0) }
+    private var headerWidth: CGFloat {
+        max(18, cellSize * 0.42, headerFloor * 1.6, rack.hasShelfLayers ? captionFloor * 1.7 : 0)
+    }
 
     /// The places of one row, offset by half a place when the row nests into the one below.
     /// `depth` draws only the front or the back places of a fridge drawn in bands; head-to-tail,
@@ -275,8 +281,10 @@ struct RackGrid: View {
     /// Shelves are numbered from the top; other racks letter their rows.
     private func rowHeader(_ row: Int) -> some View {
         Text(verbatim: rack.kind == .shelves ? "\(row + 1)" : Rack.rowLetters(row))
-            .font(.system(size: max(10, cellSize * 0.24), weight: .semibold).monospacedDigit())
+            .font(.system(size: max(headerFloor, cellSize * 0.24), weight: .semibold).monospacedDigit())
             .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
             .frame(width: headerWidth)
             .accessibilityHidden(true)
     }
@@ -287,8 +295,10 @@ struct RackGrid: View {
             HStack(spacing: spacing) {
                 ForEach(0..<rack.maxColumns, id: \.self) { column in
                     Text(verbatim: "\(column + 1)")
-                        .font(.system(size: max(10, cellSize * 0.22), weight: .medium).monospacedDigit())
+                        .font(.system(size: max(headerFloor, cellSize * 0.22), weight: .medium).monospacedDigit())
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
                         .frame(width: size)
                 }
             }
@@ -720,12 +730,16 @@ struct RackCellView: View {
         case .none:
             return nil
         case .browsing:
-            return bottles.isEmpty ? Text("Adds a bottle here") : Text("Shows this bottle")
+            if bottles.isEmpty { return Text("Adds a bottle here") }
+            return capacity == 1 ? Text("Shows this bottle") : Text("Shows the bottles here")
         case .moving:
+            // The moving bottle's own position: a tap there stops the move.
+            if selectedCount > 0 { return Text("Cancels the move") }
             if bottles.count < capacity { return Text("Puts the bottle here") }
             return capacity == 1 ? Text("Swaps the two bottles") : nil
         case .auditing:
-            return bottles.isEmpty ? nil : Text("Marks as found")
+            if bottles.isEmpty { return nil }
+            return selectedCount >= bottles.count ? Text("Marks as not found") : Text("Marks as found")
         }
     }
 

@@ -66,7 +66,7 @@ struct MacRoot: View {
         // The selected wine was deleted: the first of the Cellar takes its place.
         .replacingDeletedWine($wine, selectsFirst: destination == .cellar)
         .replacingDeletedWine($tonightWine, selectsFirst: false)
-        .onChange(of: model.highlightedSlot) { _, slot in
+        .onChange(of: router.highlightedSlot) { _, slot in
             if let slot { destination = .rack(slot.rackID) }
         }
         .onChange(of: destination) { _, new in
@@ -188,7 +188,7 @@ struct MacRoot: View {
         case .journal: if destination != .journal { destination = .journal }
         case .racks:
             if case .rack = destination { return }
-            if let first = model.highlightedSlot?.rackID ?? model.cellar.racks.first?.id {
+            if let first = router.highlightedSlot?.rackID ?? model.cellar.racks.first?.id {
                 destination = .rack(first)
             } else {
                 router.sheet = .editRack(rackID: nil)

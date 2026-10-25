@@ -74,7 +74,7 @@ struct RacksView: View {
                 SettingsToolbarItem()
                 #endif
             }
-            .onChange(of: model.highlightedSlot, initial: true) { _, slot in
+            .onChange(of: router?.highlightedSlot, initial: true) { _, slot in
                 guard let slot else { return }
                 let rack = NavigationPath([slot.rackID])
                 if path != rack { path = rack }

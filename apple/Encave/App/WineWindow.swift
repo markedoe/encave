@@ -26,6 +26,8 @@ struct WineWindow: View {
                 .environment(model)
                 .environment(router)
         }
+        // Delete Wine with several bottles asks here (the window then closes, below).
+        .confirmsWineDeletion($router.confirmingWineDeletion)
         // The menus act on this window's wine.
         .focusedSceneValue(\.sceneRouter, router)
         .focusedSceneValue(\.selectedWineID, wineID)
@@ -37,8 +39,8 @@ struct WineWindow: View {
         }
         // ⌘1 included: this window's router is already on the Cellar.
         .onAppear {
-            router.showsSectionElsewhere = { [model, openWindow] tab in
-                model.request(.show(tab))
+            router.showsSectionElsewhere = { [model, openWindow] action in
+                model.request(action)
                 #if os(macOS)
                 MainWindow.show(openWindow)
                 #endif

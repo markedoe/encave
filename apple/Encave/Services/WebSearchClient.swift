@@ -43,8 +43,22 @@ struct WebSearchSettings: Equatable, Sendable {
 }
 
 enum WebSearchClient {
-    /// No cookies or cache: each search stands alone.
-    private static let session = URLSession(configuration: .ephemeral)
+    /// No cookies, cache or saved credentials: each search, image search and picture
+    /// download stands alone, and none tells the others' hosts about it.
+    private static let session = URLSession(configuration: privateConfiguration())
+
+    /// Nothing kept or sent beyond the request itself: no cookies (accepted or sent), no
+    /// cache, no credentials. For web search, its pages and pictures, and the AI service.
+    static func privateConfiguration() -> URLSessionConfiguration {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.httpCookieAcceptPolicy = .never
+        configuration.httpShouldSetCookies = false
+        configuration.httpCookieStorage = nil
+        configuration.urlCache = nil
+        configuration.urlCredentialStorage = nil
+        configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        return configuration
+    }
 
     /// Sends the query, and nothing else, to the service set up in Settings.
     static func search(_ query: String, settings: WebSearchSettings = .load(), apiKey: String? = nil,
@@ -110,13 +124,7 @@ enum WebSearchClient {
     /// cache, saved passwords, or connection reused by a later search. The User-Agent is the
     /// system's for this app (its name and version, the network library's and the system's).
     static func makePageSession() -> URLSession {
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.httpCookieAcceptPolicy = .never
-        configuration.httpShouldSetCookies = false
-        configuration.httpCookieStorage = nil
-        configuration.urlCache = nil
-        configuration.urlCredentialStorage = nil
-        configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        let configuration = privateConfiguration()
         configuration.timeoutIntervalForRequest = PagePrices.timeout
         configuration.timeoutIntervalForResource = PagePrices.timeout
         configuration.httpMaximumConnectionsPerHost = PagePrices.parallelPages
