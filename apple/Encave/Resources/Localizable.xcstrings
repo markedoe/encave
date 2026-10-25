@@ -1431,6 +1431,16 @@
         }
       }
     },
+    "**Share an Evening Request** in Tonight prepares a request for an evening’s selection: type the occasion, dishes or guests, choose the number of bottles if you like, then tap **Share** and pick an app such as Claude. The request lists your bottles and their positions, without prices, notes or places of purchase. Encave sends nothing: the text leaves this device through the app you pick, under its privacy policy. No Siri or shortcut needed.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Partager une demande de soirée** dans Ce soir prépare une demande de sélection pour une soirée : saisissez l’occasion, les plats ou les invités, choisissez le nombre de bouteilles si vous voulez, puis touchez **Partager** et choisissez une app comme Claude. La demande liste vos bouteilles et leur position, sans prix, notes ni lieux d’achat. Encave n’envoie rien : le texte quitte cet appareil par l’app que vous choisissez, selon sa politique de confidentialité. Ni Siri ni raccourci nécessaires."
+          }
+        }
+      }
+    },
     "**Weekly Backup on This Device** is on from the start: once a week, Encave makes a backup by itself. On iPhone and iPad, it is made when you open Encave, and in the background only while sync away from home is on (iOS decides when); on a Mac, when you open Encave. It keeps the last two on this device, as ZIP files that are not encrypted. On iPhone and iPad they are in the Files app, in **On My iPhone › Encave** (or **On My iPad**); on a Mac, once one is made, choose **Show Weekly Backups in Finder**. On iPhone and iPad they are left out of the device's backups, which already hold your cellar, and are removed with Encave; on a Mac, Time Machine leaves them out. **Erase all data** erases them too, unless you turn off **Also erase previous versions and backups**. Settings show when the last backup was made, and suggest one when there was none for a month. A backup kept on the device is lost with it: copy one elsewhere from time to time. Turn the switch off if you do not want them.": {
       "localizations": {
         "fr": {
@@ -5767,6 +5777,16 @@
         }
       }
     },
+    "Evening Request": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande de soirée"
+          }
+        }
+      }
+    },
     "Every 15 minutes": {
       "localizations": {
         "fr": {
@@ -7687,6 +7707,16 @@
         }
       }
     },
+    "Let the assistant choose": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Au choix de l’assistant"
+          }
+        }
+      }
+    },
     "Libraries": {
       "localizations": {
         "fr": {
@@ -9027,6 +9057,16 @@
         }
       }
     },
+    "Occasion, dishes, guests": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Occasion, plats, invités"
+          }
+        }
+      }
+    },
     "Off": {
       "localizations": {
         "fr": {
@@ -9727,6 +9767,16 @@
         }
       }
     },
+    "Opens a form, then the share sheet.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvre un formulaire, puis la feuille de partage."
+          }
+        }
+      }
+    },
     "Opens the document.": {
       "localizations": {
         "fr": {
@@ -9743,6 +9793,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouvre la page dans votre navigateur."
+          }
+        }
+      }
+    },
+    "Opens the share sheet to choose the app, such as Claude.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvre la feuille de partage pour choisir l’app, comme Claude."
           }
         }
       }
@@ -11773,6 +11833,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Partager %@"
+          }
+        }
+      }
+    },
+    "Share an Evening Request": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partager une demande de soirée"
+          }
+        }
+      }
+    },
+    "Share an evening request": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partager une demande de soirée"
           }
         }
       }
@@ -13867,6 +13947,16 @@
         }
       }
     },
+    "The text goes to the app you choose: your wines with their positions, without prices, notes or purchase places.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le texte va à l’app que vous choisissez : vos vins avec leur position, sans prix, notes ni lieux d’achat."
+          }
+        }
+      }
+    },
     "The text is read on this device to fill in the name, producer, vintage and appellation.": {
       "localizations": {
         "fr": {
@@ -14417,12 +14507,12 @@
         }
       }
     },
-    "To let an assistant app of your choice, such as Claude, choose the bottles, make a shortcut in the Shortcuts app. First add **Prepare an Evening Request** from Encave and set **Occasion** to Ask Each Time; you can also set **Number of Bottles** or turn off **Only Bottles Ready to Drink**. Then add the assistant app’s action, such as Ask Claude, with the result of the first one. Name the shortcut “Evening” and say “Hey Siri, Evening”. The request lists your bottles and their positions, without prices, notes or places of purchase. Encave sends nothing: your shortcut gives the text to the app you chose, and it leaves this device under that app’s privacy policy. Nothing happens unless you make this shortcut.": {
+    "To let an assistant app of your choice, such as Claude, choose the bottles, make a shortcut in the Shortcuts app. First add **Prepare an Evening Request** from Encave and set **Occasion** to Ask Each Time; you can also set **Number of Bottles** or turn off **Only Bottles Ready to Drink**. Then add the assistant app’s action, such as Ask Claude, with the result of the first one. Name the shortcut “Evening” and say “Hey Siri, Evening”. The request lists your bottles and their positions, without prices, notes or places of purchase. Encave sends nothing: your shortcut gives the text to the app you chose, and it leaves this device under that app’s privacy policy. Nothing happens unless you make this shortcut. Without Siri, use **Share an Evening Request** in Tonight.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour laisser une app d’assistant de votre choix, comme Claude, choisir les bouteilles, créez un raccourci dans l’app Raccourcis. Ajoutez d’abord **Préparer une demande de soirée** d’Encave et réglez **Occasion** sur Demander à chaque fois ; vous pouvez aussi régler **Nombre de bouteilles** ou désactiver **Seulement les bouteilles prêtes à boire**. Ajoutez ensuite l’action de l’app d’assistant, comme Ask Claude, avec le résultat de la première. Nommez le raccourci « Soirée » et dites « Dis Siri, Soirée ». La demande liste vos bouteilles et leur position, sans prix, notes ni lieux d’achat. Encave n’envoie rien : votre raccourci donne le texte à l’app que vous avez choisie, et il quitte cet appareil selon la politique de confidentialité de cette app. Rien ne se passe tant que vous ne créez pas ce raccourci."
+            "value": "Pour laisser une app d’assistant de votre choix, comme Claude, choisir les bouteilles, créez un raccourci dans l’app Raccourcis. Ajoutez d’abord **Préparer une demande de soirée** d’Encave et réglez **Occasion** sur Demander à chaque fois ; vous pouvez aussi régler **Nombre de bouteilles** ou désactiver **Seulement les bouteilles prêtes à boire**. Ajoutez ensuite l’action de l’app d’assistant, comme Ask Claude, avec le résultat de la première. Nommez le raccourci « Soirée » et dites « Dis Siri, Soirée ». La demande liste vos bouteilles et leur position, sans prix, notes ni lieux d’achat. Encave n’envoie rien : votre raccourci donne le texte à l’app que vous avez choisie, et il quitte cet appareil selon la politique de confidentialité de cette app. Rien ne se passe tant que vous ne créez pas ce raccourci. Sans Siri, utilisez **Partager une demande de soirée** dans Ce soir."
           }
         }
       }
@@ -15709,6 +15799,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vous explorez la cave d’exemple"
+          }
+        }
+      }
+    },
+    "Your bottles, for the app you choose, such as Claude": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos bouteilles, pour l’app que vous choisissez, comme Claude"
           }
         }
       }

@@ -11,6 +11,8 @@ struct TonightView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// The wine opened from the suggestion card, on iPhone and iPad.
     @State private var openedWine: UUID?
+    /// The evening request form, shared to an app such as Claude.
+    @State private var sharingEvening = false
     /// The first wine shown today, "yyyy-MM-dd|id" on this device: it stays today's pick
     /// while it can be drunk, even when wines are added.
     /// Read once and written straight to the defaults, not @AppStorage: on the Mac that
@@ -22,6 +24,7 @@ struct TonightView: View {
         if let selection {
             list(selection: selection)
                 .navigationTitle("Tonight")
+                .sheet(isPresented: $sharingEvening) { EveningRequestView() }
                 #if os(macOS)
                 .toolbar {
                     ToolbarItem { MenuBarToggle() }
@@ -33,6 +36,7 @@ struct TonightView: View {
             NavigationStack {
                 list(selection: nil)
                     .navigationTitle("Tonight")
+                    .sheet(isPresented: $sharingEvening) { EveningRequestView() }
                     #if os(iOS)
                     .toolbar { SettingsToolbarItem() }
                     #endif
@@ -133,6 +137,19 @@ struct TonightView: View {
                 }
                 .accessibilityIdentifier("tonight.ask")
             }
+            // For an assistant app such as Claude, without Siri or a shortcut, as on Android.
+            Button { sharingEvening = true } label: {
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Share an Evening Request").font(.headline).foregroundStyle(.primary)
+                        Text("Your bottles, for the app you choose, such as Claude").font(.subheadline).foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "square.and.arrow.up").foregroundStyle(Color.accentColor)
+                }
+            }
+            .accessibilityHint(Text("Opens a form, then the share sheet."))
+            .accessibilityIdentifier("tonight.evening")
         }
         ForEach(sections) { section in
             Section {

@@ -97,6 +97,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
   selection with your bottles and positions, without prices, notes or places
   of purchase, for the assistant app you choose, such as Claude; Encave sends
   nothing (docs/SHORTCUTS.md)
+- Share an Evening Request in Tonight on iPhone, iPad and Mac, as on Android:
+  the occasion, number of bottles and only ready bottles, then the share
+  sheet with the same text, for Claude or another app; no Siri or shortcut
 - Mac: drop a wine or a bottle onto a storage in the sidebar to put one bottle
   in its first free position, with Undo (never into a full one); Open in New
   Window for a wine (Mac and iPad, ⌥⌘O); Android tablets and foldables show

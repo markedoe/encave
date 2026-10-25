@@ -116,6 +116,9 @@ choice; the text then leaves the device through that app, under that app's
 privacy policy (for Claude, Anthropic's). Nothing happens unless you make
 this shortcut.
 
-On Android, **Share an Evening Request** (Partager une demande de soirée) in
-Tonight asks for the occasion and opens the share sheet with the same text;
-you pick Claude or another app.
+Without Siri or a shortcut, **Share an Evening Request** (Partager une demande
+de soirée) in Tonight asks for the occasion, then opens the share sheet with
+the same text; you pick Claude or another app. On iPhone, iPad and Mac the
+form also has the number of bottles (1 to 24, or the assistant's choice) and
+Only Bottles Ready to Drink (on by default); on a Mac, Share opens the share
+menu. Encave sends nothing: the text leaves through the app you pick.
