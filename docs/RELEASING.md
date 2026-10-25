@@ -9,8 +9,11 @@ yet (see "Work in progress").
 
 ## Principles
 
-- **`main` is always releasable.** A change is checked on a branch (fast checks,
-  and the full screen tour for app changes), then merged into `main`. Every
+- **`main` is always releasable.** A change is checked on a branch (fast checks
+  on every push: tests, lint, the Mac launch test; the full Apple screen tour
+  on pull requests and manual runs), then merged into `main`, where both full
+  screen tours, Apple and Android, run before a build reaches the external or
+  closed testers. Every
   commit is checked: `scripts/check-commit-message.sh` refuses the markers that
   make GitHub skip the workflows (`[skip ci]`, `[ci skip]`, `[no ci]`,
   `[skip actions]`, `[actions skip]`).
@@ -35,7 +38,8 @@ yet (see "Work in progress").
 
 No TestFlight e-mail is sent for a build: right after each upload, the `apps`
 job turns off "Automatically notify testers" for it (`testflight_testers.py
---quiet`). Testers see new builds in the TestFlight app, where they can turn on
+--quiet`, in the background while the job goes on; awaited at its end, never
+failing it). Testers see new builds in the TestFlight app, where they can turn on
 automatic updates.
 
 ### Apple: what gates the external testers
@@ -52,7 +56,9 @@ TestFlight groups only when:
 **`testflight-external.yml`** (by hand) gives an older build: it finds the
 `apple.yml` run that made it (build number `1000 + run number * 10 +
 attempt`) and refuses unless that run's tour passed, or was skipped by
-`tour-check` after a pass. Tick **force** to give it anyway.
+`tour-check` after a pass. The Mac build goes too only when that run's Mac
+launch test passed; otherwise only the iPhone and iPad build goes, with a
+warning. Tick **force** to give both anyway.
 
 ## Release train *(planned)*
 
@@ -162,7 +168,11 @@ Runs on `main` run side by side and can finish out of order: `play_publish.py`
 reads the track first and, when it already has a newer version code, sends
 nothing and ends with a notice (the newer run has released, or will release,
 its own build). `play-release.yml`, run by hand, may release an older version
-code on purpose.
+code on purpose. It finds the `android.yml` run that made the version code
+(`1000 + run number * 10 + attempt`) and refuses unless that run's screen
+tour and emulator smoke test passed; with no version code it takes the
+newest bundle uploaded to internal testing that passed both. Tick **force**
+to release it anyway (no version code: the newest on internal testing).
 
 Every release to closed testing goes through Google's review: the first one
 takes hours to a few days, later ones are usually faster. A release waiting
@@ -410,11 +420,24 @@ the Console (Publishing overview, Inbox).
   `github.ref == 'refs/heads/main'` condition, so a branch run builds
   unsigned and uploads nothing. `scripts/check-workflow-secrets.py` (CI,
   `secrets` job) fails on a use without one.
-- *Recommended, by the owner:* a GitHub Environment `release` (Settings ›
-  Environments › New environment; Deployment branches and tags: Selected,
-  `main` only) holding the release secrets, as a second lock. The workflows
-  do not depend on it yet: moving the secrets there also needs
-  `environment: release` on the jobs that read them.
+- **Not done yet: the release secrets are repository secrets**, so the
+  `main` conditions above are their only lock. *Recommended owner step*, a
+  second lock that GitHub enforces:
+  1. Settings › Environments: open `release` (the workflows' first run on
+     `main` creates it, empty) or New environment, name `release`.
+  2. Deployment branches and tags: Selected branches and tags, add `main`.
+     No required reviewers (every push to `main` would wait for one).
+  3. Add there, as environment secrets, `ASC_KEY_ID`, `ASC_ISSUER_ID`,
+     `ASC_PRIVATE_KEY`, `APPLE_TEAM_ID`, `ENCAVE_KEYSTORE_BASE64`,
+     `ENCAVE_KEYSTORE_PASSWORD`, `ENCAVE_KEY_ALIAS` and `ENCAVE_KEY_PASSWORD`,
+     then delete them from Settings › Secrets and variables › Actions.
+
+  The workflows are ready: the jobs that read these secrets (`apps`,
+  `testers`, Android `release`, `testflight-external`, `testflight-status`,
+  `appstore-assets`, `appstore-info`) name `environment: release` on `main`
+  and no environment elsewhere, so branch builds keep working. Until step 3,
+  that environment has no rules and the repository secrets still reach
+  those jobs: it protects nothing yet.
 - CI tools are pinned: actions by commit SHA (Dependabot, one grouped pull
   request a month), XcodeGen and xcbeautify by version and SHA-256
   (`apple/tools/install-build-tools.sh`), the Gradle distribution by its
