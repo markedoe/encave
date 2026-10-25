@@ -95,6 +95,22 @@ class PriceExtractorTest {
     }
 
     @Test
+    fun otherSizesAreKeptApartAndNeverSuggested() {
+        val url = "https://shop.example.org/vin"
+        val normal = FoundPrice(BigDecimal(15), "CHF", "a", url, "")
+        val other = FoundPrice(BigDecimal(13), "CHF", "a", url, "", sizeML = 700)
+        assertTrue(other.isOtherSize && !normal.isOtherSize)
+        assertTrue(other.id != FoundPrice(BigDecimal(13), "CHF", "a", url, "").id)
+        assertNull(PriceExtractor.suggested(listOf(other), "CHF"))
+        assertEquals("15", PriceExtractor.suggested(listOf(other, normal), "CHF")!!.toPlainString())
+        // A result with a price for the size searched gives no price of another size.
+        val both = WebSearchResult("Les Lacustres", url, "70 cl CHF 13.00 · 75 cl CHF 15.00")
+        assertEquals(listOf("15"), PriceExtractor.prices(listOf(both)).map { it.amount.toPlainString() })
+        val only = WebSearchResult("Les Lacustres", url, "70 cl CHF 13.00 · Magnum CHF 30.00")
+        assertEquals(listOf("13 700", "30 1500"), PriceExtractor.prices(listOf(only)).map { "${it.amount.toPlainString()} ${it.sizeML}" })
+    }
+
+    @Test
     fun currentPriceIsStoredAndOptional() {
         val plain = Cellar(wines = listOf(Wine(name = "Chablis")))
         assertFalse(CellarJson.encode(plain).contains("currentPrice"))

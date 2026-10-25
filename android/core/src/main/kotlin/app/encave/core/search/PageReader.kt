@@ -71,7 +71,13 @@ class PageReader(
     }
 
     /** The prices of one bottle on [result]'s page; empty when it cannot be read. */
-    suspend fun prices(result: WebSearchResult, sizeML: Int, wineName: String?, vintage: Int? = null): List<FoundPrice> =
+    suspend fun prices(
+        result: WebSearchResult,
+        sizeML: Int,
+        wineName: String?,
+        vintage: Int? = null,
+        producer: String? = null,
+    ): List<FoundPrice> =
         withContext(Dispatchers.IO) {
             val job = coroutineContext.job
             val deadline = System.nanoTime() + timeoutMs * 1_000_000
@@ -83,7 +89,7 @@ class PageReader(
             // Reading the page takes a moment more, never long (PagePrices reads in one pass). A page
             // that could not be read, for whatever reason, only gives no price.
             val stop = deadline + 2_000_000_000L
-            runCatching { PagePrices.prices(html, result, sizeML, wineName, vintage) { job.isCancelled || System.nanoTime() > stop } }
+            runCatching { PagePrices.prices(html, result, sizeML, wineName, vintage, producer) { job.isCancelled || System.nanoTime() > stop } }
                 .getOrElse { error -> if (error is CancellationException) throw error else emptyList() }
         }
 

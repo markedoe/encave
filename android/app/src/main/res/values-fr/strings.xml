@@ -1198,7 +1198,15 @@
     <string name="price_remove">Retirer le prix</string>
     <string name="price_found">Prix trouvés</string>
     <string name="price_none_found">Aucun prix dans ces résultats. Essayez d’autres mots, ou ouvrez un résultat ci-dessous.</string>
-    <string name="price_found_footer">Les prix pour plusieurs bouteilles, la livraison ou un autre format sont écartés. Les premières pages trouvées sont lues sur cet appareil. Touchez un prix pour l’utiliser.</string>
+    <string name="price_found_footer">Les prix pour plusieurs bouteilles ou la livraison sont écartés, et ceux pour un autre format sont listés à part. Les premières pages trouvées sont lues sur cet appareil. Touchez un prix pour l’utiliser.</string>
+    <string name="price_other_sizes">Autres formats</string>
+    <string name="price_other_sizes_footer">Vus pour un autre format que vos bouteilles de %1$s, donc jamais utilisés pour la valeur médiane. Touchez-en un pour l’utiliser.</string>
+    <string name="price_none_for_size">Aucun prix pour des bouteilles de %1$s dans ces résultats. Les prix pour d’autres formats sont plus bas.</string>
+    <string name="price_change_size_question">Vos bouteilles de ce vin sont en %1$s. Les passer en %2$s et utiliser ce prix ?</string>
+    <string name="price_change_size">Changer</string>
+    <string name="price_use_without_changing">Utiliser sans changer</string>
+    <string name="price_use_other_size">Utiliser ce prix…</string>
+    <string name="msg_size_changed">Bouteilles passées en %1$s</string>
     <string name="price_reading_pages">Lecture des prix sur les pages…</string>
     <string name="price_set_on">Fixé le %1$s, pour une bouteille.</string>
     <string name="detail_value">Valeur</string>
@@ -1214,7 +1222,7 @@
     <string name="help_web_search_title">Chercher en ligne</string>
     <string name="help_web_search">Sur la fiche d’un vin, ou en ajoutant ou modifiant un vin, touchez **Chercher en ligne**. Les termes de recherche s’affichent d’abord et vous pouvez les modifier ; rien n’est envoyé avant que vous touchiez **Chercher**. Chaque résultat affiche son titre, un extrait et le site, et s’ouvre dans votre navigateur. Maintenez le producteur ou l’appellation appuyé sur la fiche d’un vin pour le chercher seul sur le Web.</string>
     <string name="help_web_price_title">Prix actuel</string>
-    <string name="help_web_price">Sur la fiche d’un vin, **Trouver le prix actuel** cherche le vin, son format s’il n’est pas de 75 cl, et le mot « prix ». Chaque prix trouvé est listé avec son site ; les prix pour plusieurs bouteilles, la livraison ou un autre format sont écartés. Encave ouvre aussi les cinq premières pages trouvées, depuis cet appareil, et y lit le prix de la bouteille, pour les boutiques dont le résultat ne montre pas de prix. La valeur médiane dans votre devise est proposée : modifiez-la ou touchez un autre prix, puis **Enregistrer le prix**. Les Statistiques additionnent ces prix pour les bouteilles de votre cave en **valeur estimée aujourd’hui**.</string>
+    <string name="help_web_price">Sur la fiche d’un vin, **Trouver le prix actuel** cherche le vin, son format s’il n’est pas de 75 cl, et le mot « prix ». Chaque prix trouvé est listé avec son site ; les prix pour plusieurs bouteilles ou la livraison, les seuils (« moins de 20 € ») et les pages qui ne nomment pas le vin sont écartés. Les prix vus pour un autre format, comme un 70 cl suisse, sont listés à part sous **Autres formats** et jamais proposés ; en toucher un propose de passer vos bouteilles de ce vin à ce format, avec Annuler. Encave ouvre aussi les cinq premières pages trouvées, depuis cet appareil, et y lit le prix de la bouteille, pour les boutiques dont le résultat ne montre pas de prix. La valeur médiane dans votre devise est proposée : modifiez-la ou touchez un autre prix, puis **Enregistrer le prix**. Les Statistiques additionnent ces prix pour les bouteilles de votre cave en **valeur estimée aujourd’hui**.</string>
     <string name="help_web_sent_title">Ce qui est envoyé</string>
     <string name="help_web_sent">Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime, avec le mot « vin » (« bouteille » pour les images) ; pour un prix, le mot « prix » et le format s’il n’est pas de 75 cl. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes, vos prix et vos lieux ne sont jamais envoyés. Pour un prix, les cinq premières pages trouvées sont ensuite ouvertes depuis cet appareil, sans cookies : ces sites voient la page demandée, votre adresse IP et le nom et la version de l’app. La clé est chiffrée avec le Keystore Android sur cet appareil.</string>
     <string name="action_save_search">Enregistrer cette recherche…</string>

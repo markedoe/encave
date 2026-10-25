@@ -10,15 +10,18 @@ import Testing
 @Suite struct PagePriceVectorTests {
     struct Vectors: Decodable {
         struct SizeWords: Decodable { var sizeML: Int; var words: String? }
-        struct Snippet: Decodable { var text: String; var sizeML: Int; var prices: [String] }
+        struct Snippet: Decodable { var text: String; var sizeML: Int; var prices: [String]; var otherSizes: [String]? }
         struct Page: Decodable {
             var file: String
             var url: String
             var wineName: String?
+            var producer: String?
             var sizeML: Int
             var vintage: Int?
             var prices: [String]
+            var otherSizes: [String]?
             var excerptContains: [String]?
+            var excerptLacks: [String]?
         }
         struct Address: Decodable { var url: String; var allowed: Bool }
         struct Resolved: Decodable { var addresses: [String]; var `public`: Bool }
@@ -43,6 +46,9 @@ import Testing
 
     static func label(_ amount: Decimal, _ currency: String) -> String { "\(amount) \(currency)" }
 
+    /// "13 CHF 700": a price of another size, with the size.
+    static func otherLabel(_ price: FoundPrice) -> String { "\(label(price.amount, price.currency)) \(price.sizeML ?? 0)" }
+
     /// Seconds for reading a 1.5 MB page. About 0.2 s in a release build; debug
     /// builds (as in CI) are several times slower. A reading that grew faster than the page
     /// (as regular expressions on HTML did: minutes for such a page) would not fit.
@@ -62,6 +68,11 @@ import Testing
         for vector in try Self.vectors().snippets {
             let found = PriceExtractor.prices(in: vector.text, sizeML: vector.sizeML).map { Self.label($0.0, $0.1) }
             #expect(found == vector.prices, "\(vector.text) (\(vector.sizeML) ml)")
+            let result = WebSearchResult(title: "", url: URL(string: "https://shop.example.org/vin")!, snippet: vector.text)
+            let all = PriceExtractor.prices(in: [result], sizeML: vector.sizeML)
+            #expect(all.filter { !$0.isOtherSize }.map { Self.label($0.amount, $0.currency) } == vector.prices, "\(vector.text)")
+            #expect(all.filter(\.isOtherSize).map(Self.otherLabel) == (vector.otherSizes ?? []),
+                    "\(vector.text) (\(vector.sizeML) ml)")
         }
     }
 
@@ -69,13 +80,19 @@ import Testing
         for vector in try Self.vectors().pages {
             let html = try String(contentsOf: Self.folder.appendingPathComponent(vector.file), encoding: .utf8)
             let result = WebSearchResult(title: "Result", url: URL(string: vector.url)!, snippet: "")
-            let found = PagePrices.prices(inPage: html, of: result, sizeML: vector.sizeML, wineName: vector.wineName,
-                                          vintage: vector.vintage)
-            let name = "\(vector.file) (\(vector.sizeML) ml, \(vector.vintage.map(String.init) ?? "no vintage"))"
+            let all = PagePrices.prices(inPage: html, of: result, sizeML: vector.sizeML, wineName: vector.wineName,
+                                        producer: vector.producer, vintage: vector.vintage)
+            let found = all.filter { !$0.isOtherSize }
+            let name = "\(vector.file) \(vector.wineName ?? "-") (\(vector.sizeML) ml, \(vector.vintage.map(String.init) ?? "no vintage"))"
             #expect(found.map { Self.label($0.amount, $0.currency) } == vector.prices, "\(name)")
-            #expect(found.allSatisfy { $0.url == result.url && $0.domain == result.domain }, "\(name)")
+            #expect(all.filter(\.isOtherSize).map(Self.otherLabel) == (vector.otherSizes ?? []), "\(name)")
+            #expect(all.allSatisfy { $0.url == result.url && $0.domain == result.domain }, "\(name)")
+            let excerpt = all.first?.excerpt ?? "-"
             for words in vector.excerptContains ?? [] {
-                #expect(found.first?.excerpt.contains(words) == true, "\(name): \(found.first?.excerpt ?? "-") has \(words)")
+                #expect(excerpt.contains(words), "\(name): \(excerpt) has \(words)")
+            }
+            for words in vector.excerptLacks ?? [] {
+                #expect(!excerpt.contains(words), "\(name): \(excerpt) lacks \(words)")
             }
         }
     }
@@ -154,6 +171,21 @@ import Testing
         let html = String(repeating: "<p>Les Lacustres CHF 13.00</p>", count: 20_000)
         #expect(PagePrices.prices(inPage: html, of: result, sizeML: 750, wineName: "Les Lacustres", shouldStop: { true }).isEmpty)
         #expect(!PagePrices.prices(inPage: html, of: result, sizeML: 750, wineName: "Les Lacustres", shouldStop: { false }).isEmpty)
+    }
+
+    /// The words of a name looked for when the whole name is not on the page: quick however
+    /// often they appear.
+    @Test func wordsOfTheNameAreLookedForQuickly() {
+        let result = WebSearchResult(title: "R", url: URL(string: "https://shop.example.org/vin")!, snippet: "")
+        for piece in ["<p>Lacustres CHF 13.00</p>", "Lacustres ", "<p>Chasselas Lacustres 70 cl CHF 13.00</p>", "Réserve 1 "] {
+            let html = String(repeating: piece, count: PagePrices.maxBytes / piece.utf16.count)
+            for (name, producer) in [("Lacustres Réserve Spéciale", "Vignoble Exemple"), ("", "Vignoble Lacustres Réserve")] {
+                let start = Date()
+                _ = PagePrices.prices(inPage: html, of: result, sizeML: 750, wineName: name, producer: producer,
+                                      shouldStop: { false })
+                #expect(Date().timeIntervalSince(start) < Self.budget, "\(piece) \(name)")
+            }
+        }
     }
 
     /// A page cut anywhere, inside any tag, comment or raw element, is read without failing.

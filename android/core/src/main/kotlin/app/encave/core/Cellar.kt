@@ -374,6 +374,17 @@ class Cellar(
         bottleIds.forEach { id -> bottleMap[id] = bottleMap.getValue(id).copy(reservedFor = name) }
     }
 
+    /**
+     * Gives the bottles of a wine still in the cellar that are of size [old] the size [new] (a
+     * price found for 70 cl when they were saved as 75 cl). Returns the bottles changed. As in CaveKit.
+     */
+    fun changeSize(wineId: UUID, old: Int, new: Int): List<UUID> {
+        if (old == new || new <= 0) return emptyList()
+        val changed = bottlesOf(wineId).filter { it.sizeML == old }
+        changed.forEach { bottleMap[it.id] = it.copy(sizeML = new) }
+        return changed.map { it.id }
+    }
+
     fun drink(bottleId: UUID, tasting: Tasting) {
         val bottle = bottleMap[bottleId] ?: throw CellarException(CellarError.UnknownBottle)
         if (bottle.status == Bottle.Status.Ordered) throw CellarException(CellarError.NotReceived)

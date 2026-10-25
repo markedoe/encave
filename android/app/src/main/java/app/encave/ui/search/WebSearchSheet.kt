@@ -22,6 +22,7 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,6 +35,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.annotation.StringRes
 import androidx.activity.compose.LocalActivity
@@ -53,6 +55,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -76,6 +79,8 @@ import app.encave.data.search.WebSearchPreferences
 import app.encave.ui.components.Formats
 import app.encave.ui.components.rememberForgetRetained
 import app.encave.ui.components.rememberRetained
+import app.encave.ui.components.spokenSizeLabel
+import app.encave.ui.components.volumeText
 import app.encave.ui.theme.Dimens
 import java.math.BigDecimal
 import kotlinx.coroutines.CancellationException
@@ -97,7 +102,9 @@ fun webSearchPreferences(): WebSearchPreferences = (LocalContext.current.applica
 /**
  * For "Find current price": the bottle size, the cellar currency, the price kept now, the
  * wine's name (to find its price on a page that lists several), its vintage (prices named for
- * another one are left out) and how to save one.
+ * another one are left out), its producer (with the name's words, when the whole name is not
+ * on a page), how to change the size of the wine's bottles of [sizeML] and save a price seen
+ * for another size, and how to save one.
  */
 data class PriceOptions(
     val sizeML: Int,
@@ -105,6 +112,8 @@ data class PriceOptions(
     val current: BigDecimal?,
     val wineName: String? = null,
     val vintage: Int? = null,
+    val producer: String? = null,
+    val onChangeSize: ((Int, BigDecimal, String) -> Unit)? = null,
     val onSave: (BigDecimal, String) -> Unit,
 )
 
@@ -182,6 +191,11 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
     var pageJob by session::pageJob
     // New prices move the suggested one until the user sets a price.
     var userSetPrice by rememberSaveable { mutableStateOf(false) }
+    // A price of another size tapped: asks whether to change the bottles' size.
+    var otherSizePrice by remember { mutableStateOf<FoundPrice?>(null) }
+    // Prices for the size searched, and those seen for another size.
+    val sizePrices = prices.filter { !it.isOtherSize }
+    val otherSizePrices = prices.filter { it.isOtherSize }
     // Web search off: the price sheet is only the price, as on iPhone ("Price today").
     val showsSearch = price == null || settings.isEnabled
     val priceValue = priceText.trim().replace(",", ".").toBigDecimalOrNull()?.takeIf { it.signum() > 0 }
@@ -209,7 +223,7 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
                     launch {
                         // A page that fails, however, only gives no price: nothing may end the sheet's scope.
                         val read = try {
-                            gate.withPermit { reader.prices(page, options.sizeML, options.wineName, options.vintage) }
+                            gate.withPermit { reader.prices(page, options.sizeML, options.wineName, options.vintage, options.producer) }
                         } catch (error: CancellationException) {
                             throw error
                         } catch (error: Exception) {
@@ -327,10 +341,10 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
                         currency = currency,
                         hint = when {
                             !searched -> null
-                            prices.count { it.currency == currency } == 1 -> stringResource(R.string.price_only_one, currency)
-                            prices.count { it.currency == currency } > 1 ->
-                                stringResource(R.string.price_middle, prices.count { it.currency == currency }, currency)
-                            prices.isNotEmpty() -> stringResource(R.string.price_none_in_currency, currency)
+                            sizePrices.count { it.currency == currency } == 1 -> stringResource(R.string.price_only_one, currency)
+                            sizePrices.count { it.currency == currency } > 1 ->
+                                stringResource(R.string.price_middle, sizePrices.count { it.currency == currency }, currency)
+                            sizePrices.isNotEmpty() -> stringResource(R.string.price_none_in_currency, currency)
                             else -> null
                         },
                         canSave = priceValue != null,
@@ -353,16 +367,20 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
                                 },
                             )
                         }
-                    } else if (prices.isEmpty()) {
+                    } else if (sizePrices.isEmpty()) {
                         item {
                             Text(
-                                stringResource(R.string.price_none_found),
+                                if (otherSizePrices.isEmpty()) {
+                                    stringResource(R.string.price_none_found)
+                                } else {
+                                    stringResource(R.string.price_none_for_size, volumeText(price.sizeML))
+                                },
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = Dimens.l),
                             )
                         }
                     }
-                    items(prices, key = { "p" + it.id }) { found ->
+                    items(sizePrices, key = { "p" + it.id }) { found ->
                         FoundPriceRow(
                             found, selected = priceValue?.compareTo(found.amount) == 0 && currency == found.currency,
                             onUse = {
@@ -381,6 +399,20 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
                             modifier = Modifier.padding(horizontal = Dimens.l),
                         )
                     }
+                    if (otherSizePrices.isNotEmpty()) {
+                        item { SheetHeader(stringResource(R.string.price_other_sizes)) }
+                        items(otherSizePrices, key = { "o" + it.id }) { found ->
+                            FoundPriceRow(found, selected = false, onUse = { otherSizePrice = found }, onOpen = { openLink(context, found.url) })
+                        }
+                        item {
+                            Text(
+                                stringResource(R.string.price_other_sizes_footer, volumeText(price.sizeML)),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = Dimens.l),
+                            )
+                        }
+                    }
                 }
             }
 
@@ -398,6 +430,40 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
             }
             item { Spacer(Modifier.height(Dimens.xxl)) }
         }
+    }
+
+    val asked = otherSizePrice
+    val askedSize = asked?.sizeML
+    if (price != null && asked != null && askedSize != null) {
+        AlertDialog(
+            onDismissRequest = { otherSizePrice = null },
+            text = { Text(stringResource(R.string.price_change_size_question, volumeText(price.sizeML), volumeText(askedSize))) },
+            confirmButton = {
+                price.onChangeSize?.let { change ->
+                    TextButton(
+                        onClick = {
+                            otherSizePrice = null
+                            change(askedSize, asked.amount, asked.currency)
+                            onDismiss()
+                        },
+                        modifier = Modifier.testTag("price.changeSize"),
+                    ) { Text(stringResource(R.string.price_change_size)) }
+                }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = { otherSizePrice = null }) { Text(stringResource(R.string.action_cancel)) }
+                    TextButton(
+                        onClick = {
+                            priceText = asked.amount.toPlainString()
+                            currency = asked.currency
+                            userSetPrice = true
+                            otherSizePrice = null
+                        },
+                    ) { Text(stringResource(R.string.price_use_without_changing)) }
+                }
+            },
+        )
     }
 }
 
@@ -445,13 +511,33 @@ private fun SheetTitle(title: String) {
     Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.semantics { heading() })
 }
 
-/** A price found: the amount, the words around it and the site. Tap to use it. */
+/**
+ * A price found: the amount, the words around it and the site. Tap to use it. A price seen for
+ * another size shows the size ("CHF 13.00 · 70 cl", read "CHF 13.00, 70 centilitres") and asks first.
+ */
 @Composable
 private fun FoundPriceRow(found: FoundPrice, selected: Boolean, onUse: () -> Unit, onOpen: () -> Unit) {
+    val amount = Formats.money(found.amount, found.currency)
+    val size = found.sizeML
     ListItem(
-        modifier = Modifier.selectable(selected = selected, onClick = onUse, role = Role.RadioButton),
-        leadingContent = { RadioButton(selected = selected, onClick = null) },
-        headlineContent = { Text(Formats.money(found.amount, found.currency), style = MaterialTheme.typography.titleMedium) },
+        modifier = if (size == null) {
+            Modifier.selectable(selected = selected, onClick = onUse, role = Role.RadioButton)
+        } else {
+            Modifier.clickable(onClickLabel = stringResource(R.string.price_use_other_size), role = Role.Button, onClick = onUse)
+        },
+        leadingContent = if (size == null) ({ RadioButton(selected = selected, onClick = null) }) else null,
+        headlineContent = {
+            if (size == null) {
+                Text(amount, style = MaterialTheme.typography.titleMedium)
+            } else {
+                val spoken = "$amount, ${spokenSizeLabel(size)}"
+                Text(
+                    "$amount · ${volumeText(size)}",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.semantics { contentDescription = spoken },
+                )
+            }
+        },
         supportingContent = {
             Column {
                 Text(found.excerpt, maxLines = 2, overflow = TextOverflow.Ellipsis)

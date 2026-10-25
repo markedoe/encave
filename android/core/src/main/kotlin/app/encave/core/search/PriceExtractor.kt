@@ -19,8 +19,16 @@ data class FoundPrice(
     val url: String,
     /** The words around the price, to judge it. */
     val excerpt: String,
+    /**
+     * The bottle size the price was seen for, when it is not the size searched (a Swiss 70 cl
+     * for bottles of 75 cl): shown apart, never used for the suggested price.
+     */
+    val sizeML: Int? = null,
 ) {
-    val id: String get() = "$url|${amount.toPlainString()}|$currency"
+    /** For another bottle size than the one searched. */
+    val isOtherSize: Boolean get() = sizeML != null
+
+    val id: String get() = "$url|${amount.toPlainString()}|$currency|${sizeML ?: ""}"
 }
 
 object PriceExtractor {
@@ -52,6 +60,27 @@ object PriceExtractor {
         """^[ \u00A0]*(?:(?:for|pour|les|the) \d{1,2}\b|x ?\d+|/ ?(?:case|caisse|carton|lot|pack|\d)|\( ?\d+ ?(?:x|bottles|bouteilles|btl)|(?:per|par|la|le) (?:case|caisse|carton|lot))""",
         RegexOption.IGNORE_CASE,
     )
+
+    /** The currency symbols and codes, for the words around a price. */
+    private const val SYMBOL = """(?:US\$|€|\$|£|EUR|USD|GBP|CHF|SFr\.?|Fr\.)"""
+    private const val SPACE = """[ \u00A0\u202F]"""
+
+    /**
+     * A threshold or a range is not a price: "à moins de 30 €", "under £20", "dès Fr. 9.–",
+     * "10-20 €", "entre 10 et 20 €" (both bounds), "30 € max".
+     */
+    private val notAPriceBefore = Regex(
+        """(?:(?<![\p{L}\d])(?:moins de|plus de|sous|under|over|less than|more than|below|above|à partir de|a partir de|dès|from|starting at|jusqu['’]à|up to|max(?:imum)?\.?|budget(?: de)?|entre|between)|[<>≤≥])$SPACE*:?$SPACE*$""" +
+            """|(?<![\d.,])\d{1,3}(?:[.,]\d{1,2})?$SPACE*$SYMBOL?$SPACE*(?:[-–—]|(?<![\p{L}\d])(?:à|to|et|and|bis))$SPACE*$""",
+        RegexOption.IGNORE_CASE,
+    )
+    private val notAPriceAfter = Regex(
+        """^$SPACE*(?:(?:[-–—]|(?:à|to|et|and|bis)(?!\p{L}))$SPACE*(?:$SYMBOL$SPACE?\d|\d{1,5}(?:[.,]\d{1,2})?$SPACE?(?:$SYMBOL|euros?(?!\p{L})))|(?:max(?:imum)?|et moins|ou moins|or less|and under|et plus|ou plus|and up|or more)(?!\p{L}))""",
+        RegexOption.IGNORE_CASE,
+    )
+
+    /** The words between the two bounds of a range, right after the price before ("€10-€20", "10 € et 20 €"). */
+    private val rangeJoin = Regex("""^$SPACE*(?:[-–—]|(?:à|to|et|and|bis))$SPACE*$""", RegexOption.IGNORE_CASE)
 
     /** "|6 l|6 litres|600 cl": a whole number of litres, not the end of "1,6 l". */
     private fun litres(count: String) =
@@ -87,16 +116,24 @@ object PriceExtractor {
 
     internal fun inRange(amount: BigDecimal) = amount >= min && amount <= max
 
-    /** Prices of one bottle of [sizeML] in the titles and snippets of the results. */
+    /**
+     * Prices of one bottle of [sizeML] in the titles and snippets of the results. A result
+     * without one gives the prices of one bottle of another size named next to them, if any,
+     * with that size.
+     */
     fun prices(results: List<WebSearchResult>, sizeML: Int = 750): List<FoundPrice> {
         val seen = mutableSetOf<String>()
         val found = mutableListOf<FoundPrice>()
         for (result in results) {
-            for (text in listOf(result.title, result.snippet)) {
-                for ((amount, currency, excerpt) in prices(text, sizeML)) {
-                    val price = FoundPrice(amount, currency, result.domain, result.url, excerpt)
-                    if (seen.add(price.id)) found += price
-                }
+            val all = listOf(result.title, result.snippet).flatMap { allTextPrices(it, sizeML) }
+            val oneBottle = all.filter { it.kind == Kind.OneBottle }
+            val kept = oneBottle.ifEmpty { all.filter { it.kind == Kind.OtherSize && it.namedSize != null } }
+            for (item in kept) {
+                val price = FoundPrice(
+                    item.amount, item.currency, result.domain, result.url, item.excerpt,
+                    if (item.kind == Kind.OtherSize) item.namedSize else null,
+                )
+                if (seen.add(price.id)) found += price
             }
         }
         return found
@@ -117,6 +154,9 @@ object PriceExtractor {
 
         /** One bottle of another size. */
         OtherSize,
+
+        /** A threshold ("under £20") or a bound of a range ("10-20 €"). */
+        NotAPrice,
     }
 
     /** A price in a text: where it is (UTF-16 offset and length), the size named next to it, if any, and what it is for. */
@@ -128,14 +168,16 @@ object PriceExtractor {
         val namedSize: Int?,
         val length: Int = 0,
         val kind: Kind = Kind.OneBottle,
+        /** The size named next to it, else the page's (`defaultSize`): null when none is named. */
+        val seenSize: Int? = null,
     )
 
-    /** As [prices]; a price without a size next to it is for [defaultSize]. */
-    internal fun textPrices(text: String, sizeML: Int, defaultSize: Int = 750): List<TextPrice> =
+    /** As [prices]; a price without a size next to it is for [defaultSize] (75 cl when null). */
+    internal fun textPrices(text: String, sizeML: Int, defaultSize: Int? = null): List<TextPrice> =
         allTextPrices(text, sizeML, defaultSize).filter { it.kind == Kind.OneBottle }
 
     /** Every amount with a currency in a text, in order, with what it is for. */
-    internal fun allTextPrices(text: String, sizeML: Int, defaultSize: Int = 750): List<TextPrice> {
+    internal fun allTextPrices(text: String, sizeML: Int, defaultSize: Int? = null): List<TextPrice> {
         val matches = mutableListOf<Match>()
         for (match in prefix.findAll(text).take(MAX_MATCHES)) {
             matches += Match(match.range.first, match.range.last + 1, match.groupValues[2], match.groupValues[1], false)
@@ -175,20 +217,28 @@ object PriceExtractor {
             // A price without a size is for 75 cl (or the page's size); another size must be named.
             val size = namedSize("$before $after")
             val kind = when {
+                notAPriceBefore.containsMatchIn(before) || notAPriceAfter.containsMatchIn(after) ||
+                    (from > 0 && rangeJoin.containsMatchIn(before)) -> Kind.NotAPrice
                 notOneBottleBefore.containsMatchIn(before) || notOneBottleAfter.containsMatchIn(after) -> Kind.NotOneBottle
-                (size ?: defaultSize) != sizeML -> Kind.OtherSize
+                (size ?: defaultSize ?: 750) != sizeML -> Kind.OtherSize
                 else -> Kind.OneBottle
             }
             val excerpt = (before + text.substring(match.start, match.end) + after)
                 .split(Regex("\\s+")).filter { it.isNotEmpty() }.joinToString(" ")
-            found += TextPrice(amount, currencyCode(match.symbol), excerpt, match.start, size, match.end - match.start, kind)
+            found += TextPrice(
+                amount, currencyCode(match.symbol), excerpt, match.start, size, match.end - match.start, kind,
+                size ?: defaultSize,
+            )
         }
         return found
     }
 
-    /** The median of the prices in [currency], rounded to the cent; null if there are none. */
+    /**
+     * The median of the prices in [currency] for the size searched (not those of another size),
+     * rounded to the cent; null if there are none.
+     */
     fun suggested(prices: List<FoundPrice>, currency: String): BigDecimal? {
-        val amounts = prices.filter { it.currency == currency }.map { it.amount }.sorted()
+        val amounts = prices.filter { it.currency == currency && !it.isOtherSize }.map { it.amount }.sorted()
         if (amounts.isEmpty()) return null
         val middle = amounts.size / 2
         val median = if (amounts.size % 2 == 0) {

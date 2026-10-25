@@ -620,6 +620,36 @@ final class CellarModel {
         }
     }
 
+    /// A price found for another bottle size: the wine's bottles in the cellar of size `old`
+    /// get the size `new`, and the price is set, with one Undo for both (which puts back the
+    /// sizes still `new`, and the price unless another one was set).
+    func changeSize(ofWine wineID: UUID, from old: Int, to new: Int, price: Decimal, currency: String) {
+        guard let before = cellar.wines[wineID] else { return }
+        var changed: [UUID] = []
+        let ok = update { cellar in
+            changed = cellar.changeSize(ofWine: wineID, from: old, to: new)
+            guard var wine = cellar.wines[wineID] else { return }
+            wine.currentPrice = price
+            wine.currentPriceCurrency = currency
+            wine.currentPriceDate = .now
+            try cellar.updateWine(wine)
+        }
+        guard ok else { return }
+        let ids = changed
+        let sizeLabel = BottleSize.volume(for: new)
+        showToast(String(localized: "Bottle size changed to \(sizeLabel)"), lasting: .afterChanges) { [weak self] in
+            self?.update { cellar in
+                for id in ids where cellar.bottles[id]?.sizeML == new { cellar.bottles[id]?.sizeML = old }
+                guard var wine = cellar.wines[wineID], wine.currentPrice == price, wine.currentPriceCurrency == currency
+                else { return }
+                wine.currentPrice = before.currentPrice
+                wine.currentPriceCurrency = before.currentPriceCurrency
+                wine.currentPriceDate = before.currentPriceDate
+                try cellar.updateWine(wine)
+            }
+        }
+    }
+
     /// Bottles not found where they should be: they stay in the cellar without a place.
     func takeOut(_ bottleIDs: Set<UUID>) {
         let snapshot = cellar

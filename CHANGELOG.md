@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Changed
+- Find Current Price no longer reads thresholds and ranges ("à moins de
+  30 €", "under £20", "10-20 €") as prices, and takes no price from a page that
+  does not name the wine (a guide or a producer's page listing other cuvées)
+- Prices seen for another bottle size (a Swiss 70 cl for bottles saved as
+  75 cl) are listed apart under Other sizes, never suggested; tapping one offers
+  to change the size of the wine's bottles and use the price, with Undo
+- A price's excerpt shows the product's name, not a guide's or producer's title
 - Prices read 70 cl, 50 cl, 1 litre and clavelin (62 cl) bottles, and Swiss
   formats such as "CHF 13.–", "Fr. 13.50" and "13.50 Fr."
 - Bottles can be 50 cl, clavelin (62 cl), 70 cl or 1 litre when added, so a

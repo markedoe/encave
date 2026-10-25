@@ -13,8 +13,19 @@ public struct FoundPrice: Identifiable, Hashable, Sendable {
     public var url: URL
     /// The words around the price, to judge it.
     public var excerpt: String
+    /// The bottle size the price was seen for, when it is not the size searched (a Swiss
+    /// 70 cl for bottles of 75 cl): shown apart, never used for the suggested price.
+    public var sizeML: Int?
 
-    public var id: String { "\(url.absoluteString)|\(amount)|\(currency)" }
+    public init(amount: Decimal, currency: String, domain: String, url: URL, excerpt: String, sizeML: Int? = nil) {
+        self.amount = amount; self.currency = currency; self.domain = domain; self.url = url
+        self.excerpt = excerpt; self.sizeML = sizeML
+    }
+
+    /// For another bottle size than the one searched.
+    public var isOtherSize: Bool { sizeML != nil }
+
+    public var id: String { "\(url.absoluteString)|\(amount)|\(currency)|\(sizeML.map(String.init) ?? "")" }
 }
 
 extension WebSearchQuery {
@@ -69,6 +80,18 @@ public enum PriceExtractor {
     /// Several bottles, a case or delivery: not the price of one bottle.
     static let notOneBottleBefore = #"(?:\b\d+ ?x\b|\bx ?\d+\b|\bcase\b|\bcases\b|\bcarton|\bcaisse|\blot\b|\bpack\b|\bcoffret|\bbox\b|\bshipping|\bdelivery|\blivraison|\bfrais de port|\bdozen|\bdouzaine)"#
     static let notOneBottleAfter = #"^[ \u00A0]*(?:(?:for|pour|les|the) \d{1,2}\b|x ?\d+|/ ?(?:case|caisse|carton|lot|pack|\d)|\( ?\d+ ?(?:x|bottles|bouteilles|btl)|(?:per|par|la|le) (?:case|caisse|carton|lot))"#
+    /// The currency symbols and codes, for the words around a price.
+    static let symbol = #"(?:US\$|€|\$|£|EUR|USD|GBP|CHF|SFr\.?|Fr\.)"#
+    /// A threshold or a range is not a price: "à moins de 30 €", "under £20", "dès Fr. 9.–",
+    /// "10-20 €", "entre 10 et 20 €" (both bounds), "30 € max".
+    static let notAPriceBefore = #"(?:(?<![\p{L}\d])(?:moins de|plus de|sous|under|over|less than|more than|below|above|à partir de|a partir de|dès|from|starting at|jusqu['’]à|up to|max(?:imum)?\.?|budget(?: de)?|entre|between)|[<>≤≥])[ \u00A0\u202F]*:?[ \u00A0\u202F]*$"#
+        + #"|(?<![\d.,])\d{1,3}(?:[.,]\d{1,2})?[ \u00A0\u202F]*"# + symbol + #"?[ \u00A0\u202F]*(?:[-–—]|(?<![\p{L}\d])(?:à|to|et|and|bis))[ \u00A0\u202F]*$"#
+    /// The words between the two bounds of a range, right after the price before ("€10-€20",
+    /// "10 € et 20 €").
+    static let rangeJoin = #"^[ \u00A0\u202F]*(?:[-–—]|(?:à|to|et|and|bis))[ \u00A0\u202F]*$"#
+    static let notAPriceAfter = #"^[ \u00A0\u202F]*(?:(?:[-–—]|(?:à|to|et|and|bis)(?!\p{L}))[ \u00A0\u202F]*(?:"# + symbol
+        + #"[ \u00A0\u202F]?\d|\d{1,5}(?:[.,]\d{1,2})?[ \u00A0\u202F]?(?:"# + symbol + #"|euros?(?!\p{L})))|(?:max(?:imum)?|et moins|ou moins|or less|and under|et plus|ou plus|and up|or more)(?!\p{L}))"#
+
     /// Bottle sizes named near a price, larger sizes first ("double magnum" before "magnum"),
     /// and a volume given in litres before a name that has several ("jéroboam 5 l").
     static let sizePatterns: [(Int, String)] = [
@@ -98,20 +121,31 @@ public enum PriceExtractor {
     /// Matches of each pattern read in one text, at most.
     static let maxMatches = 50
 
-    /// Prices of one bottle of `sizeML` in the titles and snippets of the results.
+    /// Prices of one bottle of `sizeML` in the titles and snippets of the results. A result
+    /// without one gives the prices of one bottle of another size named next to them, if any,
+    /// with that size.
     public static func prices(in results: [WebSearchResult], sizeML: Int = 750) -> [FoundPrice] {
         var seen = Set<String>()
         var found: [FoundPrice] = []
         for result in results {
-            for text in [result.title, result.snippet] {
-                for (amount, currency, excerpt) in prices(in: text, sizeML: sizeML) {
-                    let price = FoundPrice(amount: amount, currency: currency, domain: result.domain, url: result.url,
-                                           excerpt: excerpt)
-                    if seen.insert(price.id).inserted { found.append(price) }
-                }
+            let all = [result.title, result.snippet].flatMap { allTextPrices(in: $0, sizeML: sizeML) }
+            let oneBottle = all.filter { $0.kind == .oneBottle }
+            let kept = oneBottle.isEmpty ? all.filter { $0.kind == .otherSize && $0.namedSize != nil } : oneBottle
+            for item in kept {
+                let price = FoundPrice(amount: item.amount, currency: item.currency, domain: result.domain, url: result.url,
+                                       excerpt: item.excerpt, sizeML: item.kind == .otherSize ? item.namedSize : nil)
+                if seen.insert(price.id).inserted { found.append(price) }
             }
         }
         return found
+    }
+
+    /// The prices of one bottle of another size in a text, with the size named next to each.
+    static func otherSizePrices(in text: String, sizeML: Int) -> [(Decimal, String, Int)] {
+        allTextPrices(in: text, sizeML: sizeML).compactMap { price in
+            guard price.kind == .otherSize, let size = price.namedSize else { return nil }
+            return (price.amount, price.currency, size)
+        }
     }
 
     /// Amounts with a currency in a text, without those that are not for one bottle.
@@ -126,6 +160,8 @@ public enum PriceExtractor {
         case notOneBottle
         /// One bottle of another size.
         case otherSize
+        /// A threshold ("under £20") or a bound of a range ("10-20 €").
+        case notAPrice
     }
 
     /// A price in a text: where it is, the size named next to it, if any, and what it is for.
@@ -139,15 +175,18 @@ public enum PriceExtractor {
         /// UTF-16 length of the price in the text.
         var length: Int = 0
         var kind: Kind = .oneBottle
+        /// The size named next to it, else the page's (`defaultSize`): nil when none is named.
+        var seenSize: Int?
     }
 
-    /// As `prices(in:sizeML:)`; a price without a size next to it is for `defaultSize`.
-    static func textPrices(in text: String, sizeML: Int, defaultSize: Int = 750) -> [TextPrice] {
+    /// As `prices(in:sizeML:)`; a price without a size next to it is for `defaultSize` (75 cl
+    /// when nil).
+    static func textPrices(in text: String, sizeML: Int, defaultSize: Int? = nil) -> [TextPrice] {
         allTextPrices(in: text, sizeML: sizeML, defaultSize: defaultSize).filter { $0.kind == .oneBottle }
     }
 
     /// Every amount with a currency in a text, in order, with what it is for.
-    static func allTextPrices(in text: String, sizeML: Int, defaultSize: Int = 750) -> [TextPrice] {
+    static func allTextPrices(in text: String, sizeML: Int, defaultSize: Int? = nil) -> [TextPrice] {
         let nsText = text as NSString
         let whole = NSRange(location: 0, length: nsText.length)
         struct Match { var range: NSRange; var amount: String; var symbol: String; var isSuffix: Bool }
@@ -196,9 +235,12 @@ public enum PriceExtractor {
             let after = context(nsText, after: NSMaxRange(match.range))
             // A price without a size is for 75 cl (or the page's size); another size must be named.
             let size = namedSize(before + " " + after)
-            let kind: Kind = if contains(before, notOneBottleBefore) || contains(after, notOneBottleAfter) {
+            let kind: Kind = if contains(before, notAPriceBefore) || contains(after, notAPriceAfter)
+                || (from > 0 && contains(before, rangeJoin)) {
+                .notAPrice
+            } else if contains(before, notOneBottleBefore) || contains(after, notOneBottleAfter) {
                 .notOneBottle
-            } else if (size ?? defaultSize) != sizeML {
+            } else if (size ?? defaultSize ?? 750) != sizeML {
                 .otherSize
             } else {
                 .oneBottle
@@ -206,14 +248,16 @@ public enum PriceExtractor {
             let excerpt = (before + nsText.substring(with: match.range) + after)
                 .split(whereSeparator: \.isWhitespace).joined(separator: " ")
             found.append(TextPrice(amount: amount, currency: currencyCode(match.symbol), excerpt: excerpt,
-                                   location: match.range.location, namedSize: size, length: match.range.length, kind: kind))
+                                   location: match.range.location, namedSize: size, length: match.range.length, kind: kind,
+                                   seenSize: size ?? defaultSize))
         }
         return found
     }
 
-    /// The median of the prices in `currency`, rounded to the cent; nil if there are none.
+    /// The median of the prices in `currency` for the size searched (not those of another
+    /// size), rounded to the cent; nil if there are none.
     public static func suggested(_ prices: [FoundPrice], currency: String) -> Decimal? {
-        let amounts = prices.filter { $0.currency == currency }.map(\.amount).sorted()
+        let amounts = prices.filter { $0.currency == currency && !$0.isOtherSize }.map(\.amount).sorted()
         guard !amounts.isEmpty else { return nil }
         let middle = amounts.count / 2
         var median = amounts.count.isMultiple(of: 2) ? (amounts[middle - 1] + amounts[middle]) / 2 : amounts[middle]
@@ -284,7 +328,8 @@ public enum PriceExtractor {
     /// shared between tasks.
     static let compiled: [String: NSRegularExpression] = {
         var all: [String: NSRegularExpression] = [:]
-        for pattern in [prefixPattern, suffixPattern, notOneBottleBefore, notOneBottleAfter] + sizePatterns.map(\.1) {
+        for pattern in [prefixPattern, suffixPattern, notOneBottleBefore, notOneBottleAfter, notAPriceBefore, notAPriceAfter, rangeJoin]
+            + sizePatterns.map(\.1) {
             all[pattern] = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
         }
         return all
@@ -323,7 +368,7 @@ public enum PriceExtractor {
 /// The prompt for the on-device model that reads a price from the results.
 public enum PriceSuggestions {
     public static func prompt(terms: String, prices: [FoundPrice], currency: String, sizeML: Int, limit: Int = 12) -> String {
-        let lines = prices.prefix(limit).enumerated().map { index, price in
+        let lines = prices.filter { !$0.isOtherSize }.prefix(limit).enumerated().map { index, price in
             "\(index + 1). \(price.amount) \(price.currency) on \(price.domain): \(price.excerpt)"
         }.joined(separator: "\n")
         return """

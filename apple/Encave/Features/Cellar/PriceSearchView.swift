@@ -7,14 +7,20 @@ import FoundationModels
 /// "Find Current Price": searches the web with the wine's price terms (shown and editable,
 /// sent only on Search), then opens the first result pages from this device to read the
 /// price on them (`PagePrices`), lists every price found with its site, suggests the median
-/// in the cellar currency and keeps the price only when the user saves it.
+/// in the cellar currency and keeps the price only when the user saves it. Prices seen for
+/// another bottle size are listed apart, never suggested; using one can change the size of
+/// the wine's bottles.
 struct PriceSearchView: View {
     @Environment(\.dismiss) private var dismiss
     let sizeML: Int
     /// The wine's name, to find its price on a page that lists several.
     let wineName: String?
+    /// With the name's words, when the whole name is not on a page.
+    let producer: String?
     /// Prices named for another vintage are left out.
     let vintage: Int?
+    /// Changes the size of the wine's bottles of `sizeML` to the one given and saves the price.
+    let onChangeSize: ((Int, Decimal, String) -> Void)?
     /// Saves the accepted price per bottle and its currency.
     let onSave: (Decimal, String) -> Void
 
@@ -38,20 +44,28 @@ struct PriceSearchView: View {
     /// The middle price last put in the field; new prices move it until the user sets one.
     @State private var suggestedPrice: Decimal?
     @State private var userSetPrice = false
+    /// A price of another size tapped: asks whether to change the bottles' size.
+    @State private var otherSizePrice: FoundPrice?
 
-    init(terms: String, sizeML: Int, wineName: String? = nil, vintage: Int? = nil, currentPrice: Decimal?, currency: String,
+    init(terms: String, sizeML: Int, wineName: String? = nil, producer: String? = nil, vintage: Int? = nil,
+         currentPrice: Decimal?, currency: String, onChangeSize: ((Int, Decimal, String) -> Void)? = nil,
          onSave: @escaping (Decimal, String) -> Void) {
         _query = State(initialValue: terms)
         _price = State(initialValue: currentPrice)
         _currency = State(initialValue: currency)
         self.sizeML = sizeML
         self.wineName = wineName
+        self.producer = producer
         self.vintage = vintage
+        self.onChangeSize = onChangeSize
         self.onSave = onSave
     }
 
     private var trimmedQuery: String { query.trimmingCharacters(in: .whitespacesAndNewlines) }
-    private var pricesInCurrency: Int { prices.filter { $0.currency == currency }.count }
+    /// Prices for the size searched, and those seen for another size.
+    private var sizePrices: [FoundPrice] { prices.filter { !$0.isOtherSize } }
+    private var otherSizePrices: [FoundPrice] { prices.filter(\.isOtherSize) }
+    private var pricesInCurrency: Int { sizePrices.filter { $0.currency == currency }.count }
 
     var body: some View {
         NavigationStack {
@@ -103,13 +117,13 @@ struct PriceSearchView: View {
                             Text("The middle value of \(priceCount) prices found in \(currencyLabel). Change it if you like.")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
-                        } else if !prices.isEmpty {
+                        } else if !sizePrices.isEmpty {
                             Text("No price in \(currencyLabel) was found. Tap a price below to use it with its currency.")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
                     }
-                    if !prices.isEmpty, DetailSuggester.isAvailable {
+                    if !sizePrices.isEmpty, DetailSuggester.isAvailable {
                         Button(action: estimate) {
                             if estimating {
                                 HStack { ProgressView(); Text("Reading the prices…") }
@@ -152,11 +166,15 @@ struct PriceSearchView: View {
                             }
                             .foregroundStyle(.secondary)
                             .accessibilityElement(children: .combine)
-                        } else if prices.isEmpty {
+                        } else if sizePrices.isEmpty, otherSizePrices.isEmpty {
                             Text("No prices in these results. Try other words, or open a result below.")
                                 .foregroundStyle(.secondary)
+                        } else if sizePrices.isEmpty {
+                            let sizeLabel = BottleSize.volume(for: sizeML)
+                            Text("No price for bottles of \(sizeLabel) in these results. Prices for other sizes are below.")
+                                .foregroundStyle(.secondary)
                         }
-                        ForEach(prices) { found in
+                        ForEach(sizePrices) { found in
                             FoundPriceRow(found: found, isSelected: price == found.amount && currency == found.currency) {
                                 price = found.amount
                                 currency = found.currency
@@ -165,7 +183,20 @@ struct PriceSearchView: View {
                     } header: {
                         Text("Prices found")
                     } footer: {
-                        Text("Prices for several bottles, delivery or another bottle size are left out. The first pages found are read on this device. Tap a price to use it.")
+                        Text("Prices for several bottles or delivery are left out, and those for another bottle size are listed apart. The first pages found are read on this device. Tap a price to use it.")
+                    }
+
+                    if !otherSizePrices.isEmpty {
+                        Section {
+                            ForEach(otherSizePrices) { found in
+                                FoundPriceRow(found: found, isSelected: false) { otherSizePrice = found }
+                            }
+                        } header: {
+                            Text("Other sizes")
+                        } footer: {
+                            let sizeLabel = BottleSize.volume(for: sizeML)
+                            Text("Seen for another size than your bottles of \(sizeLabel), so never used for the middle value. Tap one to use it.")
+                        }
                     }
                 }
 
@@ -192,6 +223,21 @@ struct PriceSearchView: View {
             }
         }
         .macSheetFrame(width: 520, height: 680)
+        .confirmationDialog(otherSizeQuestion, isPresented: Binding(get: { otherSizePrice != nil },
+                                                                     set: { if !$0 { otherSizePrice = nil } }),
+                            titleVisibility: .visible, presenting: otherSizePrice) { found in
+            if let onChangeSize, let size = found.sizeML {
+                Button("Change") {
+                    onChangeSize(size, found.amount, found.currency)
+                    dismiss()
+                }
+            }
+            Button("Use Without Changing") {
+                price = found.amount
+                currency = found.currency
+            }
+            Button("Cancel", role: .cancel) {}
+        }
         .onChange(of: price) { _, new in
             if new != suggestedPrice { userSetPrice = true }
         }
@@ -203,6 +249,14 @@ struct PriceSearchView: View {
             searchTask = nil
             stopReadingPages()
         }
+    }
+
+    /// "Your bottles of this wine are 75 cl. Change them to 70 cl and use this price?"
+    private var otherSizeQuestion: Text {
+        let currentLabel = BottleSize.volume(for: sizeML)
+        guard let size = otherSizePrice?.sizeML else { return Text(verbatim: "") }
+        let otherLabel = BottleSize.volume(for: size)
+        return Text("Your bottles of this wine are \(currentLabel). Change them to \(otherLabel) and use this price?")
     }
 
     /// "euros (EUR)" in the user's language.
@@ -254,7 +308,7 @@ struct PriceSearchView: View {
         guard !pages.isEmpty else { return }
         readingPages = true
         let sizeML = sizeML
-        let wineName = wineName, vintage = vintage
+        let wineName = wineName, producer = producer, vintage = vintage
         pageTask = Task {
             // A session of its own for each search: no connection is kept for the next one.
             let session = WebSearchClient.makePageSession()
@@ -265,7 +319,7 @@ struct PriceSearchView: View {
                     let page = pages[next]
                     group.addTask {
                         await WebSearchClient.pagePrices(of: page, session: session, sizeML: sizeML, wineName: wineName,
-                                                         vintage: vintage)
+                                                         producer: producer, vintage: vintage)
                     }
                     next += 1
                 }
@@ -279,7 +333,7 @@ struct PriceSearchView: View {
                         let page = pages[next]
                         group.addTask {
                             await WebSearchClient.pagePrices(of: page, session: session, sizeML: sizeML, wineName: wineName,
-                                                             vintage: vintage)
+                                                             producer: producer, vintage: vintage)
                         }
                         next += 1
                     }
@@ -297,7 +351,7 @@ struct PriceSearchView: View {
     }
 
     private func estimate() {
-        guard !estimating, !prices.isEmpty else { return }
+        guard !estimating, !sizePrices.isEmpty else { return }
         estimating = true
         estimateNote = nil
         let prompt = PriceSuggestions.prompt(terms: searchedTerms ?? trimmedQuery, prices: prices, currency: currency,
@@ -326,6 +380,8 @@ private struct FoundPriceRow: View {
     let isSelected: Bool
     let onUse: () -> Void
 
+    private var amount: String { found.amount.formatted(.currency(code: found.currency)) }
+
     var body: some View {
         Button(action: onUse) {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
@@ -333,9 +389,17 @@ private struct FoundPriceRow: View {
                     .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(verbatim: found.amount.formatted(.currency(code: found.currency)))
-                        .font(.headline.monospacedDigit())
-                        .foregroundStyle(.primary)
+                    if let size = found.sizeML {
+                        // "CHF 13.00 · 70 cl", read "CHF 13.00, 70 centilitres".
+                        Text(verbatim: "\(amount) · \(BottleSize.volume(for: size))")
+                            .font(.headline.monospacedDigit())
+                            .foregroundStyle(.primary)
+                            .accessibilityLabel(Text(verbatim: "\(amount), \(BottleSize.spokenLabel(for: size))"))
+                    } else {
+                        Text(verbatim: amount)
+                            .font(.headline.monospacedDigit())
+                            .foregroundStyle(.primary)
+                    }
                     Text(verbatim: found.excerpt)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
@@ -350,7 +414,7 @@ private struct FoundPriceRow: View {
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .accessibilityHint(Text("Uses this price."))
+        .accessibilityHint(found.isOtherSize ? Text("Asks whether to change the size of your bottles.") : Text("Uses this price."))
         .accessibilityAction(named: Text("Open in Browser")) { openURL(found.url) }
         .contextMenu {
             Button("Open in Browser", systemImage: "safari") { openURL(found.url) }

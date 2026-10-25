@@ -231,8 +231,11 @@ struct WineDetailView: View {
                 PriceSearchView(
                     terms: WebSearchQuery.priceTerms(for: wine, sizeML: sizeML,
                                                      priceWord: String(localized: "price", comment: "Added to price search terms")),
-                    sizeML: sizeML, wineName: wine.name, vintage: wine.vintage, currentPrice: wine.currentPrice,
-                    currency: wine.currentPriceCurrency ?? model.cellar.settings.currency
+                    sizeML: sizeML, wineName: wine.name, producer: wine.producer, vintage: wine.vintage,
+                    currentPrice: wine.currentPrice, currency: wine.currentPriceCurrency ?? model.cellar.settings.currency,
+                    onChangeSize: { newSize, price, currency in
+                        model.changeSize(ofWine: wineID, from: sizeML, to: newSize, price: price, currency: currency)
+                    }
                 ) { price, currency in
                     setPrice(price, currency: currency)
                 }
@@ -725,6 +728,12 @@ enum BottleSize {
         case 3000: String(localized: "Double magnum")
         default: "\(ml) ml"
         }
+    }
+
+    /// "75 cl", "37,5 cl", "1,5 l": the volume alone, numbers as the user writes them.
+    static func volume(for ml: Int) -> String {
+        let format = FloatingPointFormatStyle<Double>.number.precision(.fractionLength(0...2))
+        return ml >= 1000 ? "\((Double(ml) / 1000).formatted(format))\u{00A0}l" : "\((Double(ml) / 10).formatted(format))\u{00A0}cl"
     }
 
     /// The size as VoiceOver reads it, units in words.
