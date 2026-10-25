@@ -70,6 +70,26 @@
           }
         }
       }
+    },
+    "Ask my cellar in ${applicationName}": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demander à ma cave dans ${applicationName}"
+          }
+        }
+      }
+    },
+    "Ask my cellar with ${applicationName}": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demander à ma cave avec ${applicationName}"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

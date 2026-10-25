@@ -34,9 +34,16 @@ enum CellarAssistant {
 
     @MainActor
     static func ask(_ question: String, model: CellarModel) async throws -> Answer {
+        try await ask(question, cellar: model.cellar, year: model.currentYear) { model.locationLabel(for: $0) }
+    }
+
+    /// The same, for a cellar read without the app's window (Siri and Shortcuts).
+    @MainActor
+    static func ask(_ question: String, cellar: Cellar, year: Int,
+                    location: @escaping (Bottle) -> String?) async throws -> Answer {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, macOS 26.0, *) {
-            return try await Generator.ask(question, model: model)
+            return try await Generator.ask(question, cellar: cellar, year: year, location: location)
         }
         #endif
         throw Failure.unavailable
@@ -58,11 +65,12 @@ private enum Generator {
     /// The model's context is small: a large cellar is tried with fewer wines (those
     /// closest to the question, then the most urgent) before giving up.
     @MainActor
-    static func ask(_ question: String, model: CellarModel) async throws -> CellarAssistant.Answer {
+    static func ask(_ question: String, cellar: Cellar, year: Int,
+                    location: @escaping (Bottle) -> String?) async throws -> CellarAssistant.Answer {
         guard case .available = SystemLanguageModel.default.availability else { throw CellarAssistant.Failure.unavailable }
         for limit in [60, 30, 15] {
             do {
-                return try await ask(question, model: model, limit: limit)
+                return try await ask(question, cellar: cellar, year: year, location: location, limit: limit)
             } catch CellarAssistant.Failure.tooLarge where limit > 15 {
                 continue
             }
@@ -71,10 +79,9 @@ private enum Generator {
     }
 
     @MainActor
-    private static func ask(_ question: String, model: CellarModel, limit: Int) async throws -> CellarAssistant.Answer {
-        let catalog = model.cellar.assistantCatalog(year: model.currentYear, limit: limit, question: question) {
-            model.locationLabel(for: $0)
-        }
+    private static func ask(_ question: String, cellar: Cellar, year: Int, location: @escaping (Bottle) -> String?,
+                            limit: Int) async throws -> CellarAssistant.Answer {
+        let catalog = cellar.assistantCatalog(year: year, limit: limit, question: question, place: location)
         let language = Locale.current.localizedString(forLanguageCode: Locale.current.language.languageCode?.identifier ?? "en")
             ?? "English"
         let prompt = """

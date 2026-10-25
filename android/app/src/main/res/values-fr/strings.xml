@@ -243,6 +243,11 @@
     <string name="tonight_surprise_title">Ce soir, ouvrez…</string>
     <string name="tonight_pairing_title">Accords mets-vins</string>
     <string name="tonight_pairing_body">Trouvez la bonne bouteille pour votre plat</string>
+    <string name="tonight_evening_share">Partager une demande de soirée</string>
+    <string name="tonight_evening_title">Demande de soirée</string>
+    <string name="tonight_evening_body">Partage une demande de sélection pour une soirée, avec les bouteilles de votre cave et leur position, à l’app que vous choisissez, comme Claude. Les prix, les notes et les lieux d’achat sont laissés de côté. Encave n’envoie rien : le texte quitte cet appareil par l’app que vous choisissez, selon sa politique de confidentialité.</string>
+    <string name="tonight_evening_occasion">Occasion, plats, invités</string>
+    <string name="tonight_evening_only_ready">Seulement les bouteilles prêtes à boire</string>
     <string name="pairing_title">Accords mets-vins</string>
     <string name="pairing_pick">Choisissez un plat</string>
     <string name="pairing_none">Aucune bouteille de votre cave ne convient à ce plat.</string>

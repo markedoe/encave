@@ -1,5 +1,17 @@
 package app.encave.ui.tonight
 
+import android.content.Intent
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.window.DialogProperties
+import app.encave.core.EveningRequest
+import app.encave.core.eveningRequest
 import androidx.compose.material3.ButtonDefaults
 import android.Manifest
 import android.content.pm.PackageManager
@@ -53,6 +65,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -165,6 +178,7 @@ private fun TonightList(viewModel: AppViewModel, navigator: AppNavigator, onOpen
     var drinking by rememberDrinking()
     var reserving by rememberSaveable { mutableStateOf<String?>(null) }
     var confirmSample by rememberSaveable { mutableStateOf(false) }
+    var askingEvening by rememberSaveable { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     // Wide windows: today's suggestion beside the list rather than an empty pane, once.
     var preselected by rememberSaveable { mutableStateOf(false) }
@@ -185,6 +199,11 @@ private fun TonightList(viewModel: AppViewModel, navigator: AppNavigator, onOpen
             LargeTopAppBar(
                 title = { Text(stringResource(R.string.nav_tonight)) },
                 actions = {
+                    if (cellar.bottlesInCellar.isNotEmpty()) {
+                        IconButton(onClick = { askingEvening = true }, modifier = Modifier.testTag("tonight.evening")) {
+                            Icon(Icons.Outlined.Share, contentDescription = stringResource(R.string.tonight_evening_share))
+                        }
+                    }
                     IconButton(onClick = { navigator.open(SettingsRoute) }) {
                         SettingsIcon()
                     }
@@ -298,6 +317,17 @@ private fun TonightList(viewModel: AppViewModel, navigator: AppNavigator, onOpen
             onDismiss = { reserving = null },
         )
     }
+    if (askingEvening) {
+        val context = LocalContext.current
+        EveningRequestDialog(onDismiss = { askingEvening = false }) { occasion, onlyReady ->
+            val request = cellar.eveningRequest(
+                occasion = occasion, onlyReady = onlyReady,
+                language = EveningRequest.Language.of(resources.configuration.locales[0].language), year = year,
+            ) { cellar.displayLocation(it, resources) }
+            val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, request.text)
+            runCatching { context.startActivity(Intent.createChooser(send, resources.getString(R.string.tonight_evening_share))) }
+        }
+    }
     if (confirmSample) {
         ConfirmDialog(
             title = stringResource(R.string.settings_sample_confirm_title),
@@ -308,6 +338,47 @@ private fun TonightList(viewModel: AppViewModel, navigator: AppNavigator, onOpen
             destructive = false,
         )
     }
+}
+
+/**
+ * Share an evening request: the occasion, then the share sheet with the request and the
+ * bottles, for an assistant app the user picks. Encave sends nothing itself.
+ */
+@Composable
+private fun EveningRequestDialog(onDismiss: () -> Unit, onShare: (String, Boolean) -> Unit) {
+    var occasion by rememberSaveable { mutableStateOf("") }
+    var onlyReady by rememberSaveable { mutableStateOf(true) }
+    // Full width with margins, as the dialog to keep a bottle for an occasion.
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier.padding(horizontal = Dimens.xl).widthIn(max = 560.dp),
+        title = { Text(stringResource(R.string.tonight_evening_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
+                Text(stringResource(R.string.tonight_evening_body))
+                OutlinedTextField(
+                    value = occasion, onValueChange = { occasion = it },
+                    label = { Text(stringResource(R.string.tonight_evening_occasion)) },
+                    modifier = Modifier.fillMaxWidth().testTag("evening.occasion"),
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                )
+                Row(
+                    Modifier.fillMaxWidth().toggleable(value = onlyReady, role = Role.Switch, onValueChange = { onlyReady = it }),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(stringResource(R.string.tonight_evening_only_ready), Modifier.weight(1f))
+                    Switch(checked = onlyReady, onCheckedChange = null)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onDismiss(); onShare(occasion, onlyReady) }, modifier = Modifier.testTag("evening.share")) {
+                Text(stringResource(R.string.action_share))
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+    )
 }
 
 /** A wine in Tonight's list. Long press: Drink, Show in rack, Keep for an occasion; TalkBack offers the same. */
