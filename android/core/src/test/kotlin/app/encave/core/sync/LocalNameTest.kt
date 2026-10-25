@@ -85,7 +85,8 @@ class LocalNameTest {
     /** Plain HTTP goes where OkHttp reads the host, even when java.net.URL reads the text otherwise. */
     @Test
     fun sentAsChecked() {
-        val resolved = LocalName.resolve(java.net.URL("http://127.0.0.1\\@evil.example/"))
+        // The String form: newer JDKs refuse this text in java.net.URL before resolve sees it.
+        val resolved = java.net.URL(LocalName.resolve("http://127.0.0.1\\@evil.example/"))
         assertEquals("127.0.0.1", resolved.host)
     }
 

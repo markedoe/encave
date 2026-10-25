@@ -80,7 +80,7 @@ enum WebSearchClient {
             request.setValue(value, forHTTPHeaderField: field)
         }
         request.httpBody = described.body
-        let (data, response) = try await CappedRead.data(request.url?.scheme == "http" ? localSession : session, for: request,
+        let (data, response) = try await CappedRead.data(request.url?.scheme?.lowercased() == "http" ? localSession : session, for: request,
                                                          limit: CappedRead.jsonLimit, delegate: SameHostRedirects.shared)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         return try provider.results(from: data, status: status)
@@ -97,7 +97,7 @@ enum WebSearchClient {
             request.setValue(value, forHTTPHeaderField: field)
         }
         request.httpBody = described.body
-        let (data, response) = try await CappedRead.data(request.url?.scheme == "http" ? localSession : session, for: request,
+        let (data, response) = try await CappedRead.data(request.url?.scheme?.lowercased() == "http" ? localSession : session, for: request,
                                                          limit: CappedRead.jsonLimit, delegate: SameHostRedirects.shared)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         return try provider.imageResults(from: data, status: status)
