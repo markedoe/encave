@@ -2667,12 +2667,12 @@
         }
       }
     },
-    "Answers a question such as “dinner for 6 with a tagine” with bottles from your cellar and where they are. Answered on this device by Apple Intelligence: nothing is sent anywhere.": {
+    "Answers a question such as “dinner for 6 with a tagine” with bottles from your cellar and where they are. Answered on this device: nothing is sent anywhere.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Répond à une question comme « dîner pour 6 avec un tajine » avec des bouteilles de votre cave et leur position. La réponse est préparée sur cet appareil par Apple Intelligence : rien n’est envoyé."
+            "value": "Répond à une question comme « dîner pour 6 avec un tajine » avec des bouteilles de votre cave et leur position. La réponse est préparée sur cet appareil : rien n’est envoyé."
           }
         }
       }

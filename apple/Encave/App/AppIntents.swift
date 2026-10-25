@@ -232,7 +232,7 @@ struct WineDetailsIntent: AppIntent {
 /// Intelligence with bottles the user has and where they are. Nothing is sent anywhere.
 struct AskCellarIntent: AppIntent {
     static let title: LocalizedStringResource = "Ask My Cellar"
-    static let description = IntentDescription("Answers a question such as “dinner for 6 with a tagine” with bottles from your cellar and where they are. Answered on this device by Apple Intelligence: nothing is sent anywhere.")
+    static let description = IntentDescription("Answers a question such as “dinner for 6 with a tagine” with bottles from your cellar and where they are. Answered on this device: nothing is sent anywhere.")
 
     @Parameter(title: "Question", requestValueDialog: "What would you like to ask your cellar?")
     var question: String
