@@ -130,14 +130,19 @@ jobs:
       - name: XcodeGen and xcbeautify (pinned, checksums checked)
         run: tools/install-build-tools.sh
 
-      - name: Generate project
-        run: xcodegen generate
+      - name: Generate project, pinned packages
+        # Builds use the package versions of CaveKit's Package.resolved (the ones the
+        # licences list names), never a newer one in Package.swift's range.
+        run: |
+          xcodegen generate
+          mkdir -p Encave.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
+          cp Packages/CaveKit/Package.resolved Encave.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
 
       - name: Build for testing
         id: build
         run: |
           set -o pipefail
-          xcodebuild build-for-testing -project Encave.xcodeproj -scheme Encave \
+          xcodebuild build-for-testing -project Encave.xcodeproj -scheme Encave -onlyUsePackageVersionsFromResolvedFile -disableAutomaticPackageResolution \
             -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/dd" \
             CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO | xcbeautify --renderer github-actions
 
@@ -300,6 +305,8 @@ jobs:
     name: Build, Mac launch test${{ (github.ref == 'refs/heads/main' && github.event_name != 'pull_request') && ', TestFlight upload' || '' }}
     needs: [cavekit, l10n]
     runs-on: macos-latest
+    # The release secrets' environment (docs/RELEASING.md, Security), on main only.
+    environment: ${{ github.ref == 'refs/heads/main' && 'release' || '' }}
     timeout-minutes: 60
     outputs:
       # The build number, set only when this run uploads (the testers job needs it),
@@ -335,14 +342,19 @@ jobs:
       - name: XcodeGen and xcbeautify (pinned, checksums checked)
         run: tools/install-build-tools.sh
 
-      - name: Generate project
-        run: xcodegen generate
+      - name: Generate project, pinned packages
+        # Builds use the package versions of CaveKit's Package.resolved (the ones the
+        # licences list names), never a newer one in Package.swift's range.
+        run: |
+          xcodegen generate
+          mkdir -p Encave.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
+          cp Packages/CaveKit/Package.resolved Encave.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
 
       - name: Build the Mac app (Release, signed to run locally)
         if: env.UPLOAD != 'true'
         run: |
           set -o pipefail
-          xcodebuild build -project Encave.xcodeproj -scheme EncaveMac -configuration Release \
+          xcodebuild build -project Encave.xcodeproj -scheme EncaveMac -configuration Release -onlyUsePackageVersionsFromResolvedFile -disableAutomaticPackageResolution \
             -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/dd" \
             CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
             COMPILER_INDEX_STORE_ENABLE=NO | xcbeautify --renderer github-actions
@@ -353,6 +365,7 @@ jobs:
           # mostly waits); its result is checked in the last step.
           touch "$RUNNER_TEMP/ios-build.started"
           nohup bash -c 'xcodebuild build -project Encave.xcodeproj -scheme Encave -derivedDataPath "$RUNNER_TEMP/dd" \
+           -onlyUsePackageVersionsFromResolvedFile -disableAutomaticPackageResolution \
             -destination "generic/platform=iOS Simulator" CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO \
             > "$RUNNER_TEMP/ios-build.log" 2>&1; echo $? > "$RUNNER_TEMP/ios-build.status"' > /dev/null 2>&1 &
 
@@ -384,7 +397,7 @@ jobs:
           # sample cellar off for the App Store, docs/development.md).
           # Archive unsigned: signing with a development certificate would create a new
           # certificate on every fresh runner. The export below signs with cloud signing.
-          xcodebuild archive -project Encave.xcodeproj -scheme Encave \
+          xcodebuild archive -project Encave.xcodeproj -scheme Encave -onlyUsePackageVersionsFromResolvedFile -disableAutomaticPackageResolution \
             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/ios.xcarchive" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             ENCAVE_CHANNEL=beta CODE_SIGNING_ALLOWED=NO | xcbeautify --renderer github-actions
@@ -393,16 +406,10 @@ jobs:
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export-ios" \
             "${auth[@]}" | xcbeautify --renderer github-actions
           echo "uploaded=true" >> "$GITHUB_OUTPUT"
-
-      - name: No tester e-mail for this build (iPhone, iPad)
-        # Before App Store Connect has processed it; testers still see it in TestFlight.
-        if: steps.ios.outputs.uploaded == 'true'
-        continue-on-error: true
-        timeout-minutes: 12
-        env:
-          PLATFORMS: IOS
-          WAIT_MINUTES: "10"
-        run: python3 tools/testflight_testers.py --quiet
+          # No tester e-mail for this build: turned off in the background as soon as App Store
+          # Connect lists it (before it has processed it), while the job goes on; checked at the end.
+          nohup bash -c 'PLATFORMS=IOS WAIT_MINUTES=10 python3 tools/testflight_testers.py --quiet \
+            > "$RUNNER_TEMP/quiet-IOS.log" 2>&1; echo $? > "$RUNNER_TEMP/quiet-IOS.status"' > /dev/null 2>&1 &
 
       - name: Archive and upload (Mac)
         id: mac
@@ -413,7 +420,7 @@ jobs:
                 -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
           # Signed to run locally so the sandbox entitlements are in the archive;
           # the export re-signs it with cloud signing (no new certificate).
-          xcodebuild archive -project Encave.xcodeproj -scheme EncaveMac \
+          xcodebuild archive -project Encave.xcodeproj -scheme EncaveMac -onlyUsePackageVersionsFromResolvedFile -disableAutomaticPackageResolution \
             -destination 'generic/platform=macOS' -archivePath "$RUNNER_TEMP/mac.xcarchive" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" ENCAVE_CHANNEL=beta \
             CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER= | xcbeautify --renderer github-actions
@@ -423,15 +430,10 @@ jobs:
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export-mac" \
             "${auth[@]}" | xcbeautify --renderer github-actions
           echo "uploaded=true" >> "$GITHUB_OUTPUT"
-
-      - name: No tester e-mail for this build (Mac)
-        if: steps.mac.outputs.uploaded == 'true'
-        continue-on-error: true
-        timeout-minutes: 12
-        env:
-          PLATFORMS: MAC_OS
-          WAIT_MINUTES: "10"
-        run: python3 tools/testflight_testers.py --quiet
+          # No tester e-mail for this build: turned off in the background as soon as App Store
+          # Connect lists it (before it has processed it), while the job goes on; checked at the end.
+          nohup bash -c 'PLATFORMS=MAC_OS WAIT_MINUTES=10 python3 tools/testflight_testers.py --quiet \
+            > "$RUNNER_TEMP/quiet-MAC_OS.log" 2>&1; echo $? > "$RUNNER_TEMP/quiet-MAC_OS.status"' > /dev/null 2>&1 &
 
       - name: Mac launch test (twice, then each section; reports crashes)
         # Also when the upload failed: the archived app is there.
@@ -520,6 +522,25 @@ jobs:
           [ "$(cat "$RUNNER_TEMP/ios-build.status")" = 0 ] || exit 1
           ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/Encave.app"
 
+      - name: No tester e-mail for these builds
+        # Waits for the background calls started after each upload (testers still see the
+        # builds in TestFlight). Never fails the job: a miss only means an e-mail.
+        if: ${{ !cancelled() && (steps.ios.outputs.uploaded == 'true' || steps.mac.outputs.uploaded == 'true') }}
+        continue-on-error: true
+        timeout-minutes: 12
+        env:
+          IOS: ${{ steps.ios.outputs.uploaded }}
+          MAC: ${{ steps.mac.outputs.uploaded }}
+        run: |
+          for platform in IOS MAC_OS; do
+            if [ "$platform" = IOS ]; then uploaded=$IOS; else uploaded=$MAC; fi
+            [ "$uploaded" = true ] || continue
+            while [ ! -e "$RUNNER_TEMP/quiet-$platform.status" ]; do sleep 5; done
+            cat "$RUNNER_TEMP/quiet-$platform.log"
+            [ "$(cat "$RUNNER_TEMP/quiet-$platform.status")" = 0 ] \
+              || echo "::warning::Could not turn off the tester e-mail of the $platform build."
+          done
+
       - name: Remove key
         if: always()
         run: rm -f "$RUNNER_TEMP/AuthKey.p8"
@@ -536,6 +557,8 @@ jobs:
     # failed, so no Mac build), the iPhone and iPad build alone goes.
     if: ${{ !cancelled() && github.ref == 'refs/heads/main' && (needs.screens.result == 'success' || needs.tour-check.outputs.passed == 'true') && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.external_testers)) && needs.apps.outputs.build != '' && (needs.apps.outputs.ios == 'true' || needs.apps.outputs.mac == 'true') && (needs.apps.outputs.launch == 'success' || (needs.apps.outputs.launch == 'skipped' && needs.apps.outputs.mac != 'true')) }}
     runs-on: ubuntu-latest
+    # The release secrets' environment (docs/RELEASING.md, Security).
+    environment: release
     # App Store Connect takes 5 to 30 minutes to process a build.
     timeout-minutes: 60
     steps:

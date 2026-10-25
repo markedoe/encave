@@ -26,6 +26,8 @@ jobs:
     # The App Store Connect key is given to code from main only.
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    # The release secrets' environment (docs/RELEASING.md, Security).
+    environment: release
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

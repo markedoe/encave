@@ -54,13 +54,17 @@ This repository is public. A few rules keep secrets and internal details out of 
   `git config user.email "<id>+<user>@users.noreply.github.com"`.
 - **No infrastructure details.** No server hostnames, home paths or private IPs
   in code or docs; use placeholders such as `/path/to/encave`. Home folders
-  (Linux, macOS, root), private, CGNAT and Tailscale addresses and Tailscale
-  names are checked automatically, in the tree and in every line the pushed
-  commits add (a file added and removed again stays in the history). Other
+  (Linux, `/var/home`, macOS, Windows, root), private, CGNAT and Tailscale
+  addresses and Tailscale names are checked automatically, in the tree and in
+  every line the pushed commits add, merge resolutions included (a file added
+  and removed again stays in the history). Other
   hostnames and public IPs are not, so check them yourself.
 - **No test output or local settings.** Test reports (`.xcresult`, JUnit
   `TEST-*.xml`, `build/reports`), `local.properties`, `.envrc`, certificates
-  and provisioning profiles are refused too.
+  and provisioning profiles are refused too, as are SSH keys (`id_rsa`,
+  `id_ed25519`, ...), `keystore.properties`, `signing.properties`, `.netrc`
+  and Google service-account keys (`"type": "service_account"` with a
+  `private_key`). `scripts/test-check-public-safety.sh` (CI) tests these.
 
 These rules are enforced by:
 

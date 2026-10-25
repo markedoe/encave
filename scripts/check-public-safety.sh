@@ -37,9 +37,12 @@ forbidden_files() {
     -e '(^|/)build/reports/' \
     -e '\.(pem|key|p8|p12|pfx|jks|keystore|cer|crt|der|mobileprovision|provisionprofile|sqlite|db|dump|sql\.gz)$' \
     -e '(^|/)(google-services\.json|GoogleService-Info\.plist)$' \
+    -e '(^|/)id_(rsa|dsa|ecdsa|ed25519)(_sk)?$' \
+    -e '(^|/)(keystore|signing)\.properties$' \
+    -e '(^|/)[._]netrc$' \
     | grep -vE '\.example$' || true
 }
-forbidden=$( { git ls-files; [[ -n "$range" ]] && git log --no-renames --diff-filter=A --name-only --format= "$range"; } \
+forbidden=$( { git ls-files; [[ -n "$range" ]] && git log -m --no-renames --diff-filter=A --name-only --format= "$range"; } \
   | sort -u | forbidden_files)
 if [[ -n "$forbidden" ]]; then
   echo "ERROR: these files must not be committed (tracked now, or added in $range):"
@@ -57,6 +60,8 @@ E='([^0-9.]|\.[^0-9]|\.?$)'
 O='[0-9]{1,3}'
 patterns=(
   "${P}/home/[a-z_][a-z0-9_.-]*/"
+  "${P}/var/home/[a-z_][a-z0-9_.-]*/"
+  "(^|[^[:alnum:]])[A-Za-z]:\\\\Users\\\\[A-Za-z0-9_][A-Za-z0-9_. -]*\\\\"
   "${P}/Users/[A-Za-z0-9_][A-Za-z0-9_.-]*/"
   "${P}/root/"
   "${B}(10\\.${O}|192\\.168|172\\.(1[6-9]|2[0-9]|3[01]))\\.${O}\\.${O}${E}"
@@ -65,16 +70,17 @@ patterns=(
 )
 excluded=(':!scripts/check-public-safety.sh')
 # Lines added by the commits in the range: content in one file, "commit file"
-# for each line in another, so the patterns only see the content.
+# for each line in another, so the patterns only see the content. --cc: text
+# written in a merge resolution counts too (added against every parent).
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 : > "$work/added"; : > "$work/where"
 if [[ -n "$range" ]]; then
-  git log -p --no-merges --no-renames --no-color --format='commit %h' "$range" -- . "${excluded[@]}" \
+  git log -p --cc --no-renames --no-color --format='commit %h %p' "$range" -- . "${excluded[@]}" \
     | awk -v where="$work/where" '
-        /^commit / { c = $2; next }
+        /^commit / { c = $2; n = NF - 2; if (n < 1) n = 1; plus = substr("++++++++", 1, n); next }
         /^\+\+\+ / { f = substr($0, 7); next }
-        /^\+/ { print c " " f > where; print substr($0, 2) }' > "$work/added"
+        substr($0, 1, n) == plus { print c " " f > where; print substr($0, n + 1) }' > "$work/added"
 fi
 for p in "${patterns[@]}"; do
   # A line can opt out explicitly with the marker "public-safety: allow".
@@ -91,7 +97,22 @@ for p in "${patterns[@]}"; do
   fi
 done
 
-# 3. Commit identities that expose a machine hostname instead of a real
+# 3. Google service-account keys (JSON with "type": "service_account" and a
+#    private_key), in the tree or among the lines a checked commit added to a file.
+sa='"type"[[:space:]]*:[[:space:]]*"service_account"'
+sa_files=$( { git grep -lIE "$sa" -- . "${excluded[@]}" | while IFS= read -r file; do
+                git grep -qIE '"private_key"' -- "$file" && echo "$file"; done
+              paste -d '\t' "$work/where" "$work/added" | awk -F '\t' -v sa="$sa" '
+                { line = substr($0, index($0, "\t") + 1) }
+                line ~ sa { t[$1] = 1 } line ~ /"private_key"/ { k[$1] = 1 }
+                END { for (w in t) if (w in k) print "added in " w }'; } | sort -u || true)
+if [[ -n "$sa_files" ]]; then
+  echo "ERROR: Google service-account key (tracked now, or added in $range):"
+  echo "$sa_files" | sed 's/^/  - /'
+  fail=1
+fi
+
+# 4. Commit identities that expose a machine hostname instead of a real
 #    (or GitHub noreply) address.
 if [[ -n "$range" ]]; then
   bad_ids=$(git log --format='%ae%n%ce' "$range" \
