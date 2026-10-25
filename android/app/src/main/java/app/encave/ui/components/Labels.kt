@@ -270,14 +270,31 @@ val PairingReason.labelRes: Int
         PairingReason.ReadyToDrink -> R.string.reason_ready
     }
 
-/** Common bottle sizes in ml with their labels. */
-val bottleSizes = listOf(375 to R.string.size_375, 750 to R.string.size_750, 1500 to R.string.size_1500, 3000 to R.string.size_3000)
+/**
+ * Common bottle sizes in ml with their labels, by volume: also 50 cl, the Jura clavelin (62 cl),
+ * the Swiss 70 cl and the litre.
+ */
+val bottleSizes = listOf(
+    375 to R.string.size_375, 500 to R.string.size_500, 620 to R.string.size_620, 700 to R.string.size_700,
+    750 to R.string.size_750, 1000 to R.string.size_1000, 1500 to R.string.size_1500, 3000 to R.string.size_3000,
+)
+
+/** The sizes as TalkBack reads them, units in words. */
+private val spokenSizes = mapOf(
+    375 to R.string.size_375_spoken, 500 to R.string.size_500_spoken, 620 to R.string.size_620_spoken,
+    700 to R.string.size_700_spoken, 750 to R.string.size_750_spoken, 1000 to R.string.size_1000_spoken,
+    1500 to R.string.size_1500_spoken, 3000 to R.string.size_3000_spoken,
+)
 
 @Composable
 fun sizeLabel(sizeML: Int): String {
     val known = bottleSizes.firstOrNull { it.first == sizeML }
     return if (known != null) stringResource(known.second) else stringResource(R.string.size_other, sizeML)
 }
+
+@Composable
+fun spokenSizeLabel(sizeML: Int): String =
+    spokenSizes[sizeML]?.let { stringResource(it) } ?: stringResource(R.string.size_other_spoken, sizeML)
 
 @Composable
 fun bottleCount(count: Int): String = pluralStringResource(R.plurals.bottle_count, count, count)

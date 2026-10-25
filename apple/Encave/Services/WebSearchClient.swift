@@ -137,7 +137,8 @@ enum WebSearchClient {
     /// https on port 443 to a public name only (its addresses checked first, each redirect
     /// too), HTML only, at most `PagePrices.maxBytes`, `PagePrices.timeout` in all. Empty when
     /// the page cannot be read or the task is cancelled; neither the address nor the page is logged.
-    static func pagePrices(of result: WebSearchResult, session: URLSession, sizeML: Int, wineName: String?) async -> [FoundPrice] {
+    static func pagePrices(of result: WebSearchResult, session: URLSession, sizeML: Int, wineName: String?,
+                           vintage: Int? = nil) async -> [FoundPrice] {
         let deadline = Date().addingTimeInterval(PagePrices.timeout)
         // The name lookup, the redirects and the reading all fit in `PagePrices.timeout`:
         // whichever finishes first, the page or the clock, ends the other.
@@ -156,7 +157,7 @@ enum WebSearchClient {
         // Read here, in this task (not on the main thread): cancelling the search stops it.
         let stop = deadline.addingTimeInterval(2)
         return PagePrices.prices(inPage: PagePrices.text(of: data, contentType: contentType), of: result,
-                                 sizeML: sizeML, wineName: wineName,
+                                 sizeML: sizeML, wineName: wineName, vintage: vintage,
                                  shouldStop: { Task.isCancelled || Date() > stop })
     }
 
@@ -169,10 +170,10 @@ enum WebSearchClient {
         request.setValue("text/html,application/xhtml+xml", forHTTPHeaderField: "Accept")
         do {
             let (bytes, response) = try await session.bytes(for: request, delegate: PageRedirects())
-            guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode),
-                  http.url.map(PagePrices.isAllowed) ?? false,
-                  PagePrices.isHTML(contentType: http.value(forHTTPHeaderField: "Content-Type")),
-                  PagePrices.acceptsLength(response.expectedContentLength) else {
+            guard let http = response as? HTTPURLResponse,
+                  PagePrices.acceptsResponse(statusCode: http.statusCode, url: http.url,
+                                             contentType: http.value(forHTTPHeaderField: "Content-Type"),
+                                             expectedLength: response.expectedContentLength) else {
                 bytes.task.cancel()
                 return nil
             }
@@ -235,17 +236,11 @@ final class PageRedirects: NSObject, URLSessionTaskDelegate, Sendable {
 
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
                     newRequest request: URLRequest) async -> URLRequest? {
-        let allowed = count.withLock { count in
+        let hop = count.withLock { count in
             count += 1
-            return count <= PagePrices.maxRedirects
+            return count
         }
-        guard allowed, let target = request.url, PagePrices.isAllowed(target),
-              await PagePrices.resolvesPublicly(target) else { return nil }
-        var next = request
-        for field in ["Referer", "Cookie", "Authorization"] {
-            next.setValue(nil, forHTTPHeaderField: field)
-        }
-        return next
+        return await PagePrices.nextRequest(hop: hop, request: request)
     }
 
     func urlSession(_ session: URLSession, task: URLSessionTask,

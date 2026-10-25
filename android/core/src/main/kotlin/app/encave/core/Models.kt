@@ -225,6 +225,15 @@ object SlotSerializer : KeepingUnknownKeys<Slot>(Slot.generatedSerializer()) {
 /** One cell of a rack: a position in a grid, a place on a shelf or a whole bin. */
 data class RackCell(val rackId: UUID, val row: Int, val column: Int)
 
+/** What a storage of bins was made as. Written as "binStyle" on the rack (docs/SYNC.md). Mirrors CaveKit. */
+enum class BinStyle(val raw: String) {
+    /** Diamond bins in a rack, shown under Rack. */
+    Diamond("diamond"),
+
+    /** Crates or boxes. */
+    Crates("crates"),
+}
+
 /** The kind of storage, as it exists in real cellars. */
 @Serializable
 enum class RackKind(val raw: String) {
@@ -284,9 +293,21 @@ data class Rack(
      * elsewhere; [normalized] keeps it only as true where it applies.
      */
     val backReversed: Boolean? = null,
+    /**
+     * "binStyle" as read or set: kept even when this version does not know the value, so
+     * writing the rack back does not lose it (docs/SYNC.md). See [binStyle].
+     */
+    @SerialName("binStyle") val binStyleValue: String? = null,
     /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
     @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {
+    /**
+     * Bins only: whether they were made as diamond bins in a rack or as crates. Null when not
+     * saved (racks from older versions) or unknown to this version: the shape decides (see
+     * [storageType]).
+     */
+    val binStyle: BinStyle? get() = BinStyle.entries.firstOrNull { it.raw == binStyleValue }
+
     /** A fridge with shelf layers two deep: drawn as a front band and a back band per shelf. */
     val hasDepthBands: Boolean get() = hasShelfLayers && depth == 2
 

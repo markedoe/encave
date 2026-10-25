@@ -1,5 +1,6 @@
 # Encave relay in a container: docker build -t encave-relay relay && docker run -p 8787:8787 -v encave-relay:/data encave-relay
-FROM node:22.11.0-alpine3.20
+# Node 22 LTS on Alpine 3.24, pinned by digest (the multi-architecture index; Dependabot updates it).
+FROM node:22.23.4-alpine3.24@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914
 WORKDIR /app
 COPY protocol.mjs server.mjs ./
 ENV PORT=8787 DATA_DIR=/data

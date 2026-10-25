@@ -72,8 +72,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
 import app.encave.ui.components.readableWidth
 import app.encave.core.Cellar
+import app.encave.core.BinStyle
 import app.encave.core.Rack
 import app.encave.core.RackKind
+import app.encave.core.editsAsCrates
+import app.encave.core.maxEditableBins
+import app.encave.core.savingBins
 import app.encave.core.StorageType
 import app.encave.core.storageType
 import app.encave.ui.AppNavigator
@@ -219,8 +223,17 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
     } else {
         emptyList()
     }
-    // Rows of different lengths fit a rack or crates; a fridge only keeps the ones it has.
-    val offersCustomRows = kind != RackKind.Staggered && (storageType != StorageType.WineFridge || existing.rowColumns != null)
+    // Bins saved without a type (older versions): the type picked here, null until then.
+    var chosenStyle by rememberSaveable { mutableStateOf<BinStyle?>(null) }
+    // Their type can be picked, shown under it from then on.
+    val offersBinType = existing.kind == RackKind.Bins && existing.binStyle == null
+    // Crates saved (or picked) as such are edited as a number of bins, laid out as the wizard
+    // lays them out when their count changes.
+    val isCrates = existing.editsAsCrates(chosenStyle)
+    var bins by rememberSaveable { mutableIntStateOf(existing.cellCount) }
+    // Rows of different lengths fit a rack; a fridge only keeps the ones it has, crates have none.
+    val offersCustomRows = kind != RackKind.Staggered && !isCrates &&
+        (storageType != StorageType.WineFridge || existing.rowColumns != null)
     var showErrors by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     var confirmDisplaced by remember { mutableStateOf(false) }
@@ -231,15 +244,16 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
         while (rowColumns.size > count) rowColumns.removeAt(rowColumns.lastIndex)
     }
 
-    fun preview() = if (layered) {
-        ShelfDraft.rack(id, name.trim(), depth, shelves, backReversed)
-    } else {
-        Rack(
+    fun preview(): Rack {
+        if (layered) return ShelfDraft.rack(id, name.trim(), depth, shelves, backReversed)
+        val shape = Rack(
             id = id, name = name.trim(), kind = kind, rows = rows,
             columns = if (customRows && kind != RackKind.Staggered) rowColumns.maxOrNull() ?: columns else columns,
             depth = depth, binCapacity = binCapacity,
             rowColumns = if (customRows && kind != RackKind.Staggered) rowColumns.toList() else null,
         ).normalized()
+        // Bins keep their saved type unless one is picked; crates keep their shape unless their count changes.
+        return if (kind == RackKind.Bins) existing.savingBins(name.trim(), binCapacity, chosenStyle, bins, shape) else shape
     }
 
     fun layerCount() = shelves.sumOf { it.layers }
@@ -249,7 +263,7 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
         if (layered) Rack.shelfRowMap(existing, rack, shelves.map { it.originalShelf }) else emptyMap()
 
     // What a save would change: the name, the shape, and which shelf is which.
-    fun signature() = "${name.trim()}|${preview().shape}|${preview().isBackReversed}|${if (layered) shelves.map { it.originalShelf } else ""}"
+    fun signature() = "${name.trim()}|$chosenStyle|${preview().shape}|${preview().isBackReversed}|${if (layered) shelves.map { it.originalShelf } else ""}"
     val initialSignature = rememberSaveable { signature() }
     val isDirty = signature() != initialSignature
 
@@ -323,12 +337,30 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                 Hint(stringResource(if (kind == RackKind.Staggered) R.string.layout_honeycomb_body else R.string.layout_grid_body))
             }
 
+            if (offersBinType) {
+                Header(R.string.kind_title)
+                val picked = chosenStyle?.let { if (it == BinStyle.Crates) StorageType.Crates else StorageType.Rack } ?: storageType
+                val options = listOf(StorageType.Rack to BinStyle.Diamond, StorageType.Crates to BinStyle.Crates)
+                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().testTag("rack.bin_type")) {
+                    options.forEachIndexed { index, (type, style) ->
+                        SegmentedButton(
+                            selected = picked == type, onClick = { chosenStyle = style },
+                            shape = SegmentedButtonDefaults.itemShape(index, options.size),
+                        ) { Text(stringResource(type.labelRes)) }
+                    }
+                }
+            }
+
             Header(R.string.rack_size_title)
-            if (!layered) {
+            if (isCrates) {
+                SizeRow(stringResource(R.string.wizard_bins), bins, { bins = it }, 1..existing.maxEditableBins)
+                Hint(stringResource(R.string.wizard_bins_body))
+            }
+            if (!layered && !isCrates) {
                 SizeRow(stringResource(kind.rowsRes), rows, { rows = it; if (customRows) resizeRows(it) }, 1..MAX_SIZE)
                 Hint(stringResource(if (kind == RackKind.Shelves) R.string.rack_field_shelves else R.string.help_field_rows))
             }
-            if (!customRows && !layered) {
+            if (!customRows && !layered && !isCrates) {
                 SizeRow(stringResource(kind.columnsRes), columns, { columns = it }, 1..MAX_SIZE)
                 Hint(stringResource(R.string.help_field_columns))
             }

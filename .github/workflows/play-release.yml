@@ -3,6 +3,8 @@ name: Google Play release
 # Run by hand on main: releases a version code already on Google Play (uploaded to the
 # internal track by android.yml) to a testing track, closed testing by default. Nothing
 # is built or uploaded: the same bundle moves to the other track (docs/RELEASING.md).
+# Only a version code whose run of android.yml passed the screen tour and the emulator
+# smoke test, unless "force" is ticked.
 on:
   workflow_dispatch:
     inputs:
@@ -12,9 +14,13 @@ on:
         options: [alpha, internal]
         default: alpha
       version_code:
-        description: "Version code (empty: the one released on internal testing)"
+        description: "Version code (empty: the newest one uploaded to internal testing whose tour and smoke test passed)"
         type: string
         default: ""
+      force:
+        description: "Release it even if its screen tour or smoke test did not pass (empty version code: the newest on internal testing)"
+        type: boolean
+        default: false
       draft:
         description: "Prepare the release as a draft, rolled out from the Play Console (needed while the app is a draft)"
         type: boolean
@@ -39,8 +45,57 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+      actions: read
       id-token: write
     steps:
+      - name: Screen tour and smoke test of this version code
+        id: checked
+        if: ${{ !inputs.force }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION_CODE: ${{ inputs.version_code }}
+        run: |
+          runs="repos/$GITHUB_REPOSITORY/actions/workflows/android.yml/runs?branch=main&status=completed&per_page=100"
+          # The checks of one run: "<release attempt> <ok>". android.yml numbers its bundles
+          # 1000 + run number * 10 + attempt of the release job; the latest try of each job counts.
+          checks() {
+            gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$1/jobs?filter=latest&per_page=100" --jq '.jobs[]' \
+              | jq -rs '
+                  def ok(n): any(.[]; .name == n and .conclusion == "success");
+                  ([.[] | select(.name == "Release bundle and lint" and .conclusion == "success") | .run_attempt][0] // 0) as $a
+                  | "\($a) \(ok("Screen tour") and ok("Emulator smoke test")
+                      and any(.[]; .name == "Google Play internal testing"
+                        and any(.steps[]?; .name == "Upload to internal testing" and .conclusion == "success")))"'
+          }
+          if [ -z "$VERSION_CODE" ]; then
+            # The newest run of main whose bundle reached internal testing and passed both.
+            for line in $(gh api "$runs" --jq '.workflow_runs[] | "\(.id):\(.run_number)"'); do
+              read -r attempt ok <<< "$(checks "${line%%:*}")"
+              if [ "$ok" = true ]; then
+                code=$(( 1000 + ${line#*:} * 10 + attempt ))
+                echo "Newest version code that passed: $code ($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/${line%%:*})"
+                echo "version-code=$code" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+            done
+            echo "::error::No recent run of android.yml on main uploaded a bundle that passed the screen tour and the smoke test. Tick \"force\" to release the newest on internal testing anyway."
+            exit 1
+          fi
+          case "$VERSION_CODE" in ''|*[!0-9]*) echo "::error::The version code must be digits."; exit 1;; esac
+          run_number=$(( (VERSION_CODE - 1000) / 10 )); attempt=$(( VERSION_CODE % 10 ))
+          run=$(gh api --paginate "$runs" --jq ".workflow_runs[] | select(.run_number == $run_number) | .id" | sed -n 1p)
+          if [ "$VERSION_CODE" -lt 1000 ] || [ -z "$run" ]; then
+            echo "::error::No completed run $run_number of android.yml on main made version code $VERSION_CODE: tick \"force\" to release it anyway."
+            exit 1
+          fi
+          echo "Version code $VERSION_CODE: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$run"
+          read -r built ok <<< "$(checks "$run")"
+          if [ "$built" != "$attempt" ] || [ "$ok" != true ]; then
+            echo "::error::Version code $VERSION_CODE is not the bundle of run $run that passed the screen tour and the smoke test (latest bundle: attempt $built; passed: $ok). Tick \"force\" to release it anyway."
+            exit 1
+          fi
+          echo "version-code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Google Play access
@@ -58,12 +113,13 @@ jobs:
           PLAY_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
           PACKAGE_NAME: markeddoe.com.encave
           TRACK: ${{ inputs.track }}
-          VERSION_CODE: ${{ inputs.version_code }}
+          VERSION_CODE: ${{ steps.checked.outputs.version-code || inputs.version_code }}
           NOTES_EN: ${{ inputs.notes_en }}
           NOTES_FR: ${{ inputs.notes_fr }}
           RELEASE_STATUS: ${{ inputs.draft && 'draft' || '' }}
         run: |
           if [ -z "$VERSION_CODE" ]; then
+            # Forced, no version code: the newest released on internal testing.
             VERSION_CODE=$(python3 - <<'PY'
           import json, os, urllib.request
           base = f"https://androidpublisher.googleapis.com/androidpublisher/v3/applications/{os.environ['PACKAGE_NAME']}"
