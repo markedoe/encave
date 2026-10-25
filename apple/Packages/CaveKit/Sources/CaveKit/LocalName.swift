@@ -67,7 +67,7 @@ public enum LocalName {
         guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
             throw LocalNetworkError.notFound
         }
-        // "http://nas.lan:8888" becomes "http://10.0.0.2:8888/", as in Kotlin (OkHttp).
+        // No path becomes "/", as OkHttp writes it in Kotlin.
         if components.percentEncodedPath.isEmpty { components.percentEncodedPath = "/" }
         if address.contains(":") {
             components.percentEncodedHost = "[" + address + "]"
