@@ -84,7 +84,7 @@ class Cellar(
         val far = Instant.MAX
         return bottlesOnOrder.groupBy { it.wineId }.mapNotNull { (wineId, bottles) ->
             val wine = wineMap[wineId] ?: return@mapNotNull null
-            WineGroup(wine, bottles.sortedWith(compareBy<Bottle>({ it.expectedAt ?: far }, { it.addedAt })))
+            WineGroup(wine, bottles.sortedWith(bottleExpectedOrder))
         }.sortedWith { a, b ->
             val da = a.bottles.first().expectedAt ?: far
             val db = b.bottles.first().expectedAt ?: far
@@ -140,7 +140,7 @@ class Cellar(
                 kept = kept.filter { it.reservedFor?.equals(filter.reservation, ignoreCase = true) == true }
                 if (kept.isEmpty()) return@mapNotNull null
             }
-            WineGroup(wine, kept.sortedBy { it.addedAt })
+            WineGroup(wine, kept.sortedWith(bottleAddedOrder))
         }
         val collator = collator()
         val byName = Comparator<WineGroup> { a, b -> nameOrder(a.wine, b.wine, collator) }
@@ -169,7 +169,7 @@ class Cellar(
             .map { (maturity, groups) -> MaturitySection(maturity, groups) }
 
     /** Bottles of a wine still in the cellar. */
-    fun bottlesOf(wineId: UUID): List<Bottle> = bottlesInCellar.filter { it.wineId == wineId }.sortedBy { it.addedAt }
+    fun bottlesOf(wineId: UUID): List<Bottle> = bottlesInCellar.filter { it.wineId == wineId }.sortedWith(bottleAddedOrder)
 
     /** Past tastings of a wine, most recent first. */
     fun tastingsOf(wineId: UUID): List<Bottle> = consumedBottles.filter { it.wineId == wineId }

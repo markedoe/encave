@@ -4,6 +4,17 @@ import java.text.Normalizer
 import java.time.LocalDate
 import java.util.UUID
 
+/**
+ * Oldest first, then by id: a total order, so the bottle Drink and Tonight open is the same
+ * on every launch and on Apple (`Bottle.addedOrder` in CaveKit). Ids compare as lowercase
+ * text, which orders like CaveKit's uppercase text.
+ */
+val bottleAddedOrder: Comparator<Bottle> = compareBy<Bottle>({ it.addedAt }, { it.id.toString() })
+
+/** Expected soonest first (unknown last), then [bottleAddedOrder]. */
+val bottleExpectedOrder: Comparator<Bottle> =
+    compareBy<Bottle> { it.expectedAt ?: java.time.Instant.MAX }.then(bottleAddedOrder)
+
 /** The bottle a quick "Drink" opens: one not kept for an occasion when there is one. */
 val List<Bottle>.bottleToOpen: Bottle? get() = firstOrNull { it.reservedFor == null } ?: firstOrNull()
 

@@ -80,6 +80,21 @@ extension View {
         #endif
     }
 
+    /// A sheet that opens at half height on iPhone. On iPad a medium detent makes a small
+    /// floating card that cuts its content, so it opens as a full form sheet there.
+    @ViewBuilder
+    func halfSheetDetents() -> some View {
+        #if os(iOS)
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            presentationDetents([.large]).presentationSizing(.form)
+        } else {
+            presentationDetents([.medium, .large])
+        }
+        #else
+        self
+        #endif
+    }
+
     /// Half-height sheets are see-through on iOS 26: give forms an opaque background.
     /// Off: the system's own sheet background, for a full-height list with a search field.
     func solidSheetBackground(_ isOn: Bool = true) -> some View {

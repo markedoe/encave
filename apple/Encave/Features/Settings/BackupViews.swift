@@ -318,7 +318,7 @@ struct RestorePreviewView: View {
             Section {
                 let date = source.date.formatted(date: .long, time: .shortened)
                 if source.kind == .version {
-                    LabeledContent("Saved On", value: date)
+                    LabeledContent("Saved on", value: date)
                 } else {
                     LabeledContent("Made On", value: date)
                 }

@@ -214,7 +214,7 @@ struct RackEditor: View {
                     Text("Bottles in this storage stay in your cellar without a position.")
                 }
                 Section {
-                    HelpLink(topic: .racks, title: "Help with storage")
+                    HelpLink(topic: .racks, title: "Help with Storage")
                 }
             }
             .formStyle(.grouped)

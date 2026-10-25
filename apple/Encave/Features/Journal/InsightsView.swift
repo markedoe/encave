@@ -222,6 +222,9 @@ private struct DrinkDownCard: View {
                             Text("Less than one bottle a month")
                         } else if rounded <= 1 {
                             Text("About one bottle a month")
+                        } else if rounded < 2 {
+                            // Same in English; singular in French ("1,3 bouteille").
+                            Text("About \(paceLabel) bottles a month [under two]")
                         } else {
                             Text("About \(paceLabel) bottles a month")
                         }

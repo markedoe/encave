@@ -993,6 +993,7 @@
     <string name="help_tonight_why">Under the gauge, each wine says where its window comes from: estimated from the style and the vintage, or entered by you. **Drink sooner** and **Keep longer** move its end by a year.</string>
     <string name="insights_drink_down">Drink-down plan</string>
     <string name="insights_pace">About %1$s bottles a month</string>
+    <string name="insights_pace_under_two">About %1$s bottles a month</string>
     <string name="insights_pace_one">About one bottle a month</string>
     <string name="insights_pace_less">Less than one bottle a month</string>
     <string name="insights_pace_detail">to open every bottle before the end of its drinking window.</string>

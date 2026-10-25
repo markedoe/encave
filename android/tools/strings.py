@@ -1055,6 +1055,8 @@ S = [
  # Insights: drink-down plan and year in wine
  ("insights_drink_down", "Drink-down plan", "Rythme de dégustation"),
  ("insights_pace", "About %1$s bottles a month", "Environ %1$s bouteilles par mois"),
+ # Same in English; French takes the singular below two ("Environ 1,3 bouteille par mois").
+ ("insights_pace_under_two", "About %1$s bottles a month", "Environ %1$s bouteille par mois"),
  ("insights_pace_one", "About one bottle a month", "Environ une bouteille par mois"),
  ("insights_pace_less", "Less than one bottle a month", "Moins d’une bouteille par mois"),
  ("insights_pace_detail", "to open every bottle before the end of its drinking window.", "pour ouvrir chaque bouteille avant la fin de sa fenêtre de dégustation."),

@@ -66,13 +66,62 @@ struct ActionButtonRow<Content: View>: View {
     var body: some View {
         let layout = dynamicTypeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: spacing))
-            : AnyLayout(HStackLayout(spacing: spacing))
+            : AnyLayout(SharedWidthRow(spacing: spacing))
         // Every button with its icon if they all fit on one line, else none of them, so
         // two buttons side by side never differ.
         ViewThatFits(in: .horizontal) {
             layout { content }.environment(\.actionLabelIcon, .shown)
             layout { content }.environment(\.actionLabelIcon, .hidden)
             layout { content }
+        }
+    }
+}
+
+/// Buttons side by side. When every button stretches (`maxWidth: .infinity`), each gets an
+/// equal share and the row's ideal width is the widest button times their count, so
+/// `ViewThatFits` keeps the icons only if the longest title fits in its own half.
+/// Otherwise the buttons keep their own width, as in an HStack, and share the width
+/// equally only when they do not all fit.
+struct SharedWidthRow: Layout {
+    var spacing: CGFloat
+
+    private func stretches(_ subviews: Subviews) -> Bool {
+        subviews.count > 1 && subviews.allSatisfy {
+            $0.sizeThatFits(ProposedViewSize(width: .infinity, height: nil)).width == .infinity
+        }
+    }
+
+    /// The width proposed to each button, nil for its own width.
+    private func widths(for width: CGFloat?, subviews: Subviews) -> [CGFloat?] {
+        let gaps = spacing * CGFloat(max(0, subviews.count - 1))
+        let count = CGFloat(max(1, subviews.count))
+        let ideals = subviews.map { $0.sizeThatFits(.unspecified).width }
+        if stretches(subviews) {
+            let share: CGFloat? = width == .infinity ? nil : width
+            let shared = share.map { max(0, ($0 - gaps) / count) } ?? (ideals.max() ?? 0)
+            return ideals.map { _ in shared }
+        }
+        guard let width, width != .infinity, ideals.reduce(gaps, +) > width else { return ideals.map { _ in nil } }
+        return ideals.map { _ in max(0, (width - gaps) / count) }
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        guard !subviews.isEmpty else { return .zero }
+        let sizes = zip(subviews, widths(for: proposal.width, subviews: subviews)).map { subview, width in
+            subview.sizeThatFits(width.map { ProposedViewSize(width: $0, height: proposal.height) } ?? .unspecified)
+        }
+        let width = sizes.map(\.width).reduce(spacing * CGFloat(subviews.count - 1), +)
+        return CGSize(width: width, height: sizes.map(\.height).max() ?? 0)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x = bounds.minX
+        for (subview, width) in zip(subviews, widths(for: bounds.width, subviews: subviews)) {
+            let proposed = width.map { ProposedViewSize(width: $0, height: bounds.height) } ?? .unspecified
+            let size = subview.sizeThatFits(proposed)
+            subview.place(at: CGPoint(x: x, y: bounds.midY), anchor: .leading,
+                          proposal: ProposedViewSize(width: size.width, height: size.height))
+            x += size.width + spacing
         }
     }
 }

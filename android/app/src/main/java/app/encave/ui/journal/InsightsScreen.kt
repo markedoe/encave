@@ -379,6 +379,7 @@ private fun DrinkDownCard(cellar: Cellar, year: Int) {
                 when {
                     rounded < 0.75 -> stringResource(R.string.insights_pace_less)
                     rounded <= 1 -> stringResource(R.string.insights_pace_one)
+                    rounded < 2 -> stringResource(R.string.insights_pace_under_two, pace)
                     else -> stringResource(R.string.insights_pace, pace)
                 },
                 style = MaterialTheme.typography.titleLarge,

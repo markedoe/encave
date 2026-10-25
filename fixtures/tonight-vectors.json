@@ -1,5 +1,5 @@
 {
-  "about": "Tonight's daily suggestion order, shared by CaveKit (TonightTests.swift) and the Android core (TonightTest.kt). rank is the 64-bit FNV-1a hash, in hexadecimal, of the UTF-8 text \"<lowercase wine id>|<yyyy-MM-dd>\"; order lists the wine ids by rank, smallest first. picks are Tonight's suggestions in a cellar on the given day (year 2026): each wine has 'free' bottles (default 1) and 'reserved' ones kept for an occasion (default 0), drinkable from 'from' (default 2020) until 'until'; order is tonightPicks: the wines to drink soon (until the year) first, then the ready ones, each by rank, with 'kept' first when it is a candidate. Ids compare ignoring case.",
+  "about": "Tonight's daily suggestion order, shared by CaveKit (TonightTests.swift) and the Android core (TonightTest.kt). rank is the 64-bit FNV-1a hash, in hexadecimal, of the UTF-8 text \"<lowercase wine id>|<yyyy-MM-dd>\"; order lists the wine ids by rank, smallest first. picks are Tonight's suggestions in a cellar on the given day (year 2026): each wine has 'free' bottles (default 1) and 'reserved' ones kept for an occasion (default 0), drinkable from 'from' (default 2020) until 'until'; order is tonightPicks: the wines to drink soon (until the year) first, then the ready ones, each by rank, with 'kept' first when it is a candidate. Ids compare ignoring case. bottleToOpen is the bottle Drink and Tonight open for a wine: the oldest free bottle (addedAt), ties broken by the id compared as text ignoring case; a bottle kept for an occasion only when no bottle is free.",
   "ranks": [
     {
       "wineId": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
@@ -321,6 +321,83 @@
         "3F2504E0-4F89-41D3-9A0C-0305E82C3301",
         "6BA7B810-9DAD-11D1-80B4-00C04FD430C8"
       ]
+    }
+  ],
+  "bottleToOpen": [
+    {
+      "about": "same day: smallest id",
+      "bottles": [
+        {
+          "id": "c3000000-0000-4000-8000-000000000003",
+          "addedAt": "2026-03-01T10:00:00Z"
+        },
+        {
+          "id": "a1000000-0000-4000-8000-000000000001",
+          "addedAt": "2026-03-01T10:00:00Z"
+        },
+        {
+          "id": "b2000000-0000-4000-8000-000000000002",
+          "addedAt": "2026-03-01T10:00:00Z"
+        }
+      ],
+      "open": "a1000000-0000-4000-8000-000000000001"
+    },
+    {
+      "about": "kept bottles skipped",
+      "bottles": [
+        {
+          "id": "0f000000-0000-4000-8000-00000000000f",
+          "addedAt": "2026-03-01T10:00:00Z"
+        },
+        {
+          "id": "01000000-0000-4000-8000-000000000001",
+          "addedAt": "2025-01-01T10:00:00Z",
+          "reservedFor": "Birthday"
+        },
+        {
+          "id": "0a000000-0000-4000-8000-00000000000a",
+          "addedAt": "2026-03-01T10:00:00Z"
+        }
+      ],
+      "open": "0a000000-0000-4000-8000-00000000000a"
+    },
+    {
+      "about": "oldest before smallest id; digits before letters",
+      "bottles": [
+        {
+          "id": "00000000-0000-4000-8000-0000000000ff",
+          "addedAt": "2026-02-01T10:00:00Z"
+        },
+        {
+          "id": "ff000000-0000-4000-8000-000000000000",
+          "addedAt": "2026-01-01T10:00:00Z"
+        },
+        {
+          "id": "9f000000-0000-4000-8000-000000000000",
+          "addedAt": "2026-01-01T10:00:00Z"
+        },
+        {
+          "id": "af000000-0000-4000-8000-000000000000",
+          "addedAt": "2026-01-01T10:00:00Z"
+        }
+      ],
+      "open": "9f000000-0000-4000-8000-000000000000"
+    },
+    {
+      "about": "only kept bottles: the oldest",
+      "bottles": [
+        {
+          "id": "e1000000-0000-4000-8000-000000000001",
+          "addedAt": "2026-03-01T10:00:00Z",
+          "reservedFor": "Birthday"
+        },
+        {
+          "id": "d1000000-0000-4000-8000-000000000001",
+          "addedAt": "2026-03-01T10:00:00Z",
+          "reservedFor": "Birthday"
+        }
+      ],
+      "open": "d1000000-0000-4000-8000-000000000001"
     }
   ]
 }

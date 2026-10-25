@@ -585,7 +585,7 @@ FR = {
     'Devices talk directly on your network. Each one proves it belongs to the cellar with its own key, and everything they exchange is encrypted. No server is involved.': 'Les appareils communiquent directement sur votre réseau. Chacun prouve qu’il fait partie de la cave avec sa propre clé, et tout ce qu’ils échangent est chiffré. Aucun serveur n’intervient.',
     'Does %@ show the same code?': '%@ affiche-t-il le même code ?',
     'Encrypted from end to end': 'Chiffré de bout en bout',
-    'Help with devices': 'Aide sur les appareils',
+    'Help with Devices': 'Aide sur les appareils',
     'It keeps what it already has, but can no longer sync with your other devices.': 'Il garde ce qu’il a déjà, mais ne peut plus se synchroniser avec vos autres appareils.',
     'Join': 'Rejoindre',
     'Join Another Device’s Cellar': 'Rejoindre la cave d’un autre appareil',
@@ -723,7 +723,7 @@ FR = {
     "Fine tannins, fresh acidity": "Tanins fins, acidité fraîche",
     "Finish": "Finale",
     "Fish": "Poisson",
-    "Food pairing": "Accords mets-vins",
+    "Food Pairing": "Accords mets-vins",
     "Food served": "Plat servi",
     "Fortified": "Muté",
     "From": "De",
@@ -985,9 +985,9 @@ FR = {
     'Double magnum, 3 litres': 'Double magnum, 3 litres',
     '%lld millilitres': '%lld millilitres',
     'Help': 'Aide',
-    'Help with adding bottles': 'Aide pour ajouter des bouteilles',
-    'Help with storage': 'Aide sur les rangements',
-    'Help with tasting notes': 'Aide sur les notes de dégustation',
+    'Help with Adding Bottles': 'Aide pour ajouter des bouteilles',
+    'Help with Storage': 'Aide sur les rangements',
+    'Help with Tasting Notes': 'Aide sur les notes de dégustation',
     'How long the flavors last after swallowing.': 'Combien de temps les saveurs persistent après avoir avalé.',
     'How many bottles fit one behind the other on a shelf.': 'Combien de bouteilles tiennent l’une derrière l’autre sur une étagère.',
     'How many identical bottles you add.': 'Combien de bouteilles identiques vous ajoutez.',
@@ -1187,6 +1187,7 @@ FR = {
     "For a rack with a sloped top, a staircase or an irregular cellar wall.": "Pour un casier sous pente, sous un escalier ou contre un mur irrégulier.",
     "Grid rack": "Casier classique",
     "Holds %lld bottles.": "Contient %lld bouteilles.",
+    "Holds %lld bottles": "Contient %lld bouteilles",
     "Honeycomb rack": "Casier nid d’abeille",
     "Kind of storage": "Type de rangement",
     'Offset rows, like metal or terracotta racks, or bottles stacked on fridge shelves': 'Rangées décalées, comme les casiers en métal ou en terre cuite, ou bouteilles empilées sur les étagères d’une cave à vin réfrigérée',
@@ -1335,7 +1336,7 @@ FR = {
     'Encave keeps a copy of your cellar on each day it changes. The first one appears tomorrow.': 'Encave garde une copie de votre cave chaque jour où elle change. La première apparaîtra demain.',
     'This version could not be read.': 'Cette version n’a pas pu être lue.',
     'Backup': 'Sauvegarde',
-    'Saved On': 'Enregistrée le',
+    'Saved on': 'Enregistrée le',
     'Made On': 'Faite le',
     'In this backup': 'Dans cette sauvegarde',
     'Wines': 'Vins',
@@ -1498,7 +1499,7 @@ FR = {
     '%@ · Kept for %@': '%@ · Gardée pour %@',
     "A bottle from your cellar": "Une bouteille de votre cave",
     "Touch and hold a bottle opened from your cellar to show its wine, edit the note, add bottles of it, or put it back in the cellar if it was logged by mistake (with Undo). Swipe it right to add bottles, left to put it back. In the note, tap the wine's name to open it.": "Touchez longuement une bouteille ouverte de votre cave pour afficher son vin, modifier la note, en ajouter des bouteilles, ou la remettre en cave si elle a été notée par erreur (avec Annuler). Balayez-la vers la droite pour ajouter des bouteilles, vers la gauche pour la remettre en cave. Dans la note, touchez le nom du vin pour l’ouvrir.",
-    'On devices with Apple Intelligence, **Ask your cellar** in Tonight answers a question such as “something light for a ratatouille” with bottles you own. The answer is worked out on the device: neither the question nor your cellar is sent anywhere. In a large cellar, the model reads only part of it, the wines closest to the question and the most urgent, and the answer says so.': 'Sur les appareils avec Apple Intelligence, **Demander à votre cave** dans Ce soir répond à une question comme « quelque chose de léger pour une ratatouille » avec des bouteilles que vous avez. La réponse est calculée sur l’appareil : ni la question ni votre cave ne sont envoyées. Dans une grande cave, le modèle n’en lit qu’une partie, les vins les plus proches de la question et les plus urgents, et la réponse le dit.',
+    'On devices with Apple Intelligence, **Ask Your Cellar** in Tonight answers a question such as “something light for a ratatouille” with bottles you own. The answer is worked out on the device: neither the question nor your cellar is sent anywhere. In a large cellar, the model reads only part of it, the wines closest to the question and the most urgent, and the answer says so.': 'Sur les appareils avec Apple Intelligence, **Demander à votre cave** dans Ce soir répond à une question comme « quelque chose de léger pour une ratatouille » avec des bouteilles que vous avez. La réponse est calculée sur l’appareil : ni la question ni votre cave ne sont envoyées. Dans une grande cave, le modèle n’en lit qu’une partie, les vins les plus proches de la question et les plus urgents, et la réponse le dit.',
     'Swipe a wine to the right, use **Drink** on its page, or tap **+** in the Journal and choose **A Bottle from My Cellar**. When the wine has bottles in several positions, choose the bottle under **Which Bottle?**: free bottles come first, and those kept for an occasion say so. The bottle leaves the cellar and its position becomes free. **Undo** appears for a few seconds.': 'Balayez un vin vers la droite, utilisez **Boire** sur sa fiche, ou touchez **+** dans le Journal et choisissez **Une bouteille de ma cave**. Quand le vin est à plusieurs endroits, choisissez la bouteille sous **Quelle bouteille ?** : les bouteilles libres viennent d’abord, et celles réservées pour une occasion le disent. La bouteille quitte la cave et sa position se libère. **Annuler** reste affiché quelques secondes.',
     'Add a rating, a few words, an occasion (Dinner at home, With friends…), or open the full tasting note (appearance, nose, palate, finish, food). Everything is optional and can be edited later from the Journal. If you close the sheet or leave a note after changing it, Encave asks before discarding it.': 'Ajoutez une note, quelques mots, une occasion (Dîner à la maison, Entre amis…), ou ouvrez la fiche de dégustation complète (robe, nez, bouche, finale, plat). Tout est facultatif et modifiable plus tard depuis le Journal. Si vous fermez la feuille ou quittez une note après l’avoir modifiée, Encave demande avant de l’abandonner.',
     # Racks: fridge names, shelves, checking.
@@ -1619,6 +1620,15 @@ CAPTIONS = {
     "different wines": (("different wine", "different wines"), ("vin différent", "vins différents")),
     "bottles opened": (("bottle opened", "bottles opened"), ("bouteille ouverte", "bouteilles ouvertes")),
     "tasted elsewhere": (("tasted elsewhere", "tasted elsewhere"), ("goûté ailleurs", "goûtés ailleurs")),
+}
+
+# Keys whose English is the same as another key's but whose French differs: "<key> [<case>]",
+# with the English and French shown.
+VARIANTS = {
+    # French takes the singular below two: "Environ 1,3 bouteille par mois".
+    "About %@ bottles a month [under two]": ("About %@ bottles a month", "Environ %@ bouteille par mois"),
+    # The drink sheet's search field is narrower than the Cellar's (Cancel beside it).
+    "Wine, producer, region, grape, vintage [drink]": ("Wine, producer, region, grape, vintage", "Vin, producteur, millésime…"),
 }
 
 INFO_PLIST = {
@@ -1756,6 +1766,8 @@ def catalogs():
     for name, ((en_one, en_other), (fr_one, fr_other)) in CAPTIONS.items():
         for form, en, fr in (("one", en_one, fr_one), ("other", en_other, fr_other)):
             strings[f"{name} [{form}]"] = {"localizations": {"en": unit(en), "fr": unit(french(fr))}}
+    for key, (en, fr) in VARIANTS.items():
+        strings[key] = {"localizations": {"en": unit(en), "fr": unit(french(fr))}}
     for key, ((en_one, en_other), (fr_one, fr_other)) in PLURALS.items():
         strings[key] = {"localizations": {
             "en": {"variations": {"plural": {"one": unit(en_one), "other": unit(en_other)}}},
@@ -1806,7 +1818,7 @@ def old_french_words(text):
 
 
 def check():
-    known = set(FR) | set(PLURALS)
+    known = set(FR) | set(PLURALS) | set(VARIANTS)
     problems = []
     for key in sorted(k for k in extract() if to_key(k) not in known and k not in known):
         problems.append(f"missing French: {key!r} (key {to_key(key)!r})")
@@ -1818,6 +1830,9 @@ def check():
         for form in forms[0] + forms[1]:
             if placeholders(form) != placeholders(key):
                 problems.append(f"placeholders differ in a plural form: {key!r} -> {form!r}")
+    for key, forms in VARIANTS.items():
+        if any(placeholders(form) != placeholders(key) for form in forms):
+            problems.append(f"placeholders differ in a variant: {key!r}")
     for name, forms in CAPTIONS.items():
         if placeholders(name) or any(placeholders(form) for form in forms[0] + forms[1]):
             problems.append(f"a caption holds no number: {name!r}")

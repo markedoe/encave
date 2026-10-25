@@ -1,6 +1,5 @@
 package app.encave.core
 
-import java.time.Instant
 import java.util.UUID
 
 /**
@@ -57,9 +56,9 @@ fun Cellar.winesSharing(attribute: WineAttribute): List<WineGroup> {
     }
     val collator = Cellar.collator()
     return wines.values.filter { it.has(attribute) }.mapNotNull { wine ->
-        inCellar[wine.id]?.let { return@mapNotNull WineGroup(wine, it.sortedBy { bottle -> bottle.addedAt }) }
+        inCellar[wine.id]?.let { return@mapNotNull WineGroup(wine, it.sortedWith(bottleAddedOrder)) }
         onOrder[wine.id]?.let { ordered ->
-            WineGroup(wine, ordered.sortedWith(compareBy<Bottle>({ it.expectedAt ?: Instant.MAX }, { it.addedAt })))
+            WineGroup(wine, ordered.sortedWith(bottleExpectedOrder))
         }
     }.sortedWith { a, b ->
         val order = Cellar.nameOrder(a.wine, b.wine, collator)

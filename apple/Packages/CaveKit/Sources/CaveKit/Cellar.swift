@@ -74,6 +74,20 @@ public extension Collection where Element == WineGroup {
     }
 }
 
+public extension Bottle {
+    /// Oldest first, then by id: a total order, so the bottle Drink and Tonight open is the
+    /// same on every launch and on Android (`Bottle.addedOrder` in the Android core).
+    static func addedOrder(_ a: Bottle, _ b: Bottle) -> Bool {
+        a.addedAt != b.addedAt ? a.addedAt < b.addedAt : a.id.uuidString < b.id.uuidString
+    }
+
+    /// Expected soonest first (unknown last), then `addedOrder`.
+    static func expectedOrder(_ a: Bottle, _ b: Bottle) -> Bool {
+        let ea = a.expectedAt ?? .distantFuture, eb = b.expectedAt ?? .distantFuture
+        return ea != eb ? ea < eb : addedOrder(a, b)
+    }
+}
+
 public extension Collection where Element == Bottle {
     /// The bottle a quick "Drink" opens: one not kept for an occasion when there is one.
     var bottleToOpen: Bottle? { first { $0.reservedFor == nil } ?? first }
@@ -230,7 +244,7 @@ public extension Cellar {
         Dictionary(grouping: bottlesOnOrder, by: \.wineID)
             .compactMap { wineID, bottles -> WineGroup? in
                 guard let wine = wines[wineID] else { return nil }
-                let sorted = bottles.sorted { ($0.expectedAt ?? .distantFuture, $0.addedAt) < ($1.expectedAt ?? .distantFuture, $1.addedAt) }
+                let sorted = bottles.sorted(by: Bottle.expectedOrder)
                 return WineGroup(wine: wine, bottles: sorted)
             }
             .sorted { a, b in
@@ -272,7 +286,7 @@ public extension Cellar {
                 kept = kept.filter { $0.reservedFor?.caseInsensitiveCompare(reservation) == .orderedSame }
                 if kept.isEmpty { return nil }
             }
-            return WineGroup(wine: wine, bottles: kept.sorted { $0.addedAt < $1.addedAt })
+            return WineGroup(wine: wine, bottles: kept.sorted(by: Bottle.addedOrder))
         }
         return result.sorted { a, b in
             switch sort {
@@ -313,7 +327,7 @@ public extension Cellar {
 
     /// Bottles of a wine still in the cellar.
     func bottles(of wineID: UUID) -> [Bottle] {
-        bottlesInCellar.filter { $0.wineID == wineID }.sorted { $0.addedAt < $1.addedAt }
+        bottlesInCellar.filter { $0.wineID == wineID }.sorted(by: Bottle.addedOrder)
     }
 
     /// Bottles as their places read: storage in its order, then shelf or row, depth (front

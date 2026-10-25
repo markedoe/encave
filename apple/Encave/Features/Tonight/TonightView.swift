@@ -103,7 +103,9 @@ struct TonightView: View {
             if reserved > 0, !sections.isEmpty {
                 // The count first, so a narrow Mac column never cuts it off.
                 Text("\(reserved) bottles kept for an occasion are not suggested.")
+                    .lineLimit(nil)
                     .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         ReminderOffer()
@@ -111,7 +113,7 @@ struct TonightView: View {
             NavigationLink(value: FoodPairingRoute()) {
                 Label {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Food pairing").font(.headline)
+                        Text("Food Pairing").font(.headline)
                         Text("Find the right bottle for your dish").font(.subheadline).foregroundStyle(.secondary)
                     }
                 } icon: {
@@ -122,7 +124,7 @@ struct TonightView: View {
                 NavigationLink(value: AskCellarRoute()) {
                     Label {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Ask your cellar").font(.headline)
+                            Text("Ask Your Cellar").font(.headline)
                             Text("A question, answered with your bottles, on this device").font(.subheadline).foregroundStyle(.secondary)
                         }
                     } icon: {
@@ -350,9 +352,11 @@ private struct TonightPick: View {
                     .fontDesign(.serif)
                     .lineLimit(2)
                 // The style in words, as in the cellar list, not only by the bottle's color;
-                // wrapped, never cut, at the larger text sizes.
+                // wrapped, never cut, at the larger text sizes. The dot stays at the end of
+                // a line, never at the start of the next.
                 if !wine.styleLine.isEmpty {
-                    Text(verbatim: wine.styleLine).foregroundStyle(.secondary)
+                    Text(verbatim: wine.styleLine.replacingOccurrences(of: " · ", with: "\u{00A0}· "))
+                        .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear))

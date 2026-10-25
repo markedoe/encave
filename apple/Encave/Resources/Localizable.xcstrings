@@ -1891,6 +1891,22 @@
         }
       }
     },
+    "About %@ bottles a month [under two]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About %@ bottles a month"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Environ %@ bouteille par mois"
+          }
+        }
+      }
+    },
     "About one bottle a month": {
       "localizations": {
         "fr": {
@@ -5991,7 +6007,7 @@
         }
       }
     },
-    "Food pairing": {
+    "Food Pairing": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -6471,7 +6487,7 @@
         }
       }
     },
-    "Help with adding bottles": {
+    "Help with Adding Bottles": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -6481,7 +6497,7 @@
         }
       }
     },
-    "Help with devices": {
+    "Help with Devices": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -6491,7 +6507,7 @@
         }
       }
     },
-    "Help with storage": {
+    "Help with Storage": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -6501,7 +6517,7 @@
         }
       }
     },
-    "Help with tasting notes": {
+    "Help with Tasting Notes": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -6517,6 +6533,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aide sur le Journal"
+          }
+        }
+      }
+    },
+    "Holds %lld bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contient %lld bouteilles"
           }
         }
       }
@@ -9041,7 +9067,7 @@
         }
       }
     },
-    "On devices with Apple Intelligence, **Ask your cellar** in Tonight answers a question such as “something light for a ratatouille” with bottles you own. The answer is worked out on the device: neither the question nor your cellar is sent anywhere. In a large cellar, the model reads only part of it, the wines closest to the question and the most urgent, and the answer says so.": {
+    "On devices with Apple Intelligence, **Ask Your Cellar** in Tonight answers a question such as “something light for a ratatouille” with bottles you own. The answer is worked out on the device: neither the question nor your cellar is sent anywhere. In a large cellar, the model reads only part of it, the wines closest to the question and the most urgent, and the answer says so.": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -11141,22 +11167,22 @@
         }
       }
     },
-    "Saved On": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enregistrée le"
-          }
-        }
-      }
-    },
     "Saved before replacing or erasing the cellar": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Enregistrée avant de remplacer ou d’effacer la cave"
+          }
+        }
+      }
+    },
+    "Saved on": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrée le"
           }
         }
       }
@@ -15367,6 +15393,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vin, producteur, région, cépage, millésime"
+          }
+        }
+      }
+    },
+    "Wine, producer, region, grape, vintage [drink]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wine, producer, region, grape, vintage"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vin, producteur, millésime…"
           }
         }
       }

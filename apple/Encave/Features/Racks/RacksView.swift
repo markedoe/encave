@@ -116,6 +116,8 @@ private struct RackCard: View {
             }
             RackThumbnail(rack: rack)
                 .frame(maxWidth: .infinity, alignment: .leading)
+            // The count at the bottom, level with the other cards of the row.
+            Spacer(minLength: 0)
             VStack(alignment: .leading, spacing: 6) {
                 ProgressView(value: Double(used), total: Double(max(1, rack.capacity)))
                     .tint(Color.accentColor)
@@ -125,6 +127,8 @@ private struct RackCard: View {
             }
         }
         .padding(18)
+        // As tall as the tallest card of its row in the grid.
+        .frame(maxHeight: .infinity, alignment: .top)
         .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .accessibilityElement(children: .combine)
