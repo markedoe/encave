@@ -282,7 +282,7 @@ public enum PriceExtractor {
 
     /// The patterns above, compiled once (compiling is slow, matching is not). Read only, so
     /// shared between tasks.
-    nonisolated(unsafe) static let compiled: [String: NSRegularExpression] = {
+    static let compiled: [String: NSRegularExpression] = {
         var all: [String: NSRegularExpression] = [:]
         for pattern in [prefixPattern, suffixPattern, notOneBottleBefore, notOneBottleAfter] + sizePatterns.map(\.1) {
             all[pattern] = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive])

@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 // Reads the price of a bottle on the web pages a price search found. After the search, the
 // app opens the first result pages from the device (no cookies, cache, credentials or
@@ -49,6 +52,27 @@ public enum PagePrices {
     public static func resolvesPublicly(_ url: URL, resolver: LocalName.Resolver? = nil) async -> Bool {
         guard isAllowed(url), let host = url.host else { return false }
         return await PublicHost.resolvesPublicly(host, resolver: resolver)
+    }
+
+    /// Fields never sent on to a redirect's target.
+    static let droppedOnRedirect = ["Referer", "Cookie", "Authorization"]
+
+    /// The request for redirect number `hop` (1 for the first): nil after `maxRedirects`, or
+    /// when the target is not allowed or does not resolve to public addresses only; otherwise
+    /// `request` without Referer, cookies or credentials.
+    public static func nextRequest(hop: Int, request: URLRequest, resolver: LocalName.Resolver? = nil) async -> URLRequest? {
+        guard hop <= maxRedirects, let target = request.url, isAllowed(target),
+              await resolvesPublicly(target, resolver: resolver) else { return nil }
+        var next = request
+        for field in droppedOnRedirect { next.setValue(nil, forHTTPHeaderField: field) }
+        return next
+    }
+
+    /// True when a page's answer is read: a 2xx status, at an allowed final address, HTML, and
+    /// not announced longer than `maxBytes` (-1: unknown, capped while reading).
+    public static func acceptsResponse(statusCode: Int, url: URL?, contentType: String?, expectedLength: Int64) -> Bool {
+        (200..<300).contains(statusCode) && (url.map(isAllowed) ?? false) && isHTML(contentType: contentType)
+            && acceptsLength(expectedLength)
     }
 
     /// "text/html; charset=utf-8" or XHTML; anything else is not read.

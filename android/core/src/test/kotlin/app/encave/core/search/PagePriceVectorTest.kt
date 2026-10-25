@@ -11,6 +11,7 @@ import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.ResponseBody.Companion.asResponseBody
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -167,21 +168,28 @@ class PagePriceVectorTest {
                 HtmlScanner.scan("<p>a</p>$tail") { false }
             }
         }
-        for (file in folder.listFiles { f -> f.name.endsWith(".html") }!!) {
+        for (file in pageFiles()) {
             val page = file.readText()
-            for (end in 0..page.length step 3) PagePrices.prices(page.substring(0, end), result, 750, "Les Lacustres")
+            for (end in 0..page.length step 3) {
+                val found = PagePrices.prices(page.substring(0, end), result, 750, "Les Lacustres")
+                assertTrue(found.all { it.url == result.url }, "${file.name} cut at $end")
+            }
         }
     }
+
+    /** The fixture pages, in the same order everywhere. */
+    private fun pageFiles(): List<File> = folder.listFiles { f -> f.name.endsWith(".html") }!!.sortedBy { it.name }
 
     /** Pages with random damage (the same pseudo-random sequence each run) are read without failing. */
     @Test
     fun damagedPagesAreRead() {
         val result = WebSearchResult("R", "https://shop.example.org/vin", "")
-        val random = java.util.Random(0x2545F4914F6CDD1DL)
         val pieces = "<>/\"'-=!&;#{}[]:, \n"
-        for (file in folder.listFiles { f -> f.name.endsWith(".html") }!!) {
+        for ((index, file) in pageFiles().withIndex()) {
+            // A sequence of its own for each file: adding a file changes no other file's damage.
+            val random = java.util.Random(0x2545F4914F6CDD1DL xor (index + 1).toLong())
             val page = file.readText()
-            repeat(60) {
+            repeat(60) { iteration ->
                 val damaged = StringBuilder(page)
                 repeat(1 + random.nextInt(20)) {
                     val at = random.nextInt(damaged.length)
@@ -191,7 +199,8 @@ class PagePriceVectorTest {
                         else -> damaged.setCharAt(at, pieces[random.nextInt(pieces.length)])
                     }
                 }
-                PagePrices.prices(damaged.toString(), result, 750, "Les Lacustres")
+                val found = PagePrices.prices(damaged.toString(), result, 750, "Les Lacustres")
+                assertTrue(found.all { it.url == result.url }, "${file.name} damage $iteration")
             }
         }
     }
@@ -260,6 +269,35 @@ class PagePriceVectorTest {
         answer(PageReader.Body("<p>late</p>"))
         assertEquals(null, reader.read("https://shop.example.org/vin", System.nanoTime() - 1))
         assertTrue(asked.isEmpty())
+        reader.close()
+    }
+
+    @Test
+    fun fetchOutcomes() = kotlinx.coroutines.runBlocking {
+        val reader = PageReader()
+        val page = okhttp3.Request.Builder().url("https://shop.example.org/a").build()
+        fun response(code: Int, type: String? = "text/html; charset=utf-8", location: String? = null, body: okhttp3.ResponseBody? = null) =
+            okhttp3.Response.Builder().request(page).protocol(okhttp3.Protocol.HTTP_1_1).code(code).message("M")
+                .apply { type?.let { header("Content-Type", it) } }
+                .apply { location?.let { header("Location", it) } }
+                .apply { body?.let { body(it) } }
+                .build()
+        fun body(text: String, length: Long = text.length.toLong()) =
+            okio.Buffer().writeUtf8(text).asResponseBody(null, length)
+
+        val redirect = reader.outcome(response(302, location = "/b")) as PageReader.Redirect
+        assertEquals("https://shop.example.org/b", redirect.next)
+        val nowhere = reader.outcome(response(302)) as PageReader.Redirect
+        assertEquals(null, nowhere.next)
+        reader.fetchForTests = { _, _ -> nowhere }
+        assertEquals(null, reader.read("https://shop.example.org/a", System.nanoTime() + 5_000_000_000L))
+        assertEquals(null, (reader.outcome(response(404, body = body("<p>no</p>"))) as PageReader.Body).html)
+        assertEquals(null, (reader.outcome(response(200, "application/json", body = body("{}"))) as PageReader.Body).html)
+        assertEquals(null, (reader.outcome(response(200, body = body("<p>x</p>", PagePrices.MAX_BYTES + 1L))) as PageReader.Body).html)
+        assertEquals("<p>ok</p>", (reader.outcome(response(200, body = body("<p>ok</p>"))) as PageReader.Body).html)
+        val long = "a".repeat(2_000_000)
+        val read = (reader.outcome(response(200, body = body(long, -1))) as PageReader.Body).html
+        assertEquals(PagePrices.MAX_BYTES, read?.length)
         reader.close()
     }
 
