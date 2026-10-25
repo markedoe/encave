@@ -245,8 +245,9 @@ data class RackPlace(val cell: RackCell, val depth: Int? = null) {
     /** The place's own slot, or the front of the cell. */
     val firstSlot: Slot get() = slot ?: Slot(cell.rackId, cell.row, cell.column)
 
-    /** Holds one bottle at most: a place of a fridge drawn front and back, or a cell of a row one bottle deep. */
-    fun holdsOne(rack: Rack): Boolean = depth != null || rack.positionsInRow(cell.row) == 1
+    /** Holds one bottle at most: a place of a fridge drawn front and back, or a cell of a row one bottle deep (with [cellar], unless an older version put a bottle behind it). */
+    fun holdsOne(rack: Rack, cellar: Cellar? = null): Boolean =
+        depth != null || rack.shownPositions(cell.row, cellar?.bottlesIn(cell)?.mapNotNull { it.slot?.depth }?.maxOrNull()) == 1
 
     operator fun contains(slot: Slot): Boolean = slot.cell == cell && (depth == null || slot.depth == depth)
 

@@ -17,11 +17,11 @@ struct RackBottleList: View {
             List(selection: $selection) {
                 Section {
                     LabeledContent {
-                        Text("\(bottles.count) of \(rack.capacity) bottles").monospacedDigit()
+                        Text("\(bottles.count) of \(model.cellar.capacity(of: rack)) bottles").monospacedDigit()
                     } label: {
                         Label(rack.storageSummary, systemImage: rack.systemImage)
                     }
-                    ProgressView(value: Double(bottles.count), total: Double(max(1, rack.capacity)))
+                    ProgressView(value: Double(bottles.count), total: Double(max(1, model.cellar.capacity(of: rack))))
                         .tint(Color.accentColor)
                 }
                 if bottles.isEmpty {

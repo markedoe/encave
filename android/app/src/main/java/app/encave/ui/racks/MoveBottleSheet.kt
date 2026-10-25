@@ -106,7 +106,7 @@ fun MoveBottleSheet(viewModel: AppViewModel, cellar: Cellar, bottle: Bottle, onD
                                         viewModel.move(bottle.id, free)
                                         onDismiss()
                                     }
-                                    place.holdsOne(rack) && from != null -> {
+                                    place.holdsOne(rack, cellar) && from != null -> {
                                         viewModel.swap(from, place.firstSlot)
                                         onDismiss()
                                     }

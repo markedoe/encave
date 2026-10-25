@@ -106,6 +106,9 @@ import Testing
         #expect(cellar.bottlesInCellar.first?.slot == behind)
         #expect(rack.label(for: behind) == "B3-2")
         #expect(rack.slot(forLabel: "B3-2") == behind)
+        // Counted among the positions, so the count never reads more bottles than places.
+        #expect(cellar.capacity(of: rack) == rack.capacity + 1)
+        #expect(cellar.displacedBottles(by: rack).isEmpty)
     }
 
     @Test func bottlesLeftWithoutAPlaceWhenARowShrinks() throws {

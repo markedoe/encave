@@ -1,5 +1,5 @@
 {
-  "about": "Rows of their own (docs/SYNC.md, rack.rowDepths and rack.rowBackReversed), shared by CaveKit (StorageRowVectorTests.swift) and the Kotlin core (StorageRowVectorTest.kt). 'wire': a rack as read (JSON) and what every device makes of it: its depth, the per-row fields kept (null: left out), each row's depth and head-to-tail, and its capacity. 'kept': places every version keeps ('contains', what sync repair and imports use) and positions the apps offer ('hasPosition'), with their names. 'displaced': the bottles an edit leaves without a place, as [row, column, depth]. 'wizard': rows set one by one in the storage wizard ('rows': positions, depth, headToTail, layers per row or shelf) and the rack made (null: left out).",
+  "about": "Rows of their own (docs/SYNC.md, rack.rowDepths and rack.rowBackReversed), shared by CaveKit (StorageRowVectorTests.swift) and the Kotlin core (StorageRowVectorTest.kt). 'wire': a rack as read (JSON) and what every device makes of it: its depth, the per-row fields kept (null: left out), each row's depth and head-to-tail, and its capacity. 'kept': places every version keeps ('contains', what sync repair and imports use) and positions the apps offer ('hasPosition'), with their names. 'displaced': the bottles an edit leaves without a place (a bottle already behind its row's depth is listed only when the edit removes that place), as [row, column, depth]. 'wizard': rows set one by one in the storage wizard ('rows': positions, depth, headToTail, layers per row or shelf) and the rack made (null: left out).",
   "wire": [
     {
       "about": "A grid with a single row between two rows two deep: kept as written",
@@ -201,9 +201,16 @@
       "displaced": []
     },
     {
-      "about": "A bottle an older version put behind a single row: kept until the storage is edited, then listed, so the person takes it out or puts it elsewhere",
+      "about": "A bottle an older version put behind a single row: an edit that keeps its place (a rename) lists nothing",
       "before": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "grid", "rows": 3, "columns": 4, "depth": 2, "rowDepths": [2, 1, 2] },
       "after": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "grid", "rows": 3, "columns": 4, "depth": 2, "rowDepths": [2, 1, 2] },
+      "slots": [[1, 2, 1], [1, 0, 0], [0, 0, 1]],
+      "displaced": []
+    },
+    {
+      "about": "The same single row made shorter: the bottle behind its removed position is listed with the others there",
+      "before": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "grid", "rows": 3, "columns": 4, "depth": 2, "rowDepths": [2, 1, 2] },
+      "after": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "grid", "rows": 3, "columns": 4, "depth": 2, "rowDepths": [2, 1, 2], "rowColumns": [4, 2, 4] },
       "slots": [[1, 2, 1], [1, 0, 0], [0, 0, 1]],
       "displaced": [[1, 2, 1]]
     }

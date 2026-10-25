@@ -118,6 +118,9 @@ class StorageRowVectorTest {
         cellar.addRack(rack)
         cellar.addBottles(Wine(name = "Clos"), slots = listOf(behind))
         assertEquals(behind, cellar.bottlesInCellar.single().slot)
+        // Counted among the positions, so the count never reads more bottles than places.
+        assertEquals(rack.capacity + 1, cellar.capacity(rack))
+        assertTrue(cellar.displacedBottles(rack).isEmpty())
     }
 
     @Test

@@ -200,6 +200,14 @@ class Cellar(
 
     fun occupancy(rack: Rack): Int = bottlesInCellar.count { it.slot?.rackId == rack.id }
 
+    /**
+     * The positions a count of this rack shows: its capacity, plus each place behind a row's
+     * depth holding a bottle an older version put there, so a count never reads more bottles
+     * than positions. Mirrors CaveKit.
+     */
+    fun capacity(rack: Rack): Int =
+        rack.capacity + bottlesInCellar.count { b -> b.slot?.let { it.rackId == rack.id && rack.contains(it) && !rack.hasPosition(it) } ?: false }
+
     fun rack(id: UUID): Rack? = rackList.firstOrNull { it.id == id }
 
     /** "Main rack · B3", "Cabinet · Shelf 2, position 3", the storage note, or null when the bottle has no location. */
@@ -574,11 +582,15 @@ class Cellar(
     /** Bottles of this rack that an update with [rowMap] would leave without a place, in the order of their places. */
     fun displacedBottles(rack: Rack, rowMap: Map<Int, Int?> = emptyMap()): List<Bottle> {
         val updated = rack.normalized()
+        val old = this.rack(updated.id)
         return bottlesInCellar.filter { bottle ->
             val slot = bottle.slot
             if (slot == null || slot.rackId != updated.id) return@filter false
-            val moved = Rack.moved(slot, rowMap)
-            moved == null || !updated.hasPosition(moved)
+            val moved = Rack.moved(slot, rowMap) ?: return@filter true
+            if (!updated.contains(moved)) return@filter true
+            // A position the edit removes; a bottle already behind its row's depth (put there by
+            // an older version) stays where it is while the edit keeps that place.
+            !updated.hasPosition(moved) && old?.hasPosition(slot) != false
         }.sortedWith(compareBy({ it.slot!!.row }, { it.slot!!.column }, { it.slot!!.depth }))
     }
 

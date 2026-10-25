@@ -843,7 +843,7 @@ struct MoveBottleView: View {
                                     } else if let free = model.cellar.freeSlot(at: place) {
                                         model.move(bottleID, to: free)
                                         dismiss()
-                                    } else if place.holdsOne(in: rack), let from = bottle.slot {
+                                    } else if place.holdsOne(in: rack, cellar: model.cellar), let from = bottle.slot {
                                         model.swap(from, place.firstSlot)
                                         dismiss()
                                     } else {

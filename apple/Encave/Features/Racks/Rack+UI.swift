@@ -186,8 +186,11 @@ struct RackPlace: Hashable {
     var slot: Slot? { depth.map { Slot(rackID: cell.rackID, row: cell.row, column: cell.column, depth: $0) } }
 
     /// Holds one bottle at most: a place of a fridge drawn front and back, or a cell of a row
-    /// one bottle deep.
-    func holdsOne(in rack: Rack) -> Bool { depth != nil || rack.positions(inRow: cell.row) == 1 }
+    /// one bottle deep (with `cellar`, unless an older version put a bottle behind it).
+    func holdsOne(in rack: Rack, cellar: Cellar? = nil) -> Bool {
+        let deepest = cellar?.bottles(in: cell).compactMap(\.slot?.depth).max()
+        return depth != nil || rack.shownPositions(inRow: cell.row, deepest: deepest) == 1
+    }
 
     /// The place's own slot, or the front of the cell.
     var firstSlot: Slot { slot ?? Slot(rackID: cell.rackID, row: cell.row, column: cell.column) }

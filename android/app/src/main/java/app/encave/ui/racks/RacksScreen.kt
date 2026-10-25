@@ -168,9 +168,9 @@ private fun RacksList(viewModel: AppViewModel, navigator: AppNavigator, onOpen: 
                         supportingContent = {
                             Column(verticalArrangement = Arrangement.spacedBy(Dimens.xs)) {
                                 Text(rack.storageSummary(resources))
-                                Text(stringResource(R.string.rack_occupancy, used, rack.capacity))
+                                Text(stringResource(R.string.rack_occupancy, used, cellar.capacity(rack)))
                                 LinearProgressIndicator(
-                                    progress = { if (rack.capacity == 0) 0f else used.toFloat() / rack.capacity },
+                                    progress = { used.toFloat() / cellar.capacity(rack).coerceAtLeast(1) },
                                     modifier = Modifier.fillMaxWidth(),
                                     drawStopIndicator = {},
                                 )
