@@ -1,4 +1,5 @@
 #if os(macOS)
+import AppKit
 import CaveKit
 import SwiftUI
 
@@ -20,6 +21,8 @@ struct MacRoot: View {
     @State private var bottle: UUID?
     @State private var columns: NavigationSplitViewVisibility = .all
     @State private var deletingRackID: UUID?
+    /// No accent chosen in System Settings (Multicolor): the app's own accent applies.
+    @State private var usesAppAccent = SystemAccent.isMulticolor
     private var layout = DefaultsFlag.cellarTable
 
     var body: some View {
@@ -129,8 +132,13 @@ struct MacRoot: View {
         }
         .listStyle(.sidebar)
         // The selected row: white on a darker rose in dark mode, where white on the accent
-        // is 3.4:1 (design token "mac-sidebar-selection"); the accent in light mode.
-        .tint(Color.macSidebarSelection)
+        // is 3.4:1 (design token "mac-sidebar-selection"); the accent in light mode. Only
+        // with Multicolor: an accent chosen in System Settings colors the selection as
+        // it colors the row icons.
+        .tint(usesAppAccent ? Color.macSidebarSelection : nil)
+        .onReceive(NotificationCenter.default.publisher(for: NSColor.systemColorsDidChangeNotification)) { _ in
+            usesAppAccent = SystemAccent.isMulticolor
+        }
         .confirmsRackDeletion($deletingRackID)
         .safeAreaInset(edge: .bottom) { SyncAttentionFooter() }
     }
@@ -194,6 +202,14 @@ struct MacRoot: View {
                 router.sheet = .editRack(rackID: nil)
             }
         }
+    }
+}
+
+/// The accent chosen in System Settings › Appearance.
+enum SystemAccent {
+    /// Multicolor (no "AppleAccentColor" set): each app shows its own accent.
+    static var isMulticolor: Bool {
+        UserDefaults.standard.object(forKey: "AppleAccentColor") == nil
     }
 }
 
