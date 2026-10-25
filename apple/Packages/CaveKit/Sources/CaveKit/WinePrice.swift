@@ -43,7 +43,12 @@ extension WebSearchQuery {
         case 1000: "1 l"
         case 1500: "magnum"
         case 3000: "double magnum"
-        default: sizeML % 10 == 0 ? "\(sizeML / 10) cl" : "\(sizeML) ml"
+        default:
+            if sizeML > 3000, sizeML % 500 == 0 {
+                sizeML % 1000 == 0 ? "\(sizeML / 1000) l" : "\(sizeML / 1000).5 l"
+            } else {
+                sizeML % 10 == 0 ? "\(sizeML / 10) cl" : "\(sizeML) ml"
+            }
         }
     }
 }
@@ -64,9 +69,17 @@ public enum PriceExtractor {
     /// Several bottles, a case or delivery: not the price of one bottle.
     static let notOneBottleBefore = #"(?:\b\d+ ?x\b|\bx ?\d+\b|\bcase\b|\bcases\b|\bcarton|\bcaisse|\blot\b|\bpack\b|\bcoffret|\bbox\b|\bshipping|\bdelivery|\blivraison|\bfrais de port|\bdozen|\bdouzaine)"#
     static let notOneBottleAfter = #"^[ \u00A0]*(?:(?:for|pour|les|the) \d{1,2}\b|x ?\d+|/ ?(?:case|caisse|carton|lot|pack|\d)|\( ?\d+ ?(?:x|bottles|bouteilles|btl)|(?:per|par|la|le) (?:case|caisse|carton|lot))"#
-    /// Bottle sizes named near a price, larger sizes first ("double magnum" before "magnum").
+    /// Bottle sizes named near a price, larger sizes first ("double magnum" before "magnum"),
+    /// and a volume given in litres before a name that has several ("jéroboam 5 l").
     static let sizePatterns: [(Int, String)] = [
-        (3000, #"\bdouble[- ]magnum|\bjeroboam|\b3 ?l\b|\b300 ?cl"#),
+        (18000, #"\bmelchior"# + litres("18")),
+        (15000, #"\bnabuchodonosor|\bnebuchadnezzar"# + litres("15")),
+        (12000, #"\bbalthazar"# + litres("12")),
+        (9000, #"\bsalmanazar"# + litres("9")),
+        (6000, #"\bimp[eé]riale?\b|\bmathusalem|\bmethuselah"# + litres("6")),
+        (5000, String(litres("5").dropFirst())),
+        (4500, #"\br[eé]hoboam|(?<![\d.,])4[.,]5 ?l\b|(?<![\d.,])4[.,]5 ?lit(?:re|er)s?\b|\b450 ?cl"#),
+        (3000, #"\bdouble[- ]magnum|\bj[eé]roboam|\b3 ?l\b|\b300 ?cl"#),
         (1500, #"\bmagnum|\b1[.,]5 ?l\b|\b150 ?cl|\b1500 ?ml"#),
         (1000, #"\b1 ?l\b|\b1 ?lit(?:re|er)\b|\b1[.,]0 ?l\b|\b100 ?cl|\b1000 ?ml"#),
         (375, #"\bhalf[- ]bottle|\bdemi[- ]bouteille|\bfillette|\b37[.,]5 ?cl|\b375 ?ml|\b0[.,]375 ?l\b"#),
@@ -75,6 +88,11 @@ public enum PriceExtractor {
         (620, #"\bclavelin|\b62 ?cl|\b620 ?ml|\b0[.,]62 ?l\b"#),
         (500, #"\b50 ?cl|\b500 ?ml|\b0[.,]5 ?l\b"#),
     ]
+
+    /// "|6 l|6 litres|600 cl": a whole number of litres, not the end of "1,6 l".
+    static func litres(_ count: String) -> String {
+        #"|(?<![\d.,])"# + count + #" ?l\b|(?<![\d.,])"# + count + #" ?lit(?:re|er)s?\b|\b"# + count + #"00 ?cl"#
+    }
 
     static let range: ClosedRange<Decimal> = 3...20_000
     /// Matches of each pattern read in one text, at most.
@@ -101,7 +119,16 @@ public enum PriceExtractor {
         textPrices(in: text, sizeML: sizeML).map { ($0.amount, $0.currency, $0.excerpt) }
     }
 
-    /// A price in a text: where it is, and the size named next to it, if any.
+    /// What a price in a text is for.
+    enum Kind: Equatable {
+        case oneBottle
+        /// Several bottles, a case or delivery.
+        case notOneBottle
+        /// One bottle of another size.
+        case otherSize
+    }
+
+    /// A price in a text: where it is, the size named next to it, if any, and what it is for.
     struct TextPrice {
         var amount: Decimal
         var currency: String
@@ -109,10 +136,18 @@ public enum PriceExtractor {
         /// UTF-16 offset of the price in the text.
         var location: Int
         var namedSize: Int?
+        /// UTF-16 length of the price in the text.
+        var length: Int = 0
+        var kind: Kind = .oneBottle
     }
 
     /// As `prices(in:sizeML:)`; a price without a size next to it is for `defaultSize`.
     static func textPrices(in text: String, sizeML: Int, defaultSize: Int = 750) -> [TextPrice] {
+        allTextPrices(in: text, sizeML: sizeML, defaultSize: defaultSize).filter { $0.kind == .oneBottle }
+    }
+
+    /// Every amount with a currency in a text, in order, with what it is for.
+    static func allTextPrices(in text: String, sizeML: Int, defaultSize: Int = 750) -> [TextPrice] {
         let nsText = text as NSString
         let whole = NSRange(location: 0, length: nsText.length)
         struct Match { var range: NSRange; var amount: String; var symbol: String; var isSuffix: Bool }
@@ -149,19 +184,31 @@ public enum PriceExtractor {
             kept.append(match)
         }
 
-        return kept.compactMap { match in
-            guard let amount = decimal(match.amount), range.contains(amount) else { return nil }
-            let before = context(nsText, before: match.range.location)
-            let after = context(nsText, after: match.range.location + match.range.length)
-            if contains(before, notOneBottleBefore) || contains(after, notOneBottleAfter) { return nil }
+        var found: [TextPrice] = []
+        // The words before a price stop at the price before it: "Case 6x75cl - £269.70 / 1 Bottle
+        // 75cl - £44.95" is a case, then one bottle.
+        var previousEnd = 0
+        for match in kept {
+            let from = previousEnd
+            previousEnd = NSMaxRange(match.range)
+            guard let amount = decimal(match.amount), range.contains(amount) else { continue }
+            let before = context(nsText, before: match.range.location, from: from)
+            let after = context(nsText, after: NSMaxRange(match.range))
             // A price without a size is for 75 cl (or the page's size); another size must be named.
             let size = namedSize(before + " " + after)
-            if (size ?? defaultSize) != sizeML { return nil }
+            let kind: Kind = if contains(before, notOneBottleBefore) || contains(after, notOneBottleAfter) {
+                .notOneBottle
+            } else if (size ?? defaultSize) != sizeML {
+                .otherSize
+            } else {
+                .oneBottle
+            }
             let excerpt = (before + nsText.substring(with: match.range) + after)
                 .split(whereSeparator: \.isWhitespace).joined(separator: " ")
-            return TextPrice(amount: amount, currency: currencyCode(match.symbol), excerpt: excerpt,
-                             location: match.range.location, namedSize: size)
+            found.append(TextPrice(amount: amount, currency: currencyCode(match.symbol), excerpt: excerpt,
+                                   location: match.range.location, namedSize: size, length: match.range.length, kind: kind))
         }
+        return found
     }
 
     /// The median of the prices in `currency`, rounded to the cent; nil if there are none.
@@ -199,15 +246,28 @@ public enum PriceExtractor {
         }
     }
 
-    /// Up to 30 characters before the price, in the same sentence ("0.7 l" does not end one).
-    static func context(_ text: NSString, before location: Int) -> String {
-        let start = max(0, location - 30)
+    /// Up to 40 characters before the price and after `lowest`, in the same sentence ("0.7 l"
+    /// does not end one), without the end of a word cut at its start ("hipping" of "shipping").
+    static func context(_ text: NSString, before location: Int, from lowest: Int = 0) -> String {
+        var start = max(lowest, location - 40)
+        if start > lowest, isWordUnit(text.character(at: start - 1)) {
+            while start < location, isWordUnit(text.character(at: start)) { start += 1 }
+        }
         var piece = text.substring(with: NSRange(location: start, length: location - start))
         if let cut = piece.lastIndex(where: { ";|•·\n!?".contains($0) }) {
             piece = String(piece[piece.index(after: cut)...])
         }
         if let stop = piece.range(of: ". ", options: .backwards) { piece = String(piece[stop.upperBound...]) }
         return piece
+    }
+
+    /// A letter or a digit (UTF-16 unit), the same test as on Android.
+    static func isWordUnit(_ unit: UInt16) -> Bool {
+        switch unit {
+        case 0x30...0x39, 0x41...0x5A, 0x61...0x7A: true
+        case 0..<0xC0: false
+        default: Unicode.Scalar(unit)?.properties.isAlphabetic ?? false
+        }
     }
 
     /// Up to 25 characters after the price, in the same sentence.

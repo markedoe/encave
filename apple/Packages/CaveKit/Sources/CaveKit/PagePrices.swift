@@ -87,13 +87,22 @@ public enum PagePrices {
 
     /// Prices of one bottle of `sizeML` on a result's page, most trusted first: schema.org data
     /// (JSON-LD), then the product meta tags, then microdata, then the visible text near the
-    /// wine's name. Each keeps the result's site and address. Empty once `shouldStop` is true.
+    /// wine's name. A structured amount the text shows for a case (or 6 or 12 times a price of
+    /// one bottle there) is left out, and the text's price is used. With `vintage`, prices
+    /// named for another vintage are left out. Each keeps the result's site and address. Empty
+    /// once `shouldStop` is true.
     public static func prices(inPage html: String, of result: WebSearchResult, sizeML: Int, wineName: String? = nil,
-                              shouldStop: () -> Bool = { Task.isCancelled }) -> [FoundPrice] {
+                              vintage: Int? = nil, shouldStop: () -> Bool = { Task.isCancelled }) -> [FoundPrice] {
         guard let document = HTMLScanner.scan(html, shouldStop: shouldStop), !shouldStop() else { return [] }
         let page = Page(document: document, wineName: wineName)
         guard !shouldStop() else { return [] }
-        let found = page.structuredPrices(sizeML: sizeML, shouldStop: shouldStop) ?? page.textPrices(sizeML: sizeML)
+        let text = page.textReading(sizeML: sizeML, vintage: vintage)
+        guard !shouldStop() else { return [] }
+        var found = text.items
+        if let structured = page.structuredPrices(sizeML: sizeML, vintage: vintage, shouldStop: shouldStop) {
+            let kept = Page.withoutCasePrices(structured, text: text)
+            if !kept.isEmpty || text.items.isEmpty { found = kept }
+        }
         guard !shouldStop() else { return [] }
         var seen = Set<String>()
         return found.compactMap { item in
@@ -133,6 +142,46 @@ public enum PagePrices {
         var amount: Decimal
         var currency: String
         var excerpt: String
+    }
+
+    /// The prices of the text near the wine's name.
+    struct TextReading {
+        /// Prices of one bottle, at most `maxTextPrices`.
+        var items: [Item] = []
+        /// Amounts and currencies of one bottle (all of them), and of several bottles, a case or delivery.
+        var oneBottle: [(Decimal, String)] = []
+        var notOneBottle: [(Decimal, String)] = []
+    }
+
+    /// How far before a price (UTF-16 units) a vintage counts as its own.
+    static let vintageBefore = 150
+    /// How far after a price, on its line, a vintage counts as its own when none is before it.
+    static let vintageAfter = 60
+
+    /// Years 1900 to 2099 written as four digits on their own in `units[start..<end]`.
+    static func years(in units: [UInt16], from start: Int, to end: Int) -> Set<Int> {
+        var found = Set<Int>()
+        var index = max(0, start)
+        let end = min(end, units.count)
+        func isDigit(_ unit: UInt16) -> Bool { unit >= 0x30 && unit <= 0x39 }
+        while index < end {
+            guard isDigit(units[index]) else { index += 1; continue }
+            var stop = index
+            while stop < end, isDigit(units[stop]) { stop += 1 }
+            let before = index > 0 ? units[index - 1] : 0x20
+            let after = stop < units.count ? units[stop] : 0x20
+            if stop - index == 4, !isDigit(before), !isDigit(after) {
+                let value = units[index..<stop].reduce(0) { $0 * 10 + Int($1 - 0x30) }
+                if (1900...2099).contains(value) { found.insert(value) }
+            }
+            index = stop
+        }
+        return found
+    }
+
+    static func years(in text: String) -> Set<Int> {
+        let units = Array(text.utf16.prefix(300))
+        return years(in: units, from: 0, to: units.count)
     }
 
     static let currencies: Set<String> = ["EUR", "USD", "GBP", "CHF"]
@@ -238,23 +287,29 @@ public enum PagePrices {
         // MARK: Structured data
 
         /// Nil when the page has no structured price for one bottle of the size.
-        func structuredPrices(sizeML: Int, shouldStop: () -> Bool) -> [Item]? {
+        func structuredPrices(sizeML: Int, vintage: Int?, shouldStop: () -> Bool) -> [Item]? {
             for step in 0..<3 {
                 if shouldStop() { return [] }
                 let items = switch step {
-                case 0: jsonLDPrices(sizeML: sizeML, shouldStop: shouldStop)
-                case 1: metaPrices(sizeML: sizeML)
-                default: microdataPrices(sizeML: sizeML)
+                case 0: jsonLDPrices(sizeML: sizeML, vintage: vintage, shouldStop: shouldStop)
+                case 1: metaPrices(sizeML: sizeML, vintage: vintage)
+                default: microdataPrices(sizeML: sizeML, vintage: vintage)
                 }
                 if !items.isEmpty { return items }
             }
             return nil
         }
 
-        func item(amount text: String, currency: String?, names: [String?], label: String?, sizeML: Int) -> Item? {
+        func item(amount text: String, currency: String?, names: [String?], label: String?, sizeML: Int,
+                  vintage: Int?, vintageNames: [String?]) -> Item? {
             guard let currency = currency?.trimmingCharacters(in: .whitespaces).uppercased(),
                   PagePrices.currencies.contains(currency),
                   let amount = PagePrices.structuredAmount(text), PriceExtractor.range.contains(amount) else { return nil }
+            // A product named for another vintage.
+            if let vintage {
+                let years = vintageNames.compactMap { $0 }.reduce(into: Set<Int>()) { $0.formUnion(PagePrices.years(in: $1)) }
+                if !years.isEmpty, !years.contains(vintage) { return nil }
+            }
             // A case, a lot or a pack is not one bottle.
             for name in names.compactMap({ $0 })
             where PriceExtractor.contains(String(name.prefix(300)), PriceExtractor.notOneBottleBefore) {
@@ -266,7 +321,7 @@ public enum PagePrices {
                         excerpt: excerpt(name: label, price: "\(PagePrices.twoDecimals(amount)) \(currency)", size: size?.words))
         }
 
-        func jsonLDPrices(sizeML: Int, shouldStop: () -> Bool) -> [Item] {
+        func jsonLDPrices(sizeML: Int, vintage: Int?, shouldStop: () -> Bool) -> [Item] {
             var items: [Item] = []
             for script in document.jsonLD {
                 if shouldStop() { return [] }
@@ -277,7 +332,7 @@ public enum PagePrices {
                     for offer in JSONLD.offers(of: product) {
                         if let quantity = offer.quantity, quantity > 1 { continue }
                         if let item = item(amount: offer.amount, currency: offer.currency, names: [offer.name, name],
-                                           label: name, sizeML: sizeML) {
+                                           label: name, sizeML: sizeML, vintage: vintage, vintageNames: [offer.name, name]) {
                             items.append(item)
                         }
                     }
@@ -286,11 +341,12 @@ public enum PagePrices {
             return items
         }
 
-        func metaPrices(sizeML: Int) -> [Item] {
+        func metaPrices(sizeML: Int, vintage: Int?) -> [Item] {
             func value(_ key: String) -> String? { document.meta.first { $0.key == key }?.value }
             for prefix in ["product:price:", "og:price:"] {
                 if let amount = value(prefix + "amount"),
-                   let item = item(amount: amount, currency: value(prefix + "currency"), names: [], label: nil, sizeML: sizeML) {
+                   let item = item(amount: amount, currency: value(prefix + "currency"), names: [], label: nil, sizeML: sizeML,
+                                   vintage: vintage, vintageNames: [label]) {
                     return [item]
                 }
             }
@@ -298,30 +354,60 @@ public enum PagePrices {
         }
 
         /// The first itemprop="price" of the page, with the first itemprop="priceCurrency".
-        func microdataPrices(sizeML: Int) -> [Item] {
+        func microdataPrices(sizeML: Int, vintage: Int?) -> [Item] {
             guard let amount = document.itemPrice,
-                  let item = item(amount: amount, currency: document.itemCurrency, names: [], label: nil, sizeML: sizeML)
+                  let item = item(amount: amount, currency: document.itemCurrency, names: [], label: nil, sizeML: sizeML,
+                                  vintage: vintage, vintageNames: [label])
             else { return [] }
             return [item]
         }
 
         // MARK: Visible text
 
-        func textPrices(sizeML: Int) -> [Item] {
+        /// The prices near the wine's name. With `vintage`, a price whose own words (before it,
+        /// else after it on its line) name another vintage is left out, and none is kept when
+        /// the text names several vintages but not this one.
+        func textReading(sizeML: Int, vintage: Int?) -> TextReading {
             let size = size(named: [])
+            var reading = TextReading()
+            var otherVintagesOnly = false
+            if let vintage {
+                var seen = Set<Int>()
+                for area in areas { seen.formUnion(PagePrices.years(in: units, from: area.location, to: NSMaxRange(area))) }
+                otherVintagesOnly = seen.count > 1 && !seen.contains(vintage)
+            }
             var prices: [PriceExtractor.TextPrice] = []
             for area in areas {
                 // A little text around the area, for the words next to a price.
                 let start = max(0, area.location - 40)
                 let end = min(units.count, NSMaxRange(area) + 30)
                 let piece = String(decoding: units[start..<end], as: UTF16.self)
-                for price in PriceExtractor.textPrices(in: piece, sizeML: sizeML, defaultSize: size?.sizeML ?? 750)
-                where NSLocationInRange(start + price.location, area) {
+                let all = PriceExtractor.allTextPrices(in: piece, sizeML: sizeML, defaultSize: size?.sizeML ?? 750)
+                for (index, price) in all.enumerated() where NSLocationInRange(start + price.location, area) {
+                    switch price.kind {
+                    case .otherSize: continue
+                    case .notOneBottle: reading.notOneBottle.append((price.amount, price.currency)); continue
+                    case .oneBottle: break
+                    }
+                    if let vintage {
+                        if otherVintagesOnly { continue }
+                        let location = start + price.location, priceEnd = location + price.length
+                        let previousEnd = index > 0 ? start + all[index - 1].location + all[index - 1].length : 0
+                        var years = PagePrices.years(in: units, from: max(area.location, previousEnd,
+                                                                         location - PagePrices.vintageBefore), to: location)
+                        if years.isEmpty {
+                            var stop = min(units.count, priceEnd + PagePrices.vintageAfter)
+                            if index + 1 < all.count { stop = min(stop, start + all[index + 1].location) }
+                            if let newline = units[priceEnd..<max(priceEnd, stop)].firstIndex(of: 0x0A) { stop = newline }
+                            years = PagePrices.years(in: units, from: priceEnd, to: stop)
+                        }
+                        if !years.isEmpty, !years.contains(vintage) { continue }
+                    }
+                    reading.oneBottle.append((price.amount, price.currency))
                     prices.append(price)
                 }
-                if prices.count >= PagePrices.maxTextPrices { break }
             }
-            return prices.prefix(PagePrices.maxTextPrices).map { price in
+            reading.items = prices.prefix(PagePrices.maxTextPrices).map { price in
                 var parts: [String] = []
                 if let label = label.flatMap(HTML.cleanLine), !price.excerpt.localizedCaseInsensitiveContains(label) {
                     parts.append(String(label.prefix(100)))
@@ -332,6 +418,23 @@ public enum PagePrices {
                     parts.append(words)
                 }
                 return Item(amount: price.amount, currency: price.currency, excerpt: parts.joined(separator: " · "))
+            }
+            return reading
+        }
+
+        /// Without the structured amounts that the text near the wine's name shows for several
+        /// bottles, or that are 6 or 12 times (±2 %) a price of one bottle there: a case.
+        static func withoutCasePrices(_ items: [Item], text: TextReading) -> [Item] {
+            let tolerance = Decimal(string: "0.02")!
+            return items.filter { item in
+                if text.notOneBottle.contains(where: { $0.0 == item.amount && $0.1 == item.currency }) { return false }
+                return !text.oneBottle.contains { amount, currency in
+                    currency == item.currency && [6, 12].contains { count in
+                        let expected = amount * Decimal(count)
+                        let difference = item.amount - expected
+                        return (difference < 0 ? -difference : difference) <= expected * tolerance
+                    }
+                }
             }
         }
     }

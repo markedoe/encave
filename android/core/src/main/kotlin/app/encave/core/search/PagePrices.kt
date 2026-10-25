@@ -99,20 +99,30 @@ object PagePrices {
     /**
      * Prices of one bottle of [sizeML] on a result's page, most trusted first: schema.org data
      * (JSON-LD), then the product meta tags, then microdata, then the visible text near the
-     * wine's name. Each keeps the result's site and address. Empty once [shouldStop] is true.
+     * wine's name. A structured amount the text shows for a case (or 6 or 12 times a price of
+     * one bottle there) is left out, and the text's price is used. With [vintage], prices
+     * named for another vintage are left out. Each keeps the result's site and address. Empty
+     * once [shouldStop] is true.
      */
     fun prices(
         html: String,
         result: WebSearchResult,
         sizeML: Int,
         wineName: String? = null,
+        vintage: Int? = null,
         shouldStop: () -> Boolean = { false },
     ): List<FoundPrice> {
         val document = HtmlScanner.scan(html, shouldStop) ?: return emptyList()
         if (shouldStop()) return emptyList()
         val page = Page(document, wineName)
         if (shouldStop()) return emptyList()
-        val found = page.structuredPrices(sizeML, shouldStop) ?: page.textPrices(sizeML)
+        val text = page.textReading(sizeML, vintage)
+        if (shouldStop()) return emptyList()
+        var found = text.items
+        page.structuredPrices(sizeML, vintage, shouldStop)?.let { structured ->
+            val kept = withoutCasePrices(structured, text)
+            if (kept.isNotEmpty() || text.items.isEmpty()) found = kept
+        }
         if (shouldStop()) return emptyList()
         return found.map { FoundPrice(it.amount, it.currency, result.domain, result.url, it.excerpt) }.distinctBy { it.id }
     }
@@ -138,6 +148,64 @@ object PagePrices {
     internal fun twoDecimals(amount: BigDecimal): String = amount.setScale(2, RoundingMode.HALF_UP).toPlainString()
 
     internal data class Item(val amount: BigDecimal, val currency: String, val excerpt: String)
+
+    /** The prices of the text near the wine's name. */
+    internal class TextReading {
+        /** Prices of one bottle, at most [MAX_TEXT_PRICES]. */
+        var items: List<Item> = emptyList()
+
+        /** Amounts and currencies of one bottle (all of them), and of several bottles, a case or delivery. */
+        val oneBottle = mutableListOf<Pair<BigDecimal, String>>()
+        val notOneBottle = mutableListOf<Pair<BigDecimal, String>>()
+    }
+
+    /** How far before a price (UTF-16 units) a vintage counts as its own. */
+    private const val VINTAGE_BEFORE = 150
+
+    /** How far after a price, on its line, a vintage counts as its own when none is before it. */
+    private const val VINTAGE_AFTER = 60
+
+    /** Years 1900 to 2099 written as four digits on their own in `text[start, end)`. */
+    internal fun years(text: String, start: Int, end: Int): Set<Int> {
+        val found = mutableSetOf<Int>()
+        var index = maxOf(0, start)
+        val stopAt = minOf(end, text.length)
+        while (index < stopAt) {
+            if (text[index] !in '0'..'9') {
+                index++
+                continue
+            }
+            var stop = index
+            while (stop < stopAt && text[stop] in '0'..'9') stop++
+            val before = if (index > 0) text[index - 1] else ' '
+            val after = if (stop < text.length) text[stop] else ' '
+            if (stop - index == 4 && before !in '0'..'9' && after !in '0'..'9') {
+                val value = text.substring(index, stop).toInt()
+                if (value in 1900..2099) found += value
+            }
+            index = stop
+        }
+        return found
+    }
+
+    internal fun years(text: String): Set<Int> = text.take(300).let { years(it, 0, it.length) }
+
+    /**
+     * Without the structured amounts that the text near the wine's name shows for several
+     * bottles, or that are 6 or 12 times (±2 %) a price of one bottle there: a case.
+     */
+    internal fun withoutCasePrices(items: List<Item>, text: TextReading): List<Item> {
+        val tolerance = BigDecimal("0.02")
+        return items.filter { item ->
+            if (text.notOneBottle.any { it.first.compareTo(item.amount) == 0 && it.second == item.currency }) return@filter false
+            text.oneBottle.none { (amount, currency) ->
+                currency == item.currency && listOf(6, 12).any { count ->
+                    val expected = amount.multiply(BigDecimal(count))
+                    item.amount.subtract(expected).abs() <= expected.multiply(tolerance)
+                }
+            }
+        }
+    }
 
     private val currencies = setOf("EUR", "USD", "GBP", "CHF")
 
@@ -226,22 +294,35 @@ object PagePrices {
         // Structured data
 
         /** Null when the page has no structured price for one bottle of the size. */
-        fun structuredPrices(sizeML: Int, shouldStop: () -> Boolean): List<Item>? {
+        fun structuredPrices(sizeML: Int, vintage: Int?, shouldStop: () -> Boolean): List<Item>? {
             for (step in 0 until 3) {
                 if (shouldStop()) return emptyList()
                 val items = when (step) {
-                    0 -> jsonLdPrices(sizeML, shouldStop)
-                    1 -> metaPrices(sizeML)
-                    else -> microdataPrices(sizeML)
+                    0 -> jsonLdPrices(sizeML, vintage, shouldStop)
+                    1 -> metaPrices(sizeML, vintage)
+                    else -> microdataPrices(sizeML, vintage)
                 }
                 if (items.isNotEmpty()) return items
             }
             return null
         }
 
-        private fun item(amount: String, currency: String?, names: List<String?>, label: String?, sizeML: Int): Item? {
+        private fun item(
+            amount: String,
+            currency: String?,
+            names: List<String?>,
+            label: String?,
+            sizeML: Int,
+            vintage: Int?,
+            vintageNames: List<String?>,
+        ): Item? {
             val code = currency?.trim()?.uppercase(Locale.ROOT)?.takeIf { it in currencies } ?: return null
             val value = structuredAmount(amount)?.takeIf { PriceExtractor.inRange(it) } ?: return null
+            // A product named for another vintage.
+            if (vintage != null) {
+                val years = vintageNames.filterNotNull().flatMap { years(it) }.toSet()
+                if (years.isNotEmpty() && vintage !in years) return null
+            }
             // A case, a lot or a pack is not one bottle.
             if (names.any { it != null && PriceExtractor.notOneBottleBefore.containsMatchIn(it.take(300)) }) return null
             val size = size(names)
@@ -249,7 +330,7 @@ object PagePrices {
             return Item(value, code, excerpt(label, "${twoDecimals(value)} $code", size?.second))
         }
 
-        private fun jsonLdPrices(sizeML: Int, shouldStop: () -> Boolean): List<Item> {
+        private fun jsonLdPrices(sizeML: Int, vintage: Int?, shouldStop: () -> Boolean): List<Item> {
             val items = mutableListOf<Item>()
             for (script in document.jsonLd) {
                 if (shouldStop()) return emptyList()
@@ -258,43 +339,87 @@ object PagePrices {
                     val name = JsonLd.string(product["name"])
                     for (offer in JsonLd.offers(product)) {
                         if ((offer.quantity ?: 1.0) > 1) continue
-                        item(offer.amount, offer.currency, listOf(offer.name, name), name, sizeML)?.let { items += it }
+                        item(offer.amount, offer.currency, listOf(offer.name, name), name, sizeML, vintage, listOf(offer.name, name))
+                            ?.let { items += it }
                     }
                 }
             }
             return items
         }
 
-        private fun metaPrices(sizeML: Int): List<Item> {
+        private fun metaPrices(sizeML: Int, vintage: Int?): List<Item> {
             fun value(key: String) = document.meta.firstOrNull { it.first == key }?.second
             for (prefix in listOf("product:price:", "og:price:")) {
                 val amount = value(prefix + "amount") ?: continue
-                item(amount, value(prefix + "currency"), emptyList(), null, sizeML)?.let { return listOf(it) }
+                item(amount, value(prefix + "currency"), emptyList(), null, sizeML, vintage, listOf(label))?.let { return listOf(it) }
             }
             return emptyList()
         }
 
         /** The first itemprop="price" of the page, with the first itemprop="priceCurrency". */
-        private fun microdataPrices(sizeML: Int): List<Item> {
+        private fun microdataPrices(sizeML: Int, vintage: Int?): List<Item> {
             val amount = document.itemPrice ?: return emptyList()
-            return listOfNotNull(item(amount, document.itemCurrency, emptyList(), null, sizeML))
+            return listOfNotNull(item(amount, document.itemCurrency, emptyList(), null, sizeML, vintage, listOf(label)))
         }
 
         // Visible text
 
-        fun textPrices(sizeML: Int): List<Item> {
+        /**
+         * The prices near the wine's name. With [vintage], a price whose own words (before it,
+         * else after it on its line) name another vintage is left out, and none is kept when the
+         * text names several vintages but not this one.
+         */
+        fun textReading(sizeML: Int, vintage: Int?): TextReading {
             val size = size(emptyList())
+            val reading = TextReading()
+            var otherVintagesOnly = false
+            if (vintage != null) {
+                val seen = mutableSetOf<Int>()
+                for (area in areas) if (!area.isEmpty()) seen += years(text, area.first, area.last + 1)
+                otherVintagesOnly = seen.size > 1 && vintage !in seen
+            }
             val prices = mutableListOf<PriceExtractor.TextPrice>()
             for (area in areas) {
                 if (area.isEmpty()) continue
                 // A little text around the area, for the words next to a price.
                 val start = maxOf(0, area.first - 40)
                 val end = minOf(text.length, area.last + 1 + 30)
-                PriceExtractor.textPrices(text.substring(start, end), sizeML, defaultSize = size?.first ?: 750)
-                    .filterTo(prices) { start + it.location in area }
-                if (prices.size >= MAX_TEXT_PRICES) break
+                val all = PriceExtractor.allTextPrices(text.substring(start, end), sizeML, defaultSize = size?.first ?: 750)
+                for ((index, price) in all.withIndex()) {
+                    if (start + price.location !in area) continue
+                    when (price.kind) {
+                        PriceExtractor.Kind.OtherSize -> continue
+                        PriceExtractor.Kind.NotOneBottle -> {
+                            reading.notOneBottle += price.amount to price.currency
+                            continue
+                        }
+                        PriceExtractor.Kind.OneBottle -> Unit
+                    }
+                    if (vintage != null) {
+                        if (otherVintagesOnly) continue
+                        val location = start + price.location
+                        val priceEnd = location + price.length
+                        val previousEnd = if (index > 0) start + all[index - 1].location + all[index - 1].length else 0
+                        var found = years(text, maxOf(area.first, previousEnd, location - VINTAGE_BEFORE), location)
+                        if (found.isEmpty()) {
+                            var stop = minOf(text.length, priceEnd + VINTAGE_AFTER)
+                            if (index + 1 < all.size) stop = minOf(stop, start + all[index + 1].location)
+                            // Only up to `stop`: a page's text is never searched to its end for each price.
+                            for (at in priceEnd until stop) {
+                                if (text[at] == '\n') {
+                                    stop = at
+                                    break
+                                }
+                            }
+                            found = years(text, priceEnd, stop)
+                        }
+                        if (found.isNotEmpty() && vintage !in found) continue
+                    }
+                    reading.oneBottle += price.amount to price.currency
+                    prices += price
+                }
             }
-            return prices.take(MAX_TEXT_PRICES).map { price ->
+            reading.items = prices.take(MAX_TEXT_PRICES).map { price ->
                 val parts = mutableListOf<String>()
                 label?.let(Html::cleanLine)?.takeIf { !price.excerpt.contains(it, ignoreCase = true) }?.let { parts += it.take(100) }
                 parts += price.excerpt
@@ -302,6 +427,7 @@ object PagePrices {
                 if (price.namedSize == null && words != null && parts.none { it.contains(words, ignoreCase = true) }) parts += words
                 Item(price.amount, price.currency, parts.joinToString(" · "))
             }
+            return reading
         }
     }
 }

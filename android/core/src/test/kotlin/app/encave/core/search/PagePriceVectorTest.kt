@@ -56,8 +56,9 @@ class PagePriceVectorTest {
             val url = vector["url"]!!.jsonPrimitive.content
             val size = vector["sizeML"]!!.jsonPrimitive.int
             val result = WebSearchResult("Result", url, "")
-            val found = PagePrices.prices(File(folder, file).readText(), result, size, vector["wineName"]?.jsonPrimitive?.contentOrNull)
-            val name = "$file ($size ml)"
+            val vintage = vector["vintage"]?.jsonPrimitive?.int
+            val found = PagePrices.prices(File(folder, file).readText(), result, size, vector["wineName"]?.jsonPrimitive?.contentOrNull, vintage)
+            val name = "$file ($size ml, ${vintage ?: "no vintage"})"
             assertEquals(strings(vector["prices"]), found.map { label(it.amount, it.currency) }, name)
             assertTrue(found.all { it.url == url && it.domain == result.domain }, name)
             for (words in strings(vector["excerptContains"])) {
@@ -126,14 +127,26 @@ class PagePriceVectorTest {
     @Test
     fun hostilePagesAreReadQuickly() {
         val result = WebSearchResult("R", "https://shop.example.org/vin", "")
-        for (piece in listOf("<", "<!--", "<h1", "<script", "<a", "<a b='", "<!x", "&amp;", "é", "<p>CHF 13.00 ", "<h1>")) {
+        val pieces = listOf(
+            "<", "<!--", "<h1", "<script", "<a", "<a b='", "<!x", "&amp;", "é", "<p>CHF 13.00 ", "<h1>",
+            "<p>Les Lacustres 2018 CHF 13.00 6x ", "2019 1999 ", "Les Lacustres 2019\n",
+        )
+        for (piece in pieces) {
             val html = piece.repeat(PagePrices.MAX_BYTES / piece.length)
-            for (name in listOf("Les Lacustres", null)) {
+            for ((name, vintage) in listOf("Les Lacustres" to 2020, null to 2020, "Les Lacustres" to null)) {
                 val start = System.nanoTime()
-                PagePrices.prices(html, result, 750, name)
+                PagePrices.prices(html, result, 750, name, vintage)
                 assertTrue((System.nanoTime() - start) / 1_000_000 < 1_000, piece)
             }
         }
+        // Structured data and text near the name, both read and compared.
+        val ld = """<script type="application/ld+json">{"@type":"Product","name":"Les Lacustres 2019","offers":[""" +
+            List(2_000) { """{"price":"78.00","priceCurrency":"CHF"}""" }.joinToString(",") + "]}</script>"
+        val mixed = ld + "<p>Les Lacustres 2019 6x75cl CHF 78.00 / 1 bottle CHF 13.00</p>".repeat(20_000)
+        val start = System.nanoTime()
+        val found = PagePrices.prices(mixed, result, 750, "Les Lacustres", 2019)
+        assertTrue((System.nanoTime() - start) / 1_000_000 < 1_000)
+        assertEquals(listOf("13"), found.map { it.amount.stripTrailingZeros().toPlainString() })
         val html = "<p>Les Lacustres CHF 13.00</p>".repeat(20_000)
         assertTrue(PagePrices.prices(html, result, 750, "Les Lacustres") { true }.isEmpty())
         assertFalse(PagePrices.prices(html, result, 750, "Les Lacustres") { false }.isEmpty())

@@ -1,5 +1,5 @@
 {
-  "about": "Prices on web pages and in search snippets, shared by CaveKit (PagePriceVectorTests.swift) and the Kotlin core (PagePriceVectorTest.kt). prices are \"amount currency\" in the order found, the amount without trailing zeros. A page is one of the HTML files next to this one, read as if it were the search result at url. excerptContains: words the excerpt shows. The pages and names are made up. Amounts in structured data are digits with an optional decimal point, rounded to the cent. Addresses of the private IPv4 ranges are tested in code, built from their numbers. A number written with an exponent in JSON-LD (1e3) is never a price.",
+  "about": "Prices on web pages and in search snippets, shared by CaveKit (PagePriceVectorTests.swift) and the Kotlin core (PagePriceVectorTest.kt). prices are \"amount currency\" in the order found, the amount without trailing zeros. A page is one of the HTML files next to this one, read as if it were the search result at url. excerptContains: words the excerpt shows. vintage: the wine's vintage, when known. The pages and names are made up. Amounts in structured data are digits with an optional decimal point, rounded to the cent. Addresses of the private IPv4 ranges are tested in code, built from their numbers. A number written with an exponent in JSON-LD (1e3) is never a price.",
   "sizeWords": [
     {
       "sizeML": 750,
@@ -28,6 +28,14 @@
     {
       "sizeML": 1500,
       "words": "magnum"
+    },
+    {
+      "sizeML": 4500,
+      "words": "4.5 l"
+    },
+    {
+      "sizeML": 6000,
+      "words": "6 l"
     }
   ],
   "snippets": [
@@ -170,6 +178,93 @@
       "sizeML": 750,
       "prices": [
         "15 EUR"
+      ]
+    },
+    {
+      "text": "Imperial (6 litres) £975.00",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Imperial (6 litres) £975.00",
+      "sizeML": 6000,
+      "prices": [
+        "975 GBP"
+      ]
+    },
+    {
+      "text": "Impériale 6 l : 980,00 €",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Jéroboam 5 l : 450,00 €",
+      "sizeML": 5000,
+      "prices": [
+        "450 EUR"
+      ]
+    },
+    {
+      "text": "Jéroboam : 260,00 €",
+      "sizeML": 3000,
+      "prices": [
+        "260 EUR"
+      ]
+    },
+    {
+      "text": "Réhoboam 4,5 l : 390,00 €",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Mathusalem : 520,00 €",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Salmanazar 9 l, 1 200,00 €",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Balthazar 12 l: €1,650.00",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Nabuchodonosor 15 l : 2 400,00 €",
+      "sizeML": 15000,
+      "prices": [
+        "2400 EUR"
+      ]
+    },
+    {
+      "text": "Bouteille 1,5 l : 60,00 €",
+      "sizeML": 1500,
+      "prices": [
+        "60 EUR"
+      ]
+    },
+    {
+      "text": "Bouteille 0,5 l : 22,00 €",
+      "sizeML": 5000,
+      "prices": []
+    },
+    {
+      "text": "Free shipping to the Peninsula from €59.95",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Order today. Free shipping to the Peninsula from €59.95",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "6 Bottle Case 6x75cl - £269.70 / 1 Bottle 75cl - £44.95",
+      "sizeML": 750,
+      "prices": [
+        "44.95 GBP"
       ]
     }
   ],
@@ -341,6 +436,101 @@
         "Saint-Joseph 2020",
         "23,00 €"
       ]
+    },
+    {
+      "file": "woocommerce.html",
+      "url": "https://shop.example.org/produit/les-lacustres/",
+      "wineName": "Les Lacustres",
+      "sizeML": 700,
+      "vintage": 2023,
+      "prices": [
+        "13 CHF"
+      ],
+      "excerptContains": [
+        "CHF 13.00",
+        "70 cl"
+      ]
+    },
+    {
+      "file": "shopify-case.html",
+      "url": "https://cellars.example.com/products/example-claret-2016",
+      "wineName": "Example Claret",
+      "sizeML": 750,
+      "vintage": 2016,
+      "prices": [
+        "44.95 GBP"
+      ],
+      "excerptContains": [
+        "1 Bottle 75cl - £44.95"
+      ]
+    },
+    {
+      "file": "shopify-case.html",
+      "url": "https://cellars.example.com/products/example-claret-2016",
+      "wineName": "Example Claret",
+      "sizeML": 750,
+      "prices": [
+        "44.95 GBP"
+      ]
+    },
+    {
+      "file": "shopify-ratio.html",
+      "url": "https://cellars.example.com/products/example-claret-2016-case",
+      "wineName": "Example Claret",
+      "sizeML": 750,
+      "prices": [
+        "44.95 GBP"
+      ]
+    },
+    {
+      "file": "vintage-listing.html",
+      "url": "https://cave.example.com/morgon",
+      "wineName": "Les Charmes",
+      "sizeML": 750,
+      "vintage": 2019,
+      "prices": [
+        "23 EUR"
+      ],
+      "excerptContains": [
+        "23,00 €"
+      ]
+    },
+    {
+      "file": "vintage-listing.html",
+      "url": "https://cave.example.com/morgon",
+      "wineName": "Les Charmes",
+      "sizeML": 750,
+      "vintage": 2017,
+      "prices": []
+    },
+    {
+      "file": "vintage-listing.html",
+      "url": "https://cave.example.com/morgon",
+      "wineName": "Les Charmes",
+      "sizeML": 750,
+      "prices": [
+        "21.5 EUR",
+        "23 EUR",
+        "24.5 EUR"
+      ]
+    },
+    {
+      "file": "jsonld-product.html",
+      "url": "https://wines.example.com/chablis-1er-cru-2019",
+      "wineName": "Chablis Premier Cru",
+      "sizeML": 750,
+      "vintage": 2019,
+      "prices": [
+        "36.5 EUR"
+      ]
+    },
+    {
+      "file": "jsonld-product.html",
+      "url": "https://wines.example.com/chablis-1er-cru-2019",
+      "wineName": "Chablis Premier Cru",
+      "sizeML": 750,
+      "vintage": 2018,
+      "prices": []
     }
   ],
   "addresses": [

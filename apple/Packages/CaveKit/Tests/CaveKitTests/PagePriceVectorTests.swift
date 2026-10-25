@@ -13,6 +13,7 @@ import Testing
             var url: String
             var wineName: String?
             var sizeML: Int
+            var vintage: Int?
             var prices: [String]
             var excerptContains: [String]?
         }
@@ -65,8 +66,9 @@ import Testing
         for vector in try Self.vectors().pages {
             let html = try String(contentsOf: Self.folder.appendingPathComponent(vector.file), encoding: .utf8)
             let result = WebSearchResult(title: "Result", url: URL(string: vector.url)!, snippet: "")
-            let found = PagePrices.prices(inPage: html, of: result, sizeML: vector.sizeML, wineName: vector.wineName)
-            let name = "\(vector.file) (\(vector.sizeML) ml)"
+            let found = PagePrices.prices(inPage: html, of: result, sizeML: vector.sizeML, wineName: vector.wineName,
+                                          vintage: vector.vintage)
+            let name = "\(vector.file) (\(vector.sizeML) ml, \(vector.vintage.map(String.init) ?? "no vintage"))"
             #expect(found.map { Self.label($0.amount, $0.currency) } == vector.prices, "\(name)")
             #expect(found.allSatisfy { $0.url == result.url && $0.domain == result.domain }, "\(name)")
             for words in vector.excerptContains ?? [] {
@@ -128,14 +130,24 @@ import Testing
     @Test func hostilePagesAreReadQuickly() {
         let result = WebSearchResult(title: "R", url: URL(string: "https://shop.example.org/vin")!, snippet: "")
         let size = PagePrices.maxBytes
-        for piece in ["<", "<!--", "<h1", "<script", "<a", "<a b='", "<!x", "&amp;", "é", "<p>CHF 13.00 ", "<h1>"] {
+        for piece in ["<", "<!--", "<h1", "<script", "<a", "<a b='", "<!x", "&amp;", "é", "<p>CHF 13.00 ", "<h1>",
+                      "<p>Les Lacustres 2018 CHF 13.00 6x ", "2019 1999 ", "Les Lacustres 2019\n"] {
             let html = String(repeating: piece, count: size / piece.utf16.count)
-            for name in ["Les Lacustres", nil] {
+            for (name, vintage) in [("Les Lacustres", 2020), (nil, 2020), ("Les Lacustres", nil)] {
                 let start = Date()
-                _ = PagePrices.prices(inPage: html, of: result, sizeML: 750, wineName: name, shouldStop: { false })
+                _ = PagePrices.prices(inPage: html, of: result, sizeML: 750, wineName: name, vintage: vintage, shouldStop: { false })
                 #expect(Date().timeIntervalSince(start) < Self.budget, "\(piece)")
             }
         }
+        // Structured data and text near the name, both read and compared.
+        let ld = #"<script type="application/ld+json">{"@type":"Product","name":"Les Lacustres 2019","offers":["#
+            + Array(repeating: #"{"price":"78.00","priceCurrency":"CHF"}"#, count: 2_000).joined(separator: ",") + "]}</script>"
+        let mixed = ld + String(repeating: "<p>Les Lacustres 2019 6x75cl CHF 78.00 / 1 bottle CHF 13.00</p>", count: 20_000)
+        let start = Date()
+        let found = PagePrices.prices(inPage: mixed, of: result, sizeML: 750, wineName: "Les Lacustres", vintage: 2019,
+                                      shouldStop: { false })
+        #expect(Date().timeIntervalSince(start) < Self.budget)
+        #expect(found.map(\.amount) == [13])
         let html = String(repeating: "<p>Les Lacustres CHF 13.00</p>", count: 20_000)
         #expect(PagePrices.prices(inPage: html, of: result, sizeML: 750, wineName: "Les Lacustres", shouldStop: { true }).isEmpty)
         #expect(!PagePrices.prices(inPage: html, of: result, sizeML: 750, wineName: "Les Lacustres", shouldStop: { false }).isEmpty)

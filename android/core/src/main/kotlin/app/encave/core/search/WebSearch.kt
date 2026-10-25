@@ -143,7 +143,11 @@ object WebSearchQuery {
         1000 -> "1 l"
         1500 -> "magnum"
         3000 -> "double magnum"
-        else -> if (sizeML % 10 == 0) "${sizeML / 10} cl" else "$sizeML ml"
+        else -> when {
+            sizeML > 3000 && sizeML % 500 == 0 -> if (sizeML % 1000 == 0) "${sizeML / 1000} l" else "${sizeML / 1000}.5 l"
+            sizeML % 10 == 0 -> "${sizeML / 10} cl"
+            else -> "$sizeML ml"
+        }
     }
 
     /** Percent-encodes a query parameter value (spaces as %20, and "+", "&", "=" too). */
