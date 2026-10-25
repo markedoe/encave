@@ -433,7 +433,8 @@ fun WineMoreDetails(
             supporting = stringResource(R.string.help_field_appellation),
         )
         GrapesField(form, known.grapes)
-        Hint(stringResource(R.string.help_origin_footer))
+        // Lined up with the fields' helper text above it.
+        Hint(stringResource(R.string.help_origin_footer), Modifier.padding(start = 16.dp))
         // Discoveries have tags of their own.
         if (showsTags) {
             Box(Modifier.bringIntoViewRequester(tagsRequester)) { WineTagsField(form, known.tags) }

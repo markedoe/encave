@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -277,13 +278,14 @@ fun ActionButtonPair(
             second(Modifier.fillMaxWidth())
         }
     } else {
+        // Both as tall as the taller one, when a title wraps to two lines.
         Row(
-            modifier.then(if (equalWidths) Modifier.fillMaxWidth() else Modifier),
+            modifier.then(if (equalWidths) Modifier.fillMaxWidth() else Modifier).height(IntrinsicSize.Min),
             horizontalArrangement = Arrangement.spacedBy(spacing),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            first(if (equalWidths) Modifier.weight(1f) else Modifier)
-            second(if (equalWidths) Modifier.weight(1f) else Modifier)
+            first((if (equalWidths) Modifier.weight(1f) else Modifier).fillMaxHeight())
+            second((if (equalWidths) Modifier.weight(1f) else Modifier).fillMaxHeight())
         }
     }
 }

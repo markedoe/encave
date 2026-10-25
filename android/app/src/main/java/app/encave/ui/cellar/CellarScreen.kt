@@ -622,6 +622,11 @@ private fun CollapsedSearch(query: String, onOpen: () -> Unit, onClear: () -> Un
                 color = if (query.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                // A narrow field or a large font: the hint gets smaller before it is cut.
+                autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(
+                    minFontSize = MaterialTheme.typography.bodyLarge.fontSize * 0.7f,
+                    maxFontSize = MaterialTheme.typography.bodyLarge.fontSize,
+                ),
             )
             if (query.isNotEmpty()) {
                 IconButton(onClick = onClear) {

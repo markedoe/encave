@@ -271,6 +271,8 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
     Scaffold(
         topBar = {
             TopAppBar(
+                // Close and Save at the edges of the form, not of a tablet.
+                modifier = Modifier.fillMaxWidth().readableWidth().fillMaxWidth(),
                 title = { Text(stringResource(R.string.rack_editor_edit)) },
                 navigationIcon = {
                     IconButton(onClick = close) {

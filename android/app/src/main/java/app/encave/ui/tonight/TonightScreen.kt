@@ -5,6 +5,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Star
@@ -165,6 +166,15 @@ private fun TonightList(viewModel: AppViewModel, navigator: AppNavigator, onOpen
     var reserving by rememberSaveable { mutableStateOf<String?>(null) }
     var confirmSample by rememberSaveable { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    // Wide windows: today's suggestion beside the list rather than an empty pane, once.
+    var preselected by rememberSaveable { mutableStateOf(false) }
+    val suggested = candidates.firstOrNull()?.id?.toString()
+    LaunchedEffect(onOpenWine != null, suggested) {
+        if (onOpenWine != null && !preselected && selectedId == null && suggested != null) {
+            preselected = true
+            onOpenWine(suggested)
+        }
+    }
     val showInRack: (Bottle) -> Unit = { bottle ->
         bottle.slot?.let { navigator.open(RackDetailRoute(it.rackId.toString(), bottle.id.toString())) }
     }
@@ -200,7 +210,7 @@ private fun TonightList(viewModel: AppViewModel, navigator: AppNavigator, onOpen
             }
         } else {
             val reserved = cellar.reservedBottleCount
-            LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = Dimens.xxl)) {
+            LazyColumn(Modifier.fillMaxSize().testTag("tonight.list"), contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = Dimens.xxl)) {
                 item {
                     when {
                         // Every bottle is kept for an occasion.
@@ -521,6 +531,7 @@ private fun SurpriseCard(
                         OutlinedButton(
                             onClick = onShuffle,
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onPrimaryContainer),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f)),
                             modifier = width.testTag("action.surprise_next"),
                         ) {
                             ActionContent(stringResource(R.string.action_surprise), Icons.Outlined.Casino)

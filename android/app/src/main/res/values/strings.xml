@@ -404,7 +404,7 @@
     <string name="ai_choose_model">Choose…</string>
     <string name="ai_enter_model">Enter a model name</string>
     <string name="ai_choose_from_list">Choose from the list</string>
-    <string name="ai_off">Off</string>
+    <string name="ai_off">None</string>
     <string name="ai_model">Model</string>
     <string name="ai_key">API key</string>
     <string name="ai_show_key">Show key</string>
@@ -1049,6 +1049,7 @@
     <string name="pdf_made_with">Made with Encave</string>
     <string name="pdf_page">Page %1$d of %2$d</string>
     <string name="pdf_rack_places">%1$s: %2$s</string>
+    <string name="pdf_places_semicolon">%1$s; %2$s</string>
     <string name="msg_imported_elsewhere">Wines tasted elsewhere imported: %1$d</string>
     <string name="help_data_pdf_title">Printed inventory</string>
     <string name="help_data_pdf">**Inventory for printing (PDF)** lists every wine in your cellar with its number of bottles, positions and purchase value: for your insurer, a move, or your family. The values are what you paid; current prices found online (**Find current price**) appear in Insights, not in the inventory.</string>

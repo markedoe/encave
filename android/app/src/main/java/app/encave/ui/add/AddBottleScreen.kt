@@ -12,6 +12,7 @@ import app.encave.ui.components.rememberDiscardGuard
 import kotlinx.coroutines.launch
 import app.encave.ui.components.ActionContent
 import androidx.compose.ui.platform.testTag
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.QrCodeScanner
@@ -676,6 +677,7 @@ private fun BarcodeMatchCard(
                 OutlinedButton(
                     onClick = { onAnotherVintage(first) },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onTertiaryContainer),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.5f)),
                     modifier = Modifier.testTag("action.another_vintage"),
                 ) {
                     ActionContent(stringResource(R.string.action_another_vintage), Icons.Filled.Add)
@@ -866,6 +868,8 @@ private fun EditWineForm(viewModel: AppViewModel, navigator: AppNavigator, wineI
         modifier = Modifier.testTag("wine.edit"),
         topBar = {
             TopAppBar(
+                // Close and Save at the edges of the form, not of a tablet.
+                modifier = Modifier.fillMaxWidth().readableWidth().fillMaxWidth(),
                 title = { Text(stringResource(R.string.edit_wine_title)) },
                 navigationIcon = {
                     IconButton(onClick = leave) {

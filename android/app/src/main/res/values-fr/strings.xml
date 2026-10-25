@@ -403,7 +403,7 @@
     <string name="ai_choose_model">Choisir…</string>
     <string name="ai_enter_model">Saisir un nom de modèle</string>
     <string name="ai_choose_from_list">Choisir dans la liste</string>
-    <string name="ai_off">Désactivée</string>
+    <string name="ai_off">Aucun</string>
     <string name="ai_model">Modèle</string>
     <string name="ai_key">Clé d’API</string>
     <string name="ai_show_key">Afficher la clé</string>
@@ -1048,6 +1048,7 @@
     <string name="pdf_made_with">Réalisé avec Encave</string>
     <string name="pdf_page">Page %1$d sur %2$d</string>
     <string name="pdf_rack_places">%1$s : %2$s</string>
+    <string name="pdf_places_semicolon">%1$s ; %2$s</string>
     <string name="msg_imported_elsewhere">Vins goûtés ailleurs importés : %1$d</string>
     <string name="help_data_pdf_title">Inventaire imprimé</string>
     <string name="help_data_pdf">**Inventaire à imprimer (PDF)** liste chaque vin de votre cave avec son nombre de bouteilles, ses positions et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; les prix actuels trouvés en ligne (**Trouver le prix actuel**) apparaissent dans les Statistiques, pas dans l’inventaire.</string>

@@ -205,9 +205,11 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
             TopAppBar(
                 title = {
                     Column {
-                        // A long name gets smaller before it is cut, beside the three buttons.
+                        // A long name gets smaller before it is cut, beside the three buttons;
+                        // on two lines at the largest font sizes.
                         Text(
-                            rack?.name.orEmpty(), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                            rack?.name.orEmpty(), overflow = TextOverflow.Ellipsis,
+                            maxLines = if (LocalDensity.current.fontScale >= STACKED_ACTIONS_FONT_SCALE) 2 else 1,
                             autoSize = TextAutoSize.StepBased(minFontSize = 15.sp, maxFontSize = MaterialTheme.typography.titleLarge.fontSize),
                         )
                         if (rack != null) {
@@ -698,7 +700,7 @@ private fun RackKey(rack: Rack, cellar: Cellar, focusWine: UUID?, onFocus: (UUID
                     onClick = { onFocus(if (isOn) null else wine.id) },
                     label = {
                         // A long name ends with an ellipsis; the style and the count always show.
-                        Row(Modifier.widthIn(max = 300.dp).clearAndSetSemantics { }, verticalAlignment = Alignment.CenterVertically) {
+                        Row(Modifier.widthIn(max = 300.dp * maxOf(1f, LocalDensity.current.fontScale)).clearAndSetSemantics { }, verticalAlignment = Alignment.CenterVertically) {
                             Text(wine.displayName, Modifier.weight(1f, fill = false), maxLines = 1, overflow = TextOverflow.Ellipsis)
                             val color = wine.color
                             if (style != null && color != null) {

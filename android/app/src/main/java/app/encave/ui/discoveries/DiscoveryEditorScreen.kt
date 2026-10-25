@@ -149,6 +149,8 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
     Scaffold(
         topBar = {
             TopAppBar(
+                // Close and Save at the edges of the form, not of a tablet.
+                modifier = Modifier.fillMaxWidth().readableWidth().fillMaxWidth(),
                 title = { Text(wine?.displayName ?: stringResource(R.string.discovery_title), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = leave) {

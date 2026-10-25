@@ -982,13 +982,21 @@ private fun Bin(rack: Rack, bottles: List<Bottle>, cellar: Cellar, size: Dp, sel
     Box(Modifier.size(size), contentAlignment = Alignment.Center) {
         Box(
             Modifier.size(size * 0.98f).background(scheme.surfaceContainerHigh, DiamondShape)
-                .border(if (isHighlighted) 3.dp else 1.5.dp, if (isHighlighted) scheme.primary else scheme.outlineVariant, DiamondShape),
+                .border(if (isHighlighted) 3.dp else 1.5.dp, if (isHighlighted) scheme.primary else scheme.outline, DiamondShape),
         )
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.offset(y = size * 0.04f)) {
             Pile(bottles.map { cellar.wines[it.wineId]?.color }, size * 0.11f)
+            // Sized to the bin, so large fonts stay inside the diamond.
+            val label = MaterialTheme.typography.labelMedium
+            val font = with(LocalDensity.current) { maxOf(8.dp, size * 0.13f).toSp() }
+            val max = if (font < label.fontSize) font else label.fontSize
             Text(
-                "${bottles.size}/$capacity", style = MaterialTheme.typography.labelMedium,
+                "${bottles.size}/$capacity", style = label.copy(lineHeight = max * 1.15f),
+                modifier = Modifier.widthIn(max = size * 0.5f),
                 color = if (bottles.size >= capacity) scheme.onSurface else scheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                autoSize = TextAutoSize.StepBased(minFontSize = max * 0.6f, maxFontSize = max, stepSize = 0.5.sp),
             )
             if (selectedCount > 0 && countsFound) {
                 // Checking: how many of its bottles were found.
@@ -1057,13 +1065,16 @@ fun RackThumbnail(rack: Rack, cellar: Cellar, modifier: Modifier = Modifier) {
 @Composable
 private fun ThumbnailRow(rack: Rack, row: Int, byCell: Map<RackCell, List<Bottle>>, cellar: Cellar, modifier: Modifier = Modifier) {
     val palette = LocalWinePalette.current
-    val empty = MaterialTheme.colorScheme.outlineVariant
+    val empty = MaterialTheme.colorScheme.outline
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
         if (rack.kind == RackKind.Staggered && rack.isOffset(row)) Spacer(Modifier.width(6.dp))
         for (column in 0 until minOf(rack.columnsInRow(row), 10)) {
             val bottles = byCell[RackCell(rack.id, row, column)].orEmpty()
-            val color = if (bottles.isEmpty()) empty else palette[bottles.first().let { cellar.wines[it.wineId]?.color }]
-            Box(Modifier.size(9.dp).background(color, if (rack.kind == RackKind.Bins) DiamondShape else CircleShape))
+            val shape = if (rack.kind == RackKind.Bins) DiamondShape else CircleShape
+            // Empty places drawn hollow, so they read by shape as well as by color.
+            val fill = if (bottles.isEmpty()) Modifier.border(1.dp, empty, shape)
+            else Modifier.background(palette[bottles.first().let { cellar.wines[it.wineId]?.color }], shape)
+            Box(Modifier.size(9.dp).then(fill))
         }
     }
 }
