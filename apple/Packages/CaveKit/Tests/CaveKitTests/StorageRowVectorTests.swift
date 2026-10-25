@@ -45,6 +45,7 @@ import Testing
             #expect(rack.capacity == vector["capacity"] as? Int, "\(about)")
             #expect(rack.allSlots.count == rack.capacity, "\(about)")
             #expect(rack.allSlots.allSatisfy(rack.contains), "\(about)")
+            #expect(rack.allSlots.allSatisfy(rack.hasPosition), "\(about)")
 
             // Written back as read, and read again the same.
             let written = try JSONEncoder().encode(rack)
@@ -76,6 +77,35 @@ import Testing
         let again = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(read)) as? [String: Any])
         #expect(again["rowFuture"] as? [Int] == [1, 2])
         #expect(again["rowDepths"] as? [Int] == [2, 1])
+    }
+
+    /// Places every version keeps (sync repair, imports) and positions the apps offer.
+    @Test func placesBehindASingleRowAreKept() throws {
+        let cases = try Self.cases("kept")
+        #expect(!cases.isEmpty)
+        for vector in cases {
+            let about = vector["about"] as? String ?? ""
+            let rack = try Self.rack(vector["rack"])
+            let place = try #require(vector["slot"] as? [Int])
+            let slot = Slot(rackID: rack.id, row: place[0], column: place[1], depth: place[2])
+            #expect(rack.contains(slot) == vector["contains"] as? Bool, "\(about)")
+            #expect(rack.hasPosition(slot) == vector["hasPosition"] as? Bool, "\(about)")
+            #expect(rack.label(for: slot) == vector["label"] as? String, "\(about)")
+            #expect(rack.placeName(for: slot) == vector["en"] as? String, "\(about)")
+        }
+    }
+
+    /// A version that does not know rowDepths puts a bottle behind a single row; merging
+    /// keeps it there on every device, and a CSV from it imports it in place.
+    @Test func aBottleAnOlderVersionPutBehindASingleRowStaysPlaced() throws {
+        let rack = Rack(name: "Main", rows: 3, columns: 4, depth: 2, rowDepths: [2, 1, 2])
+        let wine = Wine(name: "Clos")
+        let behind = Slot(rackID: rack.id, row: 1, column: 2, depth: 1)
+        var cellar = Cellar(wines: [wine], bottles: [Bottle(wineID: wine.id, slot: behind)], racks: [rack])
+        CellarMerge.repair(&cellar, stamps: [:])
+        #expect(cellar.bottlesInCellar.first?.slot == behind)
+        #expect(rack.label(for: behind) == "B3-2")
+        #expect(rack.slot(forLabel: "B3-2") == behind)
     }
 
     @Test func bottlesLeftWithoutAPlaceWhenARowShrinks() throws {

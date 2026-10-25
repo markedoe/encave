@@ -418,8 +418,8 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     }
 
     /// Keeps per-row depths and head-to-tail only where rows really differ, the same way on
-    /// every device (docs/SYNC.md): one value per row (more are dropped, missing rows take
-    /// the rack's), each depth brought into 1…`depth`, every layer of a shelf taking the value
+    /// every device (docs/SYNC.md): one value per row (an array of another length is
+    /// ignored), each depth brought into 1…`depth`, every layer of a shelf taking the value
     /// of its bottom layer. Depths are dropped when every row is `depth` deep, or when none is
     /// (an older version made the rack deeper: it shows every row that deep). Head-to-tail
     /// applies only to rows two deep of a head-to-tail fridge, and is dropped when every such
@@ -428,12 +428,14 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         rowDepths = nil
         rowBackReversed = nil
         guard kind != .bins else { return }
-        if let depths, !depths.isEmpty {
+        // An array of another length is stale (an older version added or removed rows or
+        // shelves without knowing it): the rows are read as uniform.
+        if let depths, depths.count == rows {
             let read = (0..<rows).map { row in depths.indices.contains(row) ? min(depth, max(1, depths[row])) : depth }
             let kept = alongShelves(read)
             if kept.contains(depth), kept.contains(where: { $0 != depth }) { rowDepths = kept }
         }
-        if isBackReversed, let headToTail, !headToTail.isEmpty {
+        if isBackReversed, let headToTail, headToTail.count == rows {
             let read = (0..<rows).map { row in headToTail.indices.contains(row) ? headToTail[row] : true }
             let kept = alongShelves(read).enumerated().map { row, reversed in reversed && depth(ofRow: row) == 2 }
             let deep = (0..<rows).filter { depth(ofRow: $0) == 2 }
@@ -581,10 +583,27 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
 
     public var capacity: Int { (0..<rows).reduce(0) { $0 + columns(inRow: $1) * positions(inRow: $1) } }
 
+    /// A place of this rack as every version reads it: within the rack's `depth` (or a bin's
+    /// capacity), whatever its row's own depth. Sync repair and imports judge places with
+    /// it, so a version that does not know `rowDepths` and one that does keep the same
+    /// bottles in place (docs/SYNC.md). A place behind a row's depth (`hasPosition`) holds a
+    /// bottle an older version put there: it is kept and shown.
     public func contains(_ slot: Slot) -> Bool {
         slot.rackID == id && (0..<rows).contains(slot.row)
             && (0..<columns(inRow: slot.row)).contains(slot.column)
-            && (0..<positions(inRow: slot.row)).contains(slot.depth)
+            && (0..<positionsPerCell).contains(slot.depth)
+    }
+
+    /// A position the row really has, within its own depth: what the apps offer to put a
+    /// bottle in, and what an edit keeps (`Cellar.displacedBottles`).
+    public func hasPosition(_ slot: Slot) -> Bool {
+        contains(slot) && slot.depth < positions(inRow: slot.row)
+    }
+
+    /// The places drawn and named for a cell of this row: its own depth, and as deep as the
+    /// bottles there go (a bottle an older version put behind a single row stays in view).
+    public func shownPositions(inRow row: Int, deepest: Int?) -> Int {
+        max(positions(inRow: row), (deepest ?? -1) + 1)
     }
 
     public func contains(_ cell: RackCell) -> Bool {
@@ -651,7 +670,7 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     /// "B3", or "B3-2" for the second bottle of a cell that holds several.
     public func label(for slot: Slot) -> String {
         let base = label(row: slot.row, column: slot.column)
-        return positions(inRow: slot.row) > 1 ? "\(base)-\(slot.depth + 1)" : base
+        return shownPositions(inRow: slot.row, deepest: slot.depth) > 1 ? "\(base)-\(slot.depth + 1)" : base
     }
 
     public func label(for cell: RackCell) -> String { label(row: cell.row, column: cell.column) }

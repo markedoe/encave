@@ -19,7 +19,7 @@ fun Rack.emptyCaption(cell: RackCell): String = if (numbersPlacesOnShelves) "${c
  * `Rack.placeName(for:)`.
  */
 fun Rack.placeName(slot: Slot): String {
-    val positions = positionsInRow(slot.row)
+    val positions = shownPositions(slot.row, slot.depth)
     val side = when {
         positions == 1 -> null
         slot.depth == 0 -> "front"

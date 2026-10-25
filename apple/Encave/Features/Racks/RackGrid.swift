@@ -647,7 +647,11 @@ struct RackCellView: View {
     /// A back place of a fridge drawn front and back.
     private var isBack: Bool { (place.depth ?? 0) > 0 }
     /// Bottles this place holds at most.
-    private var capacity: Int { place.depth == nil ? rack.positions(inRow: cell.row) : 1 }
+    /// A cell's places: its row's depth, and as deep as its bottles go (one an older version
+    /// put behind a single row stays in view).
+    private var capacity: Int {
+        place.depth == nil ? rack.shownPositions(inRow: cell.row, deepest: bottles.compactMap(\.slot?.depth).max()) : 1
+    }
 
     private var showsName: Bool { size >= Self.nameSize && (rack.kind == .grid || rack.kind == .shelves) }
     private var showsVintage: Bool { size >= Self.vintageSize && rack.kind != .bins }

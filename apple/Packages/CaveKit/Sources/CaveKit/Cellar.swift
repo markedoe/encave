@@ -754,7 +754,7 @@ public extension Cellar {
         bottlesInCellar.filter { bottle in
             guard let slot = bottle.slot, slot.rackID == rack.id else { return false }
             guard let moved = Rack.moved(slot, rowMap: rowMap) else { return true }
-            return !rack.contains(moved)
+            return !rack.hasPosition(moved)
         }
         .sorted { a, b in
             let x = a.slot!, y = b.slot!

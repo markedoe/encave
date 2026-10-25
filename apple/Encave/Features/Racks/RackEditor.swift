@@ -148,7 +148,7 @@ struct RackEditor: View {
                     Section {
                         ForEach($shelves) { $shelf in
                             let index = shelves.firstIndex { $0.id == shelf.id } ?? 0
-                            ShelfRow(number: index + 1, shelf: $shelf, layered: true)
+                            ShelfRow(number: index + 1, shelf: shelfBinding($shelf), layered: true)
                                 .contextMenu { shelfActions(index) }
                                 .swipeActions {
                                     if shelves.count > 1 {
@@ -296,12 +296,12 @@ struct RackEditor: View {
     /// one by one already.
     private var offersCustomRows: Bool { !layered && !isCrates }
 
-    /// The deepest a row can be: two in a grid (as the editor offers, or as deep as it was
-    /// saved) or a honeycomb, three on shelves.
+    /// The deepest a row can be: three in a grid or on shelves, two in a honeycomb (the same
+    /// on Android).
     private var maxDepth: Int {
         switch kind {
         case .shelves: Rack.maxDepth
-        case .grid: min(Rack.maxDepth, max(Rack.maxStaggeredDepth, original?.kind == .grid ? original?.depth ?? 1 : 1))
+        case .grid: Rack.maxDepth
         case .staggered: Rack.maxStaggeredDepth
         case .bins: 1
         }
@@ -389,6 +389,18 @@ struct RackEditor: View {
         if shelves.count > 1 {
             Button("Delete", systemImage: "trash", role: .destructive) { removeShelf(index) }
         }
+    }
+
+    /// A shelf turned two deep lies head-to-tail when another shelf two deep does (the same
+    /// rule on Android).
+    private func shelfBinding(_ shelf: Binding<ShelfDraft>) -> Binding<ShelfDraft> {
+        Binding(get: { shelf.wrappedValue }, set: { new in
+            var new = new
+            if new.depth == 2, shelf.wrappedValue.depth != 2 {
+                new.headToTail = shelves.contains { $0.id != new.id && $0.depth == 2 && $0.headToTail }
+            }
+            shelf.wrappedValue = new
+        })
     }
 
     private func duplicateShelf(_ index: Int) {

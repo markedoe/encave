@@ -640,7 +640,7 @@ private struct CellSheet: View {
                         BottleInCellRow(rack: rack, bottle: bottle, onAction: onAction)
                     }
                 } header: {
-                    let positions = rack.positions(inRow: cell.row)
+                    let positions = rack.shownPositions(inRow: cell.row, deepest: bottles.compactMap(\.slot?.depth).max())
                     if positions > 1 {
                         Text("\(bottles.count) of \(positions) bottles")
                     }
@@ -689,7 +689,8 @@ private struct BottleInCellRow: View {
                         .font(.headline)
                     // One text, so the gap is the same on both sides of the dot.
                     let depth = bottle.slot.flatMap { slot in
-                        rack.kind != .bins && rack.positions(inRow: slot.row) > 1 ? rack.depthName(slot.depth, row: slot.row) : nil
+                        rack.kind != .bins && rack.shownPositions(inRow: slot.row, deepest: slot.depth) > 1
+                            ? rack.depthName(slot.depth, row: slot.row) : nil
                     }
                     let subtitle = [wine?.producer, depth].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
                     if !subtitle.isEmpty {

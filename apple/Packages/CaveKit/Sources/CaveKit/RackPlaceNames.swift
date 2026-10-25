@@ -17,7 +17,7 @@ public extension Rack {
     /// bottle deep, even when other rows are deeper. Grids and honeycombs keep the code
     /// of the cell ("B3"). The app shows the same words in the person's language.
     func placeName(for slot: Slot) -> String {
-        let positions = positions(inRow: slot.row)
+        let positions = shownPositions(inRow: slot.row, deepest: slot.depth)
         let side: String? = positions == 1 ? nil
             : slot.depth == 0 ? "front" : slot.depth == positions - 1 ? "back" : "middle"
         let position = "position \(slot.column + 1)"

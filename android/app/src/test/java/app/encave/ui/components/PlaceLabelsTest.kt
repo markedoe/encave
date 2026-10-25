@@ -67,6 +67,8 @@ class PlaceLabelsTest {
         val grid = Rack(name = "G", rows = 3, columns = 4, depth = 2, rowDepths = listOf(2, 1, 2)).normalized()
         assertEquals("A1, front", grid.displayLabel(Slot(grid.id, 0, 0, 0), resources))
         assertEquals("B3", grid.displayLabel(Slot(grid.id, 1, 2, 0), resources))
+        // A bottle an older version put behind that single row is named as the back.
+        assertEquals("B3, back", grid.displayLabel(Slot(grid.id, 1, 2, 1), resources))
         assertEquals("C4, back", grid.displayLabel(Slot(grid.id, 2, 3, 1), resources))
         // Shelves three deep above a shelf two deep: the second one's back is its second bottle.
         val shelves = Rack(name = "S", kind = RackKind.Shelves, rows = 2, columns = 4, depth = 3, rowDepths = listOf(3, 2)).normalized()

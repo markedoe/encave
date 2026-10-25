@@ -578,7 +578,7 @@ class Cellar(
             val slot = bottle.slot
             if (slot == null || slot.rackId != updated.id) return@filter false
             val moved = Rack.moved(slot, rowMap)
-            moved == null || !updated.contains(moved)
+            moved == null || !updated.hasPosition(moved)
         }.sortedWith(compareBy({ it.slot!!.row }, { it.slot!!.column }, { it.slot!!.depth }))
     }
 

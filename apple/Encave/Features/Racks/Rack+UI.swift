@@ -105,7 +105,8 @@ extension Rack {
     }
 
     private func slotLabel(for slot: Slot) -> String {
-        let sideName: String? = kind == .bins || positions(inRow: slot.row) == 1 ? nil : depthName(slot.depth, row: slot.row)
+        let shown = shownPositions(inRow: slot.row, deepest: slot.depth)
+        let sideName: String? = kind == .bins || shown == 1 ? nil : depthName(slot.depth, row: slot.row)
         if let place = shelfPlace(ofRow: slot.row) {
             return shelfLabel(shelf: place.shelf + 1, sideName: sideName, layer: place.layer, layers: place.layers,
                               number: slot.column + 1)
@@ -163,7 +164,7 @@ extension Rack {
     /// Front, middle or back of a position in this row.
     func depthName(_ depth: Int, row: Int) -> String {
         if depth == 0 { return String(localized: "front") }
-        if depth == positions(inRow: row) - 1 { return String(localized: "back") }
+        if depth == shownPositions(inRow: row, deepest: depth) - 1 { return String(localized: "back") }
         return String(localized: "middle")
     }
 
@@ -217,7 +218,7 @@ extension Cellar {
     /// else the first free one of the cell; nil when it is full.
     func freeSlot(at place: RackPlace) -> Slot? {
         guard let slot = place.slot else { return freeSlot(in: place.cell) }
-        return rack(slot.rackID)?.contains(slot) == true && bottle(at: slot) == nil ? slot : nil
+        return rack(slot.rackID)?.hasPosition(slot) == true && bottle(at: slot) == nil ? slot : nil
     }
 }
 

@@ -122,6 +122,13 @@ data class ShelfDraft(
     /** Two deep: the back bottles lie head-to-tail, necks facing you (only read when [depth] is 2). */
     val headToTail: Boolean = true,
 ) {
+    /**
+     * This shelf as changed in the editor; turned two deep, it lies head-to-tail when another
+     * shelf two deep of [shelves] does (the same rule as the Apple editor).
+     */
+    fun changedFrom(old: ShelfDraft, shelves: List<ShelfDraft>): ShelfDraft =
+        if (depth == 2 && old.depth != 2) copy(headToTail = shelves.any { it.id != id && it.depth == 2 && it.headToTail }) else this
+
     /** A new shelf like this one (Duplicate, Add shelf): its own identity, no zone break. */
     fun duplicated(): ShelfDraft = copy(startsZone = false, id = UUID.randomUUID().toString(), originalShelf = null)
 
@@ -155,8 +162,8 @@ data class ShelfDraft(
             ShelfDraft(
                 rows.count(), (fromBottom + quincunx(bottom).drop(fromBottom.size)).take(3), rack.zoneBreaks.orEmpty().contains(shelf),
                 originalShelf = shelf, depth = depth,
-                // A shelf one deep turned two deep later lies head-to-tail when the fridge does.
-                headToTail = if (depth == 2) rack.isBackReversedShelf(shelf) else rack.isBackReversed || rack.depth < 2,
+                // A shelf one deep turned two deep later follows the fridge's other shelves (see [ShelfDraft.withDepth]).
+                headToTail = depth == 2 && rack.isBackReversedShelf(shelf),
             )
         }
 
@@ -253,9 +260,9 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
     // Rows set one by one fit a rack and a fridge's shelves (in layers, each shelf is set below); crates have none.
     val offersCustomRows = !layered && !isCrates
     val custom = customRows && offersCustomRows
-    // Each row's depth, but for bins: 1 to 2 (grid, honeycomb) or 3 (shelves).
+    // Each row's depth, but for bins: 1 to 3 (grid, shelves) or 2 (honeycomb), as on Apple platforms.
     val maxRowDepth = when (kind) {
-        RackKind.Shelves -> Rack.MAX_DEPTH
+        RackKind.Shelves, RackKind.Grid -> Rack.MAX_DEPTH
         RackKind.Bins -> 1
         else -> Rack.MAX_STAGGERED_DEPTH
     }
@@ -441,7 +448,7 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                 Header(R.string.rack_shelves_title)
                 shelves.forEachIndexed { index, shelf ->
                     ShelfCard(
-                        number = index + 1, shelf = shelf, onChange = { shelves[index] = it },
+                        number = index + 1, shelf = shelf, onChange = { shelves[index] = it.changedFrom(shelves[index], shelves) },
                         canAdd = layerCount() + shelf.layers <= Rack.MAX_SIZE,
                         onDuplicate = { shelves.add(index + 1, shelf.duplicated()) },
                         onApplyToAll = {

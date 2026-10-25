@@ -273,7 +273,7 @@ fun Cellar.bottlesAt(place: RackPlace): List<Bottle> = place.slot?.let { listOfN
 /** Where a bottle put on a place goes: that very place on a fridge drawn front and back, else the cell's first free one. */
 fun Cellar.freeSlotAt(place: RackPlace): Slot? {
     val slot = place.slot ?: return freeSlot(place.cell)
-    return slot.takeIf { rack(it.rackId)?.contains(it) == true && bottleAt(it) == null }
+    return slot.takeIf { rack(it.rackId)?.hasPosition(it) == true && bottleAt(it) == null }
 }
 
 /**
@@ -844,7 +844,8 @@ private fun Position(
             if (isHighlighted || isFocused) {
                 Box(Modifier.size(size * 0.86f).border(if (isHighlighted) 3.dp else 2.dp, scheme.primary, CircleShape))
             }
-            val positions = rack.positionsInRow(cell.row)
+            // As deep as the bottles go: one an older version put behind a single row stays in view.
+            val positions = rack.shownPositions(cell.row, bottles.mapNotNull { it.slot?.depth }.maxOrNull())
             if (selectedCount > 0) SelectionBadge(positions, selectedCount, if (countsFound) bottles.size else null, size)
             if (positions > 1) {
                 // On a shelf, just under the bottle and above the shelf bar, which would hide them lower.
@@ -893,8 +894,8 @@ internal fun cellDescription(
         val maturity = Maturity.of(wine, year).takeIf { it != Maturity.Unknown }?.let { resources.getString(it.shortLabelRes) }
         listOfNotNull(wine.displayName, wine.color?.let { resources.getString(it.labelRes) }, maturity).joinToString(", ")
     }
-    // Rows can differ in depth: this row's positions.
-    val positions = rack.positionsInRow(cell.row)
+    // Rows can differ in depth: this row's positions, and as deep as its bottles go.
+    val positions = rack.shownPositions(cell.row, bottles.mapNotNull { it.slot?.depth }.maxOrNull())
     val base = when {
         rack.kind == RackKind.Bins -> {
             val count = resources.getString(R.string.cell_bin, place, bottles.size, positions)

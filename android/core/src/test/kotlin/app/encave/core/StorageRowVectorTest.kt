@@ -57,6 +57,7 @@ class StorageRowVectorTest {
             assertEquals(vector.getValue("capacity").jsonPrimitive.int, rack.capacity, about)
             assertEquals(rack.capacity, rack.allSlots.size, about)
             assertTrue(rack.allSlots.all { rack.contains(it) }, about)
+            assertTrue(rack.allSlots.all { rack.hasPosition(it) }, about)
 
             // Written back as read, and read again the same.
             val written = CellarJson.json.encodeToJsonElement(Rack.serializer(), rack).jsonObject
@@ -87,6 +88,36 @@ class StorageRowVectorTest {
         val again = CellarJson.json.encodeToJsonElement(Rack.serializer(), readRack(future)).jsonObject
         assertEquals(listOf(1, 2), again["rowFuture"].ints())
         assertEquals(listOf(2, 1), again["rowDepths"].ints())
+    }
+
+    /** Places every version keeps (sync repair, imports) and positions the apps offer. */
+    @Test
+    fun placesBehindASingleRowAreKept() {
+        val cases = cases("kept")
+        assertTrue(cases.isNotEmpty())
+        for (vector in cases) {
+            val about = vector.getValue("about").jsonPrimitive.content
+            val rack = readRack(vector["rack"])
+            val place = vector["slot"].ints()!!
+            val slot = Slot(rack.id, place[0], place[1], place[2])
+            assertEquals(vector.getValue("contains").jsonPrimitive.boolean, rack.contains(slot), about)
+            assertEquals(vector.getValue("hasPosition").jsonPrimitive.boolean, rack.hasPosition(slot), about)
+            assertEquals(vector.getValue("label").jsonPrimitive.content, rack.label(slot), about)
+            assertEquals(vector.getValue("en").jsonPrimitive.content, rack.placeName(slot), about)
+        }
+    }
+
+    /** A version that does not know rowDepths puts a bottle behind a single row; a CSV from it imports it in place. */
+    @Test
+    fun aBottleAnOlderVersionPutBehindASingleRowStaysPlaced() {
+        val rack = Rack(name = "Main", rows = 3, columns = 4, depth = 2, rowDepths = listOf(2, 1, 2)).normalized()
+        val behind = Slot(rack.id, 1, 2, 1)
+        assertEquals(behind, rack.slotForLabel("B3-2"))
+        assertEquals("B3-2", rack.label(behind))
+        val cellar = Cellar()
+        cellar.addRack(rack)
+        cellar.addBottles(Wine(name = "Clos"), slots = listOf(behind))
+        assertEquals(behind, cellar.bottlesInCellar.single().slot)
     }
 
     @Test
