@@ -142,6 +142,8 @@ jobs:
     # Pushes to main and manual runs only (not claude/** branches or pull requests).
     if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
+    # The release secrets' environment (docs/RELEASING.md, Security), on main only.
+    environment: ${{ github.ref == 'refs/heads/main' && 'release' || '' }}
     timeout-minutes: 45
     outputs:
       version-code: ${{ steps.bundle.outputs.version-code }}

@@ -305,6 +305,8 @@ jobs:
     name: Build, Mac launch test${{ (github.ref == 'refs/heads/main' && github.event_name != 'pull_request') && ', TestFlight upload' || '' }}
     needs: [cavekit, l10n]
     runs-on: macos-latest
+    # The release secrets' environment (docs/RELEASING.md, Security), on main only.
+    environment: ${{ github.ref == 'refs/heads/main' && 'release' || '' }}
     timeout-minutes: 60
     outputs:
       # The build number, set only when this run uploads (the testers job needs it),
@@ -555,6 +557,8 @@ jobs:
     # failed, so no Mac build), the iPhone and iPad build alone goes.
     if: ${{ !cancelled() && github.ref == 'refs/heads/main' && (needs.screens.result == 'success' || needs.tour-check.outputs.passed == 'true') && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.external_testers)) && needs.apps.outputs.build != '' && (needs.apps.outputs.ios == 'true' || needs.apps.outputs.mac == 'true') && (needs.apps.outputs.launch == 'success' || (needs.apps.outputs.launch == 'skipped' && needs.apps.outputs.mac != 'true')) }}
     runs-on: ubuntu-latest
+    # The release secrets' environment (docs/RELEASING.md, Security).
+    environment: release
     # App Store Connect takes 5 to 30 minutes to process a build.
     timeout-minutes: 60
     steps:
