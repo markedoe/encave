@@ -676,6 +676,9 @@ struct RemoteSyncView: View {
     /// What went wrong when checking a WebDAV folder.
     static func webDAVMessage(_ error: Error) -> String {
         if let error = error as? LocalNetworkError { return error.localizedDescription }
+        if error is WebDAVRefusedByAddress {
+            return String(localized: "Some servers (Nextcloud) refuse requests by address: add the address to trusted_domains, or use https.")
+        }
         return switch error as? RemoteSyncError {
         case .unauthorized:
             String(localized: "The server refused this username or password. With two-step verification, use an app password.")

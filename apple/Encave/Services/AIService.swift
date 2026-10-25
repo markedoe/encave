@@ -557,7 +557,7 @@ enum AIService {
         guard let url = request.url, isAllowed(url) else { throw AIServiceError.insecureURL }
         var request = request
         request.url = try await LocalName.resolve(url)
-        let (data, response) = try await URLSession.shared.data(for: request, delegate: SameHostRedirects.shared)
+        let (data, response) = try await CappedRead.data(.shared, for: request, limit: CappedRead.jsonLimit, delegate: SameHostRedirects.shared)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
         guard (200..<300).contains(status) else {

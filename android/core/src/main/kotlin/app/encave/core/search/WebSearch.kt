@@ -1,7 +1,6 @@
 package app.encave.core.search
 
 import app.encave.core.Wine
-import app.encave.core.sync.LocalAddress
 import app.encave.core.sync.LocalName
 import java.net.URI
 import java.net.URLEncoder
@@ -350,8 +349,8 @@ internal object WebSearchText {
 /**
  * Which redirects a request to a search service (or an AI provider) may follow. The search
  * terms (or the key and the photo) go only where the user pointed: the same host, over HTTPS,
- * or over plain HTTP only from an HTTP server on the local network to the same host. Another
- * host, or HTTPS to HTTP, is refused.
+ * or over plain HTTP only from an HTTP server on the local network to the same host (a name is
+ * resolved again for each hop, [LocalName]). Another host, or HTTPS to HTTP, is refused.
  */
 object SameHostRedirect {
     /** At most this many redirects for one request. */
@@ -361,6 +360,7 @@ object SameHostRedirect {
         val origin = from.toHttpUrlOrNull() ?: return false
         val target = to.toHttpUrlOrNull() ?: return false
         if (origin.host.isEmpty() || origin.host != target.host) return false
-        return target.isHttps || (!origin.isHttps && LocalAddress.isLocal(target.host))
+        // Over http, a local address, or a name that LocalName checks again before the next hop.
+        return target.isHttps || (!origin.isHttps && LocalName.mayBeLocal(target.host))
     }
 }

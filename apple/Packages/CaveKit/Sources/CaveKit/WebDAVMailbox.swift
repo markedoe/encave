@@ -50,8 +50,8 @@ public struct WebDAVMailboxStore: MailboxStore {
     }
 
     /// HTTPS, or HTTP only for a server on the local network (no certificate there):
-    /// localhost, `.local` and `.home.arpa` names, private and link-local addresses, and
-    /// other names that point only to such addresses (checked before each request, `LocalName`).
+    /// localhost, private and link-local addresses, and names (`.local`, `.home.arpa` and
+    /// others), sent only to a local address of the name (checked before each request, `LocalName`).
     public static func isAllowed(_ url: URL) -> Bool {
         guard let host = url.host?.lowercased(), !host.isEmpty, url.user == nil, url.password == nil else { return false }
         switch url.scheme?.lowercased() {
@@ -78,17 +78,24 @@ public struct WebDAVMailboxStore: MailboxStore {
     /// if needed, then writes, reads back and deletes a test file.
     public func check() async throws {
         // A name that is not on the local network says so, rather than "does not answer".
-        _ = try await LocalName.resolve(baseURL)
+        let byAddress = try await LocalName.resolve(baseURL) != baseURL
+        func refused(_ status: Int) -> Bool { byAddress && (status == 400 || status == 404) }
         // Look first: some servers refuse MKCOL (403) on a folder that exists, such as a share's root.
         let propfind = { try await self.send("PROPFIND", self.baseURL, headers: ["Depth": "0", "Content-Type": "application/xml; charset=utf-8"],
                                              body: Self.propfindBody, timeout: 15).1 }
         var found = try await propfind()
         if found == 404 {
             let (_, made) = try await send("MKCOL", baseURL, timeout: 15)
-            guard [200, 201, 204, 405].contains(made) else { throw RemoteSyncError.unavailable("cannot create the folder (\(made))") }
+            guard [200, 201, 204, 405].contains(made) else {
+                if refused(made) { throw WebDAVRefusedByAddress(status: made) }
+                throw RemoteSyncError.unavailable("cannot create the folder (\(made))")
+            }
             found = try await propfind()
         }
-        guard found == 207 else { throw RemoteSyncError.unavailable("not a WebDAV folder (\(found))") }
+        guard found == 207 else {
+            if refused(found) { throw WebDAVRefusedByAddress(status: found) }
+            throw RemoteSyncError.unavailable("not a WebDAV folder (\(found))")
+        }
         let name = "encave-check-" + Data((0..<4).map { _ in UInt8.random(in: .min ... .max) }).hexString
         let file = baseURL.appendingPathComponent(name)
         let content = Data("Encave checks that it can write here. This file can be deleted.\n".utf8)
@@ -125,7 +132,7 @@ public struct WebDAVMailboxStore: MailboxStore {
         request.httpBody = body
         let (data, response): (Data, URLResponse)
         do {
-            (data, response) = try await session.data(for: request)
+            (data, response) = try await CappedRead.data(session, for: request, limit: CappedRead.syncLimit)
         } catch {
             throw RemoteSyncError.unavailable(error.localizedDescription)
         }
@@ -140,6 +147,13 @@ public struct WebDAVMailboxStore: MailboxStore {
         default: return (data, status)
         }
     }
+}
+
+/// A server named on the home network over plain http, reached at its local address
+/// (`LocalName`), answered 400 or 404 when checked: some servers accept only their name
+/// (Nextcloud's trusted_domains, a reverse proxy that tells sites apart by name).
+public struct WebDAVRefusedByAddress: Error, Equatable, Sendable {
+    public let status: Int
 }
 
 /// Refuses every redirect (see `WebDAVMailboxStore.session`).

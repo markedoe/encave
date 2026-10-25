@@ -1341,12 +1341,12 @@
         }
       }
     },
-    "**Brave Search** and **Tavily** need an API key, created on their website; both offer a free monthly allowance. **SearXNG** is a search engine you can run yourself, for example on a NAS: enter its address, such as `http://nas.local:8080` (plain `http://` only for a server on your local network, including a name of your home network that points to a local address, which Encave then reaches by that address; `https://` otherwise). Its JSON format must be on: add `json` under `search: formats:` in its `settings.yml`. Tap **Test Search** to check.": {
+    "**Brave Search** and **Tavily** need an API key, created on their website; both offer a free monthly allowance. **SearXNG** is a search engine you can run yourself, for example on a NAS: enter its address, such as `http://nas.local:8080` (plain `http://` only for a server on your local network, including a name of your home network, which Encave reaches only at one of its local addresses; `https://` otherwise). Its JSON format must be on: add `json` under `search: formats:` in its `settings.yml`. Tap **Test Search** to check.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Brave Search** et **Tavily** demandent une clé d’API, créée sur leur site ; tous deux offrent un quota gratuit chaque mois. **SearXNG** est un moteur de recherche que vous pouvez héberger vous-même, par exemple sur un NAS : saisissez son adresse, comme `http://nas.local:8080` (`http://` seulement pour un serveur de votre réseau local, y compris un nom de votre réseau domestique qui pointe vers une adresse locale, qu’Encave joint alors à cette adresse ; `https://` sinon). Son format JSON doit être activé : ajoutez `json` sous `search: formats:` dans son `settings.yml`. Touchez **Tester la recherche** pour vérifier."
+            "value": "**Brave Search** et **Tavily** demandent une clé d’API, créée sur leur site ; tous deux offrent un quota gratuit chaque mois. **SearXNG** est un moteur de recherche que vous pouvez héberger vous-même, par exemple sur un NAS : saisissez son adresse, comme `http://nas.local:8080` (`http://` seulement pour un serveur de votre réseau local, y compris un nom de votre réseau domestique, qu’Encave ne joint qu’à l’une de ses adresses locales ; `https://` sinon). Son format JSON doit être activé : ajoutez `json` sous `search: formats:` dans son `settings.yml`. Touchez **Tester la recherche** pour vérifier."
           }
         }
       }
@@ -1471,12 +1471,12 @@
         }
       }
     },
-    "A NAS (Synology, QNAP), Nextcloud, pCloud and many other services offer WebDAV. Enter the folder's address, for example https://…/remote.php/dav/files/username/Encave for Nextcloud or https://webdav.pcloud.com/Encave for pCloud, with a username and an app password if the service offers one. Encave creates the folder if needed and checks that it can write there. Only encrypted files are stored in it. The username and password stay in the Keychain on this device: the other devices receive only the address, and show **Sign in to this WebDAV folder** until you enter a login on them too. If the server later refuses the login (a changed password), the device shows it again at once. If the server refuses the username or password, Encave stops trying on its own until you sign in again or tap **Sync Now**, so the server does not lock the account. “The server refused access to this folder” means the login works, but this account may not read and write the folder.": {
+    "A NAS (Synology, QNAP), Nextcloud, pCloud and many other services offer WebDAV. Enter the folder's address, for example https://…/remote.php/dav/files/username/Encave for Nextcloud or https://webdav.pcloud.com/Encave for pCloud, with a username and an app password if the service offers one. Encave creates the folder if needed and checks that it can write there. Only encrypted files are stored in it. The username and password stay in the Keychain on this device: the other devices receive only the address, and show **Sign in to this WebDAV folder** until you enter a login on them too. If the server later refuses the login (a changed password), the device shows it again at once. If the server refuses the username or password, Encave stops trying on its own until you sign in again or tap **Sync Now**, so the server does not lock the account. “The server refused access to this folder” means the login works, but this account may not read and write the folder. Over plain http, a name of your home network is reached only at one of its local addresses; some servers (Nextcloud) then refuse the request: add that address to trusted_domains, or use https.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un NAS (Synology, QNAP), Nextcloud, pCloud et beaucoup d’autres services proposent WebDAV. Saisissez l’adresse du dossier, par exemple https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud ou https://webdav.pcloud.com/Encave pour pCloud, avec un nom d’utilisateur et un mot de passe d’application si le service en propose. Encave crée le dossier si besoin et vérifie qu’il peut y écrire. Seuls des fichiers chiffrés y sont stockés. Le nom d’utilisateur et le mot de passe restent dans le trousseau de cet appareil : les autres appareils ne reçoivent que l’adresse, et affichent **Se connecter à ce dossier WebDAV** tant que vous n’y avez pas saisi d’identifiants. Si le serveur refuse ensuite les identifiants (un mot de passe changé), l’appareil l’affiche de nouveau aussitôt. Si le serveur refuse le nom d’utilisateur ou le mot de passe, Encave arrête d’essayer de lui-même jusqu’à ce que vous vous reconnectiez ou touchiez **Synchroniser**, pour que le serveur ne bloque pas le compte. « Le serveur a refusé l’accès à ce dossier » signifie que les identifiants fonctionnent, mais que ce compte ne peut pas lire et écrire dans le dossier."
+            "value": "Un NAS (Synology, QNAP), Nextcloud, pCloud et beaucoup d’autres services proposent WebDAV. Saisissez l’adresse du dossier, par exemple https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud ou https://webdav.pcloud.com/Encave pour pCloud, avec un nom d’utilisateur et un mot de passe d’application si le service en propose. Encave crée le dossier si besoin et vérifie qu’il peut y écrire. Seuls des fichiers chiffrés y sont stockés. Le nom d’utilisateur et le mot de passe restent dans le trousseau de cet appareil : les autres appareils ne reçoivent que l’adresse, et affichent **Se connecter à ce dossier WebDAV** tant que vous n’y avez pas saisi d’identifiants. Si le serveur refuse ensuite les identifiants (un mot de passe changé), l’appareil l’affiche de nouveau aussitôt. Si le serveur refuse le nom d’utilisateur ou le mot de passe, Encave arrête d’essayer de lui-même jusqu’à ce que vous vous reconnectiez ou touchiez **Synchroniser**, pour que le serveur ne bloque pas le compte. « Le serveur a refusé l’accès à ce dossier » signifie que les identifiants fonctionnent, mais que ce compte ne peut pas lire et écrire dans le dossier. En http simple, un nom de votre réseau domestique n’est joint qu’à l’une de ses adresses locales ; certains serveurs (Nextcloud) refusent alors la requête : ajoutez cette adresse à trusted_domains, ou utilisez https."
           }
         }
       }
@@ -12021,6 +12021,16 @@
         }
       }
     },
+    "Some servers (Nextcloud) refuse requests by address: add the address to trusted_domains, or use https.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Certains serveurs (Nextcloud) refusent les requêtes par adresse : ajoutez l’adresse à trusted_domains, ou utilisez https."
+          }
+        }
+      }
+    },
     "Something light for a ratatouille": {
       "localizations": {
         "fr": {
@@ -13927,6 +13937,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cela garantit que personne ne s’est glissé entre les deux. Codes différents : répondez Non et recommencez."
+          }
+        }
+      }
+    },
+    "This name points outside your network. Use https, or the server’s local address.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce nom pointe hors de votre réseau. Utilisez https, ou l’adresse locale du serveur."
           }
         }
       }
@@ -15909,16 +15929,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "devant"
-          }
-        }
-      }
-    },
-    "http:// is only for a server on your local network: use https:// or a local address.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "http:// est réservé à un serveur de votre réseau local : utilisez https:// ou une adresse locale."
           }
         }
       }

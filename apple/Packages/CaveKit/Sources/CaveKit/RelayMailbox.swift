@@ -54,7 +54,7 @@ public struct RelayMailboxStore: MailboxStore {
         // A name that is not on the local network says so, rather than "not a relay".
         var request = URLRequest(url: try await LocalName.resolve(baseURL.appendingPathComponent("v1/health")))
         request.timeoutInterval = 15
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await CappedRead.data(session, for: request, limit: CappedRead.jsonLimit)
         guard (response as? HTTPURLResponse)?.statusCode == 200,
               let body = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               body["service"] as? String == "encave-relay" else {
@@ -91,11 +91,7 @@ struct RelayMailbox: Mailbox {
         let (data, response): (Data, URLResponse)
         do {
             if let url = request.url { request.url = try await LocalName.resolve(url) }
-            if let body {
-                (data, response) = try await session.upload(for: request, from: body)
-            } else {
-                (data, response) = try await session.data(for: request)
-            }
+            (data, response) = try await CappedRead.data(session, for: request, body: body, limit: CappedRead.syncLimit)
         } catch {
             throw RemoteSyncError.unavailable(error.localizedDescription)
         }

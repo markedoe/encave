@@ -24,8 +24,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 - Tonight suggests the bottles to drink soon first, then the ready ones, each
   in the day's order
 - Plain http also works with a server name of your home network (such as
-  http://searxng.home:8888) for web search, AI, WebDAV and relay, when every
-  address it points to is local; Encave then connects to that address
+  http://searxng.home:8888 or a .local name) for web search, AI, WebDAV and
+  relay; Encave connects only to a local address of that name (a public IPv6
+  next to it is left out) and refuses a name that has none
 
 ### Fixed
 - Replace This Cellar and Erase All keep a previous version first; with
@@ -68,6 +69,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
   it is found from its paper, and a photo without a label is shown whole
 
 ### Added
+- Mac: drop a wine or a bottle onto a storage in the sidebar to put one bottle
+  in its first free position, with Undo (never into a full one); Open in New
+  Window for a wine (Mac and iPad, ⌥⌘O); Android tablets and foldables show
+  Storage, Tonight and Journal as list and detail panes
 - Find Current Price also opens the first five result pages from the device
   and reads the bottle's price on them (product data, then the page text near
   the wine's name), for shops whose search result shows no price; pages are

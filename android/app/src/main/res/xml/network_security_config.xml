@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The only network uses are sync and the optional AI label recognition and web search.
      The app itself sends plain HTTP only to a server on this device or the local network
-     (localhost, *.local, *.home.arpa, RFC 1918, link-local and unique local addresses):
-     LocalAddress.isLocal, checked before every AI, web search, relay and WebDAV request.
-     Another name over http is resolved first and the request goes to its address, only if
-     every address it has is local (LocalName).
+     (localhost, RFC 1918, link-local and unique local addresses), checked before every AI,
+     web search, relay and WebDAV request. A name over http (*.local and *.home.arpa too) is
+     resolved first and the request goes only to one of its local addresses (LocalName).
      This file cannot express address ranges, so cleartext stays allowed in general for
      such a server reached by its address (Ollama, OpenWebUI, SearXNG or WebDAV on a NAS);
      as a second line of defence, it is refused for the cloud AI and search services. -->

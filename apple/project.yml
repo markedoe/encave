@@ -82,13 +82,8 @@ targets:
         # Lets the optional AI recognition reach a server on the local network (OpenWebUI, Ollama).
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
-          # Home-network names (RFC 8375), which local networking alone does not cover:
-          # a NAS or local AI server reached over plain HTTP, as the app allows. Other
-          # names over http are sent to their local IP address (LocalName in CaveKit).
-          NSExceptionDomains:
-            home.arpa:
-              NSIncludesSubdomains: true
-              NSExceptionAllowsInsecureHTTPLoads: true
+          # A name over plain http (a NAS, a local AI server) is sent to its local IP
+          # address (LocalName in CaveKit), so no other exception is needed.
         UILaunchScreen: {}
         UIApplicationSupportsMultipleScenes: true
         # The weekly backup archive is kept in the app's Documents folder, shown by the
@@ -155,13 +150,8 @@ targets:
             CFBundleURLSchemes: [encave]
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
-          # Home-network names (RFC 8375), which local networking alone does not cover:
-          # a NAS or local AI server reached over plain HTTP, as the app allows. Other
-          # names over http are sent to their local IP address (LocalName in CaveKit).
-          NSExceptionDomains:
-            home.arpa:
-              NSIncludesSubdomains: true
-              NSExceptionAllowsInsecureHTTPLoads: true
+          # A name over plain http (a NAS, a local AI server) is sent to its local IP
+          # address (LocalName in CaveKit), so no other exception is needed.
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
         # A bottle dragged between places of a rack (BottleDrag), a wine dragged onto a
         # storage of the Mac sidebar (WineDrag); their descriptions are

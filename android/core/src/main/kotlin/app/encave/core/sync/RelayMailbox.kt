@@ -1,5 +1,6 @@
 package app.encave.core.sync
 
+import app.encave.core.CappedRead
 import app.encave.core.Http
 import java.io.IOException
 import java.util.Locale
@@ -94,7 +95,7 @@ internal fun http(url: String, method: String, token: String, body: ByteArray? =
         }
         val status = connection.responseCode
         val stream = if (status >= 400) connection.errorStream else connection.inputStream
-        return status to (stream?.use { it.readBytes() } ?: ByteArray(0))
+        return status to (stream?.use { CappedRead.bytes(it, connection.contentLengthLong, CappedRead.SYNC_LIMIT) } ?: ByteArray(0))
     } finally {
         connection.disconnect()
     }

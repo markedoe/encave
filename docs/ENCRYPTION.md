@@ -21,8 +21,9 @@ release, and whenever the cryptography changes.
   search provider use the system's HTTPS (TLS), except a server on the local
   network (a relay, a WebDAV folder, an AI or SearXNG server), which the user
   may reach over plain HTTP, by a local address or by a name of the home
-  network that points only to local addresses (the app then connects to that
-  address, so a later DNS answer cannot redirect it). Sync files are
+  network (the app then connects only to a local address of that name, so
+  neither a public address of it nor a later DNS answer can receive the
+  request). Sync files are
   encrypted either way.
 
 The encryption protects the user's own data. It is not limited to

@@ -33,9 +33,10 @@ yet (see "Work in progress").
 | Beta testers | TestFlight group "Friends-ext", after the screen tour, the Mac launch test and Beta App Review (**done**) | Play closed testing (track Alpha, testers list "Friends"), after the tests, the screen tour and the emulator smoke test, with the store listing, then Google's review (**done**, once the testers list below is set) | Every push to `main` whose tour passed |
 | Everyone | App Store, phased release over 7 days (*planned*) | Play production, staged rollout 10%, 50%, 100% (*planned*; `play_publish.py` can set a rollout share, no job uses it) | Release train, or the urgent lane |
 
-No TestFlight e-mail is sent for a build: right after each upload, the `apps`
-job turns off "Automatically notify testers" for it (`testflight_testers.py
---quiet`). Testers see new builds in the TestFlight app, where they can turn on
+Right after each upload, the `apps` job turns off "Automatically notify
+testers" for the build (`testflight_testers.py --quiet`), so that testers get
+no TestFlight e-mail for it; this is best effort, and an e-mail may still go
+out if Apple notifies them first. Testers see new builds in the TestFlight app, where they can turn on
 automatic updates.
 
 ### Apple: what gates the external testers

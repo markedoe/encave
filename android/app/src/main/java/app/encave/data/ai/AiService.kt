@@ -2,6 +2,7 @@ package app.encave.data.ai
 
 import android.util.Base64
 import app.encave.core.AiLabelPlacement
+import app.encave.core.CappedRead
 import app.encave.core.Http
 import app.encave.core.WineLabelFrame
 import app.encave.core.sync.LocalName
@@ -433,7 +434,7 @@ object AiService {
             }
             val status = connection.responseCode
             val stream = if (status in 200..299) connection.inputStream else connection.errorStream
-            val text = stream?.use { it.readBytes().toString(Charsets.UTF_8) }.orEmpty()
+            val text = stream?.use { CappedRead.bytes(it, connection.contentLengthLong, CappedRead.JSON_LIMIT).toString(Charsets.UTF_8) }.orEmpty()
             val parsed = runCatching { json.parseToJsonElement(text) as? JsonObject }.getOrNull()
             if (status !in 200..299) throw AiError.Server(status, errorMessage(parsed))
             parsed ?: throw AiError.InvalidResponse

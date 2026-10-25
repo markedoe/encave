@@ -43,25 +43,51 @@ class LocalNameTest {
     }
 
     @Test
+    fun sharedChoices() {
+        for (item in root.getValue("choose").jsonArray.map { it.jsonObject }) {
+            val addresses = item.getValue("addresses").jsonArray.map { it.jsonPrimitive.content }
+            val expect = item["expect"]?.jsonPrimitive?.content
+            val error = item["error"]?.jsonPrimitive?.content
+            val result = runCatching { LocalName.choose(addresses) }
+            if (error == null) {
+                assertEquals(expect, result.getOrThrow(), addresses.toString())
+            } else {
+                val reason = (result.exceptionOrNull() as? LocalNetworkException)?.reason
+                val expected = if (error == "notLocal") LocalNetworkException.Reason.NotLocal else LocalNetworkException.Reason.NotFound
+                assertEquals(expected, reason, addresses.toString())
+            }
+        }
+    }
+
+    @Test
     fun mayBeLocal() {
         val hosts = root.getValue("mayBeLocal").jsonObject
         hosts.getValue("accepted").jsonArray.forEach { assertTrue(LocalName.mayBeLocal(it.jsonPrimitive.content), it.toString()) }
         hosts.getValue("refused").jsonArray.forEach { assertFalse(LocalName.mayBeLocal(it.jsonPrimitive.content), it.toString()) }
     }
 
-    /** The resolver is not asked for https or a host already known as local. */
+    /** The resolver is not asked for https, an address or localhost; .local and .home.arpa names are resolved like the others. */
     @Test
-    fun resolvesOnlyOtherNamesOverHttp() {
-        for (url in listOf("https://searxng.home/search", "http://nas.local:8080/", "http://localhost:11434/")) {
+    fun resolvesOnlyNamesOverHttp() {
+        for (url in listOf("https://searxng.home/search", "http://localhost:11434/", "http://[fd12:3456::20]:8080/")) {
             assertEquals(url, LocalName.resolve(url, LocalName.Resolver { error("resolved $url") }))
         }
     }
 
-    /** A link-local address comes after the others. */
+    /** A link-local address with an interface is skipped; one without comes after the others. */
     @Test
     fun linkLocalLast() {
         assertEquals("fd12:3456::20", LocalName.choose(listOf("fe80::1%wlan0", "fd12:3456::20")))
-        assertThrows<LocalNetworkException> { LocalName.choose(listOf("fe80::1%wlan0", "2001:db8::7")) }
+        assertEquals("fd12:3456::20", LocalName.choose(listOf("fe80::1", "fd12:3456::20")))
+        assertEquals(LocalNetworkException.Reason.NotFound, assertThrows<LocalNetworkException> { LocalName.choose(listOf("fe80::1%wlan0")) }.reason)
+    }
+
+    /** OkHttp's resolver for names gives only the local addresses, best first. */
+    @Test
+    fun dnsGivesOnlyLocalAddresses() {
+        val dns = LocalName.dns(LocalName.Resolver { listOf("2001:db8::7", "fd12:3456::20", "10.0.0.20") }) // public-safety: allow
+        assertEquals(listOf("10.0.0.20", "fd12:3456:0:0:0:0:0:20"), dns.lookup("nas.lan").map { it.hostAddress }) // public-safety: allow
+        assertThrows<java.net.UnknownHostException> { LocalName.dns(LocalName.Resolver { listOf("203.0.113.7") }).lookup("nas.lan") }
     }
 
     /** The settings fields accept a name of the home network over http. */
