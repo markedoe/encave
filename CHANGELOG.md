@@ -35,6 +35,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 - iPhone, iPad and Mac: a Nextcloud server reached over plain http by a home
   name (a .local name too) now gets requests at its local address; if Encave
   asks for it, add that address to Nextcloud's trusted_domains, or use https
+- WebDAV setup warns, in words, when the server address uses plain http: the
+  password then travels unencrypted on your network
+- Android Tonight shows the monthly reminder offer after the drink soon
+  bottles, so they come right after the suggestion
+- CSV import tests pin how ratings are read: a bare "16" is on a 100-point
+  scale, "16/20" is 4 stars
 
 ### Fixed
 - CSV import reads "12,50 €", "45.00€" or "45.0000" as the price (not 100

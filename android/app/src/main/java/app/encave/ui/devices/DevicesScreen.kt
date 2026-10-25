@@ -724,6 +724,9 @@ fun RemoteSyncScreen(navigator: AppNavigator) {
                         ) {
                             ActionContent(stringResource(R.string.remote_webdav_sign_in))
                         }
+                        if (shown.startsWith("http://", ignoreCase = true)) {
+                            Box(Modifier.padding(horizontal = Dimens.l, vertical = Dimens.xs)) { PlainHttpWarning() }
+                        }
                         Footer(stringResource(R.string.remote_webdav_sign_in_footer))
                     } else {
                         TextButton(onClick = { changingLogin = true }, modifier = Modifier.padding(horizontal = Dimens.s)) {
@@ -750,7 +753,12 @@ fun RemoteSyncScreen(navigator: AppNavigator) {
                     placeholder = { Text("https://") },
                     singleLine = true,
                     isError = folder.isNotBlank() && !folderValid,
-                    supportingText = { if (folder.isNotBlank() && !folderValid) Text(stringResource(R.string.remote_webdav_invalid)) },
+                    supportingText = {
+                        when {
+                            folder.isNotBlank() && !folderValid -> Text(stringResource(R.string.remote_webdav_invalid))
+                            WebDavMailboxStore.folderUrl(folder)?.startsWith("http://", ignoreCase = true) == true -> PlainHttpWarning()
+                        }
+                    },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
                     modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.l).testTag("remote.webdav_address"),
                 )
@@ -826,6 +834,15 @@ fun RemoteSyncScreen(navigator: AppNavigator) {
             HelpLink(HelpTopic.Devices, R.string.devices_help)
             Spacer(Modifier.width(1.dp).padding(bottom = Dimens.xl))
         }
+    }
+}
+
+/** A WebDAV folder over plain http: the login travels unencrypted on the network. An icon and words, not colour alone. */
+@Composable
+private fun PlainHttpWarning() {
+    Row(Modifier.testTag("remote.webdav_plain_http"), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(Dimens.xs)) {
+        Icon(Icons.Outlined.WarningAmber, contentDescription = null, modifier = Modifier.size(16.dp))
+        Text(stringResource(R.string.remote_webdav_plain_http), style = MaterialTheme.typography.bodySmall)
     }
 }
 

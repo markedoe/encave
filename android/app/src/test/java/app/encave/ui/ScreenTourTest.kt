@@ -220,6 +220,28 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         settle()
     }
 
+    /**
+     * For the store's Cellar image: the list scrolled to its end, so its last rows sit in the
+     * space left above the floating buttons (Add, new discovery) instead of under them.
+     */
+    private fun clearOfFloatingButtons() {
+        val list = compose.onNodeWithTag("cellar.list")
+        val page = list.fetchSemanticsNode().boundsInWindow.height
+        // A page at a time until the end: a lazy list stops there.
+        repeat(8) {
+            list.performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, page) }
+            settle()
+        }
+        val discovery = RuntimeEnvironment.getApplication().getString(app.encave.R.string.discovery_new_long)
+        val buttonsTop = minOf(
+            compose.onNodeWithTag("action.fab_add").fetchSemanticsNode().boundsInWindow.top,
+            compose.onNodeWithContentDescription(discovery).fetchSemanticsNode().boundsInWindow.top,
+        )
+        compose.onAllNodesWithTag("wine.row").fetchSemanticsNodes().filter { it.boundsInWindow.height > 0 }.forEach {
+            assertTrue("A row under the floating buttons", it.boundsInWindow.bottom <= buttonsTop + 1)
+        }
+    }
+
     /** Lets animations (a collapsing bar, a scroll) end. */
     private fun settle() {
         compose.waitForIdle()
@@ -919,6 +941,7 @@ class ScreenTourTest(private val device: String, private val variant: String) {
             compose.waitForIdle()
             compose.onNodeWithTag("cellar.sample").assertDoesNotExist()
             if (phone) {
+                clearOfFloatingButtons()
                 capture("store-cellar")
                 tap("wine.row")
                 capture("store-wine")
@@ -926,6 +949,7 @@ class ScreenTourTest(private val device: String, private val variant: String) {
                 compose.waitForIdle()
             } else {
                 tap("wine.row")
+                clearOfFloatingButtons()
                 capture("store-cellar")
             }
             tap("cellar.stat.bottles")

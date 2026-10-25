@@ -69,7 +69,10 @@ not encrypted either: it goes where you choose to save or share it.
    folder, or a relay (run by you or someone you trust). It stores only
    encrypted files that it cannot read; it sees when your devices sync, how
    much they send and, for a WebDAV server or a relay, their IP addresses. The
-   device names and the cellar stay encrypted.
+   device names and the cellar stay encrypted. A WebDAV folder on your local
+   network may use plain http: the files stay encrypted, but the WebDAV
+   username and password then travel unencrypted on that network, and Encave
+   warns about it.
 2. **AI label recognition** (off by default). If you choose an AI service and
    enter your own key (or a server of your own), Encave sends **only the label
    photo**, directly from your device to that service, when you scan a label
@@ -204,7 +207,10 @@ choisissez de l'enregistrer ou de le partager.
    (exploité par vous ou par quelqu'un de confiance). Il ne stocke que des
    fichiers chiffrés qu'il ne peut pas lire ; il voit quand vos appareils se
    synchronisent, combien ils envoient et, pour un serveur WebDAV ou un relais,
-   leurs adresses IP. Les noms des appareils et la cave restent chiffrés.
+   leurs adresses IP. Les noms des appareils et la cave restent chiffrés. Un
+   dossier WebDAV de votre réseau local peut utiliser http simple : les
+   fichiers restent chiffrés, mais le nom d'utilisateur et le mot de passe
+   WebDAV circulent alors en clair sur ce réseau, et Encave le signale.
 2. **La reconnaissance des étiquettes par IA** (désactivée par défaut). Si
    vous choisissez un service d'IA et saisissez votre propre clé (ou un serveur
    à vous), Encave envoie **seulement la photo de l'étiquette**, directement de

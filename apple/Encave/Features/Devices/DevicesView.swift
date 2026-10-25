@@ -485,7 +485,12 @@ struct RemoteSyncView: View {
                         } header: {
                             Text("Sign in to this WebDAV folder")
                         } footer: {
-                            Text("Each device signs in with its own username and password, kept in the Keychain on that device. An app password is recommended.")
+                            VStack(alignment: .leading, spacing: 8) {
+                                if case .webDAV(let url) = storage, url.scheme?.lowercased() == "http" {
+                                    plainHTTPWarning
+                                }
+                                Text("Each device signs in with its own username and password, kept in the Keychain on that device. An app password is recommended.")
+                            }
                         }
                     } else {
                         Section {
@@ -520,7 +525,12 @@ struct RemoteSyncView: View {
                 } header: {
                     Text("WebDAV folder (NAS, Nextcloud, pCloud…)")
                 } footer: {
-                    Text("Storage you already have, for every device. Only encrypted files are stored in this folder. Use an app password if the server offers one; it stays in the Keychain on this device. For example: the WebDAV address of a Synology or QNAP NAS, https://…/remote.php/dav/files/username/Encave for Nextcloud, https://webdav.pcloud.com/Encave for pCloud.")
+                    VStack(alignment: .leading, spacing: 8) {
+                        if WebDAVMailboxStore.folderURL(webDAVAddress)?.scheme?.lowercased() == "http" {
+                            plainHTTPWarning
+                        }
+                        Text("Storage you already have, for every device. Only encrypted files are stored in this folder. Use an app password if the server offers one; it stays in the Keychain on this device. For example: the WebDAV address of a Synology or QNAP NAS, https://…/remote.php/dav/files/username/Encave for Nextcloud, https://webdav.pcloud.com/Encave for pCloud.")
+                    }
                 }
                 Section {
                     TextField("Relay address", text: $address, prompt: Text(verbatim: "https://"))
@@ -613,6 +623,13 @@ struct RemoteSyncView: View {
         }
         .font(.footnote)
         .foregroundStyle(.secondary)
+    }
+
+    /// A WebDAV folder over plain http: the login is sent unencrypted on the network.
+    private var plainHTTPWarning: some View {
+        Label("Over http, your password travels unencrypted on your network. Use https if your server offers it.",
+              systemImage: "exclamationmark.triangle")
+            .accessibilityIdentifier("remote.webdavPlainHTTP")
     }
 
     /// HTTPS, or HTTP only for a server on the local network (a name is checked when turning on).

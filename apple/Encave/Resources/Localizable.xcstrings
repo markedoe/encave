@@ -1541,12 +1541,12 @@
         }
       }
     },
-    "A NAS (Synology, QNAP), Nextcloud, pCloud and many other services offer WebDAV. Enter the folder's address, for example https://…/remote.php/dav/files/username/Encave for Nextcloud or https://webdav.pcloud.com/Encave for pCloud, with a username and an app password if the service offers one. Encave creates the folder if needed and checks that it can write there. Only encrypted files are stored in it. The username and password stay in the Keychain on this device: the other devices receive only the address, and show **Sign in to this WebDAV folder** until you enter a login on them too. If the server later refuses the login (a changed password), the device shows it again at once. If the server refuses the username or password, Encave stops trying on its own until you sign in again or tap **Sync Now**, so the server does not lock the account. “The server refused access to this folder” means the login works, but this account may not read and write the folder. Over plain http, a name of your home network is reached only at one of its local addresses; some servers (Nextcloud) then refuse the request: add that address to trusted_domains, or use https.": {
+    "A NAS (Synology, QNAP), Nextcloud, pCloud and many other services offer WebDAV. Enter the folder's address, for example https://…/remote.php/dav/files/username/Encave for Nextcloud or https://webdav.pcloud.com/Encave for pCloud, with a username and an app password if the service offers one. Encave creates the folder if needed and checks that it can write there. Only encrypted files are stored in it. The username and password stay in the Keychain on this device: the other devices receive only the address, and show **Sign in to this WebDAV folder** until you enter a login on them too. If the server later refuses the login (a changed password), the device shows it again at once. If the server refuses the username or password, Encave stops trying on its own until you sign in again or tap **Sync Now**, so the server does not lock the account. “The server refused access to this folder” means the login works, but this account may not read and write the folder. Over plain http, a name of your home network is reached only at one of its local addresses; some servers (Nextcloud) then refuse the request: add that address to trusted_domains, or use https. Over plain http, the files stay encrypted but the username and password travel unencrypted on your network: use https if your server offers it.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un NAS (Synology, QNAP), Nextcloud, pCloud et beaucoup d’autres services proposent WebDAV. Saisissez l’adresse du dossier, par exemple https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud ou https://webdav.pcloud.com/Encave pour pCloud, avec un nom d’utilisateur et un mot de passe d’application si le service en propose. Encave crée le dossier si besoin et vérifie qu’il peut y écrire. Seuls des fichiers chiffrés y sont stockés. Le nom d’utilisateur et le mot de passe restent dans le trousseau de cet appareil : les autres appareils ne reçoivent que l’adresse, et affichent **Se connecter à ce dossier WebDAV** tant que vous n’y avez pas saisi d’identifiants. Si le serveur refuse ensuite les identifiants (un mot de passe changé), l’appareil l’affiche de nouveau aussitôt. Si le serveur refuse le nom d’utilisateur ou le mot de passe, Encave arrête d’essayer de lui-même jusqu’à ce que vous vous reconnectiez ou touchiez **Synchroniser**, pour que le serveur ne bloque pas le compte. « Le serveur a refusé l’accès à ce dossier » signifie que les identifiants fonctionnent, mais que ce compte ne peut pas lire et écrire dans le dossier. En http simple, un nom de votre réseau domestique n’est joint qu’à l’une de ses adresses locales ; certains serveurs (Nextcloud) refusent alors la requête : ajoutez cette adresse à trusted_domains, ou utilisez https."
+            "value": "Un NAS (Synology, QNAP), Nextcloud, pCloud et beaucoup d’autres services proposent WebDAV. Saisissez l’adresse du dossier, par exemple https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud ou https://webdav.pcloud.com/Encave pour pCloud, avec un nom d’utilisateur et un mot de passe d’application si le service en propose. Encave crée le dossier si besoin et vérifie qu’il peut y écrire. Seuls des fichiers chiffrés y sont stockés. Le nom d’utilisateur et le mot de passe restent dans le trousseau de cet appareil : les autres appareils ne reçoivent que l’adresse, et affichent **Se connecter à ce dossier WebDAV** tant que vous n’y avez pas saisi d’identifiants. Si le serveur refuse ensuite les identifiants (un mot de passe changé), l’appareil l’affiche de nouveau aussitôt. Si le serveur refuse le nom d’utilisateur ou le mot de passe, Encave arrête d’essayer de lui-même jusqu’à ce que vous vous reconnectiez ou touchiez **Synchroniser**, pour que le serveur ne bloque pas le compte. « Le serveur a refusé l’accès à ce dossier » signifie que les identifiants fonctionnent, mais que ce compte ne peut pas lire et écrire dans le dossier. En http simple, un nom de votre réseau domestique n’est joint qu’à l’une de ses adresses locales ; certains serveurs (Nextcloud) refusent alors la requête : ajoutez cette adresse à trusted_domains, ou utilisez https. En http simple, les fichiers restent chiffrés mais le nom d’utilisateur et le mot de passe circulent en clair sur votre réseau : utilisez https si votre serveur le permet."
           }
         }
       }
@@ -9823,6 +9823,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Autre serveur (compatible OpenAI)"
+          }
+        }
+      }
+    },
+    "Over http, your password travels unencrypted on your network. Use https if your server offers it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En http, votre mot de passe circule en clair sur votre réseau. Utilisez https si votre serveur le permet."
           }
         }
       }

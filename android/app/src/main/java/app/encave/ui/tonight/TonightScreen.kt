@@ -236,7 +236,6 @@ private fun TonightList(viewModel: AppViewModel, navigator: AppNavigator, onOpen
                         )
                     }
                 }
-                item { ReminderOffer(cellar, onTurnedOn = { viewModel.showMessage(UiText.Res(R.string.reminders_turned_on)) }) }
                 item {
                     Card(
                         Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.s).clickable { navigator.open(PairingRoute) },
@@ -252,7 +251,16 @@ private fun TonightList(viewModel: AppViewModel, navigator: AppNavigator, onOpen
                         }
                     }
                 }
-                sections.forEach { section ->
+                // The monthly reminder offer comes after the first section (drink soon when there is
+                // one), so the most urgent bottles follow the suggestion on a phone screen.
+                val reminderOffer: androidx.compose.foundation.lazy.LazyListScope.() -> Unit = {
+                    item(key = "reminderOffer") {
+                        ReminderOffer(cellar, onTurnedOn = { viewModel.showMessage(UiText.Res(R.string.reminders_turned_on)) })
+                    }
+                }
+                if (sections.isEmpty()) reminderOffer()
+                sections.forEachIndexed { index, section ->
+                    if (index == 1) reminderOffer()
                     item(key = section.maturity.raw) {
                         Row(
                             Modifier.fillMaxWidth().padding(start = Dimens.l, end = Dimens.l, top = Dimens.xl, bottom = Dimens.xs)
@@ -285,6 +293,7 @@ private fun TonightList(viewModel: AppViewModel, navigator: AppNavigator, onOpen
                         HorizontalDivider(Modifier.padding(start = 56.dp))
                     }
                 }
+                if (sections.size == 1) reminderOffer()
             }
         }
     }
