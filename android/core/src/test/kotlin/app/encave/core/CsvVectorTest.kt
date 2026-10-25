@@ -155,6 +155,12 @@ class CsvVectorTest {
         for ((text, value) in table("otherPrices")) {
             assertEquals(value.textOrNull(), CsvColumns.price(text, plain = false)?.let(CellarExport::price), "other $text")
         }
+        assertTrue(table("prices").isNotEmpty())
+        for ((text, value) in table("prices")) {
+            for (plain in listOf(true, false)) {
+                assertEquals(value.textOrNull(), CsvColumns.price(text, plain)?.let(CellarExport::price), "price $text ($plain)")
+            }
+        }
         for ((text, value) in table("exportedPrices")) {
             assertEquals(value.jsonPrimitive.content, CellarExport.price(BigDecimal(text)), "exported $text")
         }

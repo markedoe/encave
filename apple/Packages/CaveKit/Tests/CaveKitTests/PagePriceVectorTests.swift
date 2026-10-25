@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 import Testing
 @testable import CaveKit
 
@@ -13,6 +16,7 @@ import Testing
             var url: String
             var wineName: String?
             var sizeML: Int
+            var vintage: Int?
             var prices: [String]
             var excerptContains: [String]?
         }
@@ -65,8 +69,9 @@ import Testing
         for vector in try Self.vectors().pages {
             let html = try String(contentsOf: Self.folder.appendingPathComponent(vector.file), encoding: .utf8)
             let result = WebSearchResult(title: "Result", url: URL(string: vector.url)!, snippet: "")
-            let found = PagePrices.prices(inPage: html, of: result, sizeML: vector.sizeML, wineName: vector.wineName)
-            let name = "\(vector.file) (\(vector.sizeML) ml)"
+            let found = PagePrices.prices(inPage: html, of: result, sizeML: vector.sizeML, wineName: vector.wineName,
+                                          vintage: vector.vintage)
+            let name = "\(vector.file) (\(vector.sizeML) ml, \(vector.vintage.map(String.init) ?? "no vintage"))"
             #expect(found.map { Self.label($0.amount, $0.currency) } == vector.prices, "\(name)")
             #expect(found.allSatisfy { $0.url == result.url && $0.domain == result.domain }, "\(name)")
             for words in vector.excerptContains ?? [] {
@@ -128,14 +133,24 @@ import Testing
     @Test func hostilePagesAreReadQuickly() {
         let result = WebSearchResult(title: "R", url: URL(string: "https://shop.example.org/vin")!, snippet: "")
         let size = PagePrices.maxBytes
-        for piece in ["<", "<!--", "<h1", "<script", "<a", "<a b='", "<!x", "&amp;", "é", "<p>CHF 13.00 ", "<h1>"] {
+        for piece in ["<", "<!--", "<h1", "<script", "<a", "<a b='", "<!x", "&amp;", "é", "<p>CHF 13.00 ", "<h1>",
+                      "<p>Les Lacustres 2018 CHF 13.00 6x ", "2019 1999 ", "Les Lacustres 2019\n"] {
             let html = String(repeating: piece, count: size / piece.utf16.count)
-            for name in ["Les Lacustres", nil] {
+            for (name, vintage) in [("Les Lacustres", 2020), (nil, 2020), ("Les Lacustres", nil)] {
                 let start = Date()
-                _ = PagePrices.prices(inPage: html, of: result, sizeML: 750, wineName: name, shouldStop: { false })
+                _ = PagePrices.prices(inPage: html, of: result, sizeML: 750, wineName: name, vintage: vintage, shouldStop: { false })
                 #expect(Date().timeIntervalSince(start) < Self.budget, "\(piece)")
             }
         }
+        // Structured data and text near the name, both read and compared.
+        let ld = #"<script type="application/ld+json">{"@type":"Product","name":"Les Lacustres 2019","offers":["#
+            + Array(repeating: #"{"price":"78.00","priceCurrency":"CHF"}"#, count: 2_000).joined(separator: ",") + "]}</script>"
+        let mixed = ld + String(repeating: "<p>Les Lacustres 2019 6x75cl CHF 78.00 / 1 bottle CHF 13.00</p>", count: 20_000)
+        let start = Date()
+        let found = PagePrices.prices(inPage: mixed, of: result, sizeML: 750, wineName: "Les Lacustres", vintage: 2019,
+                                      shouldStop: { false })
+        #expect(Date().timeIntervalSince(start) < Self.budget)
+        #expect(found.map(\.amount) == [13])
         let html = String(repeating: "<p>Les Lacustres CHF 13.00</p>", count: 20_000)
         #expect(PagePrices.prices(inPage: html, of: result, sizeML: 750, wineName: "Les Lacustres", shouldStop: { true }).isEmpty)
         #expect(!PagePrices.prices(inPage: html, of: result, sizeML: 750, wineName: "Les Lacustres", shouldStop: { false }).isEmpty)
@@ -159,27 +174,35 @@ import Testing
                 _ = HTMLScanner.scan("<p>a</p>" + tail, shouldStop: { false })
             }
         }
-        for file in try FileManager.default.contentsOfDirectory(atPath: Self.folder.path) where file.hasSuffix(".html") {
+        for file in try Self.pageFiles() {
             let page = Array(try String(contentsOf: Self.folder.appendingPathComponent(file), encoding: .utf8).utf16)
             for end in stride(from: 0, through: page.count, by: 3) {
-                _ = PagePrices.prices(inPage: String(decoding: page[0..<end], as: UTF16.self), of: result, sizeML: 750,
-                                      wineName: "Les Lacustres", shouldStop: { false })
+                let found = PagePrices.prices(inPage: String(decoding: page[0..<end], as: UTF16.self), of: result, sizeML: 750,
+                                              wineName: "Les Lacustres", shouldStop: { false })
+                #expect(found.allSatisfy { $0.url == result.url }, "\(file) cut at \(end)")
             }
         }
+    }
+
+    /// The fixture pages, in the same order everywhere.
+    static func pageFiles() throws -> [String] {
+        try FileManager.default.contentsOfDirectory(atPath: folder.path).filter { $0.hasSuffix(".html") }.sorted()
     }
 
     /// Pages with random damage (the same pseudo-random sequence each run) are read without failing.
     @Test func damagedPagesAreRead() throws {
         let result = WebSearchResult(title: "R", url: URL(string: "https://shop.example.org/vin")!, snippet: "")
-        var seed: UInt64 = 0x2545F4914F6CDD1D
+        var seed: UInt64 = 0
         func next(_ bound: Int) -> Int {
             seed ^= seed << 13; seed ^= seed >> 7; seed ^= seed << 17
-            return Int(seed % UInt64(bound))
+            return Int(seed % UInt64(max(1, bound)))
         }
         let pieces = Array("<>/\"'-=!&;#{}[]:, \n".utf16)
-        for file in try FileManager.default.contentsOfDirectory(atPath: Self.folder.path) where file.hasSuffix(".html") {
+        for (index, file) in try Self.pageFiles().enumerated() {
+            // A sequence of its own for each file: adding a file changes no other file's damage.
+            seed = 0x2545F4914F6CDD1D ^ UInt64(index + 1)
             let page = Array(try String(contentsOf: Self.folder.appendingPathComponent(file), encoding: .utf8).utf16)
-            for _ in 0..<60 {
+            for iteration in 0..<60 {
                 var damaged = page
                 for _ in 0..<(1 + next(20)) {
                     let at = next(damaged.count)
@@ -189,8 +212,9 @@ import Testing
                     default: damaged[at] = pieces[next(pieces.count)]
                     }
                 }
-                _ = PagePrices.prices(inPage: String(decoding: damaged, as: UTF16.self), of: result, sizeML: 750,
-                                      wineName: "Les Lacustres", shouldStop: { false })
+                let found = PagePrices.prices(inPage: String(decoding: damaged, as: UTF16.self), of: result, sizeML: 750,
+                                              wineName: "Les Lacustres", shouldStop: { false })
+                #expect(found.allSatisfy { $0.url == result.url }, "\(file) damage \(iteration)")
             }
         }
     }
@@ -246,6 +270,50 @@ import Testing
         #expect(await !PagePrices.resolvesPublicly(url) { _ in ["203.0.113.10", "127.0.0.1"] })
         #expect(await !PagePrices.resolvesPublicly(url) { _ in throw LocalNetworkError.notFound })
         #expect(await !PagePrices.resolvesPublicly(URL(string: "https://localhost/vin")!) { _ in ["203.0.113.10"] })
+    }
+
+    @Test func redirectsAreCheckedAndCounted() async {
+        let publicName: LocalName.Resolver = { _ in ["203.0.113.10"] }
+        func request(_ address: String) -> URLRequest {
+            var request = URLRequest(url: URL(string: address)!)
+            request.setValue("https://search.example.com/?q=vin", forHTTPHeaderField: "Referer")
+            request.setValue("session=1", forHTTPHeaderField: "Cookie")
+            request.setValue("Basic eDp5", forHTTPHeaderField: "Authorization")
+            request.setValue("text/html", forHTTPHeaderField: "Accept")
+            return request
+        }
+        for address in ["http://shop.example.org/vin", "https://nas.local/vin", "https://shop.example.org:8443/vin",
+                        "https://203.0.113.10/vin", "https://user:pw@shop.example.org/vin"] {
+            #expect(await PagePrices.nextRequest(hop: 1, request: request(address), resolver: publicName) == nil, "\(address)")
+        }
+        let privateName: LocalName.Resolver = { _ in ["203.0.113.10", "127.0.0.1"] }
+        #expect(await PagePrices.nextRequest(hop: 1, request: request("https://shop.example.org/n"), resolver: privateName) == nil)
+        for hop in 1...PagePrices.maxRedirects {
+            let next = await PagePrices.nextRequest(hop: hop, request: request("https://shop.example.org/n"), resolver: publicName)
+            #expect(next?.url?.absoluteString == "https://shop.example.org/n", "hop \(hop)")
+            for field in ["Referer", "Cookie", "Authorization"] {
+                #expect(next?.value(forHTTPHeaderField: field) == nil, "hop \(hop) \(field)")
+            }
+            #expect(next?.value(forHTTPHeaderField: "Accept") == "text/html")
+        }
+        #expect(PagePrices.maxRedirects == 3)
+        #expect(await PagePrices.nextRequest(hop: 4, request: request("https://shop.example.org/n"), resolver: publicName) == nil)
+    }
+
+    @Test func onlyReadableAnswersAreRead() {
+        let url = URL(string: "https://shop.example.org/vin")
+        #expect(PagePrices.acceptsResponse(statusCode: 200, url: url, contentType: "text/html; charset=utf-8", expectedLength: -1))
+        #expect(PagePrices.acceptsResponse(statusCode: 203, url: url, contentType: "application/xhtml+xml",
+                                           expectedLength: Int64(PagePrices.maxBytes)))
+        #expect(!PagePrices.acceptsResponse(statusCode: 404, url: url, contentType: "text/html", expectedLength: -1))
+        #expect(!PagePrices.acceptsResponse(statusCode: 302, url: url, contentType: "text/html", expectedLength: -1))
+        #expect(!PagePrices.acceptsResponse(statusCode: 200, url: url, contentType: "application/json", expectedLength: -1))
+        #expect(!PagePrices.acceptsResponse(statusCode: 200, url: url, contentType: nil, expectedLength: -1))
+        #expect(!PagePrices.acceptsResponse(statusCode: 200, url: url, contentType: "text/html",
+                                            expectedLength: Int64(PagePrices.maxBytes) + 1))
+        #expect(!PagePrices.acceptsResponse(statusCode: 200, url: URL(string: "http://shop.example.org/vin"),
+                                            contentType: "text/html", expectedLength: -1))
+        #expect(!PagePrices.acceptsResponse(statusCode: 200, url: nil, contentType: "text/html", expectedLength: -1))
     }
 
     @Test func onlyTheFirstPagesAreOpened() {

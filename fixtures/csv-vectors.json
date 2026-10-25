@@ -1,5 +1,5 @@
 {
-  "about": "CSV import and export, shared by CaveKit (CSVVectorTests.swift) and the Kotlin core (CsvVectorTest.kt). Dates are days in the device's time zone, which the tests use for both import and comparison; 'now' is the import's own date. Prices are compared as numbers. Omitted bottle and wine fields are empty. An import with a 'zone' imports and compares in that time zone; 'racks' exist in the cellar before the import (and before reading the export back); 'encoded' is the file's bytes (base64), which decode to the csv lines.",
+  "about": "CSV import and export, shared by CaveKit (CSVVectorTests.swift) and the Kotlin core (CsvVectorTest.kt). Dates are days in the device's time zone, which the tests use for both import and comparison; 'now' is the import's own date. Prices are compared as numbers. Omitted bottle and wine fields are empty. An import with a 'zone' imports and compares in that time zone; 'racks' exist in the cellar before the import (and before reading the export back); 'encoded' is the file's bytes (base64), which decode to the csv lines. 'prices' are read the same in Encave's own columns and in other files: from the first digit to the last, more than 0 and at most 100000. A rating 'x/y' is that share of 5 stars.",
   "headers": {
     "name": "name",
     "Wine Name": "name",
@@ -75,7 +75,16 @@
     "-3": null,
     "abc": null,
     "0.2": 1,
-    "7": 1
+    "7": 1,
+    "4/5": 4,
+    "16/20": 4,
+    "8/10": 4,
+    "3,5/5": 4,
+    "17/20": 4,
+    "12/20": 3,
+    "9.5/10": 5,
+    "0/5": null,
+    "5/0": null
   },
   "quantities": {
     "3": 3,
@@ -978,6 +987,29 @@
     "1 234,50": "1234.5",
     "abc": null,
     "3 500,00": "3500"
+  },
+  "prices": {
+    "12,50 €": "12.5",
+    "45.00€": "45",
+    "12.50 USD": "12.5",
+    "1 234,50 €": "1234.5",
+    "1,234.50": "1234.5",
+    "45.0000": "45",
+    "CHF 13.–": "13",
+    "13.-": "13",
+    "1.234,56 €": "1234.56",
+    "1’234.50 CHF": "1234.5",
+    "8,333": "8333",
+    "1.234.567": null,
+    "100000": "100000",
+    "100000.01": null,
+    "-5": null,
+    "0": null,
+    "0,00 €": null,
+    "250 000": null,
+    "12 to 15": null,
+    "": null,
+    "€": null
   },
   "exportedPrices": {
     "8.333": "8.33",

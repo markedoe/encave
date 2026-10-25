@@ -13,6 +13,8 @@ struct PriceSearchView: View {
     let sizeML: Int
     /// The wine's name, to find its price on a page that lists several.
     let wineName: String?
+    /// Prices named for another vintage are left out.
+    let vintage: Int?
     /// Saves the accepted price per bottle and its currency.
     let onSave: (Decimal, String) -> Void
 
@@ -37,13 +39,14 @@ struct PriceSearchView: View {
     @State private var suggestedPrice: Decimal?
     @State private var userSetPrice = false
 
-    init(terms: String, sizeML: Int, wineName: String? = nil, currentPrice: Decimal?, currency: String,
+    init(terms: String, sizeML: Int, wineName: String? = nil, vintage: Int? = nil, currentPrice: Decimal?, currency: String,
          onSave: @escaping (Decimal, String) -> Void) {
         _query = State(initialValue: terms)
         _price = State(initialValue: currentPrice)
         _currency = State(initialValue: currency)
         self.sizeML = sizeML
         self.wineName = wineName
+        self.vintage = vintage
         self.onSave = onSave
     }
 
@@ -251,7 +254,7 @@ struct PriceSearchView: View {
         guard !pages.isEmpty else { return }
         readingPages = true
         let sizeML = sizeML
-        let wineName = wineName
+        let wineName = wineName, vintage = vintage
         pageTask = Task {
             // A session of its own for each search: no connection is kept for the next one.
             let session = WebSearchClient.makePageSession()
@@ -260,7 +263,10 @@ struct PriceSearchView: View {
                 var next = 0
                 while next < pages.count, next < PagePrices.parallelPages {
                     let page = pages[next]
-                    group.addTask { await WebSearchClient.pagePrices(of: page, session: session, sizeML: sizeML, wineName: wineName) }
+                    group.addTask {
+                        await WebSearchClient.pagePrices(of: page, session: session, sizeML: sizeML, wineName: wineName,
+                                                         vintage: vintage)
+                    }
                     next += 1
                 }
                 while let found = await group.next() {
@@ -272,7 +278,8 @@ struct PriceSearchView: View {
                     if next < pages.count {
                         let page = pages[next]
                         group.addTask {
-                            await WebSearchClient.pagePrices(of: page, session: session, sizeML: sizeML, wineName: wineName)
+                            await WebSearchClient.pagePrices(of: page, session: session, sizeML: sizeML, wineName: wineName,
+                                                             vintage: vintage)
                         }
                         next += 1
                     }

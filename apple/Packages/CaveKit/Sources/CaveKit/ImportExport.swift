@@ -389,20 +389,71 @@ enum CSVColumns {
         return value
     }
 
-    /// A price rounded to the cent. In Encave's own columns (`plain`), "8.333" is 8.33; elsewhere
-    /// a three-digit tail is thousands ("1.234" is 1234), as on a web page.
+    /// The prices read in an import: more than 0, at most this.
+    static let maxPrice: Decimal = 100_000
+
+    /// A price rounded to the cent, nil outside 0 (excluded) to `maxPrice`. In Encave's own
+    /// columns (`plain`), "8.333" is 8.33; otherwise `amount(_:)` reads it.
     static func price(_ text: String, plain: Bool) -> Decimal? {
         let isPlain = plain && text.range(of: #"^[0-9]+(\.[0-9]+)?$"#, options: .regularExpression) != nil
-        let value = isPlain ? Decimal(string: text, locale: Locale(identifier: "en_US_POSIX")) : PriceExtractor.decimal(text)
-        return value.map(CellarExport.rounded)
+        let value = isPlain ? Decimal(string: text, locale: Locale(identifier: "en_US_POSIX")) : amount(text)
+        guard let value, value > 0, value <= maxPrice else { return nil }
+        return CellarExport.rounded(value)
+    }
+
+    /// The number from the first digit to the last, a currency or words around it ("12,50 €",
+    /// "CHF 13.–"). Spaces and apostrophes group thousands. One separator before exactly three
+    /// digits groups thousands ("1.234", "8,333"); before 1, 2 or 4 or more digits it starts the
+    /// decimals ("45.0000"). With "." and ",", the last one starts the decimals ("1,234.50").
+    /// Nil for a negative number or text between the digits ("12 to 15").
+    static func amount(_ text: String) -> Decimal? {
+        let characters = Array(text)
+        guard let first = characters.firstIndex(where: \.isASCIIDigit),
+              let last = characters.lastIndex(where: \.isASCIIDigit) else { return nil }
+        if first > 0, "-−".contains(characters[first - 1]) { return nil }
+        var digits = ""
+        // Each separator, with the count of digits before it.
+        var marks: [(at: Int, mark: Character)] = []
+        for character in characters[first...last] {
+            if character.isASCIIDigit {
+                digits.append(character)
+            } else if character == "." || character == "," {
+                if marks.last?.at == digits.count { return nil }
+                marks.append((digits.count, character))
+            } else if !" \u{A0}\u{202F}'’".contains(character) {
+                return nil
+            }
+        }
+        var decimals = 0
+        if let lastMark = marks.last {
+            let tail = digits.count - lastMark.at
+            if marks.contains(where: { $0.mark != lastMark.mark }) {
+                decimals = tail
+            } else if marks.count == 1 {
+                decimals = tail == 3 ? 0 : tail
+            } else {
+                // "1.234.567": every group has three digits.
+                let groups = zip(marks.map(\.at), marks.dropFirst().map(\.at) + [digits.count]).map { $1 - $0 }
+                guard groups.allSatisfy({ $0 == 3 }) else { return nil }
+            }
+        }
+        let integer = digits.dropLast(decimals), fraction = digits.suffix(decimals)
+        return Decimal(string: fraction.isEmpty ? String(integer) : "\(integer.isEmpty ? "0" : integer).\(fraction)",
+                       locale: Locale(identifier: "en_US_POSIX"))
     }
 
     static func number(_ text: String) -> Double? {
         Double(text.replacingOccurrences(of: ",", with: ".").filter { $0.isASCIIDigit || $0 == "." || $0 == "-" })
     }
 
-    /// 1 to 5 (decimals rounded); 100-point scores are converted.
+    /// 1 to 5 (decimals rounded); 100-point scores are converted. "4/5", "16/20", "8/10" are
+    /// that share of 5 stars.
     static func rating(_ text: String) -> Int? {
+        let parts = text.split(separator: "/", omittingEmptySubsequences: false)
+        if parts.count == 2 {
+            guard let value = number(String(parts[0])), let scale = number(String(parts[1])), value > 0, scale > 0 else { return nil }
+            return min(5, max(1, Int((value / scale * 5).rounded())))
+        }
         guard let value = number(text), value > 0 else { return nil }
         let five = min(5, value > 5 ? value / 20 : value)
         return min(5, max(1, Int(five.rounded())))
