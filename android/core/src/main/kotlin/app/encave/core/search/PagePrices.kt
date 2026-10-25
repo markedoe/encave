@@ -101,8 +101,11 @@ object PagePrices {
      * (JSON-LD), then the product meta tags, then microdata, then the visible text near the
      * wine's name. A structured amount the text shows for a case (or 6 or 12 times a price of
      * one bottle there) is left out, and the text's price is used. With [vintage], prices
-     * named for another vintage are left out. Each keeps the result's site and address. Empty
-     * once [shouldStop] is true.
+     * named for another vintage are left out. A page that does not name the wine (its name,
+     * else the words of its name and producer) gives no price from its text, and a structured
+     * one only for a product named so. A page without a price for [sizeML] gives those of one
+     * bottle of another size it names, with that size ([FoundPrice.sizeML]). Each keeps the
+     * result's site and address. Empty once [shouldStop] is true.
      */
     fun prices(
         html: String,
@@ -110,21 +113,25 @@ object PagePrices {
         sizeML: Int,
         wineName: String? = null,
         vintage: Int? = null,
+        producer: String? = null,
         shouldStop: () -> Boolean = { false },
     ): List<FoundPrice> {
         val document = HtmlScanner.scan(html, shouldStop) ?: return emptyList()
         if (shouldStop()) return emptyList()
-        val page = Page(document, wineName)
+        val page = Page(document, wineName, producer)
         if (shouldStop()) return emptyList()
         val text = page.textReading(sizeML, vintage)
         if (shouldStop()) return emptyList()
         var found = text.items
-        page.structuredPrices(sizeML, vintage, shouldStop)?.let { structured ->
-            val kept = withoutCasePrices(structured, text)
+        val structured = page.structuredPrices(sizeML, vintage, shouldStop)
+        if (structured.first.isNotEmpty()) {
+            val kept = withoutCasePrices(structured.first, text)
             if (kept.isNotEmpty() || text.items.isEmpty()) found = kept
         }
+        if (found.isEmpty()) found = (withoutCasePrices(structured.second, text) + text.otherSize).take(MAX_TEXT_PRICES)
         if (shouldStop()) return emptyList()
-        return found.map { FoundPrice(it.amount, it.currency, result.domain, result.url, it.excerpt) }.distinctBy { it.id }
+        return found.map { FoundPrice(it.amount, it.currency, result.domain, result.url, it.excerpt, it.sizeML) }
+            .distinctBy { it.id }
     }
 
     /** [prices] with those of the pages added, without the ones already found at the same address. */
@@ -147,12 +154,16 @@ object PagePrices {
     /** "13.90", "13.00": an amount with two decimals, the same on both platforms. */
     internal fun twoDecimals(amount: BigDecimal): String = amount.setScale(2, RoundingMode.HALF_UP).toPlainString()
 
-    internal data class Item(val amount: BigDecimal, val currency: String, val excerpt: String)
+    /** [sizeML]: for one bottle of this size, another than the one searched. */
+    internal data class Item(val amount: BigDecimal, val currency: String, val excerpt: String, val sizeML: Int? = null)
 
     /** The prices of the text near the wine's name. */
     internal class TextReading {
         /** Prices of one bottle, at most [MAX_TEXT_PRICES]. */
         var items: List<Item> = emptyList()
+
+        /** Prices of one bottle of another size named on the page, at most [MAX_TEXT_PRICES]. */
+        var otherSize: List<Item> = emptyList()
 
         /** Amounts and currencies of one bottle (all of them), and of several bottles, a case or delivery. */
         val oneBottle = mutableListOf<Pair<BigDecimal, String>>()
@@ -218,17 +229,44 @@ object PagePrices {
     /** Places of the wine's name looked at, at most. */
     private const val MAX_AREAS = 20
 
-    /** Without the wine's name on the page, only the start of its text is looked at. */
+    /** Without a name to look for, only the start of its text is looked at. */
     private const val MAX_TEXT_WITHOUT_NAME = 50_000
 
-    internal class Page(private val document: HtmlDocument, wineName: String?) {
+    /** Places of a word of the name checked for the other words near them, at most. */
+    private const val MAX_WORD_CHECKS = 200
+
+    /** Small words that do not tell a wine apart. */
+    private val commonWords = setOf(
+        "les", "the", "des", "del", "della", "and", "aux", "sur", "une", "von", "vom",
+        "der", "die", "das", "und", "vin", "vins", "wine", "wines",
+    )
+
+    internal class Page(private val document: HtmlDocument, wineName: String?, producer: String? = null) {
         val text: String = document.text
         private val heading: String? = document.heading
         private val title: String? =
             document.meta.firstOrNull { it.first == "og:title" }?.second?.let(Html::cleanLine) ?: document.title
 
-        /** Where to look in the text: after the places the wine's name is, or the start of it ([start, end)). */
-        private val areas: List<IntRange> = areas(text, wineName)
+        /** The wine's name folded ([Fold]), when it is long enough to look for. */
+        private val needle: String? = needle(wineName)
+
+        /** The words of the name (else of the producer and name) folded, that name the wine when the whole name is not found. */
+        private val words: List<String> = words(wineName.orEmpty()).ifEmpty { words(listOfNotNull(producer, wineName).joinToString(" ")) }
+
+        /**
+         * Where to look in the text ([start, end)): after the places the wine's name is, the start
+         * of it when there is no name to look for, or none when the page does not name the wine.
+         */
+        private val areas: List<IntRange> = run {
+            val haystack = Fold.units(text)
+            var found = needle?.let { areas(text, haystack, it) }.orEmpty()
+            if (found.isEmpty() && words.isNotEmpty()) found = areas(text, haystack, words)
+            if (needle == null && words.isEmpty()) found = listOf(0 until minOf(text.length, MAX_TEXT_WITHOUT_NAME))
+            found
+        }
+
+        /** True when there is a name to look for and the page's text does not have it. */
+        private val lacksName: Boolean get() = (needle != null || words.isNotEmpty()) && areas.isEmpty()
 
         /** The one size named near the wine's name, if only one is. */
         private val areaSize: Pair<Int, String>? = sizeIn(text, areas)
@@ -236,12 +274,80 @@ object PagePrices {
         /** The product's name, as the page shows it. */
         private val label: String? get() = heading ?: title
 
-        private fun areas(text: String, name: String?): List<IntRange> {
-            val start = listOf(0 until minOf(text.length, MAX_TEXT_WITHOUT_NAME))
+        private fun needle(name: String?): String? {
             val cleanName = Normalizer.normalize(name.orEmpty().trim(), Normalizer.Form.NFC)
-            val needle = Fold.units(cleanName.take(100))
-            if (needle.length < 3) return start
-            val haystack = Fold.units(text)
+            return Fold.units(cleanName.take(100)).takeIf { it.length >= 3 }
+        }
+
+        /** Words of 3 letters or more, folded, without [commonWords], longest first, at most 6. */
+        private fun words(name: String): List<String> {
+            val folded = Fold.units(Normalizer.normalize(name, Normalizer.Form.NFC).take(200))
+            val found = mutableListOf<String>()
+            val current = StringBuilder()
+            for (unit in "$folded ") {
+                if (PriceExtractor.isWordUnit(unit)) {
+                    current.append(unit)
+                    continue
+                }
+                val word = current.toString()
+                if (word.length >= 3 && word !in commonWords && word !in found) found += word
+                current.clear()
+            }
+            return found.sortedByDescending { it.length }.take(6)
+        }
+
+        /** Whole words at [index] in the folded text. */
+        private fun isWord(haystack: String, index: Int, length: Int): Boolean =
+            (index == 0 || !PriceExtractor.isWordUnit(haystack[index - 1])) &&
+                (index + length >= haystack.length || !PriceExtractor.isWordUnit(haystack[index + length]))
+
+        /** The first place of [word] in `haystack[from, to)`, as a whole word. */
+        private fun find(word: String, haystack: String, from: Int, to: Int): Int? {
+            var index = maxOf(0, from)
+            val end = minOf(to, haystack.length)
+            while (index + word.length <= end) {
+                if (haystack[index] == word[0] && haystack.regionMatches(index, word, 0, word.length) &&
+                    isWord(haystack, index, word.length)
+                ) {
+                    return index
+                }
+                index++
+            }
+            return null
+        }
+
+        /**
+         * The places of the longest word of the name with every other word near it ([NEAR_NAME]
+         * before or after), at most [MAX_WORD_CHECKS] places looked at.
+         */
+        private fun areas(text: String, haystack: String, words: List<String>): List<IntRange> {
+            val first = words.firstOrNull() ?: return emptyList()
+            val found = mutableListOf<IntRange>()
+            var index = 0
+            var checks = 0
+            while (checks < MAX_WORD_CHECKS && found.size < MAX_AREAS) {
+                val at = find(first, haystack, index, haystack.length) ?: break
+                checks++
+                val near = words.drop(1).all { find(it, haystack, at - NEAR_NAME, at + first.length + NEAR_NAME) != null }
+                if (near) {
+                    val end = minOf(text.length, at + NEAR_NAME)
+                    val last = found.lastOrNull()
+                    if (last != null && at <= last.last + 1) found[found.size - 1] = last.first until end else found += at until end
+                }
+                index = at + first.length
+            }
+            return found
+        }
+
+        /** True when a product's name (as structured data or the page's title give it) names the wine: it has the wine's name, or every word of it ([words]). */
+        private fun namesWine(name: String?): Boolean {
+            if (name == null) return false
+            val folded = Fold.units(Normalizer.normalize(name, Normalizer.Form.NFC).take(300))
+            if (needle != null && folded.contains(needle)) return true
+            return words.isNotEmpty() && words.all { find(it, folded, 0, folded.length) != null }
+        }
+
+        private fun areas(text: String, haystack: String, needle: String): List<IntRange> {
             val found = mutableListOf<IntRange>()
             var index = haystack.indexOf(needle)
             // At most MAX_AREAS × NEAR_NAME units in all, however often the name appears.
@@ -259,7 +365,7 @@ object PagePrices {
                 }
                 index = haystack.indexOf(needle, index + needle.length)
             }
-            return found.ifEmpty { start }
+            return found
         }
 
         private fun sizeIn(text: String, areas: List<IntRange>): Pair<Int, String>? {
@@ -293,18 +399,24 @@ object PagePrices {
 
         // Structured data
 
-        /** Null when the page has no structured price for one bottle of the size. */
-        fun structuredPrices(sizeML: Int, vintage: Int?, shouldStop: () -> Boolean): List<Item>? {
+        /**
+         * The structured prices of one bottle of the size, of the first kind of data that has
+         * some, and of one bottle of another size named, of the first kind that has some.
+         */
+        fun structuredPrices(sizeML: Int, vintage: Int?, shouldStop: () -> Boolean): Pair<List<Item>, List<Item>> {
+            var otherSize = emptyList<Item>()
             for (step in 0 until 3) {
-                if (shouldStop()) return emptyList()
+                if (shouldStop()) return emptyList<Item>() to emptyList()
                 val items = when (step) {
                     0 -> jsonLdPrices(sizeML, vintage, shouldStop)
                     1 -> metaPrices(sizeML, vintage)
                     else -> microdataPrices(sizeML, vintage)
                 }
-                if (items.isNotEmpty()) return items
+                val oneBottle = items.filter { it.sizeML == null }
+                if (oneBottle.isNotEmpty()) return oneBottle to emptyList()
+                if (otherSize.isEmpty()) otherSize = items
             }
-            return null
+            return emptyList<Item>() to otherSize
         }
 
         private fun item(
@@ -316,6 +428,12 @@ object PagePrices {
             vintage: Int?,
             vintageNames: List<String?>,
         ): Item? {
+            // A page that does not name the wine: only a product named for it. A product whose
+            // name is given (JSON-LD) is another wine when the name is not the wine's.
+            val given = names.filterNotNull()
+            if ((lacksName || (given.isNotEmpty() && (needle != null || words.isNotEmpty()))) && (names + label).none { namesWine(it) }) {
+                return null
+            }
             val code = currency?.trim()?.uppercase(Locale.ROOT)?.takeIf { it in currencies } ?: return null
             val value = structuredAmount(amount)?.takeIf { PriceExtractor.inRange(it) } ?: return null
             // A product named for another vintage.
@@ -326,8 +444,10 @@ object PagePrices {
             // A case, a lot or a pack is not one bottle.
             if (names.any { it != null && PriceExtractor.notOneBottleBefore.containsMatchIn(it.take(300)) }) return null
             val size = size(names)
-            if ((size?.first ?: 750) != sizeML) return null
-            return Item(value, code, excerpt(label, "${twoDecimals(value)} $code", size?.second))
+            val excerpt = excerpt(label, "${twoDecimals(value)} $code", size?.second)
+            // Another size, kept only when it is named.
+            if ((size?.first ?: 750) != sizeML) return size?.let { Item(value, code, excerpt, it.first) }
+            return Item(value, code, excerpt)
         }
 
         private fun jsonLdPrices(sizeML: Int, vintage: Int?, shouldStop: () -> Boolean): List<Item> {
@@ -351,7 +471,7 @@ object PagePrices {
             fun value(key: String) = document.meta.firstOrNull { it.first == key }?.second
             for (prefix in listOf("product:price:", "og:price:")) {
                 val amount = value(prefix + "amount") ?: continue
-                item(amount, value(prefix + "currency"), emptyList(), null, sizeML, vintage, listOf(label))?.let { return listOf(it) }
+                item(amount, value(prefix + "currency"), emptyList(), label, sizeML, vintage, listOf(label))?.let { return listOf(it) }
             }
             return emptyList()
         }
@@ -359,7 +479,7 @@ object PagePrices {
         /** The first itemprop="price" of the page, with the first itemprop="priceCurrency". */
         private fun microdataPrices(sizeML: Int, vintage: Int?): List<Item> {
             val amount = document.itemPrice ?: return emptyList()
-            return listOfNotNull(item(amount, document.itemCurrency, emptyList(), null, sizeML, vintage, listOf(label)))
+            return listOfNotNull(item(amount, document.itemCurrency, emptyList(), label, sizeML, vintage, listOf(label)))
         }
 
         // Visible text
@@ -378,17 +498,23 @@ object PagePrices {
                 for (area in areas) if (!area.isEmpty()) seen += years(text, area.first, area.last + 1)
                 otherVintagesOnly = seen.size > 1 && vintage !in seen
             }
-            val prices = mutableListOf<PriceExtractor.TextPrice>()
+            val prices = mutableListOf<Pair<PriceExtractor.TextPrice, IntRange>>()
+            val otherSize = mutableListOf<Pair<PriceExtractor.TextPrice, IntRange>>()
             for (area in areas) {
                 if (area.isEmpty()) continue
                 // A little text around the area, for the words next to a price.
                 val start = maxOf(0, area.first - 40)
                 val end = minOf(text.length, area.last + 1 + 30)
-                val all = PriceExtractor.allTextPrices(text.substring(start, end), sizeML, defaultSize = size?.first ?: 750)
+                val all = PriceExtractor.allTextPrices(text.substring(start, end), sizeML, defaultSize = size?.first)
                 for ((index, price) in all.withIndex()) {
                     if (start + price.location !in area) continue
                     when (price.kind) {
-                        PriceExtractor.Kind.OtherSize -> continue
+                        PriceExtractor.Kind.OtherSize -> {
+                            // Kept when the size is named, next to it or near the wine's name.
+                            if (price.seenSize != null) otherSize += price to area
+                            continue
+                        }
+                        PriceExtractor.Kind.NotAPrice -> continue
                         PriceExtractor.Kind.NotOneBottle -> {
                             reading.notOneBottle += price.amount to price.currency
                             continue
@@ -416,18 +542,33 @@ object PagePrices {
                         if (found.isNotEmpty() && vintage !in found) continue
                     }
                     reading.oneBottle += price.amount to price.currency
-                    prices += price
+                    prices += price to area
                 }
             }
-            reading.items = prices.take(MAX_TEXT_PRICES).map { price ->
+            // The product's name: the page's title when it names the wine (not a guide's or a
+            // producer's page title), else the line where the wine's name is.
+            val productLabel = label?.let(Html::cleanLine)?.takeIf { (needle == null && words.isEmpty()) || namesWine(it) }
+            fun item(price: PriceExtractor.TextPrice, area: IntRange, sizeML: Int?): Item {
                 val parts = mutableListOf<String>()
-                label?.let(Html::cleanLine)?.takeIf { !price.excerpt.contains(it, ignoreCase = true) }?.let { parts += it.take(100) }
+                (productLabel ?: line(area.first))?.takeIf { !price.excerpt.contains(it, ignoreCase = true) }?.let { parts += it.take(80) }
                 parts += price.excerpt
-                val words = size?.second
-                if (price.namedSize == null && words != null && parts.none { it.contains(words, ignoreCase = true) }) parts += words
-                Item(price.amount, price.currency, parts.joinToString(" · "))
+                val sizeWords = if (price.namedSize == null) size?.second else null
+                if (sizeWords != null && parts.none { it.contains(sizeWords, ignoreCase = true) }) parts += sizeWords
+                return Item(price.amount, price.currency, parts.joinToString(" · "), sizeML)
             }
+            reading.items = prices.take(MAX_TEXT_PRICES).map { (price, area) -> item(price, area, null) }
+            reading.otherSize = otherSize.take(MAX_TEXT_PRICES).map { (price, area) -> item(price, area, price.seenSize) }
             return reading
+        }
+
+        /** The line of the text at [location] (at most 80 units of it on each side), when the wine's name was looked for. */
+        private fun line(location: Int): String? {
+            if ((needle == null && words.isEmpty()) || location >= text.length) return null
+            var start = location
+            while (start > maxOf(0, location - 80) && text[start - 1] != '\n') start--
+            var end = location
+            while (end < minOf(text.length, location + 80) && text[end] != '\n') end++
+            return Html.cleanLine(text.substring(start, end))
         }
     }
 }

@@ -32,6 +32,9 @@ class PagePriceVectorTest {
 
     private fun label(amount: BigDecimal, currency: String) = "${amount.stripTrailingZeros().toPlainString()} $currency"
 
+    /** "13 CHF 700": a price of another size, with the size. */
+    private fun otherLabel(price: FoundPrice) = "${label(price.amount, price.currency)} ${price.sizeML ?: 0}"
+
     @Test
     fun sizeWords() {
         for (vector in vectors("sizeWords")) {
@@ -47,6 +50,9 @@ class PagePriceVectorTest {
             val size = vector["sizeML"]!!.jsonPrimitive.int
             val found = PriceExtractor.prices(text, size).map { label(it.first, it.second) }
             assertEquals(strings(vector["prices"]), found, "$text ($size ml)")
+            val all = PriceExtractor.prices(listOf(WebSearchResult("", "https://shop.example.org/vin", text)), size)
+            assertEquals(strings(vector["prices"]), all.filter { !it.isOtherSize }.map { label(it.amount, it.currency) }, text)
+            assertEquals(strings(vector["otherSizes"]), all.filter { it.isOtherSize }.map(::otherLabel), "$text ($size ml)")
         }
     }
 
@@ -58,12 +64,22 @@ class PagePriceVectorTest {
             val size = vector["sizeML"]!!.jsonPrimitive.int
             val result = WebSearchResult("Result", url, "")
             val vintage = vector["vintage"]?.jsonPrimitive?.int
-            val found = PagePrices.prices(File(folder, file).readText(), result, size, vector["wineName"]?.jsonPrimitive?.contentOrNull, vintage)
-            val name = "$file ($size ml, ${vintage ?: "no vintage"})"
+            val wineName = vector["wineName"]?.jsonPrimitive?.contentOrNull
+            val all = PagePrices.prices(
+                File(folder, file).readText(), result, size, wineName, vintage,
+                producer = vector["producer"]?.jsonPrimitive?.contentOrNull,
+            )
+            val found = all.filter { !it.isOtherSize }
+            val name = "$file $wineName ($size ml, ${vintage ?: "no vintage"})"
             assertEquals(strings(vector["prices"]), found.map { label(it.amount, it.currency) }, name)
-            assertTrue(found.all { it.url == url && it.domain == result.domain }, name)
+            assertEquals(strings(vector["otherSizes"]), all.filter { it.isOtherSize }.map(::otherLabel), name)
+            assertTrue(all.all { it.url == url && it.domain == result.domain }, name)
+            val excerpt = all.firstOrNull()?.excerpt ?: "-"
             for (words in strings(vector["excerptContains"])) {
-                assertTrue(found.first().excerpt.contains(words), "$name: ${found.first().excerpt} has $words")
+                assertTrue(excerpt.contains(words), "$name: $excerpt has $words")
+            }
+            for (words in strings(vector["excerptLacks"])) {
+                assertFalse(excerpt.contains(words), "$name: $excerpt lacks $words")
             }
         }
     }
@@ -122,6 +138,20 @@ class PagePriceVectorTest {
         }
         assertEquals("13.90", PagePrices.twoDecimals(BigDecimal("13.9")))
         assertEquals("13.00", PagePrices.twoDecimals(BigDecimal(13)))
+    }
+
+    /** The words of a name looked for when the whole name is not on the page: quick however often they appear. */
+    @Test
+    fun wordsOfTheNameAreLookedForQuickly() {
+        val result = WebSearchResult("R", "https://shop.example.org/vin", "")
+        for (piece in listOf("<p>Lacustres CHF 13.00</p>", "Lacustres ", "<p>Chasselas Lacustres 70 cl CHF 13.00</p>", "Réserve 1 ")) {
+            val html = piece.repeat(PagePrices.MAX_BYTES / piece.length)
+            for ((name, producer) in listOf("Lacustres Réserve Spéciale" to "Vignoble Exemple", "" to "Vignoble Lacustres Réserve")) {
+                val start = System.nanoTime()
+                PagePrices.prices(html, result, 750, name, producer = producer)
+                assertTrue((System.nanoTime() - start) / 1_000_000 < 1_000, "$piece $name")
+            }
+        }
     }
 
     /** Hostile pages: the reading stays linear and quick, and stops when asked. */

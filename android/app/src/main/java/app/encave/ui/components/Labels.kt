@@ -286,6 +286,15 @@ private val spokenSizes = mapOf(
     1500 to R.string.size_1500_spoken, 3000 to R.string.size_3000_spoken,
 )
 
+/** "75 cl", "37,5 cl", "1,5 l": the volume alone, numbers as written in [locale]. */
+fun volumeText(sizeML: Int, locale: java.util.Locale = java.util.Locale.getDefault()): String {
+    val format = java.text.NumberFormat.getNumberInstance(locale).apply {
+        minimumFractionDigits = 0
+        maximumFractionDigits = 2
+    }
+    return if (sizeML >= 1000) "${format.format(sizeML / 1000.0)}\u00A0l" else "${format.format(sizeML / 10.0)}\u00A0cl"
+}
+
 @Composable
 fun sizeLabel(sizeML: Int): String {
     val known = bottleSizes.firstOrNull { it.first == sizeML }

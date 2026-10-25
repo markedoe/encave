@@ -36,6 +36,7 @@ import app.encave.core.ImportSummary
 import app.encave.core.PurchaseInfo
 import app.encave.core.Rack
 import app.encave.ui.components.displayLabel
+import app.encave.ui.components.volumeText
 import app.encave.core.SampleData
 import app.encave.core.containsSample
 import app.encave.core.removingSample
@@ -66,6 +67,7 @@ import app.encave.data.ai.completed
 import app.encave.data.ai.completing
 import app.encave.data.ai.sameDetails
 import app.encave.sync.ChangeNotifications
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
@@ -428,6 +430,38 @@ class AppViewModel(
             val text = if (name.isEmpty()) UiText.Res(R.string.msg_reservation_removed) else UiText.Res(R.string.reserved_for, listOf(name))
             post(text) { change<Unit> { c -> before.forEach { b -> c.bottles[b.id]?.let { c.updateBottle(it.copy(reservedFor = b.reservedFor)) } } } }
         }) { it.reserve(before.map(Bottle::id), occasion) }
+    }
+
+    /**
+     * A price found for another bottle size: the wine's bottles in the cellar of size [old] get
+     * the size [new], and the price is set, with one Undo for both (which puts back the sizes
+     * still [new], and the price unless another one was set). As on Apple.
+     */
+    fun changeSize(wineId: UUID, old: Int, new: Int, price: BigDecimal, currency: String) {
+        val before = cellar.value.wines[wineId] ?: return
+        change<List<UUID>>({ changed ->
+            post(UiText.Res(R.string.msg_size_changed, listOf(volumeText(new)))) {
+                change<Unit> { c ->
+                    changed.forEach { id -> c.bottles[id]?.takeIf { it.sizeML == new }?.let { c.updateBottle(it.copy(sizeML = old)) } }
+                    val wine = c.wines[wineId] ?: return@change
+                    if (wine.currentPrice?.compareTo(price) == 0 && wine.currentPriceCurrency == currency) {
+                        c.updateWine(
+                            wine.copy(
+                                currentPrice = before.currentPrice,
+                                currentPriceCurrency = before.currentPriceCurrency,
+                                currentPriceDate = before.currentPriceDate,
+                            ),
+                        )
+                    }
+                }
+            }
+        }) { c ->
+            val changed = c.changeSize(wineId, old, new)
+            c.wines[wineId]?.let {
+                c.updateWine(it.copy(currentPrice = price, currentPriceCurrency = currency, currentPriceDate = app.encave.core.ReferenceDates.now()))
+            }
+            changed
+        }
     }
 
     fun saveSearch(name: String, filter: CellarFilter) = change<Unit> { it.saveSearch(name, filter) }

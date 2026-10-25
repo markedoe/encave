@@ -147,7 +147,7 @@ enum WebSearchClient {
     /// too), HTML only, at most `PagePrices.maxBytes`, `PagePrices.timeout` in all. Empty when
     /// the page cannot be read or the task is cancelled; neither the address nor the page is logged.
     static func pagePrices(of result: WebSearchResult, session: URLSession, sizeML: Int, wineName: String?,
-                           vintage: Int? = nil) async -> [FoundPrice] {
+                           producer: String? = nil, vintage: Int? = nil) async -> [FoundPrice] {
         let deadline = Date().addingTimeInterval(PagePrices.timeout)
         // The name lookup, the redirects and the reading all fit in `PagePrices.timeout`:
         // whichever finishes first, the page or the clock, ends the other.
@@ -166,7 +166,7 @@ enum WebSearchClient {
         // Read here, in this task (not on the main thread): cancelling the search stops it.
         let stop = deadline.addingTimeInterval(2)
         return PagePrices.prices(inPage: PagePrices.text(of: data, contentType: contentType), of: result,
-                                 sizeML: sizeML, wineName: wineName, vintage: vintage,
+                                 sizeML: sizeML, wineName: wineName, producer: producer, vintage: vintage,
                                  shouldStop: { Task.isCancelled || Date() > stop })
     }
 

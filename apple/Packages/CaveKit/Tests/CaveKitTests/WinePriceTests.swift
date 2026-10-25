@@ -88,6 +88,40 @@ enum PriceFixtures {
         #expect(PriceExtractor.suggested(two, currency: "EUR") == Decimal(string: "42.48"))
     }
 
+    @Test func otherSizesAreKeptApartAndNeverSuggested() {
+        let url = URL(string: "https://shop.example.org/vin")!
+        let normal = FoundPrice(amount: 15, currency: "CHF", domain: "a", url: url, excerpt: "")
+        let other = FoundPrice(amount: 13, currency: "CHF", domain: "a", url: url, excerpt: "", sizeML: 700)
+        #expect(other.isOtherSize && !normal.isOtherSize)
+        #expect(other.id != FoundPrice(amount: 13, currency: "CHF", domain: "a", url: url, excerpt: "").id)
+        #expect(PriceExtractor.suggested([other], currency: "CHF") == nil)
+        #expect(PriceExtractor.suggested([other, normal], currency: "CHF") == 15)
+        let prompt = PriceSuggestions.prompt(terms: "Les Lacustres", prices: [other, normal], currency: "CHF", sizeML: 750)
+        #expect(prompt.contains("1. 15 CHF") && !prompt.contains("13 CHF"))
+        // A result with a price for the size searched gives no price of another size.
+        let both = WebSearchResult(title: "Les Lacustres", url: url, snippet: "70 cl CHF 13.00 · 75 cl CHF 15.00")
+        #expect(PriceExtractor.prices(in: [both]).map(\.amount) == [15])
+        let only = WebSearchResult(title: "Les Lacustres", url: url, snippet: "70 cl CHF 13.00 · Magnum CHF 30.00")
+        #expect(PriceExtractor.prices(in: [only]).map { "\($0.amount) \($0.sizeML ?? 0)" } == ["13 700", "30 1500"])
+    }
+
+    @Test func changingTheSizeOfAWinesBottles() throws {
+        var cellar = Cellar()
+        let wine = Wine(name: "Les Lacustres")
+        try cellar.addBottles(of: wine, quantity: 3)
+        try cellar.addBottles(of: wine, quantity: 1, purchase: PurchaseInfo(sizeML: 1500))
+        let other = Wine(name: "Other")
+        try cellar.addBottles(of: other, quantity: 1)
+        let drunk = try #require(cellar.bottles(of: wine.id).first { $0.sizeML == 750 })
+        try cellar.drink(drunk.id, tasting: Tasting())
+        let changed = cellar.changeSize(ofWine: wine.id, from: 750, to: 700)
+        #expect(changed.count == 2)
+        #expect(cellar.bottles(of: wine.id).map(\.sizeML).sorted() == [700, 700, 1500])
+        #expect(cellar.bottles[drunk.id]?.sizeML == 750)
+        #expect(cellar.bottles(of: other.id).map(\.sizeML) == [750])
+        #expect(cellar.changeSize(ofWine: wine.id, from: 700, to: 700).isEmpty)
+    }
+
     @Test func promptListsThePrices() {
         let prices = PriceExtractor.prices(in: PriceFixtures.results)
         let prompt = PriceSuggestions.prompt(terms: "Chablis 2019 price", prices: prices, currency: "EUR", sizeML: 750, limit: 2)

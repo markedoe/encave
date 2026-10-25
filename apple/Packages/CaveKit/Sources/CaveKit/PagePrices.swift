@@ -113,25 +113,34 @@ public enum PagePrices {
     /// (JSON-LD), then the product meta tags, then microdata, then the visible text near the
     /// wine's name. A structured amount the text shows for a case (or 6 or 12 times a price of
     /// one bottle there) is left out, and the text's price is used. With `vintage`, prices
-    /// named for another vintage are left out. Each keeps the result's site and address. Empty
-    /// once `shouldStop` is true.
+    /// named for another vintage are left out. A page that does not name the wine (its name,
+    /// else the words of its name and producer) gives no price from its text, and a structured
+    /// one only for a product named so. A page without a price for `sizeML` gives those of one
+    /// bottle of another size it names, with that size (`FoundPrice.sizeML`). Each keeps the
+    /// result's site and address. Empty once `shouldStop` is true.
     public static func prices(inPage html: String, of result: WebSearchResult, sizeML: Int, wineName: String? = nil,
-                              vintage: Int? = nil, shouldStop: () -> Bool = { Task.isCancelled }) -> [FoundPrice] {
+                              producer: String? = nil, vintage: Int? = nil,
+                              shouldStop: () -> Bool = { Task.isCancelled }) -> [FoundPrice] {
         guard let document = HTMLScanner.scan(html, shouldStop: shouldStop), !shouldStop() else { return [] }
-        let page = Page(document: document, wineName: wineName)
+        let page = Page(document: document, wineName: wineName, producer: producer)
         guard !shouldStop() else { return [] }
         let text = page.textReading(sizeML: sizeML, vintage: vintage)
         guard !shouldStop() else { return [] }
         var found = text.items
-        if let structured = page.structuredPrices(sizeML: sizeML, vintage: vintage, shouldStop: shouldStop) {
-            let kept = Page.withoutCasePrices(structured, text: text)
+        let structured = page.structuredPrices(sizeML: sizeML, vintage: vintage, shouldStop: shouldStop)
+        if !structured.oneBottle.isEmpty {
+            let kept = Page.withoutCasePrices(structured.oneBottle, text: text)
             if !kept.isEmpty || text.items.isEmpty { found = kept }
+        }
+        if found.isEmpty {
+            found = Array((Page.withoutCasePrices(structured.otherSize, text: text) + text.otherSize)
+                .prefix(PagePrices.maxTextPrices))
         }
         guard !shouldStop() else { return [] }
         var seen = Set<String>()
         return found.compactMap { item in
             let price = FoundPrice(amount: item.amount, currency: item.currency, domain: result.domain, url: result.url,
-                                   excerpt: item.excerpt)
+                                   excerpt: item.excerpt, sizeML: item.sizeML)
             return seen.insert(price.id).inserted ? price : nil
         }
     }
@@ -166,12 +175,16 @@ public enum PagePrices {
         var amount: Decimal
         var currency: String
         var excerpt: String
+        /// For one bottle of this size, another than the one searched.
+        var sizeML: Int?
     }
 
     /// The prices of the text near the wine's name.
     struct TextReading {
         /// Prices of one bottle, at most `maxTextPrices`.
         var items: [Item] = []
+        /// Prices of one bottle of another size named on the page, at most `maxTextPrices`.
+        var otherSize: [Item] = []
         /// Amounts and currencies of one bottle (all of them), and of several bottles, a case or delivery.
         var oneBottle: [(Decimal, String)] = []
         var notOneBottle: [(Decimal, String)] = []
@@ -215,8 +228,13 @@ public enum PagePrices {
     static let nearName = 400
     /// Places of the wine's name looked at, at most.
     static let maxAreas = 20
-    /// Without the wine's name on the page, only the start of its text is looked at.
+    /// Without a name to look for, only the start of its text is looked at.
     static let maxTextWithoutName = 50_000
+    /// Places of a word of the name checked for the other words near them, at most.
+    static let maxWordChecks = 200
+    /// Small words that do not tell a wine apart.
+    static let commonWords: Set<String> = ["les", "the", "des", "del", "della", "and", "aux", "sur", "une", "von", "vom",
+                                           "der", "die", "das", "und", "vin", "vins", "wine", "wines"]
 
     struct Page {
         let document: HTMLDocument
@@ -225,31 +243,127 @@ public enum PagePrices {
         let units: [UInt16]
         let heading: String?
         let title: String?
-        /// Where to look in the text: after the places the wine's name is, or the start of it.
+        /// Where to look in the text: after the places the wine's name is, the start of it when
+        /// there is no name to look for, or none when the page does not name the wine.
         let areas: [NSRange]
         /// The one size named near the wine's name, if only one is.
         let areaSize: (sizeML: Int, words: String)?
+        /// The wine's name folded (`Fold`), when it is long enough to look for.
+        let needle: [UInt16]?
+        /// The words of the name (else of the producer and name) folded, that name the wine
+        /// when the whole name is not found.
+        let words: [[UInt16]]
 
-        init(document: HTMLDocument, wineName: String?) {
+        /// True when there is a name to look for and the page's text does not have it.
+        var lacksName: Bool { (needle != nil || !words.isEmpty) && areas.isEmpty }
+
+        init(document: HTMLDocument, wineName: String?, producer: String? = nil) {
             self.document = document
             text = document.text
             units = Array(text.utf16)
             heading = document.heading
             let ogTitle = document.meta.first { $0.key == "og:title" }?.value
             title = ogTitle.flatMap(HTML.cleanLine) ?? document.title
-            areas = Page.areas(in: units, name: wineName)
+            needle = Page.needle(wineName)
+            let nameWords = Page.words(of: wineName ?? "")
+            words = nameWords.isEmpty ? Page.words(of: [producer, wineName].compactMap { $0 }.joined(separator: " ")) : nameWords
+            let all = units, haystack = Fold.units(all), wanted = words
+            var found: [NSRange] = []
+            if let needle { found = Page.areas(in: all, folded: haystack, needle: needle) }
+            if found.isEmpty, !wanted.isEmpty { found = Page.areas(in: all, folded: haystack, words: wanted) }
+            if needle == nil, wanted.isEmpty { found = [NSRange(location: 0, length: min(all.count, maxTextWithoutName))] }
+            areas = found
             areaSize = Page.size(in: units, areas: areas)
         }
 
-        static func areas(in text: String, name: String?) -> [NSRange] { areas(in: Array(text.utf16), name: name) }
-
-        static func areas(in text: [UInt16], name: String?) -> [NSRange] {
-            let length = text.count
-            let start = [NSRange(location: 0, length: min(length, maxTextWithoutName))]
+        static func needle(_ name: String?) -> [UInt16]? {
             let cleanName = (name ?? "").trimmingCharacters(in: .whitespacesAndNewlines).precomposedStringWithCanonicalMapping
             let needle = Fold.units(String(cleanName.prefix(100)))
-            guard needle.count >= 3 else { return start }
-            let haystack = Fold.units(text)
+            return needle.count >= 3 ? needle : nil
+        }
+
+        /// Words of 3 letters or more, folded, without `commonWords`, longest first, at most 6.
+        static func words(of name: String) -> [[UInt16]] {
+            let folded = Fold.units(String(name.precomposedStringWithCanonicalMapping.prefix(200)))
+            var found: [[UInt16]] = []
+            var current: [UInt16] = []
+            for unit in folded + [0x20] {
+                if PriceExtractor.isWordUnit(unit) { current.append(unit); continue }
+                let word = String(decoding: current, as: UTF16.self)
+                if current.count >= 3, !PagePrices.commonWords.contains(word), !found.contains(current) { found.append(current) }
+                current = []
+            }
+            return Array(found.enumerated().sorted { ($0.element.count, -$0.offset) > ($1.element.count, -$1.offset) }
+                .map(\.element).prefix(6))
+        }
+
+        /// The places of the name in the text, as for `areas(in:name:)`.
+        static func areas(in text: String, name: String?) -> [NSRange] {
+            let units = Array(text.utf16)
+            guard let needle = needle(name) else { return [NSRange(location: 0, length: min(units.count, maxTextWithoutName))] }
+            return areas(in: units, folded: Fold.units(units), needle: needle)
+        }
+
+        /// Whole words at `index` in the folded text.
+        static func isWord(_ haystack: [UInt16], at index: Int, length: Int) -> Bool {
+            (index == 0 || !PriceExtractor.isWordUnit(haystack[index - 1]))
+                && (index + length >= haystack.count || !PriceExtractor.isWordUnit(haystack[index + length]))
+        }
+
+        /// The first place of `word` in `haystack[from..<to]`, as a whole word.
+        static func find(_ word: [UInt16], in haystack: [UInt16], from: Int, to: Int) -> Int? {
+            var index = max(0, from)
+            let end = min(to, haystack.count)
+            while index + word.count <= end {
+                if haystack[index] == word[0], haystack[index..<(index + word.count)].elementsEqual(word),
+                   isWord(haystack, at: index, length: word.count) {
+                    return index
+                }
+                index += 1
+            }
+            return nil
+        }
+
+        /// The places of the longest word of the name with every other word near it
+        /// (`nearName` before or after), at most `maxWordChecks` places looked at.
+        static func areas(in text: [UInt16], folded haystack: [UInt16], words: [[UInt16]]) -> [NSRange] {
+            guard let first = words.first else { return [] }
+            var areas: [NSRange] = []
+            var index = 0
+            var checks = 0
+            while checks < maxWordChecks, areas.count < maxAreas,
+                  let at = find(first, in: haystack, from: index, to: haystack.count) {
+                checks += 1
+                let near = words.dropFirst().allSatisfy {
+                    find($0, in: haystack, from: at - nearName, to: at + first.count + nearName) != nil
+                }
+                if near {
+                    let end = min(text.count, at + nearName)
+                    if let last = areas.last, at <= NSMaxRange(last) {
+                        areas[areas.count - 1] = NSRange(location: last.location, length: end - last.location)
+                    } else {
+                        areas.append(NSRange(location: at, length: end - at))
+                    }
+                }
+                index = at + first.count
+            }
+            return areas
+        }
+
+        /// True when a product's name (as structured data or the page's title give it) names the
+        /// wine: it has the wine's name, or every word of it (`words`).
+        func names(_ name: String?) -> Bool {
+            guard let name else { return false }
+            let folded = Fold.units(String(name.precomposedStringWithCanonicalMapping.prefix(300)))
+            if let needle, folded.count >= needle.count,
+               (0...(folded.count - needle.count)).contains(where: { folded[$0..<($0 + needle.count)].elementsEqual(needle) }) {
+                return true
+            }
+            return !words.isEmpty && words.allSatisfy { Page.find($0, in: folded, from: 0, to: folded.count) != nil }
+        }
+
+        static func areas(in text: [UInt16], folded haystack: [UInt16], needle: [UInt16]) -> [NSRange] {
+            let length = text.count
             var areas: [NSRange] = []
             var index = 0
             // At most `maxAreas` × `nearName` units in all, however often the name appears.
@@ -270,7 +384,7 @@ public enum PagePrices {
                     index += 1
                 }
             }
-            return areas.isEmpty ? start : areas
+            return areas
         }
 
         static func size(in text: String, areas: [NSRange]) -> (sizeML: Int, words: String)? {
@@ -310,22 +424,33 @@ public enum PagePrices {
 
         // MARK: Structured data
 
-        /// Nil when the page has no structured price for one bottle of the size.
-        func structuredPrices(sizeML: Int, vintage: Int?, shouldStop: () -> Bool) -> [Item]? {
+        /// The structured prices of one bottle of the size, of the first kind of data that has
+        /// some, and of one bottle of another size named, of the first kind that has some.
+        func structuredPrices(sizeML: Int, vintage: Int?, shouldStop: () -> Bool) -> (oneBottle: [Item], otherSize: [Item]) {
+            var otherSize: [Item] = []
             for step in 0..<3 {
-                if shouldStop() { return [] }
+                if shouldStop() { return ([], []) }
                 let items = switch step {
                 case 0: jsonLDPrices(sizeML: sizeML, vintage: vintage, shouldStop: shouldStop)
                 case 1: metaPrices(sizeML: sizeML, vintage: vintage)
                 default: microdataPrices(sizeML: sizeML, vintage: vintage)
                 }
-                if !items.isEmpty { return items }
+                let oneBottle = items.filter { $0.sizeML == nil }
+                if !oneBottle.isEmpty { return (oneBottle, []) }
+                if otherSize.isEmpty { otherSize = items }
             }
-            return nil
+            return ([], otherSize)
         }
 
         func item(amount text: String, currency: String?, names: [String?], label: String?, sizeML: Int,
                   vintage: Int?, vintageNames: [String?]) -> Item? {
+            // A page that does not name the wine: only a product named for it. A product whose
+            // name is given (JSON-LD) is another wine when the name is not the wine's.
+            let given = names.compactMap { $0 }
+            if lacksName || (!given.isEmpty && (needle != nil || !words.isEmpty)),
+               !(names + [label]).contains(where: self.names) {
+                return nil
+            }
             guard let currency = currency?.trimmingCharacters(in: .whitespaces).uppercased(),
                   PagePrices.currencies.contains(currency),
                   let amount = PagePrices.structuredAmount(text), PriceExtractor.range.contains(amount) else { return nil }
@@ -340,9 +465,12 @@ public enum PagePrices {
                 return nil
             }
             let size = size(named: names)
-            guard (size?.sizeML ?? 750) == sizeML else { return nil }
-            return Item(amount: amount, currency: currency,
-                        excerpt: excerpt(name: label, price: "\(PagePrices.twoDecimals(amount)) \(currency)", size: size?.words))
+            let excerpt = excerpt(name: label, price: "\(PagePrices.twoDecimals(amount)) \(currency)", size: size?.words)
+            guard (size?.sizeML ?? 750) == sizeML else {
+                // Another size, kept only when it is named.
+                return size.map { Item(amount: amount, currency: currency, excerpt: excerpt, sizeML: $0.sizeML) }
+            }
+            return Item(amount: amount, currency: currency, excerpt: excerpt)
         }
 
         func jsonLDPrices(sizeML: Int, vintage: Int?, shouldStop: () -> Bool) -> [Item] {
@@ -369,7 +497,7 @@ public enum PagePrices {
             func value(_ key: String) -> String? { document.meta.first { $0.key == key }?.value }
             for prefix in ["product:price:", "og:price:"] {
                 if let amount = value(prefix + "amount"),
-                   let item = item(amount: amount, currency: value(prefix + "currency"), names: [], label: nil, sizeML: sizeML,
+                   let item = item(amount: amount, currency: value(prefix + "currency"), names: [], label: label, sizeML: sizeML,
                                    vintage: vintage, vintageNames: [label]) {
                     return [item]
                 }
@@ -380,7 +508,7 @@ public enum PagePrices {
         /// The first itemprop="price" of the page, with the first itemprop="priceCurrency".
         func microdataPrices(sizeML: Int, vintage: Int?) -> [Item] {
             guard let amount = document.itemPrice,
-                  let item = item(amount: amount, currency: document.itemCurrency, names: [], label: nil, sizeML: sizeML,
+                  let item = item(amount: amount, currency: document.itemCurrency, names: [], label: label, sizeML: sizeML,
                                   vintage: vintage, vintageNames: [label])
             else { return [] }
             return [item]
@@ -400,16 +528,21 @@ public enum PagePrices {
                 for area in areas { seen.formUnion(PagePrices.years(in: units, from: area.location, to: NSMaxRange(area))) }
                 otherVintagesOnly = seen.count > 1 && !seen.contains(vintage)
             }
-            var prices: [PriceExtractor.TextPrice] = []
+            var prices: [(price: PriceExtractor.TextPrice, area: NSRange)] = []
+            var otherSize: [(price: PriceExtractor.TextPrice, area: NSRange)] = []
             for area in areas {
                 // A little text around the area, for the words next to a price.
                 let start = max(0, area.location - 40)
                 let end = min(units.count, NSMaxRange(area) + 30)
                 let piece = String(decoding: units[start..<end], as: UTF16.self)
-                let all = PriceExtractor.allTextPrices(in: piece, sizeML: sizeML, defaultSize: size?.sizeML ?? 750)
+                let all = PriceExtractor.allTextPrices(in: piece, sizeML: sizeML, defaultSize: size?.sizeML)
                 for (index, price) in all.enumerated() where NSLocationInRange(start + price.location, area) {
                     switch price.kind {
-                    case .otherSize: continue
+                    case .otherSize:
+                        // Kept when the size is named, next to it or near the wine's name.
+                        if price.seenSize != nil { otherSize.append((price, area)) }
+                        continue
+                    case .notAPrice: continue
                     case .notOneBottle: reading.notOneBottle.append((price.amount, price.currency)); continue
                     case .oneBottle: break
                     }
@@ -428,22 +561,38 @@ public enum PagePrices {
                         if !years.isEmpty, !years.contains(vintage) { continue }
                     }
                     reading.oneBottle.append((price.amount, price.currency))
-                    prices.append(price)
+                    prices.append((price, area))
                 }
             }
-            reading.items = prices.prefix(PagePrices.maxTextPrices).map { price in
+            // The product's name: the page's title when it names the wine (not a guide's or a
+            // producer's page title), else the line where the wine's name is.
+            let productLabel = label.flatMap(HTML.cleanLine).flatMap { needle == nil && words.isEmpty || names($0) ? $0 : nil }
+            func item(_ price: PriceExtractor.TextPrice, area: NSRange, sizeML: Int?) -> Item {
                 var parts: [String] = []
-                if let label = label.flatMap(HTML.cleanLine), !price.excerpt.localizedCaseInsensitiveContains(label) {
-                    parts.append(String(label.prefix(100)))
+                if let name = productLabel ?? line(at: area.location), !price.excerpt.localizedCaseInsensitiveContains(name) {
+                    parts.append(String(name.prefix(80)))
                 }
                 parts.append(price.excerpt)
-                if price.namedSize == nil, let words = size?.words,
-                   !parts.contains(where: { $0.localizedCaseInsensitiveContains(words) }) {
-                    parts.append(words)
-                }
-                return Item(amount: price.amount, currency: price.currency, excerpt: parts.joined(separator: " · "))
+                let words = price.namedSize == nil ? size?.words : nil
+                if let words, !parts.contains(where: { $0.localizedCaseInsensitiveContains(words) }) { parts.append(words) }
+                return Item(amount: price.amount, currency: price.currency, excerpt: parts.joined(separator: " · "), sizeML: sizeML)
+            }
+            reading.items = prices.prefix(PagePrices.maxTextPrices).map { item($0.price, area: $0.area, sizeML: nil) }
+            reading.otherSize = otherSize.prefix(PagePrices.maxTextPrices).map {
+                item($0.price, area: $0.area, sizeML: $0.price.seenSize)
             }
             return reading
+        }
+
+        /// The line of the text at `location` (at most 80 units of it on each side), when the
+        /// wine's name was looked for.
+        func line(at location: Int) -> String? {
+            guard needle != nil || !words.isEmpty, location < units.count else { return nil }
+            var start = location
+            while start > max(0, location - 80), units[start - 1] != 0x0A { start -= 1 }
+            var end = location
+            while end < min(units.count, location + 80), units[end] != 0x0A { end += 1 }
+            return HTML.cleanLine(String(decoding: units[start..<end], as: UTF16.self))
         }
 
         /// Without the structured amounts that the text near the wine's name shows for several

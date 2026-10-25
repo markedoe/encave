@@ -1,5 +1,5 @@
 {
-  "about": "Prices on web pages and in search snippets, shared by CaveKit (PagePriceVectorTests.swift) and the Kotlin core (PagePriceVectorTest.kt). prices are \"amount currency\" in the order found, the amount without trailing zeros. A page is one of the HTML files next to this one, read as if it were the search result at url. excerptContains: words the excerpt shows. vintage: the wine's vintage, when known. The pages and names are made up. Amounts in structured data are digits with an optional decimal point, rounded to the cent. Addresses of the private IPv4 ranges are tested in code, built from their numbers. A number written with an exponent in JSON-LD (1e3) is never a price.",
+  "about": "Prices on web pages and in search snippets, shared by CaveKit (PagePriceVectorTests.swift) and the Kotlin core (PagePriceVectorTest.kt). prices are \"amount currency\" in the order found, the amount without trailing zeros. A page is one of the HTML files next to this one, read as if it were the search result at url. excerptContains: words the excerpt of the first price shows (of another size when there is none for the size), excerptLacks: words it does not show. otherSizes: prices of one bottle of another size, \"amount currency size\", kept apart and never suggested; a result gives them only when it has no price for the size searched. producer: the wine's producer. Thresholds and ranges (\"à moins de 30 €\", \"10-20 €\") are not prices; a page that does not name the wine gives no price from its text. vintage: the wine's vintage, when known. The pages and names are made up. Amounts in structured data are digits with an optional decimal point, rounded to the cent. Addresses of the private IPv4 ranges are tested in code, built from their numbers. A number written with an exponent in JSON-LD (1e3) is never a price.",
   "sizeWords": [
     {
       "sizeML": 750,
@@ -77,7 +77,10 @@
     {
       "text": "Les Lacustres 70 cl CHF 13.00",
       "sizeML": 750,
-      "prices": []
+      "prices": [],
+      "otherSizes": [
+        "13 CHF 700"
+      ]
     },
     {
       "text": "Prix Fr. 13.50 la bouteille",
@@ -171,7 +174,10 @@
     {
       "text": "Bouteille 0,75 l : 15,00 €",
       "sizeML": 700,
-      "prices": []
+      "prices": [],
+      "otherSizes": [
+        "15 EUR 750"
+      ]
     },
     {
       "text": "Bouteille 0,75 l : 15,00 €",
@@ -183,7 +189,10 @@
     {
       "text": "Imperial (6 litres) £975.00",
       "sizeML": 750,
-      "prices": []
+      "prices": [],
+      "otherSizes": [
+        "975 GBP 6000"
+      ]
     },
     {
       "text": "Imperial (6 litres) £975.00",
@@ -195,7 +204,10 @@
     {
       "text": "Impériale 6 l : 980,00 €",
       "sizeML": 750,
-      "prices": []
+      "prices": [],
+      "otherSizes": [
+        "980 EUR 6000"
+      ]
     },
     {
       "text": "Jéroboam 5 l : 450,00 €",
@@ -214,22 +226,34 @@
     {
       "text": "Réhoboam 4,5 l : 390,00 €",
       "sizeML": 750,
-      "prices": []
+      "prices": [],
+      "otherSizes": [
+        "390 EUR 4500"
+      ]
     },
     {
       "text": "Mathusalem : 520,00 €",
       "sizeML": 750,
-      "prices": []
+      "prices": [],
+      "otherSizes": [
+        "520 EUR 6000"
+      ]
     },
     {
       "text": "Salmanazar 9 l, 1 200,00 €",
       "sizeML": 750,
-      "prices": []
+      "prices": [],
+      "otherSizes": [
+        "1200 EUR 9000"
+      ]
     },
     {
       "text": "Balthazar 12 l: €1,650.00",
       "sizeML": 750,
-      "prices": []
+      "prices": [],
+      "otherSizes": [
+        "1650 EUR 12000"
+      ]
     },
     {
       "text": "Nabuchodonosor 15 l : 2 400,00 €",
@@ -248,7 +272,10 @@
     {
       "text": "Bouteille 0,5 l : 22,00 €",
       "sizeML": 5000,
-      "prices": []
+      "prices": [],
+      "otherSizes": [
+        "22 EUR 500"
+      ]
     },
     {
       "text": "Free shipping to the Peninsula from €59.95",
@@ -266,6 +293,116 @@
       "prices": [
         "44.95 GBP"
       ]
+    },
+    {
+      "text": "Vins de Bordeaux à moins de 30 € : la sélection du Guide",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Moins de 10€ : les cuvées étoilées et",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Les meilleurs blancs sous 20 €",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Best white wines under £20",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Our picks for less than $25",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Promotions dès Fr. 9.–",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Gift sets starting at €39",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "À partir de 12,50 €",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Jusqu’à 50 € offerts",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Prix : 10-20 €",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Prix : 10 – 20 €",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "€10–€20 la bouteille",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Entre 10 et 20 € la bouteille",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Entre 10 € et 20 € la bouteille",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Budget : 30 €",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Prix ≤ 15 €",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Vins rouges < 15 €",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Chasselas 30 € max",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Les Lacustres 2023 – CHF 13.00",
+      "sizeML": 750,
+      "prices": [
+        "13 CHF"
+      ]
+    },
+    {
+      "text": "Les Lacustres CHF 13.00 - 70 cl",
+      "sizeML": 700,
+      "prices": [
+        "13 CHF"
+      ]
+    },
+    {
+      "text": "Prix CHF 13",
+      "sizeML": 700,
+      "prices": [],
+      "otherSizes": []
     }
   ],
   "pages": [
@@ -288,7 +425,15 @@
       "url": "https://shop.example.org/produit/les-lacustres/",
       "wineName": "Les Lacustres",
       "sizeML": 750,
-      "prices": []
+      "prices": [],
+      "otherSizes": [
+        "13 CHF 700"
+      ],
+      "excerptContains": [
+        "Les Lacustres",
+        "CHF 13.00",
+        "70 cl"
+      ]
     },
     {
       "file": "jsonld-graph.html",
@@ -362,7 +507,10 @@
       "url": "https://cave.example.org/chateau-exemple-2018-magnum",
       "wineName": "Château Exemple",
       "sizeML": 750,
-      "prices": []
+      "prices": [],
+      "otherSizes": [
+        "89 EUR 1500"
+      ]
     },
     {
       "file": "magnum-only.html",
@@ -408,7 +556,11 @@
         "14.5 CHF"
       ],
       "excerptContains": [
+        "Les Lacustres 2023",
         "14.50 Fr."
+      ],
+      "excerptLacks": [
+        "Boutique en ligne"
       ]
     },
     {
@@ -530,6 +682,75 @@
       "wineName": "Chablis Premier Cru",
       "sizeML": 750,
       "vintage": 2018,
+      "prices": []
+    },
+    {
+      "file": "guide-producer.html",
+      "url": "https://guide.example.net/producteurs/vignoble-exemple",
+      "wineName": "Les Lacustres",
+      "producer": "Vignoble Exemple",
+      "sizeML": 750,
+      "vintage": 2023,
+      "prices": [],
+      "otherSizes": []
+    },
+    {
+      "file": "guide-producer.html",
+      "url": "https://guide.example.net/producteurs/vignoble-exemple",
+      "wineName": "Les Lacustres",
+      "producer": "Vignoble Exemple",
+      "sizeML": 700,
+      "prices": [],
+      "otherSizes": []
+    },
+    {
+      "file": "guide-producer.html",
+      "url": "https://guide.example.net/producteurs/vignoble-exemple",
+      "wineName": "Chasselas Tradition",
+      "producer": "Vignoble Exemple",
+      "sizeML": 750,
+      "prices": [
+        "8.9 EUR"
+      ],
+      "excerptContains": [
+        "Chasselas Tradition 2022",
+        "8.90 EUR"
+      ],
+      "excerptLacks": [
+        "Vignoble Exemple ·"
+      ]
+    },
+    {
+      "file": "guide-producer.html",
+      "url": "https://guide.example.net/producteurs/vignoble-exemple",
+      "wineName": "Pinot Noir Élevé en Fût",
+      "producer": "Vignoble Exemple",
+      "sizeML": 750,
+      "prices": [
+        "19.5 EUR"
+      ],
+      "excerptContains": [
+        "Pinot Noir Élevé en Fût 2021",
+        "19,50 €"
+      ],
+      "excerptLacks": [
+        "Vignoble Exemple"
+      ]
+    },
+    {
+      "file": "guide-producer.html",
+      "url": "https://guide.example.net/producteurs/vignoble-exemple",
+      "wineName": "Élevé Fût Pinot",
+      "sizeML": 750,
+      "prices": [
+        "19.5 EUR"
+      ]
+    },
+    {
+      "file": "woocommerce.html",
+      "url": "https://shop.example.org/produit/les-lacustres/",
+      "wineName": "Lacustres Réserve",
+      "sizeML": 700,
       "prices": []
     }
   ],

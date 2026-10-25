@@ -147,6 +147,16 @@ public extension Cellar {
         }
     }
 
+    /// Gives the bottles of a wine still in the cellar that are of size `old` the size `new`
+    /// (a price found for 70 cl when they were saved as 75 cl). Returns the bottles changed.
+    @discardableResult
+    mutating func changeSize(ofWine wineID: UUID, from old: Int, to new: Int) -> [UUID] {
+        guard old != new, new > 0 else { return [] }
+        let changed = bottles(of: wineID).filter { $0.sizeML == old }.map(\.id)
+        for id in changed { bottles[id]?.sizeML = new }
+        return changed
+    }
+
     /// Every photo a wine refers to (to sync, and to keep when cleaning up).
     var photoIDs: Set<String> { Set(wines.values.flatMap(\.allPhotoIDs)) }
 

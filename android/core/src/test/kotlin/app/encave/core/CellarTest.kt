@@ -23,6 +23,23 @@ class CellarTest {
     private fun cellarWithRack() = Cellar().apply { addRack(rack) }
 
     @Test
+    fun changingTheSizeOfAWinesBottles() {
+        val cellar = Cellar()
+        val wine = Wine(name = "Les Lacustres")
+        cellar.addBottles(wine, quantity = 3)
+        cellar.addBottles(wine, quantity = 1, purchase = PurchaseInfo(sizeML = 1500))
+        val other = Wine(name = "Other")
+        cellar.addBottles(other, quantity = 1)
+        val drunk = cellar.bottlesOf(wine.id).first { it.sizeML == 750 }
+        cellar.drink(drunk.id, Tasting())
+        assertEquals(2, cellar.changeSize(wine.id, 750, 700).size)
+        assertEquals(listOf(700, 700, 1500), cellar.bottlesOf(wine.id).map { it.sizeML }.sorted())
+        assertEquals(750, cellar.bottles[drunk.id]?.sizeML)
+        assertEquals(listOf(750), cellar.bottlesOf(other.id).map { it.sizeML })
+        assertTrue(cellar.changeSize(wine.id, 700, 700).isEmpty())
+    }
+
+    @Test
     fun aWineEnteredTwiceIsMergedIntoTheOther() {
         val cellar = cellarWithRack()
         val kept = Wine(name = "Clos Test", vintage = 2019, photoId = "kept")
