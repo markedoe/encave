@@ -72,6 +72,17 @@ class HomeNameHttpTest {
         }
     }
 
+    /** No file is written that a device would refuse to read back. */
+    @Test
+    fun writesOverTheLimitAreRefused() = runBlocking<Unit> {
+        val big = ByteArray(CappedRead.SYNC_LIMIT.toInt() + 1)
+        val id = "c" + "d".repeat(32)
+        for (store in listOf(RelayMailboxStore("http://127.0.0.1:9/"), WebDavMailboxStore("http://127.0.0.1:9/dav/", "u", "p"))) {
+            val error = assertThrows<RemoteSyncException> { runBlocking { store.mailbox(id, "t").create("snap/x", big) } }
+            assertEquals(RemoteSyncError.FileTooLarge, error.error)
+        }
+    }
+
     /** A WebDAV file over the limit is refused. */
     @Test
     fun webDavAnswersAreCapped() = runBlocking<Unit> {

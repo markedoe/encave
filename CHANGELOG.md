@@ -27,8 +27,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
   http://searxng.home:8888 or a .local name) for web search, AI, WebDAV and
   relay; Encave connects only to a local address of that name (a public IPv6
   next to it is left out) and refuses a name that has none
+- iPhone, iPad and Mac: a Nextcloud server reached over plain http by a home
+  name (a .local name too) now gets requests at its local address; if Encave
+  asks for it, add that address to Nextcloud's trusted_domains, or use https
 
 ### Fixed
+- Plain http to the local network never goes through a proxy set up on the
+  device; answers from a relay, WebDAV, AI or search server are limited in size
 - Replace This Cellar and Erase All keep a previous version first; with
   "also erase backups", photos and documents go once Undo has passed
 - Removing a device changes the cellar key on every device that has it, also

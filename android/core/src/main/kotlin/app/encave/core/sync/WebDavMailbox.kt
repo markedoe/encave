@@ -95,8 +95,13 @@ class WebDavMailboxStore(
         } catch (error: LocalNetworkException) {
             throw RemoteSyncException(RemoteSyncError.Unavailable("not on the local network"))
         }
-        // No proxy there: one would look the name up itself.
-        val caller = if (LocalName.needsLookup(url)) client.newBuilder().dns(localDns).proxy(Proxy.NO_PROXY).build() else client
+        // Plain HTTP (only ever local) never goes through a proxy, which would read it in clear
+        // text (and look a name up itself); HTTPS uses the system's proxy as usual.
+        val caller = when {
+            LocalName.needsLookup(url) -> client.newBuilder().dns(localDns).proxy(Proxy.NO_PROXY).build()
+            !url.isHttps -> client.newBuilder().proxy(Proxy.NO_PROXY).build()
+            else -> client
+        }
         val request = Request.Builder().url(url)
             .method(method, body?.toRequestBody(contentType.toMediaType()))
             .header("Authorization", authorization)
@@ -248,6 +253,8 @@ private class WebDavMailbox(val store: WebDavMailboxStore, val id: String) : Mai
     }
 
     override suspend fun create(path: String, data: ByteArray): Boolean {
+        // Never more than a device reads back (CappedRead).
+        if (data.size > CappedRead.SYNC_LIMIT) throw RemoteSyncException(RemoteSyncError.FileTooLarge)
         val target = url(path)
         repeat(2) { attempt ->
             val (_, status) = store.send("PUT", target, mapOf("If-None-Match" to "*"), data)
@@ -393,6 +400,11 @@ internal object WebDavMultistatus {
 
 /** Addresses on this device or the local network, where a server has no certificate and plain HTTP is accepted. */
 object LocalAddress {
+    /**
+     * True for a local address, localhost, or a `.local` or `.home.arpa` name, without asking
+     * DNS. Never enough to send plain HTTP: a name can point anywhere, so requests go through
+     * [LocalName.resolve] (or its [LocalName.dns]), which checks the addresses.
+     */
     fun isLocal(host: String): Boolean {
         val name = host.lowercase().removePrefix("[").removeSuffix("]")
         if (name == "localhost" || name.endsWith(".local") || name.endsWith(".home.arpa")) return true

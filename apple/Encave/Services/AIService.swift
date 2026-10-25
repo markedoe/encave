@@ -552,12 +552,21 @@ enum AIService {
         }
     }
 
+    /// For plain HTTP to a server on the local network: no proxy.
+    private static let localSession: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.connectionProxyDictionary = [:]
+        return URLSession(configuration: configuration)
+    }()
+
     /// Every request goes through here.
     private static func send(_ request: URLRequest) async throws -> [String: Any] {
         guard let url = request.url, isAllowed(url) else { throw AIServiceError.insecureURL }
         var request = request
         request.url = try await LocalName.resolve(url)
-        let (data, response) = try await CappedRead.data(.shared, for: request, limit: CappedRead.jsonLimit, delegate: SameHostRedirects.shared)
+        // Plain HTTP (only ever local) never goes through a proxy, which would read it in clear text.
+        let session = request.url?.scheme?.lowercased() == "http" ? localSession : URLSession.shared
+        let (data, response) = try await CappedRead.data(session, for: request, limit: CappedRead.jsonLimit, delegate: SameHostRedirects.shared)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
         guard (200..<300).contains(status) else {

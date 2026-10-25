@@ -47,4 +47,16 @@ struct CappedReadTests {
         let mailbox = store.mailbox(id: "c" + String(repeating: "d", count: 32), token: "t")
         await #expect(throws: RemoteSyncError.self) { _ = try await mailbox.get("snap/\(CappedRead.syncLimit + 1)") }
     }
+
+    /// No file is written that a device would refuse to read back.
+    @Test func writesOverTheLimitAreRefused() async throws {
+        let big = Data(count: CappedRead.syncLimit + 1)
+        let relay = RelayMailboxStore(baseURL: URL(string: "https://big.example/r")!, session: OversizedProtocol.session)
+            .mailbox(id: "c" + String(repeating: "d", count: 32), token: "t")
+        await #expect(throws: RemoteSyncError.fileTooLarge) { _ = try await relay.create("snap/x", data: big) }
+        let server = FakeWebDAV()
+        let webDAV = server.store().mailbox(id: "c" + String(repeating: "d", count: 32), token: "")
+        await #expect(throws: RemoteSyncError.fileTooLarge) { _ = try await webDAV.create("snap/x", data: big) }
+        #expect(server.requests.isEmpty)
+    }
 }

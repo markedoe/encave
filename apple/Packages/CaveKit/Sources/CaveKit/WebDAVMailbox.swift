@@ -24,11 +24,14 @@ public struct WebDAVMailboxStore: MailboxStore {
     public let baseURL: URL
     let authorization: String
     let session: URLSession
+    /// For plain HTTP (only ever local): the same, without a proxy (`NoRedirects.direct`).
+    let localSession: URLSession
 
     public init(baseURL: URL, username: String, password: String, session: URLSession = WebDAVMailboxStore.session) {
         self.baseURL = Self.normalized(baseURL)
         authorization = "Basic " + Data("\(username):\(password)".utf8).base64EncodedString()
         self.session = session
+        localSession = session === Self.session ? Self.localSession : NoRedirects.direct(session)
     }
 
     public func mailbox(id: String, token: String) -> Mailbox { WebDAVMailbox(store: self, id: id) }
@@ -37,6 +40,7 @@ public struct WebDAVMailboxStore: MailboxStore {
     /// Requests never follow redirects: one to another host, or to plain HTTP,
     /// would carry the password there.
     public static let session = NoRedirects.session()
+    static let localSession = NoRedirects.direct(session)
 
     // MARK: Addresses
 
@@ -132,11 +136,15 @@ public struct WebDAVMailboxStore: MailboxStore {
         request.httpBody = body
         let (data, response): (Data, URLResponse)
         do {
-            (data, response) = try await CappedRead.data(session, for: request, limit: CappedRead.syncLimit)
+            (data, response) = try await CappedRead.data(target.scheme?.lowercased() == "http" ? localSession : session,
+                                                         for: request, limit: CappedRead.syncLimit)
         } catch {
             throw RemoteSyncError.unavailable(error.localizedDescription)
         }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        // Sent to the local address of a home name: a server that accepts only its name
+        // (Nextcloud's trusted_domains) answers 400 to every request.
+        if status == 400, target != url { throw WebDAVRefusedByAddress(status: status) }
         switch status {
         case 401: throw RemoteSyncError.unauthorized
         case 403: throw RemoteSyncError.forbidden
@@ -158,6 +166,15 @@ public struct WebDAVRefusedByAddress: Error, Equatable, Sendable {
 
 /// Refuses every redirect (see `WebDAVMailboxStore.session`).
 final class NoRedirects: NSObject, URLSessionTaskDelegate, Sendable {
+    /// The same settings as `session`, without a proxy: plain HTTP, only ever to the local
+    /// network, must not go through one, which would read it in clear text. HTTPS keeps the
+    /// system's proxy.
+    static func direct(_ session: URLSession) -> URLSession {
+        let configuration = session.configuration
+        configuration.connectionProxyDictionary = [:]
+        return URLSession(configuration: configuration, delegate: NoRedirects(), delegateQueue: nil)
+    }
+
     /// A session that follows no redirect and keeps no cookies, cache or credentials.
     static func session(_ configuration: URLSessionConfiguration = .ephemeral) -> URLSession {
         configuration.httpShouldSetCookies = false
@@ -249,6 +266,8 @@ struct WebDAVMailbox: Mailbox {
     }
 
     func create(_ path: String, data: Data) async throws -> Bool {
+        // Never more than a device reads back (`CappedRead`).
+        guard data.count <= CappedRead.syncLimit else { throw RemoteSyncError.fileTooLarge }
         let target = try url(path)
         for attempt in 0..<2 {
             let (_, status) = try await store.send("PUT", target, headers: ["If-None-Match": "*",
@@ -397,6 +416,9 @@ enum WebDAVMultistatus {
 /// Addresses on this device or the local network, where a server has no certificate
 /// and plain HTTP is accepted.
 public enum LocalAddress {
+    /// True for a local address, localhost, or a `.local` or `.home.arpa` name, without
+    /// asking DNS. Never enough to send plain HTTP: a name can point anywhere, so requests go
+    /// through `LocalName.resolve`, which checks the addresses.
     public static func isLocal(host: String) -> Bool {
         var host = host.lowercased()
         if host.hasPrefix("["), host.hasSuffix("]") { host = String(host.dropFirst().dropLast()) }

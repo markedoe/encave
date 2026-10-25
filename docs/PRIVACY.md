@@ -8,7 +8,7 @@ with any change to what the apps send. -->
 
 ## English
 
-Effective date: October 22, 2026
+Effective date: October 25, 2026
 
 Encave is a wine cellar app for iPhone, iPad, Mac and Android. This policy
 covers those apps. In short: **the developer of Encave collects nothing.**
@@ -94,8 +94,9 @@ not encrypted either: it goes where you choose to save or share it.
 Plain HTTP is used only for a server on your local network, including a name
 on your home network (such as a `.local` name): Encave then connects only to a
 local address of that name, never to an address outside your network, and
-refuses a name that has none; everything else uses HTTPS. Links (the source code, this policy, a search result) open in your
-browser.
+refuses a name that has none. Such a connection never goes through a proxy set
+up on the device. Everything else uses HTTPS. Links (the source code, this
+policy, a search result) open in your browser.
 
 ### What the stores may provide
 
@@ -132,7 +133,7 @@ source: anyone can check what the apps do at
 
 ## Français
 
-Date d'effet : 22 octobre 2026
+Date d'effet : 25 octobre 2026
 
 Encave est une app de cave à vin pour iPhone, iPad, Mac et Android. Cette
 politique couvre ces apps. En bref : **le développeur d'Encave ne collecte
@@ -220,8 +221,12 @@ choisissez de l'enregistrer ou de le partager.
    voient la demande ; l'image devient la couverture du vin et ne remplace
    jamais votre photo d'étiquette.
 
-Le HTTP non chiffré n'est utilisé que pour un serveur de votre réseau local ;
-tout le reste passe en HTTPS. Les liens (le code source, cette politique, un
+Le HTTP non chiffré n'est utilisé que pour un serveur de votre réseau local, y
+compris un nom de votre réseau domestique (comme un nom en `.local`) : Encave ne
+se connecte alors qu'à une adresse locale de ce nom, jamais à une adresse hors
+de votre réseau, et refuse un nom qui n'en a aucune. Une telle connexion ne
+passe jamais par un proxy configuré sur l'appareil. Tout le reste passe en
+HTTPS. Les liens (le code source, cette politique, un
 résultat de recherche) s'ouvrent dans votre navigateur.
 
 ### Ce que les stores peuvent fournir

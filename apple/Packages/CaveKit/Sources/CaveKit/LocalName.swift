@@ -16,7 +16,7 @@ public enum LocalNetworkError: Error, Equatable, Sendable {
 /// Plain HTTP to a server on the local network reached by a name of the home network
 /// ("http://nas.lan:8080", "http://nas.local", a name the router or a local DNS gives).
 ///
-/// The name is resolved before each request (the answer is kept a minute): it is accepted
+/// The name is resolved before each request (the answer is kept a few seconds): it is accepted
 /// only if it has a local address, and the request then goes to that address, not to the
 /// name, so neither a public address of the same name nor a later DNS answer can receive it
 /// (DNS rebinding), and App Transport Security treats it as a local address. Only addresses
@@ -32,8 +32,8 @@ public enum LocalName {
 
     /// How long resolving a name may take.
     public static let timeout: TimeInterval = 5
-    /// How long an answer is kept.
-    public static let cacheLifetime: TimeInterval = 60
+    /// How long an answer is kept: short, so that a change of network is soon seen.
+    public static let cacheLifetime: TimeInterval = 10
 
     /// True when plain HTTP to `host` may be accepted: a local name or address, or another
     /// name, which `resolve` checks before each request. False for an address outside the

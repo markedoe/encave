@@ -45,6 +45,13 @@ struct WebSearchSettings: Equatable, Sendable {
 enum WebSearchClient {
     /// No cookies or cache: each search stands alone.
     private static let session = URLSession(configuration: .ephemeral)
+    /// The same for plain HTTP to a SearXNG server on the local network: no proxy, which would
+    /// read the search terms in clear text.
+    private static let localSession: URLSession = {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.connectionProxyDictionary = [:]
+        return URLSession(configuration: configuration)
+    }()
 
     /// Sends the query, and nothing else, to the service set up in Settings.
     static func search(_ query: String, settings: WebSearchSettings = .load(), apiKey: String? = nil,
@@ -59,7 +66,8 @@ enum WebSearchClient {
             request.setValue(value, forHTTPHeaderField: field)
         }
         request.httpBody = described.body
-        let (data, response) = try await CappedRead.data(session, for: request, limit: CappedRead.jsonLimit, delegate: SameHostRedirects.shared)
+        let (data, response) = try await CappedRead.data(request.url?.scheme == "http" ? localSession : session, for: request,
+                                                         limit: CappedRead.jsonLimit, delegate: SameHostRedirects.shared)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         return try provider.results(from: data, status: status)
     }
@@ -75,7 +83,8 @@ enum WebSearchClient {
             request.setValue(value, forHTTPHeaderField: field)
         }
         request.httpBody = described.body
-        let (data, response) = try await CappedRead.data(session, for: request, limit: CappedRead.jsonLimit, delegate: SameHostRedirects.shared)
+        let (data, response) = try await CappedRead.data(request.url?.scheme == "http" ? localSession : session, for: request,
+                                                         limit: CappedRead.jsonLimit, delegate: SameHostRedirects.shared)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         return try provider.imageResults(from: data, status: status)
     }

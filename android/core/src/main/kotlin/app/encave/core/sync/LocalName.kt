@@ -30,7 +30,7 @@ class LocalNetworkException(val reason: Reason) : Exception(reason.name) {
  * ("http://nas.lan:8080", "http://nas.local", a name the router or a local DNS gives).
  * The same rules as CaveKit's `LocalName`.
  *
- * The name is resolved before each request (the answer is kept a minute): it is accepted only
+ * The name is resolved before each request (the answer is kept a few seconds): it is accepted only
  * if it has a local address, and the request then goes only to such an address, so neither a
  * public address of the same name nor a later DNS answer can receive it (DNS rebinding).
  * Only addresses and "localhost" are used as they are. HTTPS is left as it is: by name, with
@@ -49,8 +49,8 @@ object LocalName {
     /** How long resolving a name may take. */
     const val TIMEOUT_MS = 5_000L
 
-    /** How long an answer is kept. */
-    const val CACHE_MS = 60_000L
+    /** How long an answer is kept: short, so that a change of network is soon seen. */
+    const val CACHE_MS = 10_000L
 
     /**
      * True when plain HTTP to [host] may be accepted: a local name or address, or another
@@ -74,11 +74,13 @@ object LocalName {
             ?: if (url.trim().startsWith("http:", ignoreCase = true)) throw LocalNetworkException(LocalNetworkException.Reason.NotLocal) else return url
         val host = parsed.host.lowercase()
         if (parsed.scheme != "http" || host.isEmpty()) return url
+        // Plain HTTP is sent as OkHttp reads it, the host checked here, never as java.net.URL
+        // might read the same text ("http://127.0.0.1\@evil.example/").
         if (!isName(host)) {
-            if (LocalAddress.isLocal(host)) return url
+            if (LocalAddress.isLocal(host)) return parsed.toString()
             throw LocalNetworkException(LocalNetworkException.Reason.NotLocal)
         }
-        if (host == "localhost") return url
+        if (host == "localhost") return parsed.toString()
         // "nas..lan" or ".lan" is no name of the network.
         if (host.startsWith(".") || host.contains("..")) throw LocalNetworkException(LocalNetworkException.Reason.NotLocal)
         val address = choose(addresses(host, resolver))

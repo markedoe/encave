@@ -82,6 +82,13 @@ class LocalNameTest {
         assertEquals(LocalNetworkException.Reason.NotFound, assertThrows<LocalNetworkException> { LocalName.choose(listOf("fe80::1%wlan0")) }.reason)
     }
 
+    /** Plain HTTP goes where OkHttp reads the host, even when java.net.URL reads the text otherwise. */
+    @Test
+    fun sentAsChecked() {
+        val resolved = LocalName.resolve(java.net.URL("http://127.0.0.1\\@evil.example/"))
+        assertEquals("127.0.0.1", resolved.host)
+    }
+
     /** OkHttp's resolver for names gives only the local addresses, best first. */
     @Test
     fun dnsGivesOnlyLocalAddresses() {

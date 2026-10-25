@@ -78,7 +78,7 @@ private val lenient = Json { ignoreUnknownKeys = true }
  * over http gets it at its local address ([LocalName]; [LocalNetworkException] otherwise).
  */
 internal fun http(url: String, method: String, token: String, body: ByteArray? = null, timeoutMs: Int = 60_000, headers: Map<String, String> = emptyMap()): Pair<Int, ByteArray> {
-    val connection = Http.open(LocalName.resolve(URL(url)))
+    val connection = Http.openChecked(LocalName.resolve(URL(url)))
     try {
         connection.requestMethod = method
         connection.connectTimeout = timeoutMs
@@ -157,6 +157,8 @@ private class RelayMailbox(val base: String, val id: String, val token: String) 
     }
 
     override suspend fun create(path: String, data: ByteArray): Boolean {
+        // Never more than a device reads back (CappedRead).
+        if (data.size > CappedRead.SYNC_LIMIT) throw RemoteSyncException(RemoteSyncError.FileTooLarge)
         val (status, _) = send(url(path), "PUT", data, mapOf("If-None-Match" to "*", "Content-Type" to "application/octet-stream"))
         return when (status) {
             200, 201 -> true

@@ -135,7 +135,7 @@ object WebSearchClient {
         var body = request.body
         repeat(SameHostRedirect.MAX + 1) {
             // A SearXNG server named on the home network gets the request at its local address.
-            val connection = Http.open(LocalName.resolve(url))
+            val connection = Http.openChecked(LocalName.resolve(url))
             try {
                 connection.instanceFollowRedirects = false
                 connection.requestMethod = method

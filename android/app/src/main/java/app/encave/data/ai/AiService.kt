@@ -420,7 +420,7 @@ object AiService {
     /** POST when [body] is set, GET otherwise. Every request goes through here. */
     private suspend fun send(url: URL, headers: Map<String, String>, body: JsonObject?, timeout: Int): JsonObject = withContext(Dispatchers.IO) {
         if (!isAllowed(url)) throw AiError.InsecureUrl
-        val connection = Http.open(LocalName.resolve(url))
+        val connection = Http.openChecked(LocalName.resolve(url))
         try {
             // A redirect could take the key to another server.
             connection.instanceFollowRedirects = false

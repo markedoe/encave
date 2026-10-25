@@ -1085,6 +1085,9 @@ final class SyncService {
         } catch let error as RemoteSyncError where error == .fileTooLarge || error == .quotaExceeded {
             noteRemoteFailure()
             remoteProblem = refusalMessage(error)
+        } catch is WebDAVRefusedByAddress {
+            noteRemoteFailure()
+            remoteProblem = String(localized: "Some servers (Nextcloud) refuse requests by address: add the address to trusted_domains, or use https.")
         } catch {
             noteRemoteFailure()
             switch remoteStorage {
