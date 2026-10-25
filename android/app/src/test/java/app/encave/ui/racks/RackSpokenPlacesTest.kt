@@ -117,8 +117,9 @@ class RackSpokenPlacesTest {
         cellar.addBottles(Wine(name = "Clos"), slots = listOf(Slot(rack.id, 1, 2)))
         val single = RackCell(rack.id, 1, 2)
         assertEquals("B3, Clos", cellDescription(rack, single, cellar.bottlesIn(single), cellar, resources))
+        cellar.addBottles(Wine(name = "Clos"), slots = listOf(Slot(rack.id, 0, 0, 1)))
         val deep = RackCell(rack.id, 0, 0)
-        assertEquals("A1: front empty; back empty", cellDescription(rack, deep, emptyList(), cellar, resources))
+        assertEquals("A1: front empty; back Clos", cellDescription(rack, deep, cellar.bottlesIn(deep), cellar, resources))
         // Taps on the single row reach a position of one bottle; on the others, a cell of two.
         assertEquals(true, RackPlace.of(Slot(rack.id, 1, 2), rack).holdsOne(rack))
         assertEquals(false, RackPlace.of(Slot(rack.id, 0, 0, 1), rack).holdsOne(rack))
