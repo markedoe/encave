@@ -172,6 +172,10 @@ def load_sample(strings, out):
     print("Sample cellar loaded.")
 
 
+# Home screen apps of the emulator images CI uses.
+LAUNCHERS = ("com.google.android.apps.nexuslauncher", "com.android.launcher3")
+
+
 def main():
     if len(sys.argv) != 3:
         sys.exit("Usage: emulator_smoke.py APK OUTPUT_DIR")
@@ -179,11 +183,14 @@ def main():
     sys.stdout.reconfigure(line_buffering=True)
     apk, out = sys.argv[1], Path(sys.argv[2])
     out.mkdir(parents=True, exist_ok=True)
-    # The home screen first, given time to settle: a just-booted emulator is still busy, and
-    # the launcher is the app most often not responding.
+    # The launcher is the app most often not responding on a busy CI emulator, and its
+    # dialog covers Encave: the test does not need it, so it is turned off (only on this
+    # throwaway emulator). Background ANR dialogs are hidden too.
     shell("input keyevent KEYCODE_WAKEUP", check=False)
-    shell("am start -W -a android.intent.action.MAIN -c android.intent.category.HOME", check=False)
-    time.sleep(20)
+    for launcher in LAUNCHERS:
+        shell(f"pm disable-user --user 0 {launcher}", check=False)
+    shell("settings put secure anr_show_background 0", check=False)
+    time.sleep(5)
     adb("install", "-r", apk)
     adb("logcat", "-c", "-b", "all", check=False)
 
