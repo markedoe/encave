@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import app.encave.ui.devices.SettingsIcon
@@ -167,6 +168,20 @@ private fun JournalList(viewModel: AppViewModel, navigator: AppNavigator, onOpen
         cellar.diary(filter, query, tag).groupBy { YearMonth.from(it.date.atZone(zone)) }.toList()
     }
     val isEmpty = cellar.consumedBottles.isEmpty() && cellar.discoveries.isEmpty()
+    // Wide windows: the latest entry beside the list rather than an empty pane, once.
+    var preselected by rememberSaveable { mutableStateOf(false) }
+    val latest = months.firstOrNull()?.second?.firstOrNull()?.let { entry ->
+        when (entry) {
+            is DiaryEntry.Opened -> TASTING_KEY + entry.bottle.id
+            is DiaryEntry.Elsewhere -> DISCOVERY_KEY + entry.discovery.id
+        }
+    }
+    LaunchedEffect(onOpenEntry != null, latest) {
+        if (onOpenEntry != null && !preselected && selectedKey == null && latest != null) {
+            preselected = true
+            onOpenEntry(latest)
+        }
+    }
     val locale = LocalConfiguration.current.locales[0]
     val monthFormat = remember(locale) { DateTimeFormatter.ofPattern("LLLL yyyy", locale) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()

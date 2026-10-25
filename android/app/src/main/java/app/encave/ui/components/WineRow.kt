@@ -41,7 +41,6 @@ import app.encave.core.FirstPlace
 import app.encave.core.RackKind
 import app.encave.ui.racks.icon
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.platform.LocalDensity
 
 /** "Main rack · A1, A3" for bottles in racks (people's labels), storage notes as they are. */
 @Composable
@@ -61,7 +60,7 @@ fun locationsText(cellar: Cellar, bottles: List<Bottle>): String {
 }
 
 /**
- * One line, as on Apple: the symbol of the first placed bottle's storage, then its place
+ * Up to two lines: the symbol of the first placed bottle's storage, then its place
  * ("Wine fridge · Shelf 1, place 5"), or "… and 2 more" when the bottles are in several places.
  */
 @Composable
@@ -81,9 +80,9 @@ fun LocationLine(cellar: Cellar, bottles: List<Bottle>) {
             rack?.icon ?: RackKind.Grid.icon, contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp),
         )
-        // Two lines at large font sizes, where one line would cut the place short.
+        // Up to two lines, so a long place never cuts off "… and 2 more".
         Text(
-            text, maxLines = if (LocalDensity.current.fontScale > 1.15f) 2 else 1, overflow = TextOverflow.Ellipsis,
+            text, maxLines = 2, overflow = TextOverflow.Ellipsis,
             color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.testTag("wine.row.location"),
         )

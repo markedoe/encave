@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
@@ -40,6 +41,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass
 import app.encave.ui.AppNavigator
 import app.encave.ui.theme.Dimens
@@ -151,9 +153,15 @@ fun rememberPaneSwitch(isDirty: Boolean): PaneSwitch? {
     return switch.takeIf { it.pending != null }
 }
 
+/** The list pane's width beside a detail, with the spacer between them (the scaffold's default). */
+private val LIST_PANE_WIDTH = 412.dp + 24.dp
+
+/** Room kept under the messages for what sits at the foot of a detail. */
+private val DETAIL_FOOT = 80.dp
+
 /**
- * With two panes, shows the section's messages ("Moved to… / Undo") once, centered across both
- * panes, rather than inside the list pane under the list. The list's own Scaffold then gets a
+ * With two panes, shows the section's messages ("Moved to… / Undo") once, over the detail
+ * pane, rather than inside the list pane under the list. The list's own Scaffold then gets a
  * host of its own, shown here too, so nothing it shows is lost. One pane: [content] as it is.
  */
 @Composable
@@ -164,7 +172,11 @@ fun TwoPaneMessages(twoPane: Boolean, content: @Composable () -> Unit) {
     Box(Modifier.fillMaxSize()) {
         CompositionLocalProvider(LocalSnackbarHostState provides if (twoPane) listMessages else messages, content = content)
         if (twoPane) {
-            val bottom = Modifier.align(Alignment.BottomCenter).windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+            // Over the detail pane, clear of the list's floating buttons, and above a strip or
+            // button at the foot of the detail (a rack's key).
+            val bottom = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+                .padding(start = LIST_PANE_WIDTH, bottom = DETAIL_FOOT)
             SnackbarHost(messages, bottom)
             SnackbarHost(listMessages, bottom)
         }

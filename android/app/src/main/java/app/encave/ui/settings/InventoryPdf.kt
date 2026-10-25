@@ -38,6 +38,7 @@ object InventoryPdf {
     /** The first page also has the title, the date and the value: fewer rows fit above the footer. */
     const val ROWS_ON_FIRST_PAGE = 24
     private const val ROW_HEIGHT = 26f
+    private const val REGION_WIDTH = 80f
 
     /**
      * Rows split into pages by their [height]: room for [ROWS_ON_FIRST_PAGE] rows of the usual
@@ -70,9 +71,10 @@ object InventoryPdf {
                 .sortedWith(compareBy({ it.row }, { it.column }, { it.depth }))
             if (slots.isEmpty()) return@mapNotNull null
             val labels = counted(slots.map { rack.displayLabel(it, resources) })
-            // A fridge's places have commas of their own.
-            val separator = if (labels.any { ',' in it }) "; " else ", "
-            resources.getString(R.string.pdf_rack_places, rack.name, labels.joinToString(separator))
+            // A fridge's places have commas of their own: semicolons then, spaced as in each language.
+            val joined = if (labels.any { ',' in it }) labels.reduce { a, b -> resources.getString(R.string.pdf_places_semicolon, a, b) }
+            else labels.joinToString(", ")
+            resources.getString(R.string.pdf_rack_places, rack.name, joined)
         }
         val elsewhere = bottles.filter { bottle -> bottle.slot?.let { cellar.rack(it.rackId) } == null }
             .mapNotNull { it.storageNote?.trim()?.takeIf(String::isNotEmpty) }
@@ -153,8 +155,9 @@ object InventoryPdf {
 
         // Columns: wine, region, bottles, location (the rest), purchase value.
         private val wineX = MARGIN
+        // The region is often empty or short: the room goes to the places.
         private val regionX = wineX + 170 + 8
-        private val bottlesX = regionX + 110 + 8
+        private val bottlesX = regionX + REGION_WIDTH + 8
         private val placesX = bottlesX + 40 + 8
         private val valueRight = WIDTH - MARGIN
         private val placesWidth = valueRight - 70 - 8 - placesX
@@ -192,7 +195,7 @@ object InventoryPdf {
                 val top = y + 3
                 canvas.drawText(ellipsize(row.wine, bold, 170f), wineX, top + 9, bold)
                 if (row.producer.isNotEmpty()) canvas.drawText(ellipsize(row.producer, secondary, 170f), wineX, top + 19, secondary)
-                drawBlock(canvas, row.region, text, regionX, top, 110f)
+                drawBlock(canvas, row.region, text, regionX, top, REGION_WIDTH)
                 drawRight(canvas, row.bottles.toString(), bottlesX + 40, top + 9, text)
                 drawBlock(canvas, row.places, text, placesX, top, placesWidth, PLACES_MAX_LINES)
                 drawRight(canvas, row.value, valueRight, top + 9, text)

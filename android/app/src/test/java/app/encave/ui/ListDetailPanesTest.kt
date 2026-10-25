@@ -71,7 +71,9 @@ class ListDetailPanesTest {
     @Test
     fun tonightShowsTheWineBesideTheList() {
         tab("Tonight")
-        compose.onNodeWithText("Select a bottle to see its details.").assertIsDisplayed()
+        // Today's suggestion shows beside the list at once, not an empty pane.
+        compose.onAllNodesWithText("Select a bottle to see its details.").assertCountEquals(0)
+        compose.onAllNodes(hasText("Drinking window") and inDetail).onFirst().assertExists()
         compose.onAllNodes(hasTestTag("tonight.row") and inList).onFirst().performClick()
         compose.waitForIdle()
         compose.onAllNodes(hasText("Drinking window") and inDetail).onFirst().assertExists()
@@ -81,7 +83,8 @@ class ListDetailPanesTest {
     @Test
     fun journalShowsTheNoteBesideTheList() {
         tab("Journal")
-        compose.onNodeWithText("Select a tasting to see its note.").assertIsDisplayed()
+        // The latest entry shows beside the list at once, not an empty pane.
+        compose.onAllNodesWithText("Select a tasting to see its note.").assertCountEquals(0)
         compose.onAllNodesWithTag("journal.row.cellar").onFirst().performClick()
         compose.waitForIdle()
         compose.onAllNodes(hasText("My tasting") and inDetail).onFirst().assertExists()

@@ -24,6 +24,8 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
 import androidx.test.core.app.ActivityScenario
@@ -205,6 +207,23 @@ class ScreenTourTest(private val device: String, private val variant: String) {
     /** Scrolls the list tagged [list] until [tag] shows. */
     private fun scrollIn(list: String, tag: String) {
         compose.onNodeWithTag(list).performScrollToNode(hasTestTag(tag))
+        compose.waitForIdle()
+    }
+
+    /** Scrolls the list tagged [list] until [tag] is at its top, below [header]. */
+    private fun scrollToTop(list: String, tag: String, header: androidx.compose.ui.unit.Dp = 0.dp) {
+        scrollIn(list, tag)
+        val top = compose.onNodeWithTag(list).fetchSemanticsNode().boundsInWindow.top
+        val row = compose.onAllNodesWithTag(tag).onFirst().fetchSemanticsNode().boundsInWindow.top
+        val by = row - top - header.value * density
+        compose.onNodeWithTag(list).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, by) }
+        settle()
+    }
+
+    /** Lets animations (a collapsing bar, a scroll) end. */
+    private fun settle() {
+        compose.waitForIdle()
+        compose.mainClock.advanceTimeBy(1_000)
         compose.waitForIdle()
     }
 
@@ -405,7 +424,8 @@ class ScreenTourTest(private val device: String, private val variant: String) {
 
     @Test
     fun bottlesOnOrder() {
-        scrollIn("cellar.list", "order.row")
+        // The orders' header at the top: the first screen already shows the row.
+        scrollToTop("cellar.list", "order.row", header = 56.dp)
         capture("cellar-on-order")
         tap("order.row")
         scrollIn("wine.detail", "detail.orders")
@@ -912,9 +932,14 @@ class ScreenTourTest(private val device: String, private val variant: String) {
             compose.onAllNodesWithTag("rack.row.7").onFirst().performSemanticsAction(SemanticsActions.OnClick)
             compose.waitForIdle()
             compose.onAllNodesWithTag("rack.band.back").onFirst().assertExists()
+            settle()
+            checkRackFits("store-rack")
             capture("store-rack")
             tab(TONIGHT)
             if (!phone) tap("tonight.row")
+            // The large title bar fully open, not caught mid-collapse.
+            compose.onNodeWithTag("tonight.list").performScrollToIndex(0)
+            settle()
             capture("store-tonight")
             tab(JOURNAL)
             if (!phone) tap("journal.row.cellar")

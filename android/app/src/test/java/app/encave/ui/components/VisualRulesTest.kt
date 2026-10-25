@@ -3,16 +3,12 @@ package app.encave.ui.components
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.unit.Density
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import app.encave.core.Cellar
 import app.encave.core.Wine
@@ -66,27 +62,21 @@ class VisualRulesTest {
     }
 
     @Test
-    fun theLocationTakesTwoLinesAtLargeFontSizes() {
+    fun theLocationTakesTwoLinesRatherThanBeingCut() {
         val cellar = Cellar()
-        val rack = app.encave.core.Rack(name = "Cabinet under the stairs on the left", rows = 2, columns = 2)
+        val rack = app.encave.core.Rack(name = "Cabinet under the stairs", rows = 2, columns = 2)
         cellar.addRack(rack)
-        val bottles = cellar.addBottles(Wine(name = "Placed"), quantity = 1, slots = listOf(app.encave.core.Slot(rack.id, 0, 0)))
-        var scale by mutableFloatStateOf(1f)
-        compose.setContent {
-            val density = LocalDensity.current
-            CompositionLocalProvider(LocalDensity provides Density(density.density, scale)) {
-                Box(Modifier.width(180.dp)) { LocationLine(cellar, bottles) }
-            }
-        }
-        fun height(): Int {
-            compose.waitForIdle()
-            return compose.onNodeWithTag("wine.row.location").fetchSemanticsNode().size.height
-        }
-        val one = height()
-        scale = 1.5f
-        val large = height()
-        // One line would be 1.5 times as tall; two lines are about 3 times.
-        assertTrue("$one to $large", large > one * 2.2f)
+        val bottles = cellar.addBottles(
+            Wine(name = "Placed"), quantity = 2,
+            slots = listOf(app.encave.core.Slot(rack.id, 0, 0), app.encave.core.Slot(rack.id, 1, 1)),
+        )
+        compose.setContent { Box(Modifier.width(180.dp)) { LocationLine(cellar, bottles) } }
+        compose.waitForIdle()
+        val layouts = mutableListOf<TextLayoutResult>()
+        compose.onNodeWithTag("wine.row.location").fetchSemanticsNode().config[SemanticsActions.GetTextLayoutResult].action!!(layouts)
+        // At the default font size too: the place and "and 1 more" on two lines, nothing cut.
+        assertEquals(2, layouts.first().lineCount)
+        assertFalse(layouts.first().hasVisualOverflow)
     }
 
     @Test
