@@ -3,7 +3,8 @@ name: TestFlight external build
 # Run by hand: gives a build already in TestFlight to the external testers
 # (every external group: today Friends-ext) and submits it to Beta App Review. Nothing is built.
 # Only a build whose run of apple.yml passed the screen tour (or skipped it because the
-# same files had passed it, tour-check), unless "force" is ticked.
+# same files had passed it, tour-check), unless "force" is ticked. The Mac build goes too
+# only when the Mac launch test of that run passed (else iPhone and iPad only, or force).
 on:
   workflow_dispatch:
     inputs:
@@ -16,7 +17,7 @@ on:
         type: string
         default: ""
       force:
-        description: "Give it even if its screen tour did not pass"
+        description: "Give it (iPhone, iPad and Mac) even if its screen tour or Mac launch test did not pass"
         type: boolean
         default: false
 
@@ -34,7 +35,8 @@ jobs:
       contents: read
       actions: read
     steps:
-      - name: Screen tour of this build
+      - name: Run of this build
+        id: run
         if: ${{ !inputs.force }}
         env:
           GH_TOKEN: ${{ github.token }}
@@ -44,12 +46,41 @@ jobs:
           # apple.yml numbers its builds 1000 + run number * 10 + attempt.
           run_number=$(( (BUILD_NUMBER - 1000) / 10 ))
           run=$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/workflows/apple.yml/runs?branch=main&per_page=100" \
-            --jq ".workflow_runs[] | select(.run_number == $run_number) | .id" | head -n 1)
+            --jq ".workflow_runs[] | select(.run_number == $run_number) | .id" | sed -n 1p)
           if [ -z "$run" ]; then
             echo "::error::No run $run_number of apple.yml on main made build $BUILD_NUMBER: tick \"force\" to give it anyway."
             exit 1
           fi
           echo "Build $BUILD_NUMBER: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$run"
+          echo "id=$run" >> "$GITHUB_OUTPUT"
+
+      - name: Mac launch test of this build
+        id: mac
+        if: ${{ !inputs.force }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_NUMBER: ${{ inputs.build }}
+          RUN: ${{ steps.run.outputs.id }}
+        run: |
+          # The apps job of the attempt that made this build: its "Mac launch test" step.
+          launch=$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$RUN/jobs?filter=all&per_page=100" \
+            --jq ".jobs[] | select((.name | startswith(\"Build, Mac launch test\")) and .run_attempt == $(( BUILD_NUMBER % 10 )))
+              | .steps[]? | select(.name | startswith(\"Mac launch test\")) | .conclusion" | sed -n 1p)
+          echo "Mac launch test of build $BUILD_NUMBER: ${launch:-not found}"
+          if [ "$launch" = success ]; then
+            echo "platforms=IOS,MAC_OS" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::The Mac launch test of build $BUILD_NUMBER did not pass: only the iPhone and iPad build goes to the external testers. Tick \"force\" to give the Mac build too."
+            echo "platforms=IOS" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Screen tour of this build
+        if: ${{ !inputs.force }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_NUMBER: ${{ inputs.build }}
+          run: ${{ steps.run.outputs.id }}
+        run: |
           # Every attempt of a run builds the same commit: the latest try of each tour job counts.
           jobs=$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$run/jobs?filter=latest&per_page=100" --jq '.jobs[]')
           tours=$(jq -r 'select(.name | startswith("Screen tour")) | "\(.conclusion) \(.name)"' <<< "$jobs")
@@ -78,7 +109,7 @@ jobs:
           BUILD_NUMBER: ${{ inputs.build }}
           WHATS_NEW: ${{ inputs.whats_new }}
           BUNDLE_ID: app.encave
-          PLATFORMS: IOS,MAC_OS
+          PLATFORMS: ${{ steps.mac.outputs.platforms || 'IOS,MAC_OS' }}
           WAIT_MINUTES: "5"
         run: |
           case "$BUILD_NUMBER" in ''|*[!0-9]*) echo "::error::The build number must be digits."; exit 1;; esac
