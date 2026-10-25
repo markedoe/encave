@@ -401,7 +401,22 @@ jobs:
             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/ios.xcarchive" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             ENCAVE_CHANNEL=beta CODE_SIGNING_ALLOWED=NO | xcbeautify --renderer github-actions
-          ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/ios.xcarchive/Products/Applications/Encave.app"
+          # The export keeps the entitlements found in the archive's signatures: the App
+          # Group of the app and its widget extension (project.yml) is put there by signing
+          # them to run locally, nested code first, as for the Mac app. The export re-signs them.
+          app="$RUNNER_TEMP/ios.xcarchive/Products/Applications/Encave.app"
+          for nested in "$app"/Frameworks/*; do
+            if [ -e "$nested" ]; then codesign --force --sign - "$nested"; fi
+          done
+          codesign --force --sign - --entitlements Generated/EncaveWidgets.entitlements "$app/PlugIns/EncaveWidgets.appex"
+          codesign --force --sign - --entitlements Generated/Encave.entitlements "$app"
+          for signed in "$app" "$app/PlugIns/EncaveWidgets.appex"; do
+            case "$(codesign -d --entitlements - "$signed" 2>&1)" in
+              *group.app.encave*) ;;
+              *) echo "::error::No App Group in $(basename "$signed")"; exit 1 ;;
+            esac
+          done
+          ../scripts/check-privacy-manifest.sh "$app" "$app/PlugIns/EncaveWidgets.appex"
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/ios.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export-ios" \
             "${auth[@]}" | xcbeautify --renderer github-actions
@@ -520,7 +535,8 @@ jobs:
           while [ ! -e "$RUNNER_TEMP/ios-build.status" ]; do sleep 5; done
           xcbeautify --renderer github-actions < "$RUNNER_TEMP/ios-build.log"
           [ "$(cat "$RUNNER_TEMP/ios-build.status")" = 0 ] || exit 1
-          ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/Encave.app"
+          app="$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/Encave.app"
+          ../scripts/check-privacy-manifest.sh "$app" "$app/PlugIns/EncaveWidgets.appex"
 
       - name: No tester e-mail for these builds
         # Waits for the background calls started after each upload (testers still see the

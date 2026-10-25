@@ -340,20 +340,6 @@ struct EveningRequestIntent: AppIntent {
     }
 }
 
-/// Opens the app on Add Bottles.
-struct AddBottleIntent: AppIntent {
-    static let title: LocalizedStringResource = "Add Bottles"
-    static let description = IntentDescription("Opens Encave to add bottles, by scanning the label or typing.")
-    static let openAppWhenRun = true
-
-    @MainActor
-    func perform() async throws -> some IntentResult {
-        // On the label scanner where there is one: the fastest way to add a bottle.
-        CellarModel.current?.request(.present(.addBottle(AddBottleContext(scan: true))))
-        return .result()
-    }
-}
-
 /// Opens a wine's page (from Spotlight or Shortcuts).
 struct OpenWineIntent: OpenIntent {
     static let title: LocalizedStringResource = "Open Wine"

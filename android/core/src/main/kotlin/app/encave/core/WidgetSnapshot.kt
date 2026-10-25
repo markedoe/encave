@@ -7,7 +7,7 @@ import kotlinx.serialization.json.Json
 /**
  * What the home screen widgets show: a small summary of the cellar for a year,
  * written by the app to its own storage and read by the widgets. It holds counts
- * and a few names, nothing else. Android only: the Apple app has no widgets yet.
+ * and a few names, nothing else. The Apple app has its own (CaveKit WidgetSnapshot).
  */
 @Serializable
 data class WidgetSnapshot(

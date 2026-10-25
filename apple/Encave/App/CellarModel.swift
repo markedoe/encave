@@ -63,6 +63,10 @@ final class CellarModel {
     @ObservationIgnored let backups: BackupCenter
     /// Spotlight's on-device index of the wines.
     @ObservationIgnored private let spotlight = SpotlightIndex()
+    #if os(iOS)
+    /// The summary the home screen and lock screen widgets show.
+    @ObservationIgnored private let widgets = WidgetPublisher()
+    #endif
 
     /// `demo`: screen tour and previews, where sync never touches the network or files.
     /// `versions`: earlier versions of the cellar when the store keeps none (previews).
@@ -859,6 +863,10 @@ final class CellarModel {
         // The weekly archive, when it is due.
         let snapshot = cellar
         Task { await backups.runAutomaticIfDue(cellar: snapshot) }
+        #if os(iOS)
+        // Tonight's suggestion changes each day: the widgets get the days ahead again.
+        if !sync.isDemo, !loadFailed { widgets.schedule(cellar) }
+        #endif
     }
 
     func sceneDidEnterBackground() {
@@ -870,13 +878,19 @@ final class CellarModel {
         sync.scheduleBackgroundSync()
         #endif
         spotlight.flush()
+        #if os(iOS)
+        widgets.flush()
+        #endif
     }
 
-    /// Spotlight follows the cellar, a while after the last change; never for the sample
-    /// cellar of the screen tour, nor for a cellar that could not be loaded.
+    /// Spotlight and the widgets follow the cellar, a while after the last change; never
+    /// for the sample cellar of the screen tour, nor for a cellar that could not be loaded.
     private func indexInSpotlight() {
         guard !sync.isDemo, !loadFailed else { return }
         spotlight.schedule(cellar)
+        #if os(iOS)
+        widgets.schedule(cellar)
+        #endif
     }
 
     /// Racks in the window used last. Screens use their window's router instead.

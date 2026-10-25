@@ -40,7 +40,17 @@ struct RootView: View {
         .sensoryFeedback(.selection, trigger: model.selectionCount)
         // encave://pair?code=…: the pairing QR code scanned with the system camera. Opens
         // Join with the code filled in; the user still chooses and taps Join.
+        // encave://wine/<id>, tonight, cellar, add: a tap on a widget (WidgetLink).
         .onOpenURL { url in
+            if let link = WidgetLink(url: url) {
+                switch link {
+                case .wine(let id) where model.cellar.wines[id] != nil: router.perform(.openWine(id))
+                case .wine, .tonight: router.perform(.show(.tonight))
+                case .cellar: router.perform(.show(.cellar))
+                case .addBottle: router.perform(.present(.addBottle(AddBottleContext(scan: true))))
+                }
+                return
+            }
             guard let parsed = PairingCode.parse(qr: url.absoluteString), !model.sync.isDemo else { return }
             router.perform(.present(.joinDevice(code: parsed.code.digits, commitment: parsed.commitment)))
         }

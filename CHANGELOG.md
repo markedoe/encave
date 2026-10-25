@@ -107,6 +107,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 - Share an Evening Request in Tonight on iPhone, iPad and Mac, as on Android:
   the occasion, number of bottles and only ready bottles, then the share
   sheet with the same text, for Claude or another app; no Siri or shortcut
+- iPhone and iPad widgets, as on Android: Tonight (the day's bottle and where
+  it is; also on the lock screen), Drink Soon (the first three wines, and on
+  the lock screen how many bottles) and Cellar (bottles, to keep, to drink
+  soon); a tap opens the wine or the section. An Add Bottles control for
+  Control Center, the lock screen and the Action button opens the label
+  scanner. The widgets read a short summary kept on the device
 - Mac: drop a wine or a bottle onto a storage in the sidebar to put one bottle
   in its first free position, with Undo (never into a full one); Open in New
   Window for a wine (Mac and iPad, ⌥⌘O); Android tablets and foldables show

@@ -46,6 +46,14 @@ your bottles and their positions, without prices, notes or places of purchase.
 Encave sends nothing; if you pass it to an assistant app such as Claude, it
 leaves the device through that app, under its privacy policy, by your choice.
 
+The iPhone and iPad widgets read a short summary the app keeps on the device,
+in a folder shared only with its widgets: counts of bottles, and the names,
+vintages, producers and positions of tonight's bottle and of the first wines to
+drink soon. They never read the cellar, keys or notes, and use no network. The
+lock screen widgets show what you choose to place there, the wine's name
+included; Encave marks names and positions as private, so iOS hides them while
+the device is locked when your settings ask for it.
+
 The device also keeps earlier versions of your cellar (one for each of the
 last 7 days it changed, then one a week for 4 weeks), in the same storage.
 
@@ -183,6 +191,15 @@ sélection pour une soirée avec vos bouteilles et leur position, sans prix,
 notes ni lieux d'achat. Encave n'envoie rien ; si vous le transmettez à une app
 d'assistant comme Claude, il quitte l'appareil par cette app, selon sa
 politique de confidentialité, par votre choix.
+
+Les widgets de l'iPhone et de l'iPad lisent un court résumé que l'app garde sur
+l'appareil, dans un dossier partagé seulement avec ses widgets : le nombre de
+bouteilles, et les noms, millésimes, producteurs et positions de la bouteille
+de ce soir et des premiers vins à boire bientôt. Ils ne lisent jamais la cave,
+les clés ni les notes, et n'utilisent pas le réseau. Les widgets de l'écran
+verrouillé montrent ce que vous choisissez d'y placer, nom du vin compris ;
+Encave indique les noms et les positions comme privés, pour qu'iOS les masque
+tant que l'appareil est verrouillé si vos réglages le demandent.
 
 L'appareil garde aussi des versions précédentes de votre cave (une pour
 chacun des 7 derniers jours où elle a changé, puis une par semaine pendant
