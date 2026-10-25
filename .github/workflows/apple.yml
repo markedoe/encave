@@ -525,7 +525,7 @@ jobs:
       - name: No tester e-mail for these builds
         # Waits for the background calls started after each upload (testers still see the
         # builds in TestFlight). Never fails the job: a miss only means an e-mail.
-        if: ${{ always() && (steps.ios.outputs.uploaded == 'true' || steps.mac.outputs.uploaded == 'true') }}
+        if: ${{ !cancelled() && (steps.ios.outputs.uploaded == 'true' || steps.mac.outputs.uploaded == 'true') }}
         continue-on-error: true
         timeout-minutes: 12
         env:
