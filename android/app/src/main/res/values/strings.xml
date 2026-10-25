@@ -244,6 +244,11 @@
     <string name="tonight_surprise_title">Tonight, open…</string>
     <string name="tonight_pairing_title">Food pairing</string>
     <string name="tonight_pairing_body">Find the right bottle for your dish</string>
+    <string name="tonight_evening_share">Share an evening request</string>
+    <string name="tonight_evening_title">Evening request</string>
+    <string name="tonight_evening_body">Shares a request for an evening’s selection, with the bottles of your cellar and their positions, to the app you choose, such as Claude. Prices, notes and places of purchase are left out. Encave sends nothing: the text leaves this device through the app you pick, under its privacy policy.</string>
+    <string name="tonight_evening_occasion">Occasion, dishes, guests</string>
+    <string name="tonight_evening_only_ready">Only bottles ready to drink</string>
     <string name="pairing_title">Food pairing</string>
     <string name="pairing_pick">Pick a dish</string>
     <string name="pairing_none">No bottle in your cellar suits this dish.</string>

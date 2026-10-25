@@ -1,0 +1,75 @@
+{
+  "about": "The text of Prepare an Evening Request (Apple) and Share Evening Request (Android), built on the device by CaveKit (EveningRequestTests.swift) and the Android core (EveningRequestTest.kt). Each case gives the request (occasion, bottlesWanted: null or 0 lets the assistant choose and more than 24 means 24, onlyReady, language en or fr, year, omitted: wines left out) and its wines in order (style and maturity use the English words of Get Cellar Contents; appellation is the region when the wine has none); text is the whole request. Prices, notes, places of purchase and photos are never in it.",
+  "cases": [
+    {
+      "about": "English, an occasion and a number of bottles, only bottles ready to drink",
+      "occasion": "Dinner for 6 with a tagine, friends who like Loire reds",
+      "bottlesWanted": 3,
+      "onlyReady": true,
+      "language": "en",
+      "year": 2026,
+      "omitted": 0,
+      "wines": [
+        {"name": "Chinon Les Picasses", "vintage": 2018, "producer": "Olga Raffault", "style": "red", "appellation": "Chinon",
+         "drinkFrom": 2022, "drinkUntil": 2026, "maturity": "drink soon", "bottles": 2, "places": ["Main rack · B3", "Main rack · B4"]},
+        {"name": "Saumur-Champigny", "vintage": 2020, "producer": "Clos Rougeard", "style": "red", "appellation": "Saumur-Champigny",
+         "drinkFrom": 2024, "drinkUntil": 2032, "maturity": "ready", "bottles": 1, "places": ["Cabinet · Shelf 2, position 3"]}
+      ],
+      "text": "Help me choose wine from my cellar for this evening.\nOccasion: Dinner for 6 with a tagine, friends who like Loire reds\nPropose 3 bottles, taken only from the list below.\nFor each bottle, say why it fits, when to serve it in the evening (order of service), its serving temperature and where it is in the cellar (its position).\nThe list holds only bottles ready to drink or to drink soon.\nAnswer in English.\n\nMy cellar in 2026: 2 wines, 3 bottles.\nColumns: wine | producer | style | appellation | window | maturity | bottles | positions\n1. Chinon Les Picasses 2018 | Olga Raffault | red | Chinon | 2022-2026 | drink soon | 2 | Main rack · B3; Main rack · B4\n2. Saumur-Champigny 2020 | Clos Rougeard | red | Saumur-Champigny | 2024-2032 | ready | 1 | Cabinet · Shelf 2, position 3"
+    },
+    {
+      "about": "French, every bottle, an occasion on two lines with the separator, missing fields, wines left out",
+      "occasion": " Dîner | tajine\npour 6 ",
+      "bottlesWanted": 1,
+      "onlyReady": false,
+      "language": "fr",
+      "year": 2026,
+      "omitted": 3,
+      "wines": [
+        {"name": "Crémant de Loire", "style": "sparkling", "drinkFrom": 2025, "maturity": "window unknown", "bottles": 6, "places": []},
+        {"name": "Vouvray | Le Mont", "vintage": 2023, "producer": "Huet", "style": "white", "appellation": "Vouvray",
+         "drinkFrom": 2030, "drinkUntil": 2045, "maturity": "too young", "bottles": 2, "places": ["Cave · A1", "Kitchen"]},
+        {"name": "Banyuls", "style": "fortified", "drinkUntil": 2024, "maturity": "past its peak", "bottles": 1, "places": []}
+      ],
+      "text": "Aide-moi à choisir du vin de ma cave pour ce soir.\nOccasion : Dîner / tajine pour 6\nPropose 1 bouteille, prise uniquement dans la liste ci-dessous.\nPour chaque bouteille, dis pourquoi elle convient, à quel moment la servir dans la soirée (ordre de service), sa température de service et où elle se trouve dans la cave (sa position).\nRéponds en français.\n\nMa cave en 2026 : 3 vins, 9 bouteilles (3 autres vins non listés).\nColonnes : vin | producteur | style | appellation | fenêtre | maturité | bouteilles | positions\n1. Crémant de Loire |  | effervescent |  | dès 2025 | fenêtre inconnue | 6 | \n2. Vouvray / Le Mont 2023 | Huet | blanc | Vouvray | 2030-2045 | trop jeune | 2 | Cave · A1; Kitchen\n3. Banyuls |  | muté |  | jusqu’en 2024 | après l’apogée | 1 | "
+    },
+    {
+      "about": "English, no occasion, no number, an empty list",
+      "occasion": "",
+      "bottlesWanted": null,
+      "onlyReady": true,
+      "language": "en",
+      "year": 2026,
+      "omitted": 0,
+      "wines": [],
+      "text": "Help me choose wine from my cellar for this evening.\nPropose a few bottles, taken only from the list below.\nFor each bottle, say why it fits, when to serve it in the evening (order of service), its serving temperature and where it is in the cellar (its position).\nThe list holds only bottles ready to drink or to drink soon.\nAnswer in English.\n\nMy cellar in 2026: 0 wines, 0 bottles."
+    },
+    {
+      "about": "French, 0 bottles wanted lets the assistant choose, one wine left out",
+      "occasion": "Apéritif",
+      "bottlesWanted": 0,
+      "onlyReady": true,
+      "language": "fr",
+      "year": 2026,
+      "omitted": 1,
+      "wines": [
+        {"name": "Tavel", "vintage": 2025, "style": "rose", "appellation": "Tavel", "drinkFrom": 2026, "drinkUntil": 2026,
+         "maturity": "drink soon", "bottles": 1, "places": []}
+      ],
+      "text": "Aide-moi à choisir du vin de ma cave pour ce soir.\nOccasion : Apéritif\nPropose quelques bouteilles, prises uniquement dans la liste ci-dessous.\nPour chaque bouteille, dis pourquoi elle convient, à quel moment la servir dans la soirée (ordre de service), sa température de service et où elle se trouve dans la cave (sa position).\nLa liste ne contient que des bouteilles prêtes à boire ou à boire bientôt.\nRéponds en français.\n\nMa cave en 2026 : 1 vin, 1 bouteille (1 autre vin non listé).\nColonnes : vin | producteur | style | appellation | fenêtre | maturité | bouteilles | positions\n1. Tavel 2025 |  | rosé | Tavel | 2026-2026 | à boire bientôt | 1 | "
+    },
+    {
+      "about": "English, more than 24 bottles wanted means 24, one bottle, two wines left out",
+      "occasion": "Party",
+      "bottlesWanted": 40,
+      "onlyReady": false,
+      "language": "en",
+      "year": 2027,
+      "omitted": 2,
+      "wines": [
+        {"name": "Rkatsiteli", "style": "orange", "maturity": "window unknown", "bottles": 1, "places": ["Crates · Crate 1"]}
+      ],
+      "text": "Help me choose wine from my cellar for this evening.\nOccasion: Party\nPropose 24 bottles, taken only from the list below.\nFor each bottle, say why it fits, when to serve it in the evening (order of service), its serving temperature and where it is in the cellar (its position).\nAnswer in English.\n\nMy cellar in 2027: 1 wine, 1 bottle (2 more wines left out).\nColumns: wine | producer | style | appellation | window | maturity | bottles | positions\n1. Rkatsiteli |  | orange |  |  | window unknown | 1 | Crates · Crate 1"
+    }
+  ]
+}

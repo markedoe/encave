@@ -89,6 +89,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
   it is found from its paper, and a photo without a label is shown whole
 
 ### Added
+- Ask My Cellar (Demander à ma cave) for Siri, Shortcuts and Spotlight: "Ask
+  my cellar in Encave", then a question about an evening; Apple Intelligence
+  answers on the device with bottles you have, their positions, and opens one
+- Prepare an Evening Request (Préparer une demande de soirée) in Shortcuts, and
+  Share an Evening Request in Android's Tonight: a request for an evening's
+  selection with your bottles and positions, without prices, notes or places
+  of purchase, for the assistant app you choose, such as Claude; Encave sends
+  nothing (docs/SHORTCUTS.md)
 - Mac: drop a wine or a bottle onto a storage in the sidebar to put one bottle
   in its first free position, with Undo (never into a full one); Open in New
   Window for a wine (Mac and iPad, ⌥⌘O); Android tablets and foldables show

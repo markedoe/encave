@@ -193,7 +193,8 @@ kept within the privacy rules: everything is worked out on the device.
 | Bottles kept for an occasion (not suggested for tonight) | Done | Done |
 | Tags on wines, filter chips | Done | Done |
 | "Why this window", drink sooner or keep longer | Done | Done |
-| Ask your cellar (on-device language model) | Done (Apple Intelligence devices) | Later |
+| Ask your cellar (on-device language model) | Done (Apple Intelligence devices; also Ask My Cellar for Siri and Shortcuts) | Later |
+| Evening request for an assistant app the user picks, such as Claude ([SHORTCUTS.md](SHORTCUTS.md)) | Done (Prepare an Evening Request in Shortcuts) | Done (Share an Evening Request in Tonight) |
 | Shortcuts actions that return the cellar as text or JSON, for local AI assistants ([SHORTCUTS.md](SHORTCUTS.md)) | Done | Later |
 | Printable PDF inventory | Done | Done |
 | Menu bar glass with tonight's bottles | Mac | — |
@@ -231,6 +232,13 @@ A cloud version (sending a summary of the cellar to the AI provider set up for
 labels) is not planned: `CLAUDE.md` allows only the label photo to be sent to
 it. For the same reason, Suggest Details reads web search results only with the
 on-device model.
+
+Ask My Cellar brings the same answer to Siri, Shortcuts and Spotlight ("Ask my
+cellar in Encave", « Demander à ma cave dans Encave »). For an assistant app
+instead, Prepare an Evening Request (Shortcuts) and Share an Evening Request
+(Android) only return a text to the user, like Get Cellar Contents: the user's
+own shortcut or share sheet passes it to the app they pick, such as Claude.
+Encave sends nothing and has no cloud AI of its own for this.
 
 ### Backlog for the next protocol version
 

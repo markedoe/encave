@@ -2477,6 +2477,16 @@
         }
       }
     },
+    "An evening with an assistant app": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une soirée avec une app d’assistant"
+          }
+        }
+      }
+    },
     "An invoice, a certificate, a technical sheet: kept with the wine, for all its bottles. You can add more later on the wine's page or on a bottle.": {
       "localizations": {
         "fr": {
@@ -2573,6 +2583,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Réponse donnée sur cet appareil par Apple Intelligence, à partir des bouteilles de votre cave. Rien n’est envoyé nulle part."
+          }
+        }
+      }
+    },
+    "Answers a question such as “dinner for 6 with a tagine” with bottles from your cellar and where they are. Answered on this device by Apple Intelligence: nothing is sent anywhere.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Répond à une question comme « dîner pour 6 avec un tajine » avec des bouteilles de votre cave et leur position. La réponse est préparée sur cet appareil par Apple Intelligence : rien n’est envoyé."
           }
         }
       }
@@ -2727,6 +2747,26 @@
         }
       }
     },
+    "Ask My Cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demander à ma cave"
+          }
+        }
+      }
+    },
+    "Ask My Cellar needs Apple Intelligence, which is not available on this device right now. To ask an assistant app instead, make a shortcut with Prepare an Evening Request: Encave’s Help shows how.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demander à ma cave a besoin d’Apple Intelligence, qui n’est pas disponible sur cet appareil pour le moment. Pour demander plutôt à une app d’assistant, créez un raccourci avec Préparer une demande de soirée : l’aide d’Encave explique comment."
+          }
+        }
+      }
+    },
     "Ask Siri “What should I open tonight in Encave?”, “Where is Chablis in Encave?” or “Add a bottle to Encave”. The same actions are in the Shortcuts app. Wines also appear in Spotlight search. The answers are worked out on this device.": {
       "localizations": {
         "fr": {
@@ -2763,6 +2803,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Demander à votre cave"
+          }
+        }
+      }
+    },
+    "Ask your cellar with Siri": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demander à votre cave avec Siri"
           }
         }
       }
@@ -8947,6 +8997,16 @@
         }
       }
     },
+    "Number of Bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombre de bouteilles"
+          }
+        }
+      }
+    },
     "OK": {
       "localizations": {
         "fr": {
@@ -9083,6 +9143,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sur les appareils avec Apple Intelligence, **Suggérer des détails** lit les résultats sur l’appareil et propose le producteur, la région, l’appellation, le pays, les cépages et la fenêtre de dégustation. Chaque suggestion s’affiche à côté de la valeur actuelle, et seules celles que vous choisissez sont utilisées. Les résultats ne sont envoyés à aucun service d’IA."
+          }
+        }
+      }
+    },
+    "On devices with Apple Intelligence, say “Ask my cellar in Encave”, then your question, such as “dinner for 6 with a tagine, friends who like Loire reds”. Siri answers with bottles you have and where they are; tap one to open it. **Ask My Cellar** is also in the Shortcuts app and Spotlight. The answer is worked out on this device: nothing is sent anywhere.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur les appareils avec Apple Intelligence, dites « Demander à ma cave dans Encave », puis votre question, comme « dîner pour 6 avec un tajine, des amis qui aiment les rouges de Loire ». Siri répond avec des bouteilles que vous avez et leur position ; touchez-en une pour l’ouvrir. **Demander à ma cave** est aussi dans l’app Raccourcis et dans Spotlight. La réponse est préparée sur cet appareil : rien n’est envoyé."
           }
         }
       }
@@ -9363,6 +9433,16 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Only Bottles Ready to Drink": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seulement les bouteilles prêtes à boire"
           }
         }
       }
@@ -9693,6 +9773,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouvre le vin."
+          }
+        }
+      }
+    },
+    "Opens this wine in Encave.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvre ce vin dans Encave."
           }
         }
       }
@@ -10107,6 +10197,16 @@
         }
       }
     },
+    "Prepare an Evening Request": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préparer une demande de soirée"
+          }
+        }
+      }
+    },
     "Presentation": {
       "localizations": {
         "fr": {
@@ -10373,6 +10473,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Quantité, format et rangement"
+          }
+        }
+      }
+    },
+    "Question": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Question"
           }
         }
       }
@@ -10983,6 +11093,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Résultats"
+          }
+        }
+      }
+    },
+    "Returns a request for an assistant app, in your language: choose bottles from your cellar for an evening, with the order of service, why and the temperatures, followed by your bottles and their positions, without prices, notes or places of purchase. Encave sends nothing: your shortcut passes the text to the app you choose.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renvoie une demande pour une app d’assistant, dans votre langue : choisir des bouteilles de votre cave pour une soirée, avec l’ordre de service, pourquoi et les températures, suivie de vos bouteilles et de leur position, sans prix, notes ni lieux d’achat. Encave n’envoie rien : votre raccourci transmet le texte à l’app que vous choisissez."
           }
         }
       }
@@ -14297,6 +14417,16 @@
         }
       }
     },
+    "To let an assistant app of your choice, such as Claude, choose the bottles, make a shortcut in the Shortcuts app. First add **Prepare an Evening Request** from Encave and set **Occasion** to Ask Each Time; you can also set **Number of Bottles** or turn off **Only Bottles Ready to Drink**. Then add the assistant app’s action, such as Ask Claude, with the result of the first one. Name the shortcut “Evening” and say “Hey Siri, Evening”. The request lists your bottles and their positions, without prices, notes or places of purchase. Encave sends nothing: your shortcut gives the text to the app you chose, and it leaves this device under that app’s privacy policy. Nothing happens unless you make this shortcut.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour laisser une app d’assistant de votre choix, comme Claude, choisir les bouteilles, créez un raccourci dans l’app Raccourcis. Ajoutez d’abord **Préparer une demande de soirée** d’Encave et réglez **Occasion** sur Demander à chaque fois ; vous pouvez aussi régler **Nombre de bouteilles** ou désactiver **Seulement les bouteilles prêtes à boire**. Ajoutez ensuite l’action de l’app d’assistant, comme Ask Claude, avec le résultat de la première. Nommez le raccourci « Soirée » et dites « Dis Siri, Soirée ». La demande liste vos bouteilles et leur position, sans prix, notes ni lieux d’achat. Encave n’envoie rien : votre raccourci donne le texte à l’app que vous avez choisie, et il quitte cet appareil selon la politique de confidentialité de cette app. Rien ne se passe tant que vous ne créez pas ce raccourci."
+          }
+        }
+      }
+    },
     "Today": {
       "localizations": {
         "fr": {
@@ -15017,6 +15147,16 @@
         }
       }
     },
+    "What is the evening? Dishes, guests…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quelle soirée ? Plats, invités…"
+          }
+        }
+      }
+    },
     "What stays on each device": {
       "localizations": {
         "fr": {
@@ -15063,6 +15203,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ce qui circule entre vos appareils, et comment les modifications se combinent."
+          }
+        }
+      }
+    },
+    "What would you like to ask your cellar?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Que voulez-vous demander à votre cave ?"
           }
         }
       }
@@ -15193,6 +15343,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Où est-elle ?"
+          }
+        }
+      }
+    },
+    "Where they are: %@.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Où elles sont : %@."
           }
         }
       }

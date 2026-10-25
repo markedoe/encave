@@ -2,6 +2,7 @@ import AppIntents
 import CaveKit
 import CoreSpotlight
 import Foundation
+import SwiftUI
 
 // Siri, Shortcuts and Spotlight: "What should I open tonight?", "Where is my Chablis?",
 // wines in Spotlight. Everything is read and indexed on the device.
@@ -227,6 +228,118 @@ struct WineDetailsIntent: AppIntent {
     }
 }
 
+/// "Ask my cellar": a question about an evening, answered on this device by Apple
+/// Intelligence with bottles the user has and where they are. Nothing is sent anywhere.
+struct AskCellarIntent: AppIntent {
+    static let title: LocalizedStringResource = "Ask My Cellar"
+    static let description = IntentDescription("Answers a question such as “dinner for 6 with a tagine” with bottles from your cellar and where they are. Answered on this device by Apple Intelligence: nothing is sent anywhere.")
+
+    @Parameter(title: "Question", requestValueDialog: "What would you like to ask your cellar?")
+    var question: String
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ReturnsValue<[WineEntity]> & ProvidesDialog & ShowsSnippetView {
+        let text = question.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { throw $question.needsValueError() }
+        let cellar = CellarAccess.cellar()
+        var spokenLabel: String
+        var items: [AskCellarSnippet.Item] = []
+        do {
+            let answer = try await CellarAssistant.ask(text, cellar: cellar, year: CellarAccess.year) {
+                CellarAccess.location(of: $0, in: cellar)
+            }
+            let groups = cellar.groups()
+            items = answer.wineIDs.compactMap { id in
+                guard let group = groups.first(where: { $0.wine.id == id }) else { return nil }
+                let place = group.bottles.bottleToOpen.flatMap { CellarAccess.location(of: $0, in: cellar) }
+                return AskCellarSnippet.Item(entity: WineEntity(group, cellar: cellar), place: place)
+            }
+            spokenLabel = answer.text
+            let placeLabels = items.compactMap { item in item.place.map { "\(item.entity.name) (\($0))" } }
+            if !placeLabels.isEmpty {
+                let placesLabel = ListFormatter.localizedString(byJoining: placeLabels)
+                spokenLabel += "\n" + String(localized: "Where they are: \(placesLabel).")
+            }
+            if answer.considered < answer.total {
+                let considered = answer.considered, total = answer.total
+                spokenLabel += "\n" + String(localized: "Based on \(considered) of \(total) wines: the closest matches and the most urgent.")
+            }
+        } catch CellarAssistant.Failure.unavailable {
+            spokenLabel = String(localized: "Ask My Cellar needs Apple Intelligence, which is not available on this device right now. To ask an assistant app instead, make a shortcut with Prepare an Evening Request: Encave’s Help shows how.")
+        } catch CellarAssistant.Failure.refused {
+            spokenLabel = String(localized: "This question cannot be answered. Try asking about a dish or an occasion.")
+        } catch CellarAssistant.Failure.tooLarge {
+            spokenLabel = String(localized: "Your cellar or the question is too large for the model on this device. Try a shorter question.")
+        } catch CellarAssistant.Failure.unsupportedLanguage {
+            spokenLabel = String(localized: "Apple Intelligence does not answer in the language of this device yet.")
+        } catch {
+            spokenLabel = String(localized: "No answer this time. Try again.")
+        }
+        return .result(value: items.map(\.entity), dialog: "\(spokenLabel)", view: AskCellarSnippet(items: items))
+    }
+}
+
+/// The suggested wines under Siri's answer, each opening its page in Encave.
+struct AskCellarSnippet: View {
+    struct Item {
+        var entity: WineEntity
+        var place: String?
+    }
+
+    var items: [Item]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(items, id: \.entity.id) { item in
+                Button(intent: OpenWineIntent(item.entity)) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(item.entity.name).font(.headline)
+                        if let place = item.place {
+                            Text(place).font(.subheadline).foregroundStyle(.secondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint(Text("Opens this wine in Encave."))
+            }
+        }
+        .padding(items.isEmpty ? 0 : 12)
+    }
+}
+
+/// Which language the request is written in: the app's.
+private var appLanguageCode: String? {
+    Bundle.main.preferredLocalizations.first
+}
+
+/// A request for an evening's selection, as text for an assistant app the user picks
+/// in their own shortcut (for example Claude's Ask Claude): the instruction, then the
+/// bottles with their positions, without prices, notes or places of purchase. The
+/// shortcut gets the text, like Get Cellar Contents; Encave sends nothing.
+struct EveningRequestIntent: AppIntent {
+    static let title: LocalizedStringResource = "Prepare an Evening Request"
+    static let description = IntentDescription("Returns a request for an assistant app, in your language: choose bottles from your cellar for an evening, with the order of service, why and the temperatures, followed by your bottles and their positions, without prices, notes or places of purchase. Encave sends nothing: your shortcut passes the text to the app you choose.")
+
+    @Parameter(title: "Occasion", requestValueDialog: "What is the evening? Dishes, guests…")
+    var occasion: String?
+
+    @Parameter(title: "Number of Bottles")
+    var bottles: Int?
+
+    @Parameter(title: "Only Bottles Ready to Drink", default: true)
+    var onlyReady: Bool
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ReturnsValue<String> {
+        let cellar = CellarAccess.cellar()
+        let request = cellar.eveningRequest(occasion: occasion ?? "", bottlesWanted: bottles, onlyReady: onlyReady,
+                                            language: EveningRequest.Language(code: appLanguageCode),
+                                            year: CellarAccess.year) { CellarAccess.location(of: $0, in: cellar) }
+        return .result(value: request.text)
+    }
+}
+
 /// Opens the app on Add Bottles.
 struct AddBottleIntent: AppIntent {
     static let title: LocalizedStringResource = "Add Bottles"
@@ -248,6 +361,12 @@ struct OpenWineIntent: OpenIntent {
     @Parameter(title: "Wine")
     var target: WineEntity
 
+    init() {}
+
+    init(_ wine: WineEntity) {
+        target = wine
+    }
+
     @MainActor
     func perform() async throws -> some IntentResult {
         CellarModel.current?.open(wine: target.id)
@@ -261,6 +380,10 @@ struct EncaveShortcuts: AppShortcutsProvider {
             "What should I open tonight in \(.applicationName)",
             "What to drink tonight with \(.applicationName)",
         ], shortTitle: "Tonight", systemImageName: "moon.stars")
+        AppShortcut(intent: AskCellarIntent(), phrases: [
+            "Ask my cellar in \(.applicationName)",
+            "Ask my cellar with \(.applicationName)",
+        ], shortTitle: "Ask My Cellar", systemImageName: "sparkles")
         AppShortcut(intent: FindWineIntent(), phrases: [
             "Where is \(\.$wine) in \(.applicationName)",
             "Find \(\.$wine) in \(.applicationName)",

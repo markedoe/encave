@@ -40,6 +40,12 @@ Shortcuts and Spotlight, and the on-device features of Apple Intelligence
 (asking your cellar, suggesting details, estimating a price) are worked out on
 the device.
 
+Prepare an Evening Request (Shortcuts) and Share an Evening Request (Android,
+in Tonight) only hand a text to you: a request for an evening's selection with
+your bottles and their positions, without prices, notes or places of purchase.
+Encave sends nothing; if you pass it to an assistant app such as Claude, it
+leaves the device through that app, under its privacy policy, by your choice.
+
 The device also keeps earlier versions of your cellar (one for each of the
 last 7 days it changed, then one a week for 4 weeks), in the same storage.
 
@@ -170,6 +176,13 @@ Les rappels, les notifications de modifications venant de vos autres
 appareils, les widgets, Siri, Raccourcis et Spotlight, ainsi que les fonctions
 d'Apple Intelligence sur l'appareil (interroger votre cave, suggérer des
 détails, estimer un prix) sont calculés sur l'appareil.
+
+Préparer une demande de soirée (Raccourcis) et Partager une demande de soirée
+(Android, dans Ce soir) ne font que vous remettre un texte : une demande de
+sélection pour une soirée avec vos bouteilles et leur position, sans prix,
+notes ni lieux d'achat. Encave n'envoie rien ; si vous le transmettez à une app
+d'assistant comme Claude, il quitte l'appareil par cette app, selon sa
+politique de confidentialité, par votre choix.
 
 L'appareil garde aussi des versions précédentes de votre cave (une pour
 chacun des 7 derniers jours où elle a changé, puis une par semaine pendant
