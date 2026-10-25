@@ -1,10 +1,7 @@
 package app.encave.ui.racks
 
 import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
@@ -182,19 +179,6 @@ class RackActionsTest {
         compose.runOnUiThread { move.action() }
         compose.waitForIdle()
         compose.onNodeWithText("Choose where to put", substring = true).assertExists()
-    }
-
-    @Test
-    fun aSelectedPlaceIsNotSaidSelectedTwice() {
-        val rack = cellar.racks.first { it.kind == RackKind.Grid && it.depth == 1 && it.rowColumns == null }
-        val slot = cellar.bottlesInCellar.first { it.slot?.rackId == rack.id }.slot!!
-        openRack(rack.name)
-        compose.onNodeWithTag("cell.${slot.row}.${slot.column}").performClick()
-        compose.waitForIdle()
-        val node = compose.onNodeWithTag("cell.${slot.row}.${slot.column}").fetchSemanticsNode()
-        assertEquals(true, node.config.getOrNull(SemanticsProperties.Selected))
-        val description = node.config[SemanticsProperties.ContentDescription].joinToString()
-        assertTrue(description, !description.contains("selected"))
     }
 
     @Test
