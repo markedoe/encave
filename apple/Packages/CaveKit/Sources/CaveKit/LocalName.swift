@@ -67,6 +67,8 @@ public enum LocalName {
         guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
             throw LocalNetworkError.notFound
         }
+        // "http://nas.lan:8888" becomes "http://10.0.0.2:8888/", as in Kotlin (OkHttp).
+        if components.percentEncodedPath.isEmpty { components.percentEncodedPath = "/" }
         if address.contains(":") {
             components.percentEncodedHost = "[" + address + "]"
         } else {
@@ -195,7 +197,7 @@ public enum LocalName {
             var buffer = [CChar](repeating: 0, count: 1025) // NI_MAXHOST
             if let address = info.pointee.ai_addr,
                getnameinfo(address, info.pointee.ai_addrlen, &buffer, socklen_t(buffer.count), nil, 0, NI_NUMERICHOST) == 0 {
-                let text = String(cString: buffer)
+                let text = String(decoding: buffer.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }, as: UTF8.self)
                 if !addresses.contains(text) { addresses.append(text) }
             }
             next = info.pointee.ai_next

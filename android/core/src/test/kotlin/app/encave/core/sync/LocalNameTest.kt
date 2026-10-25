@@ -96,6 +96,8 @@ class LocalNameTest {
         assertNotNull(WebDavMailboxStore.folderUrl("http://nas.lan:5005/encave"))
         assertNull(WebDavMailboxStore.folderUrl("http://203.0.113.7/encave"))
         assertTrue(RelayMailboxStore.isAllowed("http://relay.home:8787"))
+        assertFalse(RelayMailboxStore.isAllowed("http://203.0.113.7:8787"))
+        assertNull(WebDavMailboxStore.folderUrl("http://8.8.8.8/encave"))
         assertEquals("http://searxng.home:8888", SearXNGSearch("http://searxng.home:8888").base)
         assertThrows<WebSearchError> { SearXNGSearch("http://203.0.113.7:8888") }
     }
