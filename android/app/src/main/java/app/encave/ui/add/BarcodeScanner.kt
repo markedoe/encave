@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -103,7 +104,7 @@ fun BarcodeScannerDialog(onScan: (String) -> Unit, onDismiss: () -> Unit) {
 /** Without the camera: type the digits under the barcode. */
 @Composable
 private fun TypedBarcode(onScan: (String) -> Unit) {
-    var digits by remember { mutableStateOf("") }
+    var digits by rememberSaveable { mutableStateOf("") }
     val valid = digits.length >= MIN_DIGITS
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
         Text(

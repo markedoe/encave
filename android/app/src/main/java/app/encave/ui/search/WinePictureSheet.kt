@@ -39,7 +39,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -65,10 +68,28 @@ import app.encave.core.search.pictureTerms
 import app.encave.data.PhotoStore
 import app.encave.data.search.WebSearchClient
 import app.encave.ui.AppViewModel
+import app.encave.ui.components.rememberForgetRetained
+import app.encave.ui.components.rememberRetained
 import app.encave.ui.theme.Dimens
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+/** The pictures a picture sheet found, and its search or download, kept while the activity is recreated. */
+private class PictureSession : AutoCloseable {
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    var searching by mutableStateOf(false)
+    var searched by mutableStateOf(false)
+    var error by mutableStateOf<Throwable?>(null)
+    var downloadFailed by mutableStateOf(false)
+    var images by mutableStateOf<List<WebImageResult>>(emptyList())
+    var downloading by mutableStateOf<String?>(null)
+
+    override fun close() = scope.cancel()
+}
 
 /**
  * "Change picture": the label photo, or a picture of the bottle found on the internet
@@ -81,15 +102,22 @@ import kotlinx.coroutines.withContext
 fun WinePictureSheet(viewModel: AppViewModel, wine: Wine, onDismiss: () -> Unit) {
     val preferences = webSearchPreferences()
     val settings by preferences.settings.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
+    // Kept when the activity is recreated (rotation, folding, dark mode): the terms in saved
+    // state, the pictures found and a search or download under way in the session.
+    val session = rememberRetained("webSearch.picture") { PictureSession() }
+    val forget = rememberForgetRetained()
+    val activity = LocalActivity.current
+    DisposableEffect(session) { onDispose { if (activity?.isChangingConfigurations != true) forget("webSearch.picture") } }
+    val scope = session.scope
+    val dismiss by rememberUpdatedState(onDismiss)
     val bottleWord = stringResource(R.string.search_bottle_word)
-    var query by remember { mutableStateOf(WebSearchQuery.pictureTerms(wine, bottleWord)) }
-    var searching by remember { mutableStateOf(false) }
-    var searched by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<Throwable?>(null) }
-    var downloadFailed by remember { mutableStateOf(false) }
-    var images by remember { mutableStateOf<List<WebImageResult>>(emptyList()) }
-    var downloading by remember { mutableStateOf<String?>(null) }
+    var query by rememberSaveable { mutableStateOf(WebSearchQuery.pictureTerms(wine, bottleWord)) }
+    var searching by session::searching
+    var searched by session::searched
+    var error by session::error
+    var downloadFailed by session::downloadFailed
+    var images by session::images
+    var downloading by session::downloading
 
     fun search() {
         val terms = query.trim()
@@ -123,7 +151,7 @@ fun WinePictureSheet(viewModel: AppViewModel, wine: Wine, onDismiss: () -> Unit)
                 downloadFailed = true
             } else {
                 viewModel.setCover(wine.id, jpeg)
-                onDismiss()
+                dismiss()
             }
         }
     }

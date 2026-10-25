@@ -116,15 +116,7 @@ val RackKind.labelRes: Int
         RackKind.Grid -> R.string.kind_grid
         RackKind.Staggered -> R.string.kind_staggered
         RackKind.Shelves -> R.string.kind_shelves
-        RackKind.Bins -> R.string.kind_bins
-    }
-
-/** The kind of storage, as in the Storage list: a honeycomb on shelves is a wine fridge. */
-val Rack.kindLabelRes: Int
-    get() = when {
-        isBackReversed -> R.string.kind_fridge_layers_reversed
-        hasShelfLayers -> R.string.kind_fridge_layers
-        else -> kind.labelRes
+        RackKind.Bins -> R.string.storage_type_crates
     }
 
 val StorageType.labelRes: Int
@@ -158,7 +150,7 @@ val RackKind.bodyRes: Int
         RackKind.Grid -> R.string.kind_grid_body
         RackKind.Staggered -> R.string.kind_staggered_body
         RackKind.Shelves -> R.string.kind_shelves_body
-        RackKind.Bins -> R.string.kind_bins_body
+        RackKind.Bins -> R.string.storage_type_crates_body
     }
 
 /** What a row is called in this kind of storage. */

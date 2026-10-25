@@ -86,6 +86,7 @@ import app.encave.ui.help.HelpTopic
 import app.encave.ui.components.LocalSnackbarHostState
 import app.encave.ui.components.WhenLoaded
 import app.encave.ui.components.rememberRetained
+import app.encave.ui.navigation.RacksRoute
 import app.encave.ui.components.Stepper
 import app.encave.ui.components.bodyRes
 import app.encave.ui.components.columnsRes
@@ -358,7 +359,7 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                 }
                 RackKind.Bins -> {
                     SizeRow(stringResource(R.string.rack_bottles_per_bin), binCapacity, { binCapacity = it }, 2..40)
-                    Hint(stringResource(R.string.help_field_bin))
+                    Hint(stringResource(if (storageType == StorageType.Crates) R.string.wizard_crate_body else R.string.help_field_bin))
                 }
                 RackKind.Staggered -> {
                     Text(stringResource(R.string.rack_rows_deep), style = MaterialTheme.typography.bodyLarge)
@@ -502,8 +503,8 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
             confirm = stringResource(R.string.rack_delete),
             onConfirm = {
                 viewModel.removeRack(existing.id)
-                navigator.back()
-                navigator.back()
+                // Back to the Storage list, whether the editor was opened from the storage or the list.
+                navigator.back(to = RacksRoute)
             },
             onDismiss = { confirmDelete = false },
         )

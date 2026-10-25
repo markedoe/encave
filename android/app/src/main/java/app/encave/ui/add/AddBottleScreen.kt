@@ -146,9 +146,10 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
     val routeWine = remember(route.wineId) { route.wineId?.let { runCatching { UUID.fromString(it) }.getOrNull() } }
     var existingId by rememberSaveable { mutableStateOf(routeWine?.toString()) }
     val existing = existingId?.let { id -> cellar.wines[UUID.fromString(id)] }
-    // Kept while the activity is recreated (rotation, folding), with the photo being added.
-    val form = rememberRetained("add.form") { WineFormState(null, year) }
-    val formStart = rememberRetained("add.formStart") { form.snapshot() }
+    // Kept while the activity is recreated (rotation, folding), with the photo being added, and
+    // in saved state if the app's process is ended meanwhile (camera open).
+    val form = rememberWineForm("add.form", null, year)
+    val formStart = remember { WineFormState(null, year).snapshot() }
     var search by rememberSaveable { mutableStateOf("") }
     var moreDetails by rememberSaveable { mutableStateOf(false) }
     var quantity by rememberSaveable { mutableStateOf(1) }
@@ -182,6 +183,8 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
     var pickingExpected by remember { mutableStateOf(false) }
     // Barcode read on the bottle: recognizes wines already in the cellar, or is kept with the new one.
     var scanning by rememberSaveable { mutableStateOf(route.scan) }
+    // The Scan shortcut or link while Add bottle is already open (the same screen, reused) scans too.
+    LaunchedEffect(route.scan) { if (route.scan) scanning = true }
     var barcode by rememberSaveable { mutableStateOf<String?>(null) }
     var barcodeDismissed by rememberSaveable { mutableStateOf(false) }
     // Producers often keep one barcode for every vintage: all are offered, newest first.
@@ -848,8 +851,8 @@ fun EditWineScreen(viewModel: AppViewModel, navigator: AppNavigator, wineId: Str
 private fun EditWineForm(viewModel: AppViewModel, navigator: AppNavigator, wineId: String, field: WineFormField?) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val wine = remember(wineId) { runCatching { UUID.fromString(wineId) }.getOrNull()?.let { cellar.wines[it] } }
-    val form = rememberRetained("editWine.form") { WineFormState(wine, viewModel.year) }
-    val formStart = rememberRetained("editWine.formStart") { form.snapshot() }
+    val form = rememberWineForm("editWine.form", wine, viewModel.year)
+    val formStart = remember { WineFormState(wine, viewModel.year).snapshot() }
     // Back, the back gesture and ✕ ask first when something was changed.
     val leave = rememberDiscardGuard(form.snapshot() != formStart) { navigator.back() }
     val known = remember(cellar) { cellar.knownValues() }

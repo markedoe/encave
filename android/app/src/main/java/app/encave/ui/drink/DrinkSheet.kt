@@ -52,6 +52,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -78,7 +80,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 
 /** Editable copy of a tasting, shared by the drink sheet and the tasting screen. */
-class TastingFormState(initial: Tasting) {
+class TastingFormState(initial: Tasting, start: Tasting? = null) {
     var date by mutableStateOf(initial.date)
     var rating by mutableStateOf(initial.rating)
     var note by mutableStateOf(initial.note.orEmpty())
@@ -102,9 +104,27 @@ class TastingFormState(initial: Tasting) {
     }
 
     /** The tasting as the form opened, to know whether something changed. */
-    private val original: Tasting = toTasting()
+    private val original: Tasting = start ?: toTasting()
 
     val isDirty: Boolean get() = toTasting() != original
+
+    companion object {
+        private fun Tasting.saved() = arrayListOf(date.toString(), rating, note, occasion, appearance, nose, palate, finish, foodPairing)
+
+        private fun restored(v: List<Any?>) = Tasting(
+            date = java.time.Instant.parse(v[0] as String), rating = v[1] as Int?, note = v[2] as String?,
+            occasion = v[3] as String?, appearance = v[4] as String?, nose = v[5] as String?, palate = v[6] as String?,
+            finish = v[7] as String?, foodPairing = v[8] as String?,
+        )
+
+        /** Saves the tasting typed and the one the form opened with, when the app's process is ended meanwhile. */
+        val Saver: Saver<TastingFormState, Any> = listSaver(
+            save = { listOf(it.toTasting().saved(), it.original.saved(), it.expanded) },
+            restore = { v ->
+                TastingFormState(restored(v[0] as List<Any?>), start = restored(v[1] as List<Any?>)).apply { expanded = v[2] as Boolean }
+            },
+        )
+    }
 }
 
 

@@ -1,5 +1,6 @@
 package app.encave.ui.add
 
+import androidx.compose.runtime.saveable.SaverScope
 import app.encave.core.Cellar
 import app.encave.core.Rack
 import app.encave.core.Wine
@@ -83,5 +84,35 @@ class AddFormLogicTest {
         assertEquals("Côte de Nuits", undone.region)
         assertEquals("France", undone.country)
         assertNull(undone.aiCompletedAt)
+    }
+
+    @Test
+    fun whatWasTypedIsSavedWithoutThePhoto() {
+        // Saved state outlives the app's process (ended while the camera app was open); the
+        // photo, too big for it, is kept apart while the activity is recreated.
+        val photo = WineFormPhoto(null)
+        val form = WineFormState(null, 2026, photo)
+        form.name = "Clos des Tilleuls"
+        form.producer = "Domaine Martin"
+        form.vintageText = "2019"
+        form.color = WineColor.Red
+        form.grapes.add("Pinot noir")
+        form.tagInput = "gift"
+        form.manualWindow = 2024..2032
+        form.newPhoto = byteArrayOf(1, 2, 3)
+        assertEquals(true, form.apply(LabelAnalysis(region = "Bourgogne")))
+        val saver = WineFormState.saver(null, 2026, photo)
+        val saved = with(saver) { SaverScope { true }.save(form) }!!
+        val restored = saver.restore(saved)!!
+        assertEquals(form.id, restored.id)
+        assertEquals(form.snapshot(), restored.snapshot())
+        assertEquals(3, restored.newPhoto?.size)
+        // The process ended: the photo is gone, what was typed is not.
+        val again = WineFormState.saver(null, 2026, WineFormPhoto(null)).restore(saved)!!
+        assertEquals("Clos des Tilleuls", again.name)
+        assertNull(again.newPhoto)
+        // A region filled from the label may still be replaced by the next answer.
+        again.apply(LabelAnalysis(region = "Côte de Nuits"))
+        assertEquals("Côte de Nuits", again.region)
     }
 }

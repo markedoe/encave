@@ -36,11 +36,14 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.annotation.StringRes
+import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,9 +74,14 @@ import app.encave.core.sync.LocalNetworkException
 import app.encave.data.search.WebSearchClient
 import app.encave.data.search.WebSearchPreferences
 import app.encave.ui.components.Formats
+import app.encave.ui.components.rememberForgetRetained
+import app.encave.ui.components.rememberRetained
 import app.encave.ui.theme.Dimens
 import java.math.BigDecimal
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.joinAll
@@ -124,6 +132,20 @@ internal fun openLink(context: Context, url: String) {
     runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) }
 }
 
+/** What a search sheet found, and its search and page reads, kept while the activity is recreated. */
+private class WebSearchSession : AutoCloseable {
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    var searching by mutableStateOf(false)
+    var searched by mutableStateOf(false)
+    var error by mutableStateOf<Throwable?>(null)
+    var results by mutableStateOf<List<WebSearchResult>>(emptyList())
+    var prices by mutableStateOf<List<FoundPrice>>(emptyList())
+    var readingPages by mutableStateOf(false)
+    var pageJob: Job? = null
+
+    override fun close() = scope.cancel()
+}
+
 /**
  * "Search online" and "Find current price": shows the search terms, sends them only when
  * the user taps Search, and lists the pages found with links to the browser. With [price],
@@ -138,22 +160,32 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
     val preferences = webSearchPreferences()
     val settings by preferences.settings.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var query by remember { mutableStateOf(initialQuery) }
-    var searching by remember { mutableStateOf(false) }
-    var searched by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<Throwable?>(null) }
-    var results by remember { mutableStateOf<List<WebSearchResult>>(emptyList()) }
-    var prices by remember { mutableStateOf<List<FoundPrice>>(emptyList()) }
-    var currency by remember { mutableStateOf(price?.currency.orEmpty()) }
-    var priceText by remember { mutableStateOf(price?.current?.toPlainString().orEmpty()) }
-    var readingPages by remember { mutableStateOf(false) }
-    var pageJob by remember { mutableStateOf<Job?>(null) }
+    // Kept when the activity is recreated (rotation, folding, dark mode): the terms and price
+    // typed in saved state; what was found, the search and the pages being read in the session.
+    val sessionKey = if (price != null) "webSearch.price" else "webSearch"
+    val session = rememberRetained(sessionKey) { WebSearchSession() }
+    val forget = rememberForgetRetained()
+    val activity = LocalActivity.current
+    DisposableEffect(session) { onDispose { if (activity?.isChangingConfigurations != true) forget(sessionKey) } }
+    val scope = session.scope
+    var query by rememberSaveable { mutableStateOf(initialQuery) }
+    var searching by session::searching
+    var searched by session::searched
+    var error by session::error
+    var results by session::results
+    var prices by session::prices
+    var currency by rememberSaveable { mutableStateOf(price?.currency.orEmpty()) }
+    var priceText by rememberSaveable { mutableStateOf(price?.current?.toPlainString().orEmpty()) }
+    var readingPages by session::readingPages
+    var pageJob by session::pageJob
     // New prices move the suggested one until the user sets a price.
-    var userSetPrice by remember { mutableStateOf(false) }
+    var userSetPrice by rememberSaveable { mutableStateOf(false) }
+    // Web search off: the price sheet is only the price, as on iPhone ("Price today").
+    val showsSearch = price == null || settings.isEnabled
     val priceValue = priceText.trim().replace(",", ".").toBigDecimalOrNull()?.takeIf { it.signum() > 0 }
 
-    fun suggestMiddlePrice() {
+    // Each price found moves the suggestion (here, not in the search: a recreated sheet suggests too).
+    LaunchedEffect(prices) {
         if (!userSetPrice) PriceExtractor.suggested(prices, currency)?.let { priceText = it.toPlainString() }
     }
 
@@ -181,10 +213,7 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
                         } catch (error: Exception) {
                             emptyList()
                         }
-                        if (read.isNotEmpty()) {
-                            prices = PagePrices.merging(read, prices)
-                            suggestMiddlePrice()
-                        }
+                        if (read.isNotEmpty()) prices = PagePrices.merging(read, prices)
                     }
                 }.joinAll()
                 readingPages = false
@@ -202,6 +231,7 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
         readingPages = false
         searching = true
         error = null
+        userSetPrice = false
         val current = settings
         scope.launch {
             val key = withContext(Dispatchers.IO) { preferences.apiKey(current.service) }
@@ -212,8 +242,6 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
                     results = found
                     if (price != null) {
                         prices = PriceExtractor.prices(found, price.sizeML).distinctBy { it.id }
-                        userSetPrice = false
-                        suggestMiddlePrice()
                         readPages(found, price)
                     }
                 }
@@ -232,11 +260,17 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
             item {
                 Column(Modifier.padding(horizontal = Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
                     Text(
-                        stringResource(if (price != null) R.string.search_find_price else R.string.search_online),
+                        stringResource(
+                            when {
+                                price == null -> R.string.search_online
+                                showsSearch -> R.string.search_find_price
+                                else -> R.string.price_today
+                            },
+                        ),
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.semantics { heading() },
                     )
-                    OutlinedTextField(
+                    if (showsSearch) OutlinedTextField(
                         value = query,
                         onValueChange = { query = it },
                         label = { Text(stringResource(R.string.search_terms)) },
@@ -253,7 +287,7 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
                         keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Search),
                         keyboardActions = KeyboardActions(onSearch = { search() }),
                     )
-                    Button(
+                    if (showsSearch) Button(
                         onClick = ::search,
                         enabled = !searching && query.isNotBlank() && settings.isEnabled,
                         modifier = Modifier.testTag("webSearch.search"),
@@ -266,7 +300,7 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
                             Text(stringResource(R.string.search_action), Modifier.padding(start = Dimens.s))
                         }
                     }
-                    Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
+                    if (showsSearch) Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
                         error?.let { problem ->
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
                                 Icon(Icons.Outlined.ErrorOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error)

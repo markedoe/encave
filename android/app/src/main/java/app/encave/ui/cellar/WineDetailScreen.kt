@@ -50,6 +50,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -161,15 +162,16 @@ fun WineDetailScreen(
     // With Undo, or asked first for a wine with several bottles.
     val deleteWines = rememberWineDeletion(cellar, viewModel)
     var drinking by rememberDrinking()
-    var reserving by remember { mutableStateOf<Bottle?>(null) }
+    // Kept when the activity is recreated (rotation, folding, dark mode), as the sheets below.
+    var reservingId by rememberSaveable { mutableStateOf<String?>(null) }
     /** A bottle being moved to a place, another rack, or out of the racks. */
     var movingBottle by remember { mutableStateOf<UUID?>(null) }
-    var findingPrice by remember { mutableStateOf(false) }
-    var searchingOnline by remember { mutableStateOf(false) }
-    var choosingPicture by remember { mutableStateOf(false) }
-    var showingPhoto by remember { mutableStateOf(false) }
+    var findingPrice by rememberSaveable { mutableStateOf(false) }
+    var searchingOnline by rememberSaveable { mutableStateOf(false) }
+    var choosingPicture by rememberSaveable { mutableStateOf(false) }
+    var showingPhoto by rememberSaveable { mutableStateOf(false) }
     /** "Search the web" on one detail: its value only, shown and editable before it is sent. */
-    var searchingDetail by remember { mutableStateOf<String?>(null) }
+    var searchingDetail by rememberSaveable { mutableStateOf<String?>(null) }
     /** A bottle whose documents are shown, and whether the file picker opens at once. */
     var bottleDocuments by remember { mutableStateOf<Pair<UUID, Boolean>?>(null) }
     val webSearch by webSearchPreferences().settings.collectAsStateWithLifecycle()
@@ -297,7 +299,7 @@ fun WineDetailScreen(
                     onGone = { viewModel.markGone(bottle.id) },
                     // With Undo; the wine goes with its last bottle, and the page closes.
                     onDelete = { viewModel.deleteBottle(bottle.id) },
-                    onReserve = { reserving = bottle },
+                    onReserve = { reservingId = bottle.id.toString() },
                     onFree = { viewModel.reserve(listOf(bottle.id), null) },
                     onDocuments = { importing -> bottleDocuments = bottle.id to importing },
                 )
@@ -430,11 +432,11 @@ fun WineDetailScreen(
     movingBottle?.let { id -> cellar.bottlesInCellar.firstOrNull { it.id == id } }?.let { bottle ->
         app.encave.ui.racks.MoveBottleSheet(viewModel, cellar, bottle, onDismiss = { movingBottle = null })
     }
-    reserving?.let { bottle ->
+    reservingId?.let { id -> cellar.bottlesInCellar.firstOrNull { it.id.toString() == id } }?.let { bottle ->
         ReserveDialog(
             initial = cellar.reservations.firstOrNull().orEmpty(),
             onKeep = { occasion -> viewModel.reserve(listOf(bottle.id), occasion) },
-            onDismiss = { reserving = null },
+            onDismiss = { reservingId = null },
         )
     }
 }
@@ -563,7 +565,7 @@ fun DrinkingWindowGauge(from: Int, until: Int, year: Int, maturity: Maturity, mo
 /** Names the occasion a bottle (or, [plural], the bottles of several wines) is kept for. */
 @Composable
 internal fun ReserveDialog(initial: String, onKeep: (String) -> Unit, onDismiss: () -> Unit, plural: Boolean = false) {
-    var occasion by remember { mutableStateOf(initial) }
+    var occasion by rememberSaveable { mutableStateOf(initial) }
     // Full width with margins: a text field in a default-width dialog never settles in tests.
     androidx.compose.material3.AlertDialog(
         onDismissRequest = onDismiss,

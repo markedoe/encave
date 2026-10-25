@@ -165,7 +165,6 @@
     <string name="value_increase">Increase %1$s</string>
     <string name="quantity_increase">More bottles</string>
     <string name="edit_wine_title">Edit wine</string>
-    <string name="slot_selected">%1$s, selected</string>
     <string name="slot_choose">Choose this position</string>
     <string name="drink_title">Open a bottle</string>
     <string name="drink_which">Which bottle?</string>
@@ -481,11 +480,9 @@
     <string name="kind_grid">Grid rack</string>
     <string name="kind_staggered">Honeycomb rack</string>
     <string name="kind_shelves">Wine fridge</string>
-    <string name="kind_bins">Bins or crates</string>
     <string name="kind_grid_body">One bottle per position, single or double depth</string>
     <string name="kind_staggered_body">Offset rows, like metal or terracotta racks, or bottles stacked on fridge shelves</string>
     <string name="kind_shelves_body">Shelves holding a row of bottles, one to three deep</string>
-    <string name="kind_bins_body">Diamond bins or crates holding several bottles each</string>
     <string name="rows_grid">Rows</string>
     <string name="rows_shelves">Shelves</string>
     <string name="rows_bins">Rows of bins</string>
@@ -589,7 +586,7 @@
     <string name="help_field_finish">How long the flavors last after swallowing.</string>
     <string name="help_field_food">What you ate with it, to remember good pairings.</string>
     <string name="help_full_note_footer">A structured note: appearance, nose, palate, finish and the food you had with it.</string>
-    <string name="help_field_rack_name">A name you will recognize: cellar left wall, kitchen wine fridge…</string>
+    <string name="help_field_rack_name">A name you will recognize: basement left wall, kitchen wine fridge…</string>
     <string name="help_field_rows">Counted from the top. Rows are lettered A, B, C…</string>
     <string name="help_field_columns">Counted from the left. Positions are numbered 1, 2, 3…</string>
     <string name="help_field_grid_depth">Deep racks hold a second bottle behind the first one.</string>
@@ -619,7 +616,7 @@
     <string name="help_start_title">Getting started</string>
     <string name="help_start_summary">The four sections and how they work together.</string>
     <string name="help_start_cellar">Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, with several words if you like (“margaux 2015”), and filter by style, grape or when to drink: the chips show only what your bottles have.</string>
-    <string name="help_start_racks">Your racks, wine fridges and bins drawn as they look, so you know exactly where each bottle is.</string>
+    <string name="help_start_racks">Your racks, wine fridges and crates drawn as they look, so you know exactly where each bottle is.</string>
     <string name="help_start_tonight">What to open now: bottles at their peak or to drink soon first, and ideas to match a dish.</string>
     <string name="help_start_journal">Your tasting diary: the bottles you opened from your cellar and the wines you tasted elsewhere, with your notes, your shopping list and insights.</string>
     <string name="help_start_try_title">Try it</string>
@@ -661,7 +658,7 @@
     <string name="help_racks_bands">When a fridge with bottles in layers is two deep, each shelf shows two bands: **Front**, the bottles whose base faces you, then **Back**, the bottles behind them, drawn smaller. Many fridges keep the back bottles head-to-tail, their necks facing you between the bases of the front ones: turn on **Back bottles head-to-tail** in the editor, and the back band shows their necks and capsules. Its layers are drawn half a position to the right, so each neck sits between two bases. Tap any position of either band to see, add or move its bottle; on wide screens (tablets in landscape, unfolded foldables), touch and hold a bottle to drag it from one band to the other. Positions read like **Shelf 3, front, bottom layer, position 2**, and the one behind it **Shelf 3, back, bottom layer, position 2**. Other kinds two deep show the dots described below.</string>
     <string name="help_racks_layers">For a wine fridge whose shelves hold bottles stacked in quincunx, choose **Wine fridge** when adding the storage, then 2 or 3 in **Layers per shelf**. Each shelf holds one to three layers: for example 6 bottles at the bottom and 5 on top, resting in the gaps. Shelves can differ: set the layers and bottles of each one, or set one and choose **Apply to all shelves**. Positions are named by shelf, layer and number, like **Shelf 1, top layer, position 3**; each shelf fills from its bottom layer. For two temperature zones, turn on **New zone from this shelf** on the first shelf of the lower zone, in the editor.</string>
     <string name="help_racks_shelves">Shelves holding a row of bottles, one to three deep. The dots under each bottle show which positions are filled, front first.</string>
-    <string name="help_racks_bins">Diamond bins or crates hold several bottles in a pile. Set how many bottles fit in each; tap a bin to see what is inside.</string>
+    <string name="help_racks_bins">Crates, and the diamond bins of a rack, hold several bottles in a pile. Set how many bottles fit in each; tap a bin to see what is inside.</string>
     <string name="help_racks_places_title">Positions</string>
     <string name="help_racks_places">In grids and honeycombs, rows are lettered from the top and positions numbered from the left: **B3** is the second row, third position. With two bottles in a position, **B3, back** is the one behind. In a wine fridge, shelves are numbered from the top and positions along each shelf: **Shelf 2, position 3**, and the one behind it **Shelf 2, back, position 3**; an empty position shows only its number. Bins read like **Bin B3**. The same name shows on the wine’s page and in the bottle list.</string>
     <string name="help_racks_finding_title">Finding a bottle</string>
@@ -669,7 +666,7 @@
     <string name="help_racks_zooming_title">Zooming</string>
     <string name="help_racks_zooming">Pinch to zoom in and out, or double-tap a spot; double-tap again to see the whole storage. Drag to look around once zoomed in. **Bottle list** lists the bottles of the storage position by position.</string>
     <string name="help_racks_moving_title">Moving bottles</string>
-    <string name="help_racks_moving">Tap a bottle, then **Move**, then the new position (or press and hold a bottle); Back cancels. From the Cellar, touch and hold a wine and choose **Move**. A position with room takes the bottle; where each position holds one bottle, tapping another bottle swaps them. To put it in other storage, or out of storage with a note on where it is, choose **Move to other storage…** in the bottle’s menu, or **Move…** on the wine’s page. **Undo** puts it back.</string>
+    <string name="help_racks_moving">Tap a bottle, then **Move**, then the new position (or touch and hold a bottle); Back cancels. From the Cellar, touch and hold a wine and choose **Move**. A position with room takes the bottle; where each position holds one bottle, tapping another bottle swaps them. To put it in other storage, or out of storage with a note on where it is, choose **Move to other storage…** in the bottle’s menu, or **Move…** on the wine’s page. **Undo** puts it back.</string>
     <string name="help_racks_irregular_title">Irregular storage</string>
     <string name="help_racks_irregular">Turn on **Rows of different lengths** for storage under a sloped ceiling or a staircase, and set the length of each row (not for honeycomb racks).</string>
     <string name="help_tonight_title">Tonight and drinking windows</string>
@@ -727,7 +724,7 @@
     <string name="help_data_devices_title">Restoring and your other devices</string>
     <string name="help_data_devices">A restore is a change made on this device: the devices that sync with this one take it too. After **Replace this cellar**, what the backup brings back returns on them, and what is not in it is deleted on them. Their sync keys stay as they are: a backup never holds them.</string>
     <string name="help_data_csv_title">Spreadsheet</string>
-    <string name="help_data_csv">**Export a spreadsheet (CSV)** opens in any spreadsheet app, one line per bottle with its location. Bottles on order, drunk or given away are included too, with their status and tasting notes. A CSV with at least a **name** column can be imported, including from another app.</string>
+    <string name="help_data_csv">**Export a spreadsheet (CSV)** opens in any spreadsheet app, one line per bottle with its position. Bottles on order, drunk or given away are included too, with their status and tasting notes. A CSV with at least a **name** column can be imported, including from another app.</string>
     <string name="help_privacy_title">Privacy</string>
     <string name="help_privacy_summary">Your cellar stays yours.</string>
     <string name="help_privacy_1">Your cellar, its photos and documents are kept on your devices, in Encave’s private storage, which Android encrypts. They are left out of Google cloud backups and move to a new phone only with a direct transfer from the old one. The backups Encave makes are ZIP files that are not encrypted: the weekly backup, on at first, goes to the shared Download/Encave folder, and **Back up now** where you choose. There is no account, no analytics, no tracking and no advertising: the developer of Encave receives nothing.</string>
@@ -1041,7 +1038,7 @@
     <string name="help_racks_check_title">Checking storage</string>
     <string name="help_racks_check">Choose **Check this storage**, tap each bottle you find, then **End check**. Tapping a position with several bottles marks them all; to tick them one by one, touch and hold it (it shows **8/10** when some are found). For the bottles not found, choose **Take them out of storage** (they stay in the cellar without a position) or **Mark them as gone** (they leave the cellar). **Undo** puts everything back.</string>
     <string name="settings_export_pdf">Inventory for printing (PDF)</string>
-    <string name="settings_export_pdf_body">Every wine with its locations and purchase value, for insurance or a move.</string>
+    <string name="settings_export_pdf_body">Every wine with its positions and purchase value, for insurance or a move.</string>
     <string name="settings_import_other">Import from another app</string>
     <string name="settings_import_other_body">A CSV from CellarTracker, Vivino or a spreadsheet, read on this device.</string>
     <string name="pdf_title">Cellar inventory</string>
@@ -1054,7 +1051,7 @@
     <string name="pdf_rack_places">%1$s: %2$s</string>
     <string name="msg_imported_elsewhere">Wines tasted elsewhere imported: %1$d</string>
     <string name="help_data_pdf_title">Printed inventory</string>
-    <string name="help_data_pdf">**Inventory for printing (PDF)** lists every wine in your cellar with its number of bottles, locations and purchase value: for your insurer, a move, or your family. The values are what you paid; current prices found online (**Find current price**) appear in Insights, not in the inventory.</string>
+    <string name="help_data_pdf">**Inventory for printing (PDF)** lists every wine in your cellar with its number of bottles, positions and purchase value: for your insurer, a move, or your family. The values are what you paid; current prices found online (**Find current price**) appear in Insights, not in the inventory.</string>
     <string name="help_data_other_title">Coming from another app</string>
     <string name="help_data_other">Export your cellar as CSV from CellarTracker, a spreadsheet or another app, then choose **Import from another app**. Columns are recognized by their name in English or French (wine, producer, vintage, color, quantity, location, bin, price, drinking window…). A Vivino history becomes wines tasted elsewhere in the Journal, with your ratings and notes. The file is read on this device.</string>
     <string name="action_scan_barcode">Scan the barcode</string>
@@ -1335,8 +1332,6 @@
     <string name="help_journal_opened_title">A bottle from your cellar</string>
     <string name="help_journal_opened">Touch and hold a bottle opened from your cellar to show its wine, edit the note, add bottles of it, or put it back in the cellar if it was logged by mistake (with Undo). In the note, touch the wine’s name to open it.</string>
     <string name="rack_field_shelves">Counted from the top. Shelves are numbered 1, 2, 3…</string>
-    <string name="kind_fridge_layers">Wine fridge, shelves in layers</string>
-    <string name="kind_fridge_layers_reversed">Wine fridge, shelves in layers · two deep, head-to-tail</string>
     <string name="cell_check_found">Found</string>
     <string name="cell_check_not_found">Not found yet</string>
     <string name="wizard_title">New storage</string>
