@@ -54,7 +54,9 @@ class TonightWidget : GlanceAppWidget() {
 
     override suspend fun providePreview(context: Context, widgetCategory: Int) {
         val snapshot = WidgetData.preview(context)
-        provideContent { EncaveGlanceTheme(dynamicColor = true) { TonightContent(snapshot) } }
+        // The colors the widget will have: the Encave ones unless dynamic color is turned on.
+        val dynamicColor = (context.applicationContext as EncaveApplication).preferences.dynamicColor.value
+        provideContent { EncaveGlanceTheme(dynamicColor) { TonightContent(snapshot) } }
     }
 
     companion object {

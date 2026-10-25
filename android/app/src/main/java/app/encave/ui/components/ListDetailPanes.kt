@@ -21,7 +21,14 @@ import androidx.compose.material3.adaptive.navigation.NavigableListDetailPaneSca
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.key
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelStore
@@ -45,7 +52,8 @@ fun isWideWindow(): Boolean =
 
 /**
  * A section as a list beside its detail on wide windows; on phones, [list] alone with
- * `open = null`, so the section opens its detail as a full screen exactly as before.
+ * `open = null`, so the section opens its detail as a full screen exactly as before. A detail
+ * opened beside the list stays open, alone, when the window narrows.
  *
  * [list] gets `open(key)` to show a detail and the key shown, to highlight its row.
  * [detail] gets the key, a navigator whose Back closes the pane, and whether the list is beside it.
@@ -58,10 +66,8 @@ fun ListDetailPanes(
     detail: @Composable (key: String, paneNavigator: AppNavigator, twoPane: Boolean) -> Unit,
     wide: Boolean = isWideWindow(),
 ) {
-    if (!wide) {
-        list(null, null)
-        return
-    }
+    // Composed on every width, as the Cellar does: a detail open on a tablet stays open, full
+    // screen, when the window narrows (rotation, folding), with what was being typed in it.
     val panes = rememberListDetailPaneScaffoldNavigator<String>()
     val scope = rememberCoroutineScope()
     val selected = panes.currentDestination?.contentKey
@@ -73,6 +79,12 @@ fun ListDetailPanes(
     // A detail closed (Back) is left for good, as a screen popped off the stack.
     val stores: DetailStores = viewModel()
     LaunchedEffect(stores, selected) { if (selected == null) stores.keepOnly(null) }
+    // Opening another row while the detail has unsaved changes asks first (see rememberPaneSwitch).
+    val switch = remember { PaneSwitch() }
+    val open: (String) -> Unit = { key ->
+        val go = { scope.launch { panes.navigateTo(ListDetailPaneScaffoldRole.Detail, key) }; Unit }
+        if (key != selected && switch.dirty) switch.pending = go else go()
+    }
 
     TwoPaneMessages(twoPane) {
         NavigableListDetailPaneScaffold(
@@ -82,13 +94,17 @@ fun ListDetailPanes(
             defaultBackBehavior = BackNavigationBehavior.PopUntilContentChange,
             listPane = {
                 AnimatedPane(Modifier.testTag("panes.list")) {
-                    list({ key -> scope.launch { panes.navigateTo(ListDetailPaneScaffoldRole.Detail, key) } }, if (twoPane) selected else null)
+                    // One pane (phones): the section opens its details as full screens, as before.
+                    list(if (wide) open else null, if (twoPane) selected else null)
                 }
             },
             detailPane = {
                 AnimatedPane(Modifier.testTag("panes.detail")) {
                     if (selected != null) {
-                        CompositionLocalProvider(LocalSnackbarHostState provides if (twoPane) detailMessages else LocalSnackbarHostState.current) {
+                        CompositionLocalProvider(
+                            LocalSnackbarHostState provides if (twoPane) detailMessages else LocalSnackbarHostState.current,
+                            LocalPaneSwitch provides switch,
+                        ) {
                             // A new detail starts afresh, not with the state of the one shown before.
                             key(selected) { DetailStore(selected) { detail(selected, paneNavigator, twoPane) } }
                         }
@@ -101,6 +117,38 @@ fun ListDetailPanes(
             },
         )
     }
+}
+
+/** The list's open of another detail, held back while the detail shown has unsaved changes. */
+@Stable
+class PaneSwitch {
+    /** Set by the detail shown: it has changes that opening another one would discard. */
+    var dirty by mutableStateOf(false)
+    /** The open held back until the detail's "Discard changes?" is answered. */
+    var pending by mutableStateOf<(() -> Unit)?>(null)
+
+    fun confirm() {
+        val go = pending ?: return
+        pending = null
+        dirty = false
+        go()
+    }
+
+    fun cancel() { pending = null }
+}
+
+val LocalPaneSwitch = staticCompositionLocalOf<PaneSwitch?> { null }
+
+/**
+ * For a detail form beside its list: tells the list whether it has unsaved changes, and returns
+ * the list's open being held back for its discard dialog (null when none, or not in a pane).
+ */
+@Composable
+fun rememberPaneSwitch(isDirty: Boolean): PaneSwitch? {
+    val switch = LocalPaneSwitch.current ?: return null
+    SideEffect { switch.dirty = isDirty }
+    DisposableEffect(switch) { onDispose { switch.dirty = false; switch.pending = null } }
+    return switch.takeIf { it.pending != null }
 }
 
 /**

@@ -158,6 +158,9 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
     // Checking the rack: the bottles found (by ID, so a bottle found and then moved stays found).
     var auditing by rememberSaveable { mutableStateOf(false) }
     var checked by rememberRetained("rack.audit.checked") { mutableStateOf(setOf<UUID>()) }
+    // Deleted (from its editor beside the list, or on another device): closes as a screen popped off.
+    var seen by rememberSaveable { mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(rack != null) { if (rack != null) seen = true else if (seen) navigator.back() }
     var confirmingAudit by remember { mutableStateOf(false) }
     fun endAudit() {
         auditing = false
@@ -358,6 +361,8 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                         } else {
                             listOf(
                                 CustomAccessibilityAction(drinkLabel) { drinking = bottle.id.toString(); true },
+                                // Move, as a long press does: then the new position.
+                                CustomAccessibilityAction(moveLabel) { selectedKey = null; movingId = bottle.id.toString(); true },
                                 CustomAccessibilityAction(winePageLabel) { navigator.open(WineDetailRoute(bottle.wineId.toString())); true },
                             )
                         }

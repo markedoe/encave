@@ -1,6 +1,8 @@
 package app.encave.ui.racks
 
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -14,12 +16,15 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.assertCountEquals
 import androidx.test.core.app.ApplicationProvider
 import app.encave.EncaveApplication
 import app.encave.MainActivity
 import app.encave.core.RackCell
 import app.encave.core.RackKind
 import app.encave.core.SampleData
+import app.encave.core.StorageSettings
+import app.encave.core.StorageType
 import app.encave.core.Wine
 import app.encave.ui.components.labelRes
 import kotlinx.coroutines.runBlocking
@@ -142,5 +147,50 @@ class RackActionsTest {
         compose.onAllNodesWithTag("rack.check.bottle").onFirst().performClick()
         compose.waitForIdle()
         compose.onAllNodesWithText("Found: 1 of 2").onFirst().assertExists()
+    }
+
+    @Test
+    fun deletingAStorageFromTheListMenuStaysInStorage() {
+        val rack = cellar.racks.first()
+        compose.onAllNodesWithText("Storage").onFirst().performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("rack.row.0").performSemanticsAction(SemanticsActions.OnLongClick)
+        compose.waitForIdle()
+        compose.onNodeWithTag("rack.menu.edit").performClick()
+        compose.waitForIdle()
+        compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(androidx.compose.ui.test.hasTestTag("action.delete_rack"))
+        compose.onNodeWithTag("action.delete_rack").performClick()
+        compose.waitForIdle()
+        // The dialog's button, after the editor's.
+        compose.onAllNodesWithText("Delete storage").onLast().performClick()
+        compose.waitUntil(10_000) { cellar.racks.none { it.id == rack.id } }
+        compose.waitForIdle()
+        compose.onNodeWithTag("nav.Racks").assertIsSelected()
+        compose.onNodeWithTag("rack.row.0").assertExists()
+    }
+
+    @Test
+    fun aBottleCanBeMovedFromTalkBack() {
+        val rack = cellar.racks.first { it.kind == RackKind.Grid && it.depth == 1 && it.rowColumns == null }
+        val slot = cellar.bottlesInCellar.first { it.slot?.rackId == rack.id }.slot!!
+        openRack(rack.name)
+        val cell = compose.onNodeWithTag("cell.${slot.row}.${slot.column}")
+        val move = cell.fetchSemanticsNode().config[SemanticsActions.CustomActions].first { it.label == "Move" }
+        compose.runOnUiThread { move.action() }
+        compose.waitForIdle()
+        compose.onNodeWithText("Choose where to put", substring = true).assertExists()
+    }
+
+    @Test
+    fun theCratesEditorGivesTheCrateHint() {
+        val crates = StorageSettings(StorageType.Crates).rack(name = "Garage crates")
+        runBlocking { app.repository.replaceWith { it.copy().apply { addRack(crates) } }.getOrThrow() }
+        compose.waitForIdle()
+        openRack("Garage crates")
+        compose.onNodeWithTag("action.edit_rack").performClick()
+        compose.waitForIdle()
+        compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(hasText("A wooden crate usually holds 6 or 12 bottles."))
+        compose.onNodeWithText("A wooden crate usually holds 6 or 12 bottles.").assertExists()
+        compose.onAllNodesWithText("A diamond bin", substring = true).assertCountEquals(0)
     }
 }

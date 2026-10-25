@@ -20,25 +20,28 @@ import app.encave.R
  * Asks "Discard changes?" before a form with unsaved input is left: Back (including the
  * predictive back gesture, skipped while [isDirty]) and the returned action, for the
  * form's Close button. [leave] runs at once when nothing was changed, or once confirmed.
+ * Shown beside a list, opening another row asks the same, and opens it once confirmed.
  */
 @Composable
 fun rememberDiscardGuard(isDirty: Boolean, leave: () -> Unit): () -> Unit {
     var asking by rememberSaveable { mutableStateOf(false) }
     BackHandler(enabled = isDirty) { asking = true }
-    if (asking) {
+    // Beside a list, opening another row asks too.
+    val switch = rememberPaneSwitch(isDirty)
+    if (asking || switch != null) {
         AlertDialog(
-            onDismissRequest = { asking = false },
+            onDismissRequest = { asking = false; switch?.cancel() },
             title = { Text(stringResource(R.string.discard_title)) },
             text = { Text(stringResource(R.string.discard_message)) },
             confirmButton = {
                 TextButton(
-                    onClick = { asking = false; leave() },
+                    onClick = { asking = false; if (switch != null) switch.confirm() else leave() },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
                     modifier = Modifier.testTag("discard.confirm"),
                 ) { Text(stringResource(R.string.discard_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { asking = false }, modifier = Modifier.testTag("discard.keep")) {
+                TextButton(onClick = { asking = false; switch?.cancel() }, modifier = Modifier.testTag("discard.keep")) {
                     Text(stringResource(R.string.discard_keep))
                 }
             },

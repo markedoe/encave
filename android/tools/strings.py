@@ -46,7 +46,7 @@ S = [
  ("action_insights", "Insights", "Statistiques"),
  ("action_surprise", "Another idea", "Autre idée"),
  ("action_remove_from_rack", "Take out of storage", "Sortir du rangement"),
- ("action_clear_filters", "Clear filters", "Retirer les filtres"),
+ ("action_clear_filters", "Clear filters", "Effacer les filtres"),
  ("action_change", "Change", "Changer"),
  ("action_put_back", "Put back in the cellar", "Remettre en cave"),
 
@@ -181,7 +181,6 @@ S = [
  ("value_increase", "Increase %1$s", "Augmenter : %1$s"),
  ("quantity_increase", "More bottles", "Plus de bouteilles"),
  ("edit_wine_title", "Edit wine", "Modifier le vin"),
- ("slot_selected", "%1$s, selected", "%1$s, sélectionnée"),
  ("slot_choose", "Choose this position", "Choisir cette position"),
 
  ("drink_title", "Open a bottle", "Ouvrir une bouteille"),
@@ -233,7 +232,7 @@ S = [
 
  ("racks_empty_title", "No storage yet", "Aucun rangement"),
  ("racks_empty_body", "Describe your storage to see exactly where each bottle is.", "Décrivez vos rangements pour voir exactement où se trouve chaque bouteille."),
- ("rack_occupancy", "%1$d of %2$d bottles", "%1$d bouteilles sur %2$d"),
+ ("rack_occupancy", "%1$d of %2$d bottles", "%1$d sur %2$d bouteilles"),
  ("rack_not_found", "Storage not found", "Rangement introuvable"),
  ("rack_editor_edit", "Edit storage", "Modifier le rangement"),
  ("rack_preview", "Preview", "Aperçu"),
@@ -466,7 +465,7 @@ S = [
  ("serving_decant_value", "About %1$d min before serving", "Environ %1$d min avant de servir"),
  ("serving_no_decant", "Not needed", "Pas nécessaire"),
 
- ("discovery_title", "Tasted elsewhere", "Vin goûté ailleurs"),
+ ("discovery_title", "Tasted elsewhere", "Goûté ailleurs"),
  ("discovery_new_long", "Note a wine tasted elsewhere", "Noter un vin goûté ailleurs"),
  ("discovery_to_buy", "To buy", "À acheter"),
  ("discovery_to_buy_count", "To buy · %1$d", "À acheter · %1$d"),
@@ -511,11 +510,9 @@ S = [
  ("kind_grid", "Grid rack", "Casier classique"),
  ("kind_staggered", "Honeycomb rack", "Casier nid d’abeille"),
  ("kind_shelves", "Wine fridge", "Cave à vin réfrigérée"),
- ("kind_bins", "Bins or crates", "Cases ou caisses"),
  ("kind_grid_body", "One bottle per position, single or double depth", "Une bouteille par position, simple ou double profondeur"),
  ("kind_staggered_body", "Offset rows, like metal or terracotta racks, or bottles stacked on fridge shelves", "Rangées décalées, comme les casiers en métal ou en terre cuite, ou bouteilles empilées sur les étagères d’une cave à vin réfrigérée"),
  ("kind_shelves_body", "Shelves holding a row of bottles, one to three deep", "Étagères d’une rangée de bouteilles, sur un à trois rangs"),
- ("kind_bins_body", "Diamond bins or crates holding several bottles each", "Cases en losange ou caisses de plusieurs bouteilles"),
  ("rows_grid", "Rows", "Rangées"),
  ("rows_shelves", "Shelves", "Étagères"),
  ("rows_bins", "Rows of bins", "Rangées de cases"),
@@ -621,7 +618,7 @@ S = [
  ("help_field_finish", "How long the flavors last after swallowing.", "Combien de temps les saveurs persistent après avoir avalé."),
  ("help_field_food", "What you ate with it, to remember good pairings.", "Ce que vous avez mangé avec, pour retenir les bons accords."),
  ("help_full_note_footer", "A structured note: appearance, nose, palate, finish and the food you had with it.", "Une note structurée : robe, nez, bouche, finale et le plat qui l’accompagnait."),
- ("help_field_rack_name", "A name you will recognize: cellar left wall, kitchen wine fridge…", "Un nom que vous reconnaîtrez : mur gauche du sous-sol, cave à vin réfrigérée de la cuisine…"),
+ ("help_field_rack_name", "A name you will recognize: basement left wall, kitchen wine fridge…", "Un nom que vous reconnaîtrez : mur gauche du sous-sol, cave à vin réfrigérée de la cuisine…"),
  ("help_field_rows", "Counted from the top. Rows are lettered A, B, C…", "Comptées depuis le haut. Les rangées sont nommées A, B, C…"),
  ('help_field_columns', 'Counted from the left. Positions are numbered 1, 2, 3…', 'Comptées depuis la gauche. Les positions sont numérotées 1, 2, 3…'),
  ("help_field_grid_depth", "Deep racks hold a second bottle behind the first one.", "Les casiers profonds accueillent une deuxième bouteille derrière la première."),
@@ -654,7 +651,7 @@ S = [
  ("help_start_title", "Getting started", "Prise en main"),
  ("help_start_summary", "The four sections and how they work together.", "Les quatre sections et comment elles fonctionnent ensemble."),
  ('help_start_cellar', 'Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, with several words if you like (“margaux 2015”), and filter by style, grape or when to drink: the chips show only what your bottles have.', 'Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, avec plusieurs mots si vous voulez (« margaux 2015 »), et filtrez par style, cépage ou moment où les boire : les pastilles ne montrent que ce que vos bouteilles ont.'),
- ("help_start_racks", "Your racks, wine fridges and bins drawn as they look, so you know exactly where each bottle is.", "Vos casiers, caves à vin réfrigérées et cases dessinés tels qu’ils sont, pour savoir exactement où est chaque bouteille."),
+ ("help_start_racks", "Your racks, wine fridges and crates drawn as they look, so you know exactly where each bottle is.", "Vos casiers, caves à vin réfrigérées et caisses dessinés tels qu’ils sont, pour savoir exactement où est chaque bouteille."),
  ("help_start_tonight", "What to open now: bottles at their peak or to drink soon first, and ideas to match a dish.", "Quoi ouvrir maintenant : d’abord les bouteilles à leur apogée ou à boire bientôt, et des idées selon le plat."),
  ("help_start_journal", "Your tasting diary: the bottles you opened from your cellar and the wines you tasted elsewhere, with your notes, your shopping list and insights.", "Votre carnet de dégustation : les bouteilles ouvertes de votre cave et les vins goûtés ailleurs, avec vos notes, votre liste d’achats et vos statistiques."),
  ("help_start_try_title", "Try it", "Essayer"),
@@ -696,10 +693,10 @@ S = [
  ("help_racks_staggered", "Every other row is offset by half a bottle and holds one fewer, like metal or terracotta racks. Enter the number of bottles in the widest row, and in **Rows deep** whether a second bottle fits behind each one.", "Une rangée sur deux est décalée d’une demi-bouteille et en contient une de moins, comme les casiers en métal ou en terre cuite. Indiquez le nombre de bouteilles de la rangée la plus large, et dans **Rangées en profondeur** si une deuxième bouteille tient derrière chacune."),
  ("help_racks_layers_title", "Fridge with bottles in layers", "Cave à vin réfrigérée avec bouteilles en couches"),
  ("help_racks_bands_title", "Two deep, head-to-tail", "Deux rangs, tête-bêche"),
- ('help_racks_bands', 'When a fridge with bottles in layers is two deep, each shelf shows two bands: **Front**, the bottles whose base faces you, then **Back**, the bottles behind them, drawn smaller. Many fridges keep the back bottles head-to-tail, their necks facing you between the bases of the front ones: turn on **Back bottles head-to-tail** in the editor, and the back band shows their necks and capsules. Its layers are drawn half a position to the right, so each neck sits between two bases. Tap any position of either band to see, add or move its bottle; on wide screens (tablets in landscape, unfolded foldables), touch and hold a bottle to drag it from one band to the other. Positions read like **Shelf 3, front, bottom layer, position 2**, and the one behind it **Shelf 3, back, bottom layer, position 2**. Other kinds two deep show the dots described below.', 'Quand une cave à vin réfrigérée avec bouteilles en couches a deux rangs de profondeur, chaque étagère montre deux bandes : **Devant**, les bouteilles dont le culot est vers vous, puis **Fond**, les bouteilles derrière elles, dessinées plus petites. Beaucoup de caves à vin réfrigérées rangent les bouteilles du fond tête-bêche, le goulot vers vous entre les culots de celles de devant : activez **Bouteilles du fond tête-bêche** dans l’éditeur, et la bande du fond montre leurs goulots et leurs capsules. Ses couches sont dessinées une demi-position plus à droite, chaque goulot entre deux culots. Touchez n’importe quelle position de l’une ou l’autre bande pour voir, ajouter ou déplacer sa bouteille ; sur grand écran (tablette à l’horizontale, pliable déplié), touchez longuement une bouteille pour la faire glisser d’une bande à l’autre. Les positions se lisent comme **Étagère 3, devant, couche du bas, position 2**, et celle derrière **Étagère 3, fond, couche du bas, position 2**. Les autres rangements à deux rangs montrent les points décrits plus bas.'),
+ ('help_racks_bands', 'When a fridge with bottles in layers is two deep, each shelf shows two bands: **Front**, the bottles whose base faces you, then **Back**, the bottles behind them, drawn smaller. Many fridges keep the back bottles head-to-tail, their necks facing you between the bases of the front ones: turn on **Back bottles head-to-tail** in the editor, and the back band shows their necks and capsules. Its layers are drawn half a position to the right, so each neck sits between two bases. Tap any position of either band to see, add or move its bottle; on wide screens (tablets in landscape, unfolded foldables), touch and hold a bottle to drag it from one band to the other. Positions read like **Shelf 3, front, bottom layer, position 2**, and the one behind it **Shelf 3, back, bottom layer, position 2**. Other kinds two deep show the dots described below.', 'Quand une cave à vin réfrigérée avec bouteilles en couches a deux rangs de profondeur, chaque étagère montre deux bandes : **Devant**, les bouteilles dont le culot est vers vous, puis **Fond**, les bouteilles derrière elles, dessinées plus petites. Beaucoup de caves à vin réfrigérées rangent les bouteilles du fond tête-bêche, le goulot vers vous entre les culots de celles de devant : activez **Bouteilles du fond tête-bêche** dans l’éditeur, et la bande du fond montre leurs goulots et leurs capsules. Ses couches sont dessinées une demi-position plus à droite, chaque goulot entre deux culots. Touchez n’importe quelle position de l’une ou l’autre bande pour voir, ajouter ou déplacer sa bouteille ; sur grand écran (tablette à l’horizontale, pliable déplié), maintenez le doigt sur une bouteille pour la faire glisser d’une bande à l’autre. Les positions se lisent comme **Étagère 3, devant, couche du bas, position 2**, et celle derrière **Étagère 3, fond, couche du bas, position 2**. Les autres rangements à deux rangs montrent les points décrits plus bas.'),
  ("help_racks_layers", "For a wine fridge whose shelves hold bottles stacked in quincunx, choose **Wine fridge** when adding the storage, then 2 or 3 in **Layers per shelf**. Each shelf holds one to three layers: for example 6 bottles at the bottom and 5 on top, resting in the gaps. Shelves can differ: set the layers and bottles of each one, or set one and choose **Apply to all shelves**. Positions are named by shelf, layer and number, like **Shelf 1, top layer, position 3**; each shelf fills from its bottom layer. For two temperature zones, turn on **New zone from this shelf** on the first shelf of the lower zone, in the editor.", "Pour une cave à vin réfrigérée dont les étagères portent des bouteilles empilées en quinconce, choisissez **Cave à vin réfrigérée** en ajoutant le rangement, puis 2 ou 3 dans **Couches par étagère**. Chaque étagère porte une à trois couches : par exemple 6 bouteilles en bas et 5 au-dessus, posées dans les creux. Les étagères peuvent différer : réglez les couches et les bouteilles de chacune, ou réglez-en une et choisissez **Appliquer à toutes les étagères**. Les positions sont nommées par étagère, couche et numéro, comme **Étagère 1, couche du haut, position 3** ; chaque étagère se remplit par sa couche du bas. Pour deux zones de température, activez **Nouvelle zone à partir de cette étagère** sur la première étagère de la zone basse, dans l’éditeur."),
  ("help_racks_shelves", "Shelves holding a row of bottles, one to three deep. The dots under each bottle show which positions are filled, front first.", "Des étagères d’une rangée de bouteilles, sur un à trois rangs. Les points sous chaque bouteille montrent les positions occupées, de l’avant vers l’arrière."),
- ('help_racks_bins', 'Diamond bins or crates hold several bottles in a pile. Set how many bottles fit in each; tap a bin to see what is inside.', 'Les cases en losange ou les caisses contiennent plusieurs bouteilles empilées. Indiquez combien de bouteilles tiennent dans chacune ; touchez-en une pour voir son contenu.'),
+ ('help_racks_bins', 'Crates, and the diamond bins of a rack, hold several bottles in a pile. Set how many bottles fit in each; tap a bin to see what is inside.', 'Les caisses, et les cases en losange d’un casier, contiennent plusieurs bouteilles empilées. Indiquez combien de bouteilles tiennent dans chacune ; touchez-en une pour voir son contenu.'),
  ('help_racks_places_title', 'Positions', 'Positions'),
  ('help_racks_places', 'In grids and honeycombs, rows are lettered from the top and positions numbered from the left: **B3** is the second row, third position. With two bottles in a position, **B3, back** is the one behind. In a wine fridge, shelves are numbered from the top and positions along each shelf: **Shelf 2, position 3**, and the one behind it **Shelf 2, back, position 3**; an empty position shows only its number. Bins read like **Bin B3**. The same name shows on the wine’s page and in the bottle list.', 'Dans les casiers en grille et nid d’abeille, les rangées sont nommées par lettre depuis le haut et les positions numérotées depuis la gauche : **B3** est la deuxième rangée, troisième position. Avec deux bouteilles par position, **B3, fond** est celle de derrière. Dans une cave à vin réfrigérée, les étagères sont numérotées depuis le haut et les positions le long de chaque étagère : **Étagère 2, position 3**, et celle derrière **Étagère 2, fond, position 3** ; une position vide n’affiche que son numéro. Les cases se lisent comme **Case B3**. Le même nom s’affiche sur la fiche du vin et dans la liste des bouteilles.'),
  ("help_racks_finding_title", "Finding a bottle", "Trouver une bouteille"),
@@ -707,7 +704,7 @@ S = [
  ("help_racks_zooming_title", "Zooming", "Zoomer"),
  ('help_racks_zooming', 'Pinch to zoom in and out, or double-tap a spot; double-tap again to see the whole storage. Drag to look around once zoomed in. **Bottle list** lists the bottles of the storage position by position.', 'Pincez pour zoomer, ou touchez deux fois un endroit ; touchez de nouveau deux fois pour revoir tout le rangement. Faites glisser pour vous déplacer une fois zoomé. **Liste des bouteilles** montre les bouteilles du rangement position par position.'),
  ("help_racks_moving_title", "Moving bottles", "Déplacer des bouteilles"),
- ('help_racks_moving', 'Tap a bottle, then **Move**, then the new position (or press and hold a bottle); Back cancels. From the Cellar, touch and hold a wine and choose **Move**. A position with room takes the bottle; where each position holds one bottle, tapping another bottle swaps them. To put it in other storage, or out of storage with a note on where it is, choose **Move to other storage…** in the bottle’s menu, or **Move…** on the wine’s page. **Undo** puts it back.', 'Touchez une bouteille, puis **Déplacer**, puis la nouvelle position (ou appuyez longuement sur une bouteille) ; Retour annule. Depuis la Cave, appuyez longuement sur un vin et choisissez **Déplacer**. Une position libre prend la bouteille ; là où chaque position tient une bouteille, toucher une autre bouteille les échange. Pour la mettre dans un autre rangement, ou hors des rangements avec une note sur l’endroit où elle est, choisissez **Déplacer vers un autre rangement…** dans le menu de la bouteille, ou **Déplacer…** sur la fiche du vin. **Annuler** la remet où elle était.'),
+ ('help_racks_moving', 'Tap a bottle, then **Move**, then the new position (or touch and hold a bottle); Back cancels. From the Cellar, touch and hold a wine and choose **Move**. A position with room takes the bottle; where each position holds one bottle, tapping another bottle swaps them. To put it in other storage, or out of storage with a note on where it is, choose **Move to other storage…** in the bottle’s menu, or **Move…** on the wine’s page. **Undo** puts it back.', 'Touchez une bouteille, puis **Déplacer**, puis la nouvelle position (ou maintenez le doigt sur une bouteille) ; Retour annule. Depuis la Cave, maintenez le doigt sur un vin et choisissez **Déplacer**. Une position libre prend la bouteille ; là où chaque position tient une bouteille, toucher une autre bouteille les échange. Pour la mettre dans un autre rangement, ou hors des rangements avec une note sur l’endroit où elle est, choisissez **Déplacer vers un autre rangement…** dans le menu de la bouteille, ou **Déplacer…** sur la fiche du vin. **Annuler** la remet où elle était.'),
  ("help_racks_irregular_title", "Irregular storage", "Rangements irréguliers"),
  ('help_racks_irregular', 'Turn on **Rows of different lengths** for storage under a sloped ceiling or a staircase, and set the length of each row (not for honeycomb racks).', 'Activez **Rangées de longueurs différentes** pour un rangement sous pente ou sous un escalier, et réglez la longueur de chaque rangée (sauf pour les casiers nid d’abeille).'),
 
@@ -771,7 +768,7 @@ S = [
  ('help_data_devices_title', 'Restoring and your other devices', 'La restauration et vos autres appareils'),
  ('help_data_devices', 'A restore is a change made on this device: the devices that sync with this one take it too. After **Replace this cellar**, what the backup brings back returns on them, and what is not in it is deleted on them. Their sync keys stay as they are: a backup never holds them.', 'Une restauration est une modification faite sur cet appareil : les appareils synchronisés avec lui la reçoivent aussi. Après **Remplacer cette cave**, ce que la sauvegarde ramène revient sur eux, et ce qui n’y est pas y est supprimé. Leurs clés de synchronisation restent les mêmes : une sauvegarde ne les contient jamais.'),
  ("help_data_csv_title", "Spreadsheet", "Tableur"),
- ('help_data_csv', '**Export a spreadsheet (CSV)** opens in any spreadsheet app, one line per bottle with its location. Bottles on order, drunk or given away are included too, with their status and tasting notes. A CSV with at least a **name** column can be imported, including from another app.', '**Exporter un tableur (CSV)** s’ouvre dans n’importe quel tableur, une ligne par bouteille avec son rangement. Les bouteilles en commande, bues ou offertes y sont aussi, avec leur statut et leurs notes de dégustation. Un CSV avec au moins une colonne **name** peut être importé, y compris depuis une autre app.'),
+ ('help_data_csv', '**Export a spreadsheet (CSV)** opens in any spreadsheet app, one line per bottle with its position. Bottles on order, drunk or given away are included too, with their status and tasting notes. A CSV with at least a **name** column can be imported, including from another app.', '**Exporter un tableur (CSV)** s’ouvre dans n’importe quel tableur, une ligne par bouteille avec sa position. Les bouteilles en commande, bues ou offertes y sont aussi, avec leur statut et leurs notes de dégustation. Un CSV avec au moins une colonne **name** peut être importé, y compris depuis une autre app.'),
 
  ("help_privacy_title", "Privacy", "Confidentialité"),
  ("help_privacy_summary", "Your cellar stays yours.", "Votre cave reste la vôtre."),
@@ -1111,11 +1108,11 @@ S = [
  ("audit_all_found", "Every bottle is where it should be.", "Chaque bouteille est à sa position."),
  ("audit_found_state", "Found", "Trouvée"),
  ("help_racks_check_title", "Checking storage", "Vérifier un rangement"),
- ('help_racks_check', 'Choose **Check this storage**, tap each bottle you find, then **End check**. Tapping a position with several bottles marks them all; to tick them one by one, touch and hold it (it shows **8/10** when some are found). For the bottles not found, choose **Take them out of storage** (they stay in the cellar without a position) or **Mark them as gone** (they leave the cellar). **Undo** puts everything back.', 'Choisissez **Vérifier ce rangement**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Toucher une position de plusieurs bouteilles les marque toutes ; pour les cocher une par une, touchez-la longuement (elle affiche **8/10** quand certaines sont trouvées). Pour les bouteilles non trouvées, choisissez **Les sortir du rangement** (elles restent dans la cave sans position) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place.'),
+ ('help_racks_check', 'Choose **Check this storage**, tap each bottle you find, then **End check**. Tapping a position with several bottles marks them all; to tick them one by one, touch and hold it (it shows **8/10** when some are found). For the bottles not found, choose **Take them out of storage** (they stay in the cellar without a position) or **Mark them as gone** (they leave the cellar). **Undo** puts everything back.', 'Choisissez **Vérifier ce rangement**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Toucher une position de plusieurs bouteilles les marque toutes ; pour les cocher une par une, maintenez-la (elle affiche **8/10** quand certaines sont trouvées). Pour les bouteilles non trouvées, choisissez **Les sortir du rangement** (elles restent dans la cave sans position) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place.'),
 
  # Printed inventory and import from other apps
  ("settings_export_pdf", "Inventory for printing (PDF)", "Inventaire à imprimer (PDF)"),
- ("settings_export_pdf_body", "Every wine with its locations and purchase value, for insurance or a move.", "Chaque vin avec ses rangements et sa valeur d’achat, pour l’assurance ou un déménagement."),
+ ("settings_export_pdf_body", "Every wine with its positions and purchase value, for insurance or a move.", "Chaque vin avec ses positions et sa valeur d’achat, pour l’assurance ou un déménagement."),
  ("settings_import_other", "Import from another app", "Importer depuis une autre app"),
  ("settings_import_other_body", "A CSV from CellarTracker, Vivino or a spreadsheet, read on this device.", "Un CSV de CellarTracker, Vivino ou d’un tableur, lu sur cet appareil."),
  ("pdf_title", "Cellar inventory", "Inventaire de la cave"),
@@ -1128,7 +1125,7 @@ S = [
  ("pdf_rack_places", "%1$s: %2$s", "%1$s : %2$s"),
  ("msg_imported_elsewhere", "Wines tasted elsewhere imported: %1$d", "Vins goûtés ailleurs importés : %1$d"),
  ("help_data_pdf_title", "Printed inventory", "Inventaire imprimé"),
- ('help_data_pdf', '**Inventory for printing (PDF)** lists every wine in your cellar with its number of bottles, locations and purchase value: for your insurer, a move, or your family. The values are what you paid; current prices found online (**Find current price**) appear in Insights, not in the inventory.', '**Inventaire à imprimer (PDF)** liste chaque vin de votre cave avec son nombre de bouteilles, ses rangements et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; les prix actuels trouvés en ligne (**Trouver le prix actuel**) apparaissent dans les Statistiques, pas dans l’inventaire.'),
+ ('help_data_pdf', '**Inventory for printing (PDF)** lists every wine in your cellar with its number of bottles, positions and purchase value: for your insurer, a move, or your family. The values are what you paid; current prices found online (**Find current price**) appear in Insights, not in the inventory.', '**Inventaire à imprimer (PDF)** liste chaque vin de votre cave avec son nombre de bouteilles, ses positions et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; les prix actuels trouvés en ligne (**Trouver le prix actuel**) apparaissent dans les Statistiques, pas dans l’inventaire.'),
  ("help_data_other_title", "Coming from another app", "Venir d’une autre app"),
  ('help_data_other', 'Export your cellar as CSV from CellarTracker, a spreadsheet or another app, then choose **Import from another app**. Columns are recognized by their name in English or French (wine, producer, vintage, color, quantity, location, bin, price, drinking window…). A Vivino history becomes wines tasted elsewhere in the Journal, with your ratings and notes. The file is read on this device.', 'Exportez votre cave en CSV depuis CellarTracker, un tableur ou une autre app, puis choisissez **Importer depuis une autre app**. Les colonnes sont reconnues par leur nom en anglais ou en français (vin, producteur, millésime, couleur, quantité, emplacement, case, prix, fenêtre de dégustation…). Un historique Vivino devient des vins goûtés ailleurs dans le Journal, avec vos notes et vos commentaires. Le fichier est lu sur cet appareil.'),
 
@@ -1271,7 +1268,7 @@ S = [
  ('detail_value', 'Value', 'Valeur'),
  ('detail_value_footer', 'What a bottle sells for today. Counted in the estimated value of your cellar in Insights.', 'Le prix d’une bouteille aujourd’hui. Compté dans la valeur estimée de votre cave dans les Statistiques.'),
  ('insights_estimated', 'Estimated value today', 'Valeur estimée aujourd’hui'),
- ('insights_estimated_count', '%1$d of %2$d bottles priced', '%1$d bouteilles sur %2$d avec un prix'),
+ ('insights_estimated_count', '%1$d of %2$d bottles priced', '%1$d sur %2$d bouteilles avec un prix'),
  ('help_web_title', 'Searching online', 'Chercher en ligne'),
  ('help_web_summary', 'Complete a wine’s details or find its price on the web, with the search service you choose.', 'Complétez la fiche d’un vin ou trouvez son prix sur le web, avec le service de recherche de votre choix.'),
  ('help_web_off_title', 'Off by default', 'Désactivée par défaut'),
@@ -1432,10 +1429,8 @@ S = [
  ("insights_year_made_with", "Made with Encave", "Réalisé avec Encave"),
  ("help_journal_opened_title", "A bottle from your cellar", "Une bouteille de votre cave"),
  ("help_journal_opened", "Touch and hold a bottle opened from your cellar to show its wine, edit the note, add bottles of it, or put it back in the cellar if it was logged by mistake (with Undo). In the note, touch the wine’s name to open it.",
-  "Maintenez appuyée une bouteille ouverte de votre cave pour afficher son vin, modifier la note, en ajouter des bouteilles, ou la remettre en cave si elle a été notée par erreur (avec Annuler). Dans la note, touchez le nom du vin pour l’ouvrir."),
+  "Maintenez une bouteille ouverte de votre cave pour afficher son vin, modifier la note, en ajouter des bouteilles, ou la remettre en cave si elle a été notée par erreur (avec Annuler). Dans la note, touchez le nom du vin pour l’ouvrir."),
  ("rack_field_shelves", "Counted from the top. Shelves are numbered 1, 2, 3…", "Comptées depuis le haut. Les étagères sont numérotées 1, 2, 3…"),
- ("kind_fridge_layers", "Wine fridge, shelves in layers", "Cave à vin réfrigérée, étagères en couches"),
- ("kind_fridge_layers_reversed", "Wine fridge, shelves in layers · two deep, head-to-tail", "Cave à vin réfrigérée, étagères en couches · deux rangs, tête-bêche"),
  ("cell_check_found", "Found", "Trouvée"),
  ("cell_check_not_found", "Not found yet", "Pas encore trouvée"),
  # Storage wizard: a new storage step by step (type, settings, name), and the Storage list.
@@ -1625,6 +1620,15 @@ def old_french_words(text):
 OLD_FRENCH_ALLOWED = {"help_data_other"}
 
 
+# A count first, then a plural noun, outside <plurals>: wrong for 1 ("1 bouteilles sur 40").
+# Say "%1$d sur %2$d bouteilles", or make it a plural.
+COUNT_THEN_PLURAL = re.compile(r"^%1\$d\s+[a-zà-ÿœ’]+s\b", re.I)
+
+
+def count_then_plural(text):
+    return bool(COUNT_THEN_PLURAL.search(text))
+
+
 def check(res):
     problems = []
     for lang, folder in (("en", "values"), ("fr", "values-fr")):
@@ -1639,6 +1643,9 @@ def check(res):
             problems.append(f"plain space before a mark in French: {found!r} ({name})")
         for found in loose_guillemets(value):
             problems.append(f"« » without a narrow no-break space inside: {found!r} ({name})")
+    for row in S:
+        if count_then_plural(text_for(row[2], "fr")):
+            problems.append(f"French count followed by a plural noun, wrong for 1 (say “%1$d sur %2$d …”): {row[0]}")
     # Typographic apostrophes only: a straight one is written \' in strings.xml.
     for row in S:
         for lang, value in (("English", row[1]), ("French", row[2])):

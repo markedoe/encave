@@ -101,7 +101,7 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
         return
     }
     val wine = existing?.let { cellar.wines[it.wineId] }
-    val form = rememberRetained("discovery.form") { WineFormState(wine, viewModel.year) }
+    val form = app.encave.ui.add.rememberWineForm("discovery.form", wine, viewModel.year)
     val known = remember(cellar) { cellar.knownValues() }
     var setting by rememberSaveable { mutableStateOf(existing?.setting) }
     var place by rememberSaveable { mutableStateOf(existing?.place.orEmpty()) }

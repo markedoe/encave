@@ -85,7 +85,9 @@ struct RackEditor: View {
                         Stepper(value: $binCapacity, in: 2...40) {
                             LabeledContent("Bottles per bin") { Text(verbatim: "\(binCapacity)").monospacedDigit() }
                         }
-                        .fieldHelp("A diamond bin of about 30 cm holds around 10 standard bottles.")
+                        .fieldHelp(storageType == .crates
+                            ? "A wooden crate usually holds 6 or 12 bottles."
+                            : "A diamond bin of about 30 cm holds around 10 standard bottles.")
                     case .staggered:
                         Picker("Rows deep", selection: $depth.animation()) {
                             Text(verbatim: "1").tag(1)

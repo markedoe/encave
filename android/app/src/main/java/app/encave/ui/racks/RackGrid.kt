@@ -644,7 +644,8 @@ private fun RackCellView(
     val description = cellDescription(
         rack, cell, bottles, cellar, resources,
         found = if (countsFound) selectedCount else null,
-        isSelected = selectedCount > 0 && !countsFound, isShown = isHighlighted || isFocused, isDimmed = isDimmed,
+        // Selected is said by the semantics' selected state, not in the description as well.
+        isShown = isHighlighted || isFocused, isDimmed = isDimmed,
         depth = place.depth,
     )
     val checkState = cellCheckState(bottles, if (countsFound) selectedCount else null, resources)
@@ -864,7 +865,6 @@ internal fun cellDescription(
     cellar: Cellar,
     resources: android.content.res.Resources,
     found: Int? = null,
-    isSelected: Boolean = false,
     isShown: Boolean = false,
     isDimmed: Boolean = false,
     /** A front (0) or back (1) place of a fridge drawn front and back; null for the whole cell. */
@@ -898,7 +898,6 @@ internal fun cellDescription(
     }
     return when {
         found != null && found > 0 && found < bottles.size -> resources.getString(R.string.cell_found_partial, place, found, bottles.size)
-        isSelected -> resources.getString(R.string.slot_selected, base)
         isShown -> resources.getString(R.string.cell_highlighted, base)
         isDimmed -> resources.getString(R.string.cell_dimmed, base)
         else -> base

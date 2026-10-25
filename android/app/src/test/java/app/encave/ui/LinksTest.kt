@@ -98,4 +98,17 @@ class LinksTest {
         compose.onNodeWithTag("action.scan_barcode").assertExists()
         compose.onNodeWithTag("barcode.field").assertDoesNotExist()
     }
+
+    @Test
+    fun scanWhileAddingABottle() {
+        // The Scan shortcut while Add bottle is already open: the same screen, now scanning.
+        open(MainActivity.LINK_ADD)
+        compose.onNodeWithTag("barcode.field").assertDoesNotExist()
+        scenario!!.onActivity { activity ->
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(MainActivity.LINK_SCAN), app, MainActivity::class.java)
+            MainActivity::class.java.getDeclaredMethod("onNewIntent", Intent::class.java).apply { isAccessible = true }.invoke(activity, intent)
+        }
+        compose.waitForIdle()
+        compose.onNodeWithTag("barcode.field").assertExists()
+    }
 }

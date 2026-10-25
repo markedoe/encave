@@ -45,6 +45,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,6 +64,8 @@ import app.encave.core.Wine
 import app.encave.core.WineColor
 import app.encave.data.ai.LabelAnalysis
 import app.encave.ui.components.Hint
+import app.encave.ui.components.rememberRetained
+import app.encave.core.WineLabelFrame
 import app.encave.ui.components.WineColorDot
 import app.encave.ui.components.labelRes
 import app.encave.ui.theme.Dimens
@@ -74,9 +79,34 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.util.UUID
 import kotlin.math.roundToInt
 
+/**
+ * What a wine form keeps outside saved state: the new photo (too big for it) and where its
+ * label is. Kept while the activity is recreated, lost if the app's process is ended.
+ */
+class WineFormPhoto(labelFrame: WineLabelFrame?) {
+    val newPhoto = mutableStateOf<ByteArray?>(null)
+    val labelFrame = mutableStateOf(labelFrame)
+}
+
+/**
+ * A wine form kept when the activity is recreated and, but for its new photo, when the app's
+ * process is ended meanwhile (the camera app open): what was typed is never lost. [key]
+ * names the form within the screen.
+ */
+@Composable
+fun rememberWineForm(key: String, initial: Wine?, year: Int): WineFormState {
+    val photo = rememberRetained("$key.photo") { WineFormPhoto(initial?.labelFrame) }
+    return rememberSaveable(saver = WineFormState.saver(initial, year, photo)) { WineFormState(initial, year, photo) }
+}
+
 /** Editable copy of a wine. The drinking window follows the estimate until the user changes it. */
-class WineFormState(private val initial: Wine?, private val year: Int) {
-    val id: UUID = initial?.id ?: UUID.randomUUID()
+class WineFormState(
+    private val initial: Wine?,
+    private val year: Int,
+    photo: WineFormPhoto = WineFormPhoto(initial?.labelFrame),
+    restoredId: UUID? = null,
+) {
+    val id: UUID = restoredId ?: initial?.id ?: UUID.randomUUID()
     var name by mutableStateOf(initial?.name.orEmpty())
     var producer by mutableStateOf(initial?.producer.orEmpty())
     var vintageText by mutableStateOf(initial?.vintage?.toString().orEmpty())
@@ -94,7 +124,7 @@ class WineFormState(private val initial: Wine?, private val year: Int) {
 
     /** Photo already stored for this wine, a new prepared JPEG, or removal. */
     val storedPhotoId: String? = initial?.photoId
-    var newPhoto by mutableStateOf<ByteArray?>(null)
+    var newPhoto by photo.newPhoto
     var photoRemoved by mutableStateOf(false)
     val hasPhoto: Boolean get() = newPhoto != null || (storedPhotoId != null && !photoRemoved)
 
@@ -102,7 +132,7 @@ class WineFormState(private val initial: Wine?, private val year: Int) {
     var aiCompletedAt by mutableStateOf(initial?.aiCompletedAt)
 
     /** Where the label is in the label photo, from the AI: set by [apply], kept on save. */
-    var labelFrame by mutableStateOf(initial?.labelFrame)
+    var labelFrame by photo.labelFrame
 
     /** Values filled automatically from the label; those may be replaced again, typed ones never. */
     private val autoFilled = mutableMapOf<String, Any>()
@@ -183,6 +213,51 @@ class WineFormState(private val initial: Wine?, private val year: Int) {
         grapes.clear()
         grapes.addAll(wine.grapes)
         autoFilled.clear()
+    }
+
+    companion object {
+        /** Saves what was typed and chosen (not the photo, kept in [photo]). */
+        fun saver(initial: Wine?, year: Int, photo: WineFormPhoto): Saver<WineFormState, Any> = listSaver(
+            save = { f ->
+                listOf(
+                    f.id.toString(), f.name, f.producer, f.vintageText, f.color?.raw, f.region, f.country, f.appellation,
+                    ArrayList(f.grapes), f.grapeInput, f.notes, ArrayList(f.tags), f.tagInput, f.showErrors, f.photoRemoved,
+                    f.aiCompletedAt?.toString(), f.manualWindow?.first, f.manualWindow?.last, f.windowEnabled,
+                    ArrayList(f.autoFilled.keys), ArrayList(f.autoFilled.values.map { (it as? WineColor)?.raw ?: it.toString() }),
+                )
+            },
+            restore = { v ->
+                WineFormState(initial, year, photo, UUID.fromString(v[0] as String)).apply {
+                    name = v[1] as String
+                    producer = v[2] as String
+                    vintageText = v[3] as String
+                    color = (v[4] as String?)?.let { WineColor.fromRaw(it) }
+                    region = v[5] as String
+                    country = v[6] as String
+                    appellation = v[7] as String
+                    grapes.clear(); grapes.addAll(v[8] as List<String>)
+                    grapeInput = v[9] as String
+                    notes = v[10] as String
+                    tags.clear(); tags.addAll(v[11] as List<String>)
+                    tagInput = v[12] as String
+                    showErrors = v[13] as Boolean
+                    photoRemoved = v[14] as Boolean
+                    aiCompletedAt = (v[15] as String?)?.let { java.time.Instant.parse(it) }
+                    val from = v[16] as Int?
+                    val until = v[17] as Int?
+                    manualWindow = if (from != null && until != null) from..until else null
+                    windowEnabled = v[18] as Boolean
+                    autoFilled.clear()
+                    (v[19] as List<String>).zip(v[20] as List<String>).forEach { (key, value) ->
+                        autoFilled[key] = when (key) {
+                            "vintage" -> value.toInt()
+                            "color" -> WineColor.fromRaw(value) ?: return@forEach
+                            else -> value
+                        }
+                    }
+                }
+            },
+        )
     }
 
     /** What the user can edit, to tell whether anything changed since it was taken (Discard changes?). */
@@ -298,7 +373,7 @@ fun WineEssentials(
         }
         // Right under the name: the web often has the details the label lacks.
         val webSearch by webSearchPreferences().settings.collectAsStateWithLifecycle()
-        var searching by remember { mutableStateOf(false) }
+        var searching by rememberSaveable { mutableStateOf(false) }
         if (webSearch.isEnabled) {
             OutlinedButton(onClick = { searching = true }, enabled = !form.nameMissing, modifier = Modifier.testTag("form.search_online")) {
                 Icon(Icons.Outlined.Public, contentDescription = null)

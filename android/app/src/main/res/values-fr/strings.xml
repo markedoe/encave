@@ -36,7 +36,7 @@
     <string name="action_insights">Statistiques</string>
     <string name="action_surprise">Autre idée</string>
     <string name="action_remove_from_rack">Sortir du rangement</string>
-    <string name="action_clear_filters">Retirer les filtres</string>
+    <string name="action_clear_filters">Effacer les filtres</string>
     <string name="action_change">Changer</string>
     <string name="action_put_back">Remettre en cave</string>
     <string name="search_hint">Vin, producteur, région, cépage, millésime</string>
@@ -164,7 +164,6 @@
     <string name="value_increase">Augmenter : %1$s</string>
     <string name="quantity_increase">Plus de bouteilles</string>
     <string name="edit_wine_title">Modifier le vin</string>
-    <string name="slot_selected">%1$s, sélectionnée</string>
     <string name="slot_choose">Choisir cette position</string>
     <string name="drink_title">Ouvrir une bouteille</string>
     <string name="drink_which">Quelle bouteille ?</string>
@@ -211,7 +210,7 @@
     <string name="err_missing_name">Le fichier CSV doit avoir une colonne « name ».</string>
     <string name="racks_empty_title">Aucun rangement</string>
     <string name="racks_empty_body">Décrivez vos rangements pour voir exactement où se trouve chaque bouteille.</string>
-    <string name="rack_occupancy">%1$d bouteilles sur %2$d</string>
+    <string name="rack_occupancy">%1$d sur %2$d bouteilles</string>
     <string name="rack_not_found">Rangement introuvable</string>
     <string name="rack_editor_edit">Modifier le rangement</string>
     <string name="rack_preview">Aperçu</string>
@@ -436,7 +435,7 @@
     <string name="serving_decanting">Carafage</string>
     <string name="serving_decant_value">Environ %1$d min avant de servir</string>
     <string name="serving_no_decant">Pas nécessaire</string>
-    <string name="discovery_title">Vin goûté ailleurs</string>
+    <string name="discovery_title">Goûté ailleurs</string>
     <string name="discovery_new_long">Noter un vin goûté ailleurs</string>
     <string name="discovery_to_buy">À acheter</string>
     <string name="discovery_to_buy_count">À acheter · %1$d</string>
@@ -480,11 +479,9 @@
     <string name="kind_grid">Casier classique</string>
     <string name="kind_staggered">Casier nid d’abeille</string>
     <string name="kind_shelves">Cave à vin réfrigérée</string>
-    <string name="kind_bins">Cases ou caisses</string>
     <string name="kind_grid_body">Une bouteille par position, simple ou double profondeur</string>
     <string name="kind_staggered_body">Rangées décalées, comme les casiers en métal ou en terre cuite, ou bouteilles empilées sur les étagères d’une cave à vin réfrigérée</string>
     <string name="kind_shelves_body">Étagères d’une rangée de bouteilles, sur un à trois rangs</string>
-    <string name="kind_bins_body">Cases en losange ou caisses de plusieurs bouteilles</string>
     <string name="rows_grid">Rangées</string>
     <string name="rows_shelves">Étagères</string>
     <string name="rows_bins">Rangées de cases</string>
@@ -618,7 +615,7 @@
     <string name="help_start_title">Prise en main</string>
     <string name="help_start_summary">Les quatre sections et comment elles fonctionnent ensemble.</string>
     <string name="help_start_cellar">Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, avec plusieurs mots si vous voulez (« margaux 2015 »), et filtrez par style, cépage ou moment où les boire : les pastilles ne montrent que ce que vos bouteilles ont.</string>
-    <string name="help_start_racks">Vos casiers, caves à vin réfrigérées et cases dessinés tels qu’ils sont, pour savoir exactement où est chaque bouteille.</string>
+    <string name="help_start_racks">Vos casiers, caves à vin réfrigérées et caisses dessinés tels qu’ils sont, pour savoir exactement où est chaque bouteille.</string>
     <string name="help_start_tonight">Quoi ouvrir maintenant : d’abord les bouteilles à leur apogée ou à boire bientôt, et des idées selon le plat.</string>
     <string name="help_start_journal">Votre carnet de dégustation : les bouteilles ouvertes de votre cave et les vins goûtés ailleurs, avec vos notes, votre liste d’achats et vos statistiques.</string>
     <string name="help_start_try_title">Essayer</string>
@@ -657,10 +654,10 @@
     <string name="help_racks_staggered">Une rangée sur deux est décalée d’une demi-bouteille et en contient une de moins, comme les casiers en métal ou en terre cuite. Indiquez le nombre de bouteilles de la rangée la plus large, et dans **Rangées en profondeur** si une deuxième bouteille tient derrière chacune.</string>
     <string name="help_racks_layers_title">Cave à vin réfrigérée avec bouteilles en couches</string>
     <string name="help_racks_bands_title">Deux rangs, tête-bêche</string>
-    <string name="help_racks_bands">Quand une cave à vin réfrigérée avec bouteilles en couches a deux rangs de profondeur, chaque étagère montre deux bandes : **Devant**, les bouteilles dont le culot est vers vous, puis **Fond**, les bouteilles derrière elles, dessinées plus petites. Beaucoup de caves à vin réfrigérées rangent les bouteilles du fond tête-bêche, le goulot vers vous entre les culots de celles de devant : activez **Bouteilles du fond tête-bêche** dans l’éditeur, et la bande du fond montre leurs goulots et leurs capsules. Ses couches sont dessinées une demi-position plus à droite, chaque goulot entre deux culots. Touchez n’importe quelle position de l’une ou l’autre bande pour voir, ajouter ou déplacer sa bouteille ; sur grand écran (tablette à l’horizontale, pliable déplié), touchez longuement une bouteille pour la faire glisser d’une bande à l’autre. Les positions se lisent comme **Étagère 3, devant, couche du bas, position 2**, et celle derrière **Étagère 3, fond, couche du bas, position 2**. Les autres rangements à deux rangs montrent les points décrits plus bas.</string>
+    <string name="help_racks_bands">Quand une cave à vin réfrigérée avec bouteilles en couches a deux rangs de profondeur, chaque étagère montre deux bandes : **Devant**, les bouteilles dont le culot est vers vous, puis **Fond**, les bouteilles derrière elles, dessinées plus petites. Beaucoup de caves à vin réfrigérées rangent les bouteilles du fond tête-bêche, le goulot vers vous entre les culots de celles de devant : activez **Bouteilles du fond tête-bêche** dans l’éditeur, et la bande du fond montre leurs goulots et leurs capsules. Ses couches sont dessinées une demi-position plus à droite, chaque goulot entre deux culots. Touchez n’importe quelle position de l’une ou l’autre bande pour voir, ajouter ou déplacer sa bouteille ; sur grand écran (tablette à l’horizontale, pliable déplié), maintenez le doigt sur une bouteille pour la faire glisser d’une bande à l’autre. Les positions se lisent comme **Étagère 3, devant, couche du bas, position 2**, et celle derrière **Étagère 3, fond, couche du bas, position 2**. Les autres rangements à deux rangs montrent les points décrits plus bas.</string>
     <string name="help_racks_layers">Pour une cave à vin réfrigérée dont les étagères portent des bouteilles empilées en quinconce, choisissez **Cave à vin réfrigérée** en ajoutant le rangement, puis 2 ou 3 dans **Couches par étagère**. Chaque étagère porte une à trois couches : par exemple 6 bouteilles en bas et 5 au-dessus, posées dans les creux. Les étagères peuvent différer : réglez les couches et les bouteilles de chacune, ou réglez-en une et choisissez **Appliquer à toutes les étagères**. Les positions sont nommées par étagère, couche et numéro, comme **Étagère 1, couche du haut, position 3** ; chaque étagère se remplit par sa couche du bas. Pour deux zones de température, activez **Nouvelle zone à partir de cette étagère** sur la première étagère de la zone basse, dans l’éditeur.</string>
     <string name="help_racks_shelves">Des étagères d’une rangée de bouteilles, sur un à trois rangs. Les points sous chaque bouteille montrent les positions occupées, de l’avant vers l’arrière.</string>
-    <string name="help_racks_bins">Les cases en losange ou les caisses contiennent plusieurs bouteilles empilées. Indiquez combien de bouteilles tiennent dans chacune ; touchez-en une pour voir son contenu.</string>
+    <string name="help_racks_bins">Les caisses, et les cases en losange d’un casier, contiennent plusieurs bouteilles empilées. Indiquez combien de bouteilles tiennent dans chacune ; touchez-en une pour voir son contenu.</string>
     <string name="help_racks_places_title">Positions</string>
     <string name="help_racks_places">Dans les casiers en grille et nid d’abeille, les rangées sont nommées par lettre depuis le haut et les positions numérotées depuis la gauche : **B3** est la deuxième rangée, troisième position. Avec deux bouteilles par position, **B3, fond** est celle de derrière. Dans une cave à vin réfrigérée, les étagères sont numérotées depuis le haut et les positions le long de chaque étagère : **Étagère 2, position 3**, et celle derrière **Étagère 2, fond, position 3** ; une position vide n’affiche que son numéro. Les cases se lisent comme **Case B3**. Le même nom s’affiche sur la fiche du vin et dans la liste des bouteilles.</string>
     <string name="help_racks_finding_title">Trouver une bouteille</string>
@@ -668,7 +665,7 @@
     <string name="help_racks_zooming_title">Zoomer</string>
     <string name="help_racks_zooming">Pincez pour zoomer, ou touchez deux fois un endroit ; touchez de nouveau deux fois pour revoir tout le rangement. Faites glisser pour vous déplacer une fois zoomé. **Liste des bouteilles** montre les bouteilles du rangement position par position.</string>
     <string name="help_racks_moving_title">Déplacer des bouteilles</string>
-    <string name="help_racks_moving">Touchez une bouteille, puis **Déplacer**, puis la nouvelle position (ou appuyez longuement sur une bouteille) ; Retour annule. Depuis la Cave, appuyez longuement sur un vin et choisissez **Déplacer**. Une position libre prend la bouteille ; là où chaque position tient une bouteille, toucher une autre bouteille les échange. Pour la mettre dans un autre rangement, ou hors des rangements avec une note sur l’endroit où elle est, choisissez **Déplacer vers un autre rangement…** dans le menu de la bouteille, ou **Déplacer…** sur la fiche du vin. **Annuler** la remet où elle était.</string>
+    <string name="help_racks_moving">Touchez une bouteille, puis **Déplacer**, puis la nouvelle position (ou maintenez le doigt sur une bouteille) ; Retour annule. Depuis la Cave, maintenez le doigt sur un vin et choisissez **Déplacer**. Une position libre prend la bouteille ; là où chaque position tient une bouteille, toucher une autre bouteille les échange. Pour la mettre dans un autre rangement, ou hors des rangements avec une note sur l’endroit où elle est, choisissez **Déplacer vers un autre rangement…** dans le menu de la bouteille, ou **Déplacer…** sur la fiche du vin. **Annuler** la remet où elle était.</string>
     <string name="help_racks_irregular_title">Rangements irréguliers</string>
     <string name="help_racks_irregular">Activez **Rangées de longueurs différentes** pour un rangement sous pente ou sous un escalier, et réglez la longueur de chaque rangée (sauf pour les casiers nid d’abeille).</string>
     <string name="help_tonight_title">Ce soir et fenêtres de dégustation</string>
@@ -726,7 +723,7 @@
     <string name="help_data_devices_title">La restauration et vos autres appareils</string>
     <string name="help_data_devices">Une restauration est une modification faite sur cet appareil : les appareils synchronisés avec lui la reçoivent aussi. Après **Remplacer cette cave**, ce que la sauvegarde ramène revient sur eux, et ce qui n’y est pas y est supprimé. Leurs clés de synchronisation restent les mêmes : une sauvegarde ne les contient jamais.</string>
     <string name="help_data_csv_title">Tableur</string>
-    <string name="help_data_csv">**Exporter un tableur (CSV)** s’ouvre dans n’importe quel tableur, une ligne par bouteille avec son rangement. Les bouteilles en commande, bues ou offertes y sont aussi, avec leur statut et leurs notes de dégustation. Un CSV avec au moins une colonne **name** peut être importé, y compris depuis une autre app.</string>
+    <string name="help_data_csv">**Exporter un tableur (CSV)** s’ouvre dans n’importe quel tableur, une ligne par bouteille avec sa position. Les bouteilles en commande, bues ou offertes y sont aussi, avec leur statut et leurs notes de dégustation. Un CSV avec au moins une colonne **name** peut être importé, y compris depuis une autre app.</string>
     <string name="help_privacy_title">Confidentialité</string>
     <string name="help_privacy_summary">Votre cave reste la vôtre.</string>
     <string name="help_privacy_1">Votre cave, ses photos et ses documents sont gardés sur vos appareils, dans le stockage privé d’Encave, qu’Android chiffre. Ils sont exclus des sauvegardes Google dans le cloud et ne passent sur un nouveau téléphone que par un transfert direct depuis l’ancien. Les sauvegardes que fait Encave sont des fichiers ZIP non chiffrés : la sauvegarde hebdomadaire, activée au départ, va dans le dossier partagé Download/Encave, et **Sauvegarder maintenant** là où vous le choisissez. Pas de compte, pas de mesure d’audience, pas de pistage, pas de publicité : le développeur d’Encave ne reçoit rien.</string>
@@ -1038,9 +1035,9 @@
     <string name="audit_all_found">Chaque bouteille est à sa position.</string>
     <string name="audit_found_state">Trouvée</string>
     <string name="help_racks_check_title">Vérifier un rangement</string>
-    <string name="help_racks_check">Choisissez **Vérifier ce rangement**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Toucher une position de plusieurs bouteilles les marque toutes ; pour les cocher une par une, touchez-la longuement (elle affiche **8/10** quand certaines sont trouvées). Pour les bouteilles non trouvées, choisissez **Les sortir du rangement** (elles restent dans la cave sans position) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place.</string>
+    <string name="help_racks_check">Choisissez **Vérifier ce rangement**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Toucher une position de plusieurs bouteilles les marque toutes ; pour les cocher une par une, maintenez-la (elle affiche **8/10** quand certaines sont trouvées). Pour les bouteilles non trouvées, choisissez **Les sortir du rangement** (elles restent dans la cave sans position) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place.</string>
     <string name="settings_export_pdf">Inventaire à imprimer (PDF)</string>
-    <string name="settings_export_pdf_body">Chaque vin avec ses rangements et sa valeur d’achat, pour l’assurance ou un déménagement.</string>
+    <string name="settings_export_pdf_body">Chaque vin avec ses positions et sa valeur d’achat, pour l’assurance ou un déménagement.</string>
     <string name="settings_import_other">Importer depuis une autre app</string>
     <string name="settings_import_other_body">Un CSV de CellarTracker, Vivino ou d’un tableur, lu sur cet appareil.</string>
     <string name="pdf_title">Inventaire de la cave</string>
@@ -1053,7 +1050,7 @@
     <string name="pdf_rack_places">%1$s : %2$s</string>
     <string name="msg_imported_elsewhere">Vins goûtés ailleurs importés : %1$d</string>
     <string name="help_data_pdf_title">Inventaire imprimé</string>
-    <string name="help_data_pdf">**Inventaire à imprimer (PDF)** liste chaque vin de votre cave avec son nombre de bouteilles, ses rangements et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; les prix actuels trouvés en ligne (**Trouver le prix actuel**) apparaissent dans les Statistiques, pas dans l’inventaire.</string>
+    <string name="help_data_pdf">**Inventaire à imprimer (PDF)** liste chaque vin de votre cave avec son nombre de bouteilles, ses positions et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; les prix actuels trouvés en ligne (**Trouver le prix actuel**) apparaissent dans les Statistiques, pas dans l’inventaire.</string>
     <string name="help_data_other_title">Venir d’une autre app</string>
     <string name="help_data_other">Exportez votre cave en CSV depuis CellarTracker, un tableur ou une autre app, puis choisissez **Importer depuis une autre app**. Les colonnes sont reconnues par leur nom en anglais ou en français (vin, producteur, millésime, couleur, quantité, emplacement, case, prix, fenêtre de dégustation…). Un historique Vivino devient des vins goûtés ailleurs dans le Journal, avec vos notes et vos commentaires. Le fichier est lu sur cet appareil.</string>
     <string name="action_scan_barcode">Scanner le code-barres</string>
@@ -1186,7 +1183,7 @@
     <string name="detail_value">Valeur</string>
     <string name="detail_value_footer">Le prix d’une bouteille aujourd’hui. Compté dans la valeur estimée de votre cave dans les Statistiques.</string>
     <string name="insights_estimated">Valeur estimée aujourd’hui</string>
-    <string name="insights_estimated_count">%1$d bouteilles sur %2$d avec un prix</string>
+    <string name="insights_estimated_count">%1$d sur %2$d bouteilles avec un prix</string>
     <string name="help_web_title">Chercher en ligne</string>
     <string name="help_web_summary">Complétez la fiche d’un vin ou trouvez son prix sur le web, avec le service de recherche de votre choix.</string>
     <string name="help_web_off_title">Désactivée par défaut</string>
@@ -1332,10 +1329,8 @@
     <string name="insights_year_share_title">Votre année en vin %1$s</string>
     <string name="insights_year_made_with">Réalisé avec Encave</string>
     <string name="help_journal_opened_title">Une bouteille de votre cave</string>
-    <string name="help_journal_opened">Maintenez appuyée une bouteille ouverte de votre cave pour afficher son vin, modifier la note, en ajouter des bouteilles, ou la remettre en cave si elle a été notée par erreur (avec Annuler). Dans la note, touchez le nom du vin pour l’ouvrir.</string>
+    <string name="help_journal_opened">Maintenez une bouteille ouverte de votre cave pour afficher son vin, modifier la note, en ajouter des bouteilles, ou la remettre en cave si elle a été notée par erreur (avec Annuler). Dans la note, touchez le nom du vin pour l’ouvrir.</string>
     <string name="rack_field_shelves">Comptées depuis le haut. Les étagères sont numérotées 1, 2, 3…</string>
-    <string name="kind_fridge_layers">Cave à vin réfrigérée, étagères en couches</string>
-    <string name="kind_fridge_layers_reversed">Cave à vin réfrigérée, étagères en couches · deux rangs, tête-bêche</string>
     <string name="cell_check_found">Trouvée</string>
     <string name="cell_check_not_found">Pas encore trouvée</string>
     <string name="wizard_title">Nouveau rangement</string>

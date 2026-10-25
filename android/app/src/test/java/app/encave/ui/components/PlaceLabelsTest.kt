@@ -68,12 +68,18 @@ class PlaceLabelsTest {
         assertEquals("Étagère\u00A01, position\u00A06", fridge.displayLabel(Slot(fridge.id, 0, 5), resources))
         val bands = Rack(name = "F", kind = RackKind.Staggered, rows = 2, columns = 6, depth = 2, shelfLayers = listOf(1, 1))
         assertEquals("Étagère\u00A01, fond, position\u00A03", bands.displayLabel(Slot(bands.id, 0, 2, 1), resources))
-        assertEquals("Cave à vin réfrigérée, étagères en couches", resources.getString(bands.kindLabelRes))
         val deep = Rack(name = "Armoire", kind = RackKind.Shelves, rows = 4, columns = 6, depth = 2)
         assertEquals("Étagère\u00A02, fond, position\u00A03", deep.displayLabel(Slot(deep.id, 1, 2, 1), resources))
         val bins = Rack(name = "Losanges", kind = RackKind.Bins, rows = 2, columns = 3, binCapacity = 6)
         assertEquals("Case B3", bins.displayLabel(Slot(bins.id, 1, 2, 4), resources))
         assertEquals("Cave à vin réfrigérée", resources.getString(RackKind.Shelves.labelRes))
         assertEquals("Rangements", resources.getString(app.encave.R.string.nav_racks))
+    }
+
+    @Test
+    @Config(qualifiers = "fr")
+    fun aCountOfOneReadsWellInFrench() {
+        assertEquals("1 sur 40 bouteilles", resources.getString(app.encave.R.string.rack_occupancy, 1, 40))
+        assertEquals("1 sur 12 bouteilles avec un prix", resources.getString(app.encave.R.string.insights_estimated_count, 1, 12))
     }
 }

@@ -22,6 +22,11 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.RuntimeEnvironment
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.assertIsSelected
 
 /** On a tablet, Storage, Tonight and Journal show the chosen item beside their list. */
 @RunWith(RobolectricTestRunner::class)
@@ -81,5 +86,53 @@ class ListDetailPanesTest {
         compose.waitForIdle()
         compose.onAllNodes(hasText("My tasting") and inDetail).onFirst().assertExists()
         compose.onAllNodesWithTag("journal.row.cellar").onFirst().assertIsDisplayed()
+    }
+
+    private fun typeInTheNote(text: String) {
+        compose.onAllNodes(hasSetTextAction() and inDetail).onFirst().performTextInput(text)
+        compose.waitForIdle()
+    }
+
+    private fun recreateAt(qualifiers: String) {
+        RuntimeEnvironment.setQualifiers(qualifiers)
+        compose.activityRule.scenario.recreate()
+        compose.waitForIdle()
+    }
+
+    @Test
+    fun aNoteBeingTypedStaysWhenTheWindowNarrowsAndWidens() {
+        tab("Journal")
+        compose.onAllNodesWithTag("journal.row.cellar").onFirst().performClick()
+        compose.waitForIdle()
+        typeInTheNote("Kept while folding")
+        // Portrait (one pane): the note stays open, full screen, with what was typed.
+        recreateAt("en-w600dp-h1000dp-xhdpi")
+        compose.onAllNodesWithText("Kept while folding", substring = true).onFirst().assertExists()
+        // Landscape again: still beside the list.
+        recreateAt("en-w1280dp-h800dp-xhdpi")
+        compose.onAllNodes(hasText("Kept while folding", substring = true) and inDetail).onFirst().assertExists()
+        compose.onAllNodesWithTag("journal.row.cellar").onFirst().assertIsDisplayed()
+    }
+
+    @Test
+    fun openingAnotherEntryWithAChangedNoteAsksFirst() {
+        tab("Journal")
+        val rows = compose.onAllNodesWithTag("journal.row.cellar")
+        rows[0].performClick()
+        compose.waitForIdle()
+        typeInTheNote("Not lost")
+        rows[1].performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Discard this note?").assertExists()
+        compose.onNodeWithText("Keep editing").performClick()
+        compose.waitForIdle()
+        compose.onAllNodes(hasText("Not lost", substring = true) and inDetail).onFirst().assertExists()
+        // Discarded: the other entry opens.
+        rows[1].performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("discard.confirm").performClick()
+        compose.waitForIdle()
+        compose.onAllNodesWithText("Not lost", substring = true).assertCountEquals(0)
+        compose.onAllNodes(hasText("My tasting") and inDetail).onFirst().assertExists()
     }
 }

@@ -10,10 +10,10 @@ import app.encave.core.RackKind
 import app.encave.core.Slot
 import app.encave.core.Wine
 import app.encave.core.WineColor
-import app.encave.ui.components.kindLabelRes
+import app.encave.core.storageType
+import app.encave.ui.components.labelRes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -111,8 +111,8 @@ class RackSpokenPlacesTest {
     @Test
     fun fridgesOnShelvesAreNotCalledHoneycombs() {
         val fridge = Rack(name = "F", kind = RackKind.Staggered, rows = 4, columns = 6, depth = 2, shelfLayers = listOf(2, 2), backReversed = true)
-        assertEquals(R.string.kind_fridge_layers_reversed, fridge.kindLabelRes)
+        assertEquals("Wine fridge", resources.getString(fridge.storageType.labelRes))
         val honeycomb = Rack(name = "H", kind = RackKind.Staggered, rows = 4, columns = 6)
-        assertTrue(resources.getString(honeycomb.kindLabelRes).contains("Honeycomb"))
+        assertEquals("Rack", resources.getString(honeycomb.storageType.labelRes))
     }
 }

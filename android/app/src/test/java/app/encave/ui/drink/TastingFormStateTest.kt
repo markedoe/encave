@@ -1,5 +1,6 @@
 package app.encave.ui.drink
 
+import androidx.compose.runtime.saveable.SaverScope
 import app.encave.core.Tasting
 import java.time.Instant
 import org.junit.Assert.assertEquals
@@ -33,5 +34,22 @@ class TastingFormStateTest {
         assertFalse(form.isDirty)
         form.rating = 4
         assertTrue(form.isDirty)
+    }
+
+    @Test
+    fun aNoteBeingTypedIsSavedAndStillKnownAsChanged() {
+        // Saved state outlives the app's process (ended while the camera app was open).
+        val form = TastingFormState(Tasting(date = date, note = "Lovely"))
+        form.note = "Lovely, long finish"
+        form.rating = 4
+        form.expanded = true
+        val saved = with(TastingFormState.Saver) { SaverScope { true }.save(form) }!!
+        val restored = TastingFormState.Saver.restore(saved)!!
+        assertEquals(form.toTasting(), restored.toTasting())
+        assertTrue(restored.expanded)
+        assertTrue(restored.isDirty)
+        restored.note = "Lovely"
+        restored.rating = null
+        assertFalse(restored.isDirty)
     }
 }

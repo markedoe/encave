@@ -509,17 +509,22 @@ private fun TastingForm(viewModel: AppViewModel, navigator: AppNavigator, bottle
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val bottle = cellar.bottles.values.firstOrNull { it.id.toString() == bottleId }
     val wine = bottle?.let { cellar.wines[it.wineId] }
-    // Kept while the activity is recreated; started from the tasting once it is there
+    // Kept in saved state (rotation, and the app's process ended meanwhile); started from the tasting once it is there
     // (a bottle opened without one, such as an imported one, starts from the day it was added).
     val form = bottle?.takeIf { it.status == Bottle.Status.Consumed }?.let { opened ->
-        rememberRetained("tasting.form") { TastingFormState(opened.tasting ?: Tasting(date = opened.addedAt)) }
+        rememberSaveable(saver = TastingFormState.Saver) { TastingFormState(opened.tasting ?: Tasting(date = opened.addedAt)) }
     }
 
     var confirmingDiscard by rememberSaveable { mutableStateOf(false) }
     val leave = { if (form?.isDirty == true) confirmingDiscard = true else navigator.back() }
     BackHandler(enabled = form?.isDirty == true) { confirmingDiscard = true }
-    if (confirmingDiscard) {
-        DiscardNoteDialog(onDiscard = { confirmingDiscard = false; navigator.back() }, onKeepEditing = { confirmingDiscard = false })
+    // Beside the list, opening another entry asks too.
+    val switch = app.encave.ui.components.rememberPaneSwitch(form?.isDirty == true)
+    if (confirmingDiscard || switch != null) {
+        DiscardNoteDialog(
+            onDiscard = { confirmingDiscard = false; if (switch != null) switch.confirm() else navigator.back() },
+            onKeepEditing = { confirmingDiscard = false; switch?.cancel() },
+        )
     }
 
     Scaffold(
