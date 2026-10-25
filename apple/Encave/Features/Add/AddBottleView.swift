@@ -104,10 +104,12 @@ struct AddBottleView: View {
             }
             Picker("Size", selection: $sizeML) {
                 ForEach(BottleSize.all, id: \.self) { size in
-                    Text(BottleSize.label(for: size)).tag(size)
+                    Text(BottleSize.label(for: size))
+                        .accessibilityLabel(Text(BottleSize.spokenLabel(for: size)))
+                        .tag(size)
                 }
             }
-            .fieldHelp("Half bottle 37.5 cl, bottle 75 cl, magnum 1.5 l, double magnum 3 l.")
+            .fieldHelp("Half bottle 37.5 cl, bottle 75 cl, magnum 1.5 l, double magnum 3 l; also 50 cl, clavelin 62 cl, 70 cl (as in Switzerland) and 1 l.")
             Toggle("Not delivered yet", isOn: $isOrdered.animation())
                 .fieldHelp("Bought or ordered en primeur. The bottles join the cellar when you mark them received.")
                 .accessibilityIdentifier("add.ordered")

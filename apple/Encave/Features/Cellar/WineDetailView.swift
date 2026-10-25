@@ -231,7 +231,7 @@ struct WineDetailView: View {
                 PriceSearchView(
                     terms: WebSearchQuery.priceTerms(for: wine, sizeML: sizeML,
                                                      priceWord: String(localized: "price", comment: "Added to price search terms")),
-                    sizeML: sizeML, wineName: wine.name, currentPrice: wine.currentPrice,
+                    sizeML: sizeML, wineName: wine.name, vintage: wine.vintage, currentPrice: wine.currentPrice,
                     currency: wine.currentPriceCurrency ?? model.cellar.settings.currency
                 ) { price, currency in
                     setPrice(price, currency: currency)
@@ -709,17 +709,36 @@ struct OrderedBottleRow: View {
     }
 }
 
-/// Common bottle sizes.
+/// Common bottle sizes, by volume: also 50 cl, the Jura clavelin (62 cl), the Swiss 70 cl and the litre.
 enum BottleSize {
-    static let all = [375, 750, 1500, 3000]
+    static let all = [375, 500, 620, 700, 750, 1000, 1500, 3000]
 
     static func label(for ml: Int) -> String {
         switch ml {
         case 375: String(localized: "Half bottle")
+        case 500: String(localized: "50 cl", comment: "Bottle size")
+        case 620: String(localized: "Clavelin 62 cl", comment: "Bottle size")
+        case 700: String(localized: "70 cl", comment: "Bottle size")
         case 750: String(localized: "Bottle")
+        case 1000: String(localized: "1 l", comment: "Bottle size")
         case 1500: String(localized: "Magnum")
         case 3000: String(localized: "Double magnum")
         default: "\(ml) ml"
+        }
+    }
+
+    /// The size as VoiceOver reads it, units in words.
+    static func spokenLabel(for ml: Int) -> String {
+        switch ml {
+        case 375: String(localized: "Half bottle, 37.5 centilitres")
+        case 500: String(localized: "50 centilitres")
+        case 620: String(localized: "Clavelin, 62 centilitres")
+        case 700: String(localized: "70 centilitres")
+        case 750: String(localized: "Bottle, 75 centilitres")
+        case 1000: String(localized: "1 litre")
+        case 1500: String(localized: "Magnum, 1.5 litres")
+        case 3000: String(localized: "Double magnum, 3 litres")
+        default: String(localized: "\(ml) millilitres")
         }
     }
 }

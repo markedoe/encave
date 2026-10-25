@@ -96,13 +96,15 @@ fun webSearchPreferences(): WebSearchPreferences = (LocalContext.current.applica
 
 /**
  * For "Find current price": the bottle size, the cellar currency, the price kept now, the
- * wine's name (to find its price on a page that lists several) and how to save one.
+ * wine's name (to find its price on a page that lists several), its vintage (prices named for
+ * another one are left out) and how to save one.
  */
 data class PriceOptions(
     val sizeML: Int,
     val currency: String,
     val current: BigDecimal?,
     val wineName: String? = null,
+    val vintage: Int? = null,
     val onSave: (BigDecimal, String) -> Unit,
 )
 
@@ -207,7 +209,7 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
                     launch {
                         // A page that fails, however, only gives no price: nothing may end the sheet's scope.
                         val read = try {
-                            gate.withPermit { reader.prices(page, options.sizeML, options.wineName) }
+                            gate.withPermit { reader.prices(page, options.sizeML, options.wineName, options.vintage) }
                         } catch (error: CancellationException) {
                             throw error
                         } catch (error: Exception) {

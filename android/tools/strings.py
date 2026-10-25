@@ -152,7 +152,20 @@ S = [
  ("field_occasion", "Occasion", "Occasion"),
  ("field_date", "Date", "Date"),
  ("size_375", "Half bottle · 375 ml", "Demi-bouteille · 37,5 cl"),
+ ("size_500", "50 cl", "50 cl"),
+ ("size_620", "Clavelin · 62 cl", "Clavelin · 62 cl"),
+ ("size_700", "70 cl", "70 cl"),
  ("size_750", "Bottle · 750 ml", "Bouteille · 75 cl"),
+ ("size_1000", "1 l", "1 l"),
+ ("size_375_spoken", "Half bottle, 37.5 centilitres", "Demi-bouteille, 37,5 centilitres"),
+ ("size_500_spoken", "50 centilitres", "50 centilitres"),
+ ("size_620_spoken", "Clavelin, 62 centilitres", "Clavelin, 62 centilitres"),
+ ("size_700_spoken", "70 centilitres", "70 centilitres"),
+ ("size_750_spoken", "Bottle, 75 centilitres", "Bouteille, 75 centilitres"),
+ ("size_1000_spoken", "1 litre", "1 litre"),
+ ("size_1500_spoken", "Magnum, 1.5 litres", "Magnum, 1,5 litre"),
+ ("size_3000_spoken", "Double magnum, 3 litres", "Double magnum, 3 litres"),
+ ("size_other_spoken", "%1$d millilitres", "%1$d millilitres"),
  ("size_1500", "Magnum · 1.5 l", "Magnum · 1,5 l"),
  ("size_3000", "Double magnum · 3 l", "Double magnum · 3 l"),
  ("size_other", "%1$d ml", "%1$d ml"),
@@ -591,7 +604,7 @@ S = [
  ("help_field_search", "Type a few letters of the name to add bottles of a wine you already have.", "Tapez quelques lettres du nom pour ajouter des bouteilles d’un vin que vous avez déjà."),
  ("help_field_existing", "Choose it to add bottles without typing the wine again.", "Choisissez-le pour ajouter des bouteilles sans ressaisir le vin."),
  ("help_field_quantity", "How many identical bottles you add.", "Combien de bouteilles identiques vous ajoutez."),
- ("help_field_size", "Half bottle 37.5 cl, bottle 75 cl, magnum 1.5 l, double magnum 3 l.", "Demi-bouteille 37,5 cl, bouteille 75 cl, magnum 1,5 l, double magnum 3 l."),
+ ("help_field_size", "Half bottle 37.5 cl, bottle 75 cl, magnum 1.5 l, double magnum 3 l; also 50 cl, clavelin 62 cl, 70 cl (as in Switzerland) and 1 l.", "Demi-bouteille 37,5 cl, bouteille 75 cl, magnum 1,5 l, double magnum 3 l ; aussi 50 cl, clavelin 62 cl, 70 cl (comme en Suisse) et 1 l."),
  ("help_bottles_footer", "Each bottle is tracked on its own, so you can drink or move them one by one.", "Chaque bouteille est suivie séparément : vous pouvez les boire ou les déplacer une par une."),
  ("help_field_storage", "For bottles that are not in your storage.", "Pour les bouteilles qui ne sont pas dans un rangement."),
  ("help_location_footer", "Choose storage to see exactly where the bottles are, or note where they are kept.", "Choisissez un rangement pour savoir exactement où sont les bouteilles, ou indiquez où elles sont rangées."),
@@ -1624,6 +1637,8 @@ OLD_FRENCH_ALLOWED = {"help_data_other"}
 # A count first, then a plural noun, outside <plurals>: wrong for 1 ("1 bouteilles sur 40").
 # Say "%1$d sur %2$d bouteilles", or make it a plural.
 COUNT_THEN_PLURAL = re.compile(r"^%1\$d\s+[a-zà-ÿœ’]+s\b", re.I)
+# Counts that are never 1 (a bottle size in millilitres).
+COUNT_NEVER_ONE = {"size_other_spoken"}
 
 
 def count_then_plural(text):
@@ -1645,7 +1660,7 @@ def check(res):
         for found in loose_guillemets(value):
             problems.append(f"« » without a narrow no-break space inside: {found!r} ({name})")
     for row in S:
-        if count_then_plural(text_for(row[2], "fr")):
+        if row[0] not in COUNT_NEVER_ONE and count_then_plural(text_for(row[2], "fr")):
             problems.append(f"French count followed by a plural noun, wrong for 1 (say “%1$d sur %2$d …”): {row[0]}")
     # Typographic apostrophes only: a straight one is written \' in strings.xml.
     for row in S:

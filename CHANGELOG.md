@@ -8,6 +8,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 ### Changed
 - Prices read 70 cl, 50 cl, 1 litre and clavelin (62 cl) bottles, and Swiss
   formats such as "CHF 13.–", "Fr. 13.50" and "13.50 Fr."
+- Bottles can be 50 cl, clavelin (62 cl), 70 cl or 1 litre when added, so a
+  Swiss 70 cl bottle finds its price
+- Find Current Price leaves out case prices a page gives as the bottle's price,
+  prices of other vintages on a page that lists several, and sizes from 4.5 to
+  18 litres (Impériale, Mathusalem…)
 - Racks are now Storage (Rangements in French): a storage is a rack, a wine
   fridge (Cave à vin réfrigérée) or bins and crates (a bin is a Case); "Cave"
   now means only your whole cellar
@@ -28,6 +33,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
   address it points to is local; Encave then connects to that address
 
 ### Fixed
+- CSV import reads "12,50 €", "45.00€" or "45.0000" as the price (not 100
+  times more), and skips prices over 100,000; "4/5", "16/20" and "8/10"
+  ratings are that share of 5 stars
+- "Free shipping from €59.95" is no longer read as a bottle's price
 - Replace This Cellar and Erase All keep a previous version first; with
   "also erase backups", photos and documents go once Undo has passed
 - Removing a device changes the cellar key on every device that has it, also

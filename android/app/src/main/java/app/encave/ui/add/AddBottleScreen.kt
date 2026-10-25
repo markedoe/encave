@@ -108,6 +108,7 @@ import app.encave.ui.components.rememberRetained
 import app.encave.ui.components.Stepper
 import app.encave.ui.components.WineColorDot
 import app.encave.ui.components.bottleSizes
+import app.encave.ui.components.spokenSizeLabel
 import app.encave.ui.components.commonCurrencies
 import app.encave.ui.components.labelRes
 import app.encave.ui.components.origin
@@ -815,7 +816,11 @@ private fun SizeField(sizeML: Int, onChange: (Int) -> Unit) {
     Text(stringResource(R.string.field_size), style = MaterialTheme.typography.titleSmall)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
         bottleSizes.forEach { (ml, label) ->
-            FilterChip(selected = sizeML == ml, onClick = { onChange(ml) }, label = { Text(stringResource(label)) })
+            val spoken = spokenSizeLabel(ml)
+            FilterChip(
+                selected = sizeML == ml, onClick = { onChange(ml) }, label = { Text(stringResource(label)) },
+                modifier = Modifier.semantics { contentDescription = spoken },
+            )
         }
     }
     Hint(stringResource(R.string.help_field_size))

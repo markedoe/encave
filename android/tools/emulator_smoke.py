@@ -78,30 +78,57 @@ def check_running():
         sys.exit(f"The app is no longer running.\n{crash[-6000:]}")
 
 
+# System dialogs of an app that stopped responding or crashed: "<app> isn't responding",
+# "<app> has stopped", "<app> keeps stopping" (either apostrophe).
+SYSTEM_DIALOG = re.compile(r"^(?P<app>.+?) (isn['’]t responding|has stopped|keeps stopping)$")
+# The button that closes each kind of dialog, in order of preference.
+ANR_BUTTONS = ["Wait", "Close app", "Close", "OK"]
+CRASH_BUTTONS = ["Close app", "Close", "OK"]
+
+
+def system_dialog(found):
+    """The title and the button to tap of a system dialog of another app, or None.
+    Exits when the dialog is about Encave itself."""
+    for node in found:
+        match = SYSTEM_DIALOG.match(node[0])
+        if not match:
+            continue
+        title = node[0]
+        if "Encave" in match.group("app"):
+            sys.exit(f"Encave stopped or is not responding: {title}")
+        buttons = ANR_BUTTONS if "responding" in title else CRASH_BUTTONS
+        for label in buttons:
+            button = [n for n in found if n[0] == label]
+            if button:
+                return title, button[0]
+    return None
+
+
 def dismiss_other_anr(found):
-    """On a slow CI emulator another app (often the launcher) can stop responding, and its
-    system dialog then covers Encave. Tap "Wait" on it; Encave not responding still fails."""
-    titles = [n[0] for n in found if n[0].endswith("isn't responding")]
-    if not titles:
+    """On a slow CI emulator another app (often the launcher) can stop responding or crash,
+    and its system dialog then covers Encave: close it. Encave's own dialog still fails."""
+    dialog = system_dialog(found)
+    if not dialog:
         return False
-    if any(t.startswith("Encave") for t in titles):
-        sys.exit(f"Encave is not responding: {titles}")
-    wait = [n for n in found if n[0] == "Wait"]
-    if not wait:
-        return False
-    print(f"Dismissed a system dialog: {titles[0]}")
-    tap(wait[0])
+    print(f"Dismissed a system dialog: {dialog[0]}")
+    tap(dialog[1])
     time.sleep(1)
     return True
+
+
+def screen():
+    """The nodes on screen, once any system dialog of another app is closed."""
+    found = nodes()
+    if dismiss_other_anr(found):
+        found = nodes()
+    return found
 
 
 def find(labels, timeout=30):
     """The bottom-most node whose text or description is one of the labels (tab bar first)."""
     deadline = time.time() + timeout
     while True:
-        found = nodes()
-        if dismiss_other_anr(found):
-            found = nodes()
+        found = screen()
         matches = [n for n in found if n[0] in labels or n[1] in labels]
         if matches:
             return max(matches, key=lambda n: n[2][1])
@@ -148,8 +175,15 @@ def load_sample(strings, out):
 def main():
     if len(sys.argv) != 3:
         sys.exit("Usage: emulator_smoke.py APK OUTPUT_DIR")
+    # Every line reaches the log at once, also when the job times out.
+    sys.stdout.reconfigure(line_buffering=True)
     apk, out = sys.argv[1], Path(sys.argv[2])
     out.mkdir(parents=True, exist_ok=True)
+    # The home screen first, given time to settle: a just-booted emulator is still busy, and
+    # the launcher is the app most often not responding.
+    shell("input keyevent KEYCODE_WAKEUP", check=False)
+    shell("am start -W -a android.intent.action.MAIN -c android.intent.category.HOME", check=False)
+    time.sleep(20)
     adb("install", "-r", apk)
     adb("logcat", "-c", "-b", "all", check=False)
 
@@ -173,7 +207,7 @@ def main():
             tap(node)
             time.sleep(2)
             check_running()
-            if len(nodes()) < 8:
+            if len(screen()) < 8:
                 screenshot(out, f"{language}-blank-{index}")
                 sys.exit(f"{language}: the {label} tab looks empty.")
             screenshot(out, f"{language}-{index}-{label.replace(' ', '-').lower()}")
