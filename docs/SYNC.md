@@ -146,13 +146,13 @@ implementations:
     field (below);
   - `rack.binStyle` (optional string) says what a `bins` rack was made as:
     `"diamond"` (diamond bins, shown under Rack) or `"crates"` (shown as Crates).
-    Apps write it when a storage of bins is created or saved from its editor; it
-    changes with the rest of the rack (the rack's stamp, last writer wins). When it
-    is left out (racks from older versions) or holds a value the reader does not
-    know, the shape decides: bins four to a row, the last row possibly shorter,
-    are crates, other bins are diamond bins. Any string is kept as read and written
-    back unchanged until the rack is saved with a known value; other kinds ignore
-    it. Apps that do not know it keep it as an unknown field (below). Shared
+    Apps write it when a storage of bins is created, and when its type is picked
+    in the editor (offered only while none is saved); any other edit keeps it as
+    read, left out or holding a value of a newer version. It changes with the rest
+    of the rack (the rack's stamp, last writer wins). When it is left out (racks
+    from older versions) or holds a value the reader does not know, the shape
+    decides: bins four to a row, the last row possibly shorter, are crates, other
+    bins are diamond bins. Other kinds ignore it. Apps that do not know it keep it as an unknown field (below). Shared
     vectors: `fixtures/storage-type-vectors.json`;
   - a document's `name` is normalized the same way on every device, when read
     and when set: each control character (Unicode category Cc) becomes a

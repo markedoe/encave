@@ -19,8 +19,9 @@ import org.junit.jupiter.api.Test
  */
 class StorageTypeVectorTest {
     /** Tests run in android/core. */
-    private val cases: List<JsonObject> = Json.parseToJsonElement(File("../../fixtures/storage-type-vectors.json").readText())
-        .jsonObject.getValue("cases").jsonArray.map { it.jsonObject }
+    private val root: JsonObject = Json.parseToJsonElement(File("../../fixtures/storage-type-vectors.json").readText()).jsonObject
+
+    private val cases: List<JsonObject> = root.getValue("cases").jsonArray.map { it.jsonObject }
 
     private val types = mapOf("rack" to StorageType.Rack, "wineFridge" to StorageType.WineFridge, "crates" to StorageType.Crates)
 
@@ -69,6 +70,39 @@ class StorageTypeVectorTest {
         for (vector in cases) {
             val rack = rack(vector)
             assertEquals(rack.storageType, StorageSettings.of(rack).type, vector.getValue("about").jsonPrimitive.content)
+        }
+    }
+
+    /** The bins editor, as RackEditorScreen saves: a rename, a type picked, a count of bins or rows and columns. */
+    @Test
+    fun editorKeepsOrSetsTheType() {
+        val editorCases = root.getValue("editorCases").jsonArray.map { it.jsonObject }
+        assertTrue(editorCases.size >= 8)
+        for (vector in editorCases) {
+            val about = vector.getValue("about").jsonPrimitive.content
+            val rack = CellarJson.json.decodeFromString(Rack.serializer(), vector.getValue("record").toString())
+            val edit = vector["edit"]?.jsonObject ?: JsonObject(emptyMap())
+            val chosen = when (edit["choose"]?.jsonPrimitive?.content) {
+                "rack" -> BinStyle.Diamond
+                "crates" -> BinStyle.Crates
+                else -> null
+            }
+            val reshaped = edit.int("rows") != null || edit.int("columns") != null
+            val shape = Rack(
+                id = rack.id, name = rack.name, kind = RackKind.Bins, rows = edit.int("rows") ?: rack.rows,
+                columns = edit.int("columns") ?: rack.columns, binCapacity = rack.binCapacity,
+                rowColumns = if (reshaped) null else rack.rowColumns,
+            ).normalized()
+            val name = edit["name"]?.jsonPrimitive?.content ?: rack.name
+            val saved = rack.savingBins(name, rack.binCapacity, chosen, edit.int("bins") ?: rack.cellCount, shape)
+            assertEquals(types.getValue(vector.getValue("storageType").jsonPrimitive.content), saved.storageType, about)
+            val expected = vector.getValue("binStyle").takeIf { it != JsonNull }?.jsonPrimitive?.contentOrNull
+            assertEquals(expected, saved.binStyleValue, about)
+            val widths = (0 until saved.rows).map { saved.columnsInRow(it) }
+            assertEquals(vector.getValue("columnsInRow").jsonArray.map { it.jsonPrimitive.int }, widths, about)
+            assertEquals(vector.int("maxEditableBins"), rack.maxEditableBins, about)
+            assertEquals(rack.id, saved.id, about)
+            assertEquals(name, saved.name, about)
         }
     }
 }

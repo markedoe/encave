@@ -160,6 +160,39 @@ extension Rack {
         return (0..<rows).allSatisfy { columns(inRow: $0) == ($0 < rows - 1 ? perRow : bins - (rows - 1) * perRow) }
     }
 
+    /// The editor shows crates as one count of bins when they are saved as crates or
+    /// `chosen` as crates; other bins (and crates saved without a type) keep rows and columns.
+    public func editsAsCrates(chosen: BinStyle?) -> Bool { kind == .bins && (chosen ?? binStyle) == .crates }
+
+    /// Most bins the crates editor offers: `StorageSettings.maxCount`, or the bins there
+    /// already are, so editing never cuts them silently.
+    public var maxEditableBins: Int { max(StorageSettings.maxCount, cellCount) }
+
+    /// These bins as the editor saves them. `chosen` is the type picked in the editor (only
+    /// offered while none is saved). Edited as crates (`editsAsCrates`), they hold `bins`
+    /// bins: the same shape while that count is unchanged (a rename keeps it), laid out
+    /// again otherwise. Else they take the rows and columns of `shape`. `binStyle` is the
+    /// one chosen, or stays as read (left out, or a value of a newer version).
+    public func savingBins(name: String, binCapacity: Int, chosen: BinStyle?, bins: Int, shape: Rack) -> Rack {
+        var rack: Rack
+        if editsAsCrates(chosen: chosen) {
+            if bins == cellCount {
+                rack = self
+                rack.name = name
+                rack.binCapacity = Rack.bounded(binCapacity)
+            } else {
+                rack = StorageSettings.crates(id: id, name: name, bins: min(bins, maxEditableBins), bottlesPerBin: binCapacity)
+            }
+            rack.binStyle = .crates
+        } else {
+            rack = shape
+            rack.name = name
+            rack.binStyleValue = chosen?.rawValue ?? binStyleValue
+        }
+        rack.unknownFields = unknownFields
+        return rack
+    }
+
     /// What the Storage list counts: rows of a rack, shelves of a fridge, bins of crates or
     /// diamond bins.
     public var storageCount: Int {

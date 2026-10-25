@@ -37,5 +37,56 @@
       "record": { "id": "6F1C2D3E-0000-4000-8000-000000000004", "name": "Bins", "kind": "bins", "rows": 3, "columns": 5, "depth": 1, "binCapacity": 12, "binStyle": "crates" },
       "storageType": "crates", "storageCount": 15, "binStyle": "crates"
     }
+  ],
+  "editorAbout": "The bins editor ('edit': a new name, a type picked with 'choose', a count of 'bins' for crates, or 'rows' and 'columns' otherwise), as Rack.savingBins saves it. A type can be picked only while none is saved; until then binStyle stays as read. Crates keep their shape unless their count of bins changes. 'maxEditableBins' is the most bins the crates editor offers.",
+  "editorCases": [
+    {
+      "about": "A diamond rack 6 by 4 from an older version (no binStyle) reads as crates; renamed, it keeps its shape and still saves no type",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000101", "name": "Bins", "kind": "bins", "rows": 6, "columns": 4, "depth": 1, "binCapacity": 10 },
+      "edit": { "name": "Wall" },
+      "storageType": "crates", "binStyle": null, "columnsInRow": [4, 4, 4, 4, 4, 4], "maxEditableBins": 40
+    },
+    {
+      "about": "The same rack, picked as Rack in the editor: saved as diamond bins, shape kept",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000102", "name": "Bins", "kind": "bins", "rows": 6, "columns": 4, "depth": 1, "binCapacity": 10 },
+      "edit": { "choose": "rack" },
+      "storageType": "rack", "binStyle": "diamond", "columnsInRow": [4, 4, 4, 4, 4, 4], "maxEditableBins": 40
+    },
+    {
+      "about": "Crates 2 by 4 from an older version, picked as Crates with the same bins: saved as crates, shape kept",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000103", "name": "Bins", "kind": "bins", "rows": 2, "columns": 4, "depth": 1, "binCapacity": 12 },
+      "edit": { "choose": "crates" },
+      "storageType": "crates", "binStyle": "crates", "columnsInRow": [4, 4], "maxEditableBins": 40
+    },
+    {
+      "about": "Bins with a binStyle from a newer version, renamed: the value is kept",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000104", "name": "Bins", "kind": "bins", "rows": 6, "columns": 4, "depth": 1, "binCapacity": 10, "binStyle": "pyramid" },
+      "edit": { "name": "Wall" },
+      "storageType": "crates", "binStyle": "pyramid", "columnsInRow": [4, 4, 4, 4, 4, 4], "maxEditableBins": 40
+    },
+    {
+      "about": "Crates of 2 rows of 5 (reshaped by an older editor), renamed: the shape is kept",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000105", "name": "Bins", "kind": "bins", "rows": 2, "columns": 5, "depth": 1, "binCapacity": 12, "binStyle": "crates" },
+      "edit": { "name": "Boxes" },
+      "storageType": "crates", "binStyle": "crates", "columnsInRow": [5, 5], "maxEditableBins": 40
+    },
+    {
+      "about": "The same crates edited to 11 bins: laid out again four to a row",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000106", "name": "Bins", "kind": "bins", "rows": 2, "columns": 5, "depth": 1, "binCapacity": 12, "binStyle": "crates" },
+      "edit": { "bins": 11 },
+      "storageType": "crates", "binStyle": "crates", "columnsInRow": [4, 4, 3], "maxEditableBins": 40
+    },
+    {
+      "about": "Crates of 60 bins (an older editor allowed more than 40): the editor offers up to 60, a rename keeps them all",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000107", "name": "Bins", "kind": "bins", "rows": 15, "columns": 4, "depth": 1, "binCapacity": 12, "binStyle": "crates" },
+      "edit": { "name": "Boxes" },
+      "storageType": "crates", "binStyle": "crates", "columnsInRow": [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4], "maxEditableBins": 60
+    },
+    {
+      "about": "Diamond bins saved as such, edited to 3 rows of 4: still a rack",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000108", "name": "Bins", "kind": "bins", "rows": 6, "columns": 4, "depth": 1, "binCapacity": 10, "binStyle": "diamond" },
+      "edit": { "rows": 3 },
+      "storageType": "rack", "binStyle": "diamond", "columnsInRow": [4, 4, 4], "maxEditableBins": 40
+    }
   ]
 }

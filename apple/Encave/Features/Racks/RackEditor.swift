@@ -15,8 +15,12 @@ struct RackEditor: View {
     /// A fridge on shelves two deep: the back bottles lie head-to-tail.
     @State private var backReversed = false
     @State private var binCapacity = 10
-    /// Crates: how many bins, laid out as the wizard lays them out.
+    /// Crates: how many bins, laid out as the wizard lays them out when their count changes.
     @State private var bins = 6
+    /// Bins saved without a type (older versions): the type picked here, nil until then.
+    @State private var chosenStyle: BinStyle?
+    /// The storage as loaded.
+    @State private var original: Rack?
     @State private var customRows = false
     @State private var rowColumns: [Int] = []
     /// Honeycomb: on shelves (a wine fridge with bottles in layers) rather than continuous.
@@ -54,9 +58,18 @@ struct RackEditor: View {
                     }
                 }
 
+                if offersBinType {
+                    Section {
+                        Picker("Kind of storage", selection: binType.animation()) {
+                            Text(StorageType.rack.name).tag(StorageType.rack)
+                            Text(StorageType.crates.name).tag(StorageType.crates)
+                        }
+                    }
+                }
+
                 Section {
                     if isCrates {
-                        Stepper(value: $bins, in: 1...StorageSettings.maxCount) {
+                        Stepper(value: $bins, in: 1...(original?.maxEditableBins ?? StorageSettings.maxCount)) {
                             LabeledContent("Bins") { Text(verbatim: "\(bins)").monospacedDigit() }
                         }
                         .fieldHelp("Each crate or box is a bin, named like B3.")
@@ -244,8 +257,19 @@ struct RackEditor: View {
     /// A honeycomb on shelves, edited shelf by shelf.
     private var layered: Bool { kind == .staggered && onShelves }
 
-    /// Crates are edited as a number of bins, laid out as the wizard lays them out.
-    private var isCrates: Bool { storageType == .crates }
+    /// Crates saved (or picked) as such are edited as a number of bins.
+    private var isCrates: Bool { original?.editsAsCrates(chosen: chosenStyle) ?? false }
+
+    /// Bins saved without a type: their type can be picked, shown under it from then on.
+    private var offersBinType: Bool { original?.kind == .bins && original?.binStyle == nil }
+
+    /// The type picked for bins saved without one; until then, the one their shape gives.
+    private var binType: Binding<StorageType> {
+        Binding(
+            get: { chosenStyle.map { $0 == .crates ? .crates : .rack } ?? storageType },
+            set: { chosenStyle = $0 == .crates ? .crates : .diamond }
+        )
+    }
 
     /// The kinds this storage can become: a rack stays a rack (grid or honeycomb); diamond
     /// bins, a fridge and crates keep theirs.
@@ -259,7 +283,7 @@ struct RackEditor: View {
 
     private var current: EditorState {
         EditorState(name: name, kind: kind, rows: rows, columns: columns, depth: depth, binCapacity: binCapacity,
-                    bins: bins, customRows: customRows, rowColumns: rowColumns, onShelves: onShelves, shelves: shelves,
+                    bins: bins, chosenStyle: chosenStyle, customRows: customRows, rowColumns: rowColumns, onShelves: onShelves, shelves: shelves,
                     backReversed: backReversed)
     }
 
@@ -306,14 +330,15 @@ struct RackEditor: View {
                         zoneBreaks: shelves.indices.filter { $0 > 0 && shelves[$0].startsZone },
                         backReversed: backReversed)
         }
-        if isCrates {
-            return StorageSettings.crates(id: rackID, name: name, bins: bins, bottlesPerBin: binCapacity)
+        let shape = Rack(id: rackID, name: name, kind: kind, rows: rows,
+                         columns: customRows ? (rowColumns.max() ?? columns) : columns,
+                         depth: depth, binCapacity: binCapacity, rowColumns: customRows ? rowColumns : nil)
+        // Bins keep their saved type unless one is picked; crates keep their shape unless
+        // their count changes.
+        if kind == .bins, let original {
+            return original.savingBins(name: name, binCapacity: binCapacity, chosen: chosenStyle, bins: bins, shape: shape)
         }
-        // Bins that are not crates are diamond bins in a rack: saved as such, whatever their shape.
-        return Rack(id: rackID, name: name, kind: kind, rows: rows,
-                    columns: customRows ? (rowColumns.max() ?? columns) : columns,
-                    depth: depth, binCapacity: binCapacity, rowColumns: customRows ? rowColumns : nil,
-                    binStyle: kind == .bins ? .diamond : nil)
+        return shape
     }
 
     @ViewBuilder
@@ -382,6 +407,7 @@ struct RackEditor: View {
         guard !loaded else { return }
         loaded = true
         if let rack = model.cellar.rack(rackID) {
+            original = rack
             storageType = rack.storageType
             name = rack.name; kind = rack.kind; rows = rack.rows; columns = rack.columns
             depth = rack.depth; binCapacity = rack.binCapacity
@@ -390,7 +416,7 @@ struct RackEditor: View {
             if rack.hasShelfLayers {
                 onShelves = true
                 shelves = ShelfDraft.shelves(of: rack, keepingOrigins: true)
-            } else if let custom = rack.rowColumns, storageType != .crates {
+            } else if let custom = rack.rowColumns {
                 rowColumns = custom
                 customRows = true
             }
@@ -424,6 +450,7 @@ private struct EditorState: Equatable {
     var depth: Int
     var binCapacity: Int
     var bins: Int
+    var chosenStyle: BinStyle?
     var customRows: Bool
     var rowColumns: [Int]
     var onShelves: Bool

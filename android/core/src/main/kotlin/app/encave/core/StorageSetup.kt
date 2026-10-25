@@ -170,6 +170,39 @@ val Rack.isCratesLayout: Boolean
             (0 until rows).all { columnsInRow(it) == if (it < rows - 1) perRow else bins - (rows - 1) * perRow }
     }
 
+/**
+ * The editor shows crates as one count of bins when they are saved as crates or [chosen] as
+ * crates; other bins (and crates saved without a type) keep rows and columns.
+ */
+fun Rack.editsAsCrates(chosen: BinStyle?): Boolean = kind == RackKind.Bins && (chosen ?: binStyle) == BinStyle.Crates
+
+/**
+ * Most bins the crates editor offers: [StorageSettings.MAX_COUNT], or the bins there already
+ * are, so editing never cuts them silently.
+ */
+val Rack.maxEditableBins: Int get() = maxOf(StorageSettings.MAX_COUNT, cellCount)
+
+/**
+ * These bins as the editor saves them. [chosen] is the type picked in the editor (only
+ * offered while none is saved). Edited as crates ([editsAsCrates]), they hold [bins] bins: the
+ * same shape while that count is unchanged (a rename keeps it), laid out again otherwise.
+ * Else they take the rows and columns of [shape]. The bin style is the one chosen, or stays
+ * as read (left out, or a value of a newer version). Mirrors CaveKit.
+ */
+fun Rack.savingBins(name: String, binCapacity: Int, chosen: BinStyle?, bins: Int, shape: Rack): Rack {
+    val rack = if (editsAsCrates(chosen)) {
+        val crates = if (bins == cellCount) {
+            copy(name = name, binCapacity = binCapacity)
+        } else {
+            StorageSettings.crates(id, name, minOf(bins, maxEditableBins), binCapacity)
+        }
+        crates.copy(binStyleValue = BinStyle.Crates.raw)
+    } else {
+        shape.copy(name = name, binStyleValue = chosen?.raw ?: binStyleValue)
+    }
+    return rack.copy(unknownKeys = unknownKeys).normalized()
+}
+
 /** What the Storage list counts: rows of a rack, shelves of a fridge, bins of crates or diamond bins. */
 val Rack.storageCount: Int
     get() = when (storageType) {
