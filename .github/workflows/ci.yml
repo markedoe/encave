@@ -78,6 +78,10 @@ jobs:
       - name: Design tokens only (no system colors in the Apple features)
         run: scripts/check-system-colors.sh
 
+      - name: Public-safety check tests
+        # Throwaway repositories the check must refuse (keys, paths, merge resolutions).
+        run: scripts/test-check-public-safety.sh
+
       - name: Public-safety check
         env:
           CHECK_COMMIT_RANGE: ${{ steps.range.outputs.range }}
