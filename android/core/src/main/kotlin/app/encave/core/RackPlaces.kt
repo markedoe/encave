@@ -13,15 +13,17 @@ fun Rack.emptyCaption(cell: RackCell): String = if (numbersPlacesOnShelves) "${c
  * A position for people, in English (files and reports for other apps), always in the order
  * shelf, side, layer, position, leaving out what does not apply: "B3", "B3, back",
  * "Shelf 2, back, position 3", "Shelf 1, top layer, position 3",
- * "Shelf 3, back, bottom layer, position 2", "Bin B3". Grids and honeycombs keep the code of
+ * "Shelf 3, back, bottom layer, position 2", "Bin B3"; no side on a row one bottle deep, even
+ * when other rows are deeper. Grids and honeycombs keep the code of
  * the cell ("B3"). The app shows the same words in the person's language. Same as CaveKit's
  * `Rack.placeName(for:)`.
  */
 fun Rack.placeName(slot: Slot): String {
+    val positions = positionsInRow(slot.row)
     val side = when {
-        positionsPerCell == 1 -> null
+        positions == 1 -> null
         slot.depth == 0 -> "front"
-        slot.depth == positionsPerCell - 1 -> "back"
+        slot.depth == positions - 1 -> "back"
         else -> "middle"
     }
     val position = "position ${slot.column + 1}"

@@ -1,0 +1,278 @@
+{
+  "about": "Rows of their own (docs/SYNC.md, rack.rowDepths and rack.rowBackReversed), shared by CaveKit (StorageRowVectorTests.swift) and the Kotlin core (StorageRowVectorTest.kt). 'wire': a rack as read (JSON) and what every device makes of it: its depth, the per-row fields kept (null: left out), each row's depth and head-to-tail, and its capacity. 'displaced': the bottles an edit leaves without a place, as [row, column, depth]. 'wizard': rows set one by one in the storage wizard ('rows': positions, depth, headToTail, layers per row or shelf) and the rack made (null: left out).",
+  "wire": [
+    {
+      "about": "A grid with a single row between two rows two deep: kept as written",
+      "rack": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "grid", "rows": 3, "columns": 4, "depth": 2, "rowDepths": [2, 1, 2] },
+      "depth": 2,
+      "rowDepths": [2, 1, 2],
+      "rowBackReversed": null,
+      "backReversed": null,
+      "depthOfRow": [2, 1, 2],
+      "headToTailOfRow": [false, false, false],
+      "capacity": 20
+    },
+    {
+      "about": "Rows all as deep as the rack: left out, as if uniform",
+      "rack": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "grid", "rows": 3, "columns": 4, "depth": 2, "rowDepths": [2, 2, 2] },
+      "depth": 2,
+      "rowDepths": null,
+      "rowBackReversed": null,
+      "backReversed": null,
+      "depthOfRow": [2, 2, 2],
+      "headToTailOfRow": [false, false, false],
+      "capacity": 24
+    },
+    {
+      "about": "An older version made the rack one deep: every row follows (values are brought into 1 to depth)",
+      "rack": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "grid", "rows": 3, "columns": 4, "depth": 1, "rowDepths": [2, 1, 2] },
+      "depth": 1,
+      "rowDepths": null,
+      "rowBackReversed": null,
+      "backReversed": null,
+      "depthOfRow": [1, 1, 1],
+      "headToTailOfRow": [false, false, false],
+      "capacity": 12
+    },
+    {
+      "about": "An older version made the rack deeper: no row reaches depth, so every row is that deep, as the older version shows it",
+      "rack": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "shelves", "rows": 3, "columns": 4, "depth": 3, "rowDepths": [2, 1, 2] },
+      "depth": 3,
+      "rowDepths": null,
+      "rowBackReversed": null,
+      "backReversed": null,
+      "depthOfRow": [3, 3, 3],
+      "headToTailOfRow": [false, false, false],
+      "capacity": 36
+    },
+    {
+      "about": "Fewer values than rows (an older version added rows): the rows without one take the rack's depth",
+      "rack": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "grid", "rows": 4, "columns": 2, "depth": 2, "rowDepths": [1] },
+      "depth": 2,
+      "rowDepths": [1, 2, 2, 2],
+      "rowBackReversed": null,
+      "backReversed": null,
+      "depthOfRow": [1, 2, 2, 2],
+      "headToTailOfRow": [false, false, false, false],
+      "capacity": 14
+    },
+    {
+      "about": "More values than rows and values out of range: one per row, each brought into 1 to depth",
+      "rack": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "grid", "rows": 2, "columns": 2, "depth": 3, "rowDepths": [0, 5, 1, 1] },
+      "depth": 3,
+      "rowDepths": [1, 3],
+      "rowBackReversed": null,
+      "backReversed": null,
+      "depthOfRow": [1, 3],
+      "headToTailOfRow": [false, false],
+      "capacity": 8
+    },
+    {
+      "about": "A honeycomb holds at most two deep, rows too",
+      "rack": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "staggered", "rows": 3, "columns": 4, "depth": 3, "rowDepths": [3, 1, 2] },
+      "depth": 2,
+      "rowDepths": [2, 1, 2],
+      "rowBackReversed": null,
+      "backReversed": null,
+      "depthOfRow": [2, 1, 2],
+      "headToTailOfRow": [false, false, false],
+      "capacity": 19
+    },
+    {
+      "about": "Bins pile their bottles: per-row depths are dropped",
+      "rack": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "bins", "rows": 2, "columns": 2, "binCapacity": 6, "rowDepths": [1, 2] },
+      "depth": 1,
+      "rowDepths": null,
+      "rowBackReversed": null,
+      "backReversed": null,
+      "depthOfRow": [1, 1],
+      "headToTailOfRow": [false, false],
+      "capacity": 24
+    },
+    {
+      "about": "A wine fridge one row per shelf, shelves of their own depth",
+      "rack": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "shelves", "rows": 3, "columns": 6, "depth": 2, "rowDepths": [2, 1, 1] },
+      "depth": 2,
+      "rowDepths": [2, 1, 1],
+      "rowBackReversed": null,
+      "backReversed": null,
+      "depthOfRow": [2, 1, 1],
+      "headToTailOfRow": [false, false, false],
+      "capacity": 24
+    },
+    {
+      "about": "A fridge in layers whose shelves differ: each layer takes its shelf's bottom layer value; the top shelf head-to-tail, the bottom one not",
+      "rack": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "staggered", "rows": 5, "columns": 4, "depth": 2, "shelfLayers": [2, 1, 2], "backReversed": true, "rowDepths": [1, 2, 1, 2, 2], "rowBackReversed": [true, true, false, false, false] },
+      "depth": 2,
+      "rowDepths": [2, 2, 1, 2, 2],
+      "rowBackReversed": [true, true, false, false, false],
+      "backReversed": true,
+      "depthOfRow": [2, 2, 1, 2, 2],
+      "headToTailOfRow": [true, true, false, false, false],
+      "capacity": 32
+    },
+    {
+      "about": "Every shelf two deep head-to-tail: left out, backReversed says it for all; the single shelf is never head-to-tail",
+      "rack": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "staggered", "rows": 5, "columns": 4, "depth": 2, "shelfLayers": [2, 1, 2], "backReversed": true, "rowDepths": [2, 2, 1, 2, 2], "rowBackReversed": [true, true, false, true, true] },
+      "depth": 2,
+      "rowDepths": [2, 2, 1, 2, 2],
+      "rowBackReversed": null,
+      "backReversed": true,
+      "depthOfRow": [2, 2, 1, 2, 2],
+      "headToTailOfRow": [true, true, false, true, true],
+      "capacity": 32
+    },
+    {
+      "about": "No shelf two deep head-to-tail while backReversed is true (an older version turned it on): left out, every such shelf is",
+      "rack": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "staggered", "rows": 5, "columns": 4, "depth": 2, "shelfLayers": [2, 1, 2], "backReversed": true, "rowDepths": [2, 2, 1, 2, 2], "rowBackReversed": [false, false, true, false, false] },
+      "depth": 2,
+      "rowDepths": [2, 2, 1, 2, 2],
+      "rowBackReversed": null,
+      "backReversed": true,
+      "depthOfRow": [2, 2, 1, 2, 2],
+      "headToTailOfRow": [true, true, false, true, true],
+      "capacity": 32
+    },
+    {
+      "about": "Head-to-tail per row without backReversed (an older version turned it off): dropped",
+      "rack": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "staggered", "rows": 5, "columns": 4, "depth": 2, "shelfLayers": [2, 1, 2], "rowDepths": [2, 2, 1, 2, 2], "rowBackReversed": [true, true, false, false, false] },
+      "depth": 2,
+      "rowDepths": [2, 2, 1, 2, 2],
+      "rowBackReversed": null,
+      "backReversed": null,
+      "depthOfRow": [2, 2, 1, 2, 2],
+      "headToTailOfRow": [false, false, false, false, false],
+      "capacity": 32
+    },
+    {
+      "about": "Head-to-tail on a grid does not apply: dropped with backReversed",
+      "rack": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "grid", "rows": 2, "columns": 2, "depth": 2, "backReversed": true, "rowDepths": [2, 1], "rowBackReversed": [true, false] },
+      "depth": 2,
+      "rowDepths": [2, 1],
+      "rowBackReversed": null,
+      "backReversed": null,
+      "depthOfRow": [2, 1],
+      "headToTailOfRow": [false, false],
+      "capacity": 6
+    }
+  ],
+  "displaced": [
+    {
+      "about": "Row B of a grid becomes single: the bottle behind in B is displaced, the one in front stays, row A keeps both",
+      "before": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "grid", "rows": 2, "columns": 3, "depth": 2 },
+      "after": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "grid", "rows": 2, "columns": 3, "depth": 2, "rowDepths": [2, 1] },
+      "slots": [[0, 0, 0], [0, 0, 1], [1, 1, 0], [1, 1, 1], [1, 2, 1]],
+      "displaced": [[1, 1, 1], [1, 2, 1]]
+    },
+    {
+      "about": "The bottom shelf of a fridge in layers becomes single: its back bottles are displaced, on both layers",
+      "before": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "staggered", "rows": 4, "columns": 4, "depth": 2, "shelfLayers": [2, 2], "backReversed": true },
+      "after": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "staggered", "rows": 4, "columns": 4, "depth": 2, "shelfLayers": [2, 2], "backReversed": true, "rowDepths": [2, 2, 1, 1] },
+      "slots": [[0, 0, 1], [2, 0, 0], [2, 1, 1], [3, 3, 1], [3, 0, 0]],
+      "displaced": [[2, 1, 1], [3, 3, 1]]
+    },
+    {
+      "about": "A single row becomes two deep: nothing is displaced",
+      "before": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "grid", "rows": 2, "columns": 3, "depth": 2, "rowDepths": [2, 1] },
+      "after": { "id": "7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b", "name": "Rack", "kind": "grid", "rows": 2, "columns": 3, "depth": 2 },
+      "slots": [[0, 0, 1], [1, 0, 0]],
+      "displaced": []
+    }
+  ],
+  "wizard": [
+    {
+      "about": "A grid whose rows differ: positions and depth per row",
+      "settings": {
+        "type": "rack",
+        "layout": "grid",
+        "rows": [
+          { "positions": 6, "depth": 2 },
+          { "positions": 6, "depth": 1 },
+          { "positions": 5, "depth": 1 }
+        ]
+      },
+      "rack": { "kind": "grid", "rows": 3, "columns": 6, "depth": 2, "rowColumns": [6, 6, 5], "rowDepths": [2, 1, 1], "shelfLayers": null, "backReversed": null, "rowBackReversed": null, "binStyle": null },
+      "capacity": 23
+    },
+    {
+      "about": "Rows set one by one but all alike: the same rack as the uniform settings",
+      "settings": {
+        "type": "rack",
+        "layout": "grid",
+        "rows": [
+          { "positions": 8, "depth": 1 },
+          { "positions": 8, "depth": 1 },
+          { "positions": 8, "depth": 1 }
+        ]
+      },
+      "rack": { "kind": "grid", "rows": 3, "columns": 8, "depth": 1, "rowColumns": null, "rowDepths": null, "shelfLayers": null, "backReversed": null, "rowBackReversed": null, "binStyle": null },
+      "capacity": 24
+    },
+    {
+      "about": "A honeycomb with rows of the usual widths (one fewer every other row) and their own depth: widths left out",
+      "settings": {
+        "type": "rack",
+        "layout": "honeycomb",
+        "rows": [
+          { "positions": 5, "depth": 2 },
+          { "positions": 4, "depth": 1 },
+          { "positions": 5, "depth": 2 }
+        ]
+      },
+      "rack": { "kind": "staggered", "rows": 3, "columns": 5, "depth": 2, "rowColumns": null, "rowDepths": [2, 1, 2], "shelfLayers": null, "backReversed": null, "rowBackReversed": null, "binStyle": null },
+      "capacity": 24
+    },
+    {
+      "about": "Diamond bins with rows of their own number of bins; no depth",
+      "settings": {
+        "type": "rack",
+        "layout": "diamond",
+        "bottlesPerBin": 10,
+        "rows": [
+          { "positions": 4, "depth": 2 },
+          { "positions": 3, "depth": 1 }
+        ]
+      },
+      "rack": { "kind": "bins", "rows": 2, "columns": 4, "depth": 1, "rowColumns": [4, 3], "rowDepths": null, "shelfLayers": null, "backReversed": null, "rowBackReversed": null, "binStyle": "diamond" },
+      "capacity": 70
+    },
+    {
+      "about": "A wine fridge, one row per shelf, shelves of their own depth",
+      "settings": {
+        "type": "wineFridge",
+        "rows": [
+          { "positions": 6, "depth": 2, "layers": 1 },
+          { "positions": 6, "depth": 1, "layers": 1 }
+        ]
+      },
+      "rack": { "kind": "shelves", "rows": 2, "columns": 6, "depth": 2, "rowColumns": null, "rowDepths": [2, 1], "shelfLayers": null, "backReversed": null, "rowBackReversed": null, "binStyle": null },
+      "capacity": 18
+    },
+    {
+      "about": "A wine fridge in layers: double head-to-tail, double facing the same way, single on one layer",
+      "settings": {
+        "type": "wineFridge",
+        "rows": [
+          { "positions": 6, "depth": 2, "headToTail": true, "layers": 2 },
+          { "positions": 6, "depth": 2, "headToTail": false, "layers": 2 },
+          { "positions": 5, "depth": 1, "headToTail": true, "layers": 1 }
+        ]
+      },
+      "rack": { "kind": "staggered", "rows": 5, "columns": 6, "depth": 2, "rowColumns": [5, 6, 5, 6, 5], "rowDepths": [2, 2, 2, 2, 1], "shelfLayers": [2, 2, 1], "backReversed": true, "rowBackReversed": [true, true, false, false, false], "binStyle": null },
+      "capacity": 49
+    },
+    {
+      "about": "Crates have no rows: rows set one by one are ignored",
+      "settings": {
+        "type": "crates",
+        "bins": 5,
+        "bottlesPerBin": 12,
+        "rows": [
+          { "positions": 2, "depth": 2 }
+        ]
+      },
+      "rack": { "kind": "bins", "rows": 2, "columns": 4, "depth": 1, "rowColumns": [4, 1], "rowDepths": null, "shelfLayers": null, "backReversed": null, "rowBackReversed": null, "binStyle": "crates" },
+      "capacity": 60
+    }
+  ]
+}

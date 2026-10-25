@@ -13,11 +13,13 @@ public extension Rack {
     /// A position for people, in English (reports for other apps), always in the order shelf,
     /// side, layer, position, leaving out what does not apply: "B3", "B3, back",
     /// "Shelf 2, back, position 3", "Shelf 1, top layer, position 3",
-    /// "Shelf 3, back, bottom layer, position 2", "Bin B3". Grids and honeycombs keep the code
+    /// "Shelf 3, back, bottom layer, position 2", "Bin B3". The side is left out on a row one
+    /// bottle deep, even when other rows are deeper. Grids and honeycombs keep the code
     /// of the cell ("B3"). The app shows the same words in the person's language.
     func placeName(for slot: Slot) -> String {
-        let side: String? = positionsPerCell == 1 ? nil
-            : slot.depth == 0 ? "front" : slot.depth == positionsPerCell - 1 ? "back" : "middle"
+        let positions = positions(inRow: slot.row)
+        let side: String? = positions == 1 ? nil
+            : slot.depth == 0 ? "front" : slot.depth == positions - 1 ? "back" : "middle"
         let position = "position \(slot.column + 1)"
         if let place = shelfPlace(ofRow: slot.row) {
             let layer: String? = place.layers == 1 ? nil

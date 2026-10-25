@@ -363,9 +363,9 @@ class RackTest {
     fun headToTailBackLayersShiftHalfAPlace() {
         // Each neck behind sits between two bases in front: the back band moves half a place right.
         val fridge = Rack(name = "F", kind = RackKind.Staggered, rows = 2, columns = 4, depth = 2, shelfLayers = listOf(2), backReversed = true)
-        assertEquals(0f, fridge.bandShift(0))
-        assertEquals(0.5f, fridge.bandShift(1))
-        assertEquals(0f, fridge.bandShift(null))
+        assertEquals(0f, fridge.bandShift(0, 0))
+        assertEquals(0.5f, fridge.bandShift(0, 1))
+        assertEquals(0f, fridge.bandShift(0, null))
         // Not head-to-tail, one deep, a continuous honeycomb, a grid: never shifted.
         val others = listOf(
             Rack(name = "B", kind = RackKind.Staggered, rows = 2, columns = 4, depth = 2, shelfLayers = listOf(2)),
@@ -375,8 +375,8 @@ class RackTest {
             Rack(name = "S", kind = RackKind.Shelves, rows = 2, columns = 4, depth = 2),
         )
         for (rack in others) {
-            assertEquals(0f, rack.bandShift(0), rack.name)
-            assertEquals(0f, rack.bandShift(1), rack.name)
+            assertEquals(0f, rack.bandShift(0, 0), rack.name)
+            assertEquals(0f, rack.bandShift(0, 1), rack.name)
         }
     }
 

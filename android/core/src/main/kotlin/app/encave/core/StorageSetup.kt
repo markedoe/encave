@@ -21,6 +21,24 @@ enum class StorageType {
 /** How a rack holds its bottles. */
 enum class RackLayout { Grid, Honeycomb, Diamond }
 
+/**
+ * One row of a storage (a shelf of a wine fridge) set on its own, when rows are not all the
+ * same: one single, the next two deep head-to-tail, a shorter top row… Mirrors CaveKit.
+ */
+data class StorageRowSettings(
+    /**
+     * Positions in the row (bins in a row of diamond bins); on a fridge in layers, in the
+     * bottom layer: each layer above rests in its gaps, one fewer, then as many.
+     */
+    val positions: Int,
+    /** Bottles one behind the other (not for diamond bins). */
+    val depth: Int = 1,
+    /** Wine fridge, two deep, in layers: the back bottles lie head-to-tail. */
+    val headToTail: Boolean = false,
+    /** Wine fridge: layers stacked in quincunx on this shelf, 1 to 3. */
+    val layers: Int = 1,
+)
+
 /** What the storage wizard asks for, type by type. Only the settings of [type] are read. */
 data class StorageSettings(
     val type: StorageType,
@@ -41,13 +59,73 @@ data class StorageSettings(
     val headToTail: Boolean = true,
     // Crates.
     val bins: Int = 6,
+    /**
+     * Rows (a fridge's shelves) set one by one when they are not all the same; null while they
+     * are (the usual case). Not for crates. See [withRowsDiffer].
+     */
+    val rowSettings: List<StorageRowSettings>? = null,
 ) {
     /** Head-to-tail applies to a fridge with layers, two deep. */
     val offersHeadToTail: Boolean get() = type == StorageType.WineFridge && layersPerShelf > 1 && depth == 2
 
+    /** Rows can be set one by one: racks and wine fridges (crates have no rows). */
+    val offersRowSettings: Boolean get() = type != StorageType.Crates
+
+    /** Each row has a depth: every storage but diamond bins and crates. */
+    val offersRowDepth: Boolean
+        get() = when (type) {
+            StorageType.Rack -> layout != RackLayout.Diamond
+            StorageType.WineFridge -> true
+            StorageType.Crates -> false
+        }
+
+    /** A row set on its own lies head-to-tail only on a fridge, in layers, two deep. */
+    fun offersHeadToTail(row: StorageRowSettings): Boolean = type == StorageType.WineFridge && row.layers > 1 && row.depth == 2
+
+    /** The rows of a rack, or the shelves of a fridge. */
+    val rowCount: Int get() = if (type == StorageType.WineFridge) shelves else rows
+
+    /** These settings with [count] rows (a fridge's shelves); rows set one by one follow. */
+    fun withRowCount(count: Int): StorageSettings =
+        (if (type == StorageType.WineFridge) copy(shelves = count) else copy(rows = count)).fittedRows()
+
+    /** Rows set one by one start as the uniform settings make them; turned off, the uniform settings apply again. */
+    fun withRowsDiffer(differ: Boolean): StorageSettings {
+        if (!differ || !offersRowSettings) return copy(rowSettings = null)
+        if (rowSettings != null) return fittedRows()
+        val rack = copy(rowSettings = null).rack(name = "")
+        val rows = if (type == StorageType.WineFridge && rack.hasShelfLayers) {
+            rack.shelfRows.indices.map { shelf ->
+                val rows = rack.shelfRows[shelf]
+                StorageRowSettings(rack.columnsInRow(rows.last), rack.depthOfShelf(shelf), rack.isBackReversedShelf(shelf), rows.count())
+            }
+        } else {
+            (0 until rack.rows).map { StorageRowSettings(rack.columnsInRow(it), rack.depthOfRow(it)) }
+        }
+        return copy(rowSettings = rows)
+    }
+
+    /** Rows set one by one follow the number of rows: new ones copy the last one. */
+    fun fittedRows(): StorageSettings {
+        val rows = rowSettings ?: return this
+        val last = rows.lastOrNull() ?: return this
+        val count = rowCount.coerceIn(1, if (type == StorageType.WineFridge) MAX_SHELVES else MAX_COUNT)
+        val fitted = if (rows.size < count) rows + List(count - rows.size) { last } else rows.take(count)
+        return if (fitted == rows) this else copy(rowSettings = fitted)
+    }
+
+    /** This one row changed. */
+    fun withRow(index: Int, row: StorageRowSettings): StorageSettings {
+        val rows = rowSettings ?: return this
+        if (index !in rows.indices) return this
+        return copy(rowSettings = rows.toMutableList().also { it[index] = row })
+    }
+
     /** The rack these settings describe. */
     fun rack(id: UUID = UUID.randomUUID(), name: String): Rack {
         fun count(value: Int) = value.coerceIn(1, MAX_COUNT)
+        val custom = rowSettings?.takeIf { it.isNotEmpty() && offersRowSettings }
+        if (custom != null) return rack(id, name, custom.take(if (type == StorageType.WineFridge) MAX_SHELVES else MAX_COUNT))
         return when (type) {
             StorageType.Rack -> when (layout) {
                 RackLayout.Grid -> Rack(id = id, name = name, kind = RackKind.Grid, rows = count(rows), columns = count(columns),
@@ -75,7 +153,65 @@ data class StorageSettings(
         }.normalized()
     }
 
+    /**
+     * A rack whose rows (a fridge's shelves) are set one by one. Places and depths are written
+     * per row only where they differ from the rack's (docs/SYNC.md).
+     */
+    private fun rack(id: UUID, name: String, rows: List<StorageRowSettings>): Rack {
+        fun count(value: Int) = value.coerceIn(1, MAX_COUNT)
+        val positions = rows.map { count(it.positions) }
+        val depths = rows.map { it.depth.coerceIn(1, MAX_ROW_DEPTH) }
+        val widest = positions.max()
+        val deepest = depths.max()
+        return when (type) {
+            StorageType.Rack -> {
+                val kind = when (layout) {
+                    RackLayout.Grid -> RackKind.Grid
+                    RackLayout.Honeycomb -> RackKind.Staggered
+                    RackLayout.Diamond -> RackKind.Bins
+                }
+                val bins = kind == RackKind.Bins
+                val rack = Rack(
+                    id = id, name = name, kind = kind, rows = rows.size, columns = widest, depth = if (bins) 1 else deepest,
+                    binCapacity = count(bottlesPerBin), binStyleValue = if (bins) BinStyle.Diamond.raw else null,
+                    rowDepths = if (bins) null else depths,
+                ).normalized()
+                // Left out when the rows are as wide as the rack makes them anyway.
+                if ((0 until rack.rows).map { rack.columnsInRow(it) } == positions) rack else rack.copy(rowColumns = positions).normalized()
+            }
+            StorageType.Crates -> crates(id, name, count(bins), count(bottlesPerBin))
+            StorageType.WineFridge -> {
+                val layers = rows.map { it.layers.coerceIn(1, Rack.MAX_LAYERS) }
+                if (layers.all { it == 1 }) {
+                    Rack(
+                        id = id, name = name, kind = RackKind.Shelves, rows = rows.size, columns = widest, depth = deepest,
+                        rowColumns = if (positions.all { it == widest }) null else positions, rowDepths = depths,
+                    ).normalized()
+                } else {
+                    // Each shelf from its top layer: one fewer on the layer above the bottom one.
+                    val widths = mutableListOf<Int>()
+                    val layerDepths = mutableListOf<Int>()
+                    val reversed = mutableListOf<Boolean>()
+                    rows.forEachIndexed { index, row ->
+                        val bottom = positions[index]
+                        widths += listOf(bottom, maxOf(1, bottom - 1), bottom).take(layers[index]).reversed()
+                        layerDepths += List(layers[index]) { depths[index] }
+                        reversed += List(layers[index]) { row.headToTail && depths[index] == 2 }
+                    }
+                    Rack(
+                        id = id, name = name, kind = RackKind.Staggered, rows = widths.size, columns = widest, depth = deepest,
+                        rowColumns = widths, shelfLayers = layers, backReversed = true in reversed,
+                        rowDepths = layerDepths, rowBackReversed = reversed,
+                    ).normalized()
+                }
+            }
+        }
+    }
+
     companion object {
+        /** Deepest a row can be in the wizard. */
+        const val MAX_ROW_DEPTH = 2
+
         /** Crates are drawn this many to a row. */
         const val BINS_PER_ROW = 4
 
@@ -122,8 +258,26 @@ data class StorageSettings(
                     )
                 }
                 StorageType.Crates -> base.copy(bins = rack.cellCount, bottlesPerBin = rack.binCapacity)
-            }
+            }.let { settings -> if (!settings.offersRowSettings || sameShape(settings.rack(name = ""), rack)) settings else settings.copy(rowSettings = rowsOf(rack)) }
         }
+
+        /** Each row of [rack] (each shelf of a fridge with shelf layers) as the wizard sets it. */
+        private fun rowsOf(rack: Rack): List<StorageRowSettings> = if (rack.hasShelfLayers) {
+            rack.shelfRows.indices.map { shelf ->
+                val rows = rack.shelfRows[shelf]
+                StorageRowSettings(rack.columnsInRow(rows.last), rack.depthOfShelf(shelf), rack.isBackReversedShelf(shelf), rows.count())
+            }
+        } else {
+            (0 until rack.rows).map { StorageRowSettings(rack.columnsInRow(it), rack.depthOfRow(it)) }
+        }
+
+        /** Same places, depths and head-to-tail, row by row. */
+        internal fun sameShape(a: Rack, b: Rack): Boolean =
+            a.kind == b.kind && a.rows == b.rows && a.shelfLayers == b.shelfLayers && a.binCapacity == b.binCapacity &&
+                (0 until a.rows).all { row ->
+                    a.columnsInRow(row) == b.columnsInRow(row) && a.positionsInRow(row) == b.positionsInRow(row) &&
+                        a.isBackReversedRow(row) == b.isBackReversedRow(row)
+                }
 
         /** [base], or "base 2", "base 3"… when a storage already has that name. */
         fun uniqueName(base: String, names: List<String>): String {

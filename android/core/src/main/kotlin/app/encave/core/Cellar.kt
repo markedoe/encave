@@ -195,7 +195,7 @@ class Cellar(
         val rack = rack(cell.rackId) ?: return null
         if (!rack.contains(cell)) return null
         val taken = bottlesIn(cell).mapNotNull { it.slot?.depth }.toSet()
-        return (0 until rack.positionsPerCell).firstOrNull { it !in taken }?.let { Slot(cell.rackId, cell.row, cell.column, it) }
+        return (0 until rack.positionsInRow(cell.row)).firstOrNull { it !in taken }?.let { Slot(cell.rackId, cell.row, cell.column, it) }
     }
 
     fun occupancy(rack: Rack): Int = bottlesInCellar.count { it.slot?.rackId == rack.id }

@@ -1,5 +1,5 @@
 {
-  "about": "Storage layouts, shared by CaveKit (RackVectorTests.swift), the Kotlin core (RackVectorTest.kt) and the Android app (RackVectorLabelsTest.kt): cells per row, the order bottles are placed in, and for each place its technical label ('B3-2', as files write it), its name for people in English ('en', placeName) and French ('fr', the apps' wording), what the drawing shows on it when empty, and how far its band is drawn shifted (head-to-tail fridges). 'storageType' and 'storageCount' are what the Storage list shows: rack, wineFridge or crates, and how many rows, shelves or bins. Rows, columns and depths count from 0; 'fillOrderStart' lists the first places filled, as [row, column, depth].",
+  "about": "Storage layouts, shared by CaveKit (RackVectorTests.swift), the Kotlin core (RackVectorTest.kt) and the Android app (RackVectorLabelsTest.kt): cells per row, the order bottles are placed in, and for each place its technical label ('B3-2', as files write it), its name for people in English ('en', placeName) and French ('fr', the apps' wording), what the drawing shows on it when empty, and how far its band is drawn shifted (head-to-tail fridges). 'rowDepths' and 'rowBackReversed' set rows of their own depth and head-to-tail (docs/SYNC.md). 'storageType' and 'storageCount' are what the Storage list shows: rack, wineFridge or crates, and how many rows, shelves or bins. Rows, columns and depths count from 0; 'fillOrderStart' lists the first places filled, as [row, column, depth].",
   "racks": [
     {
       "about": "A grid one bottle deep with more than 26 rows: rows after Z are lettered AA, AB",
@@ -117,6 +117,33 @@
       "places": [
         { "row": 0, "column": 2, "depth": 1, "label": "A3-2", "en": "Shelf 1, back, position 3", "fr": "Étagère 1, fond, position 3", "emptyCaption": "3", "bandShift": 0 },
         { "row": 1, "column": 0, "depth": 0, "label": "B1-1", "en": "Shelf 2, front, position 1", "fr": "Étagère 2, devant, position 1", "emptyCaption": "1", "bandShift": 0 }
+      ]
+    },
+    {
+      "about": "A grid whose rows differ in depth: row B single, so its places have no side and no '-1'",
+      "kind": "grid", "rows": 3, "columns": 4, "depth": 2, "rowDepths": [2, 1, 2],
+      "storageType": "rack", "storageCount": 3,
+      "columnsInRow": [4, 4, 4],
+      "fillOrderStart": [[0, 0, 0], [0, 1, 0], [0, 2, 0], [0, 3, 0], [0, 0, 1], [0, 1, 1], [0, 2, 1], [0, 3, 1], [1, 0, 0], [1, 1, 0], [1, 2, 0], [1, 3, 0], [2, 0, 0]],
+      "places": [
+        { "row": 0, "column": 0, "depth": 0, "label": "A1-1", "en": "A1, front", "fr": "A1, devant", "emptyCaption": "A1", "bandShift": 0 },
+        { "row": 1, "column": 2, "depth": 0, "label": "B3", "en": "B3", "fr": "B3", "emptyCaption": "B3", "bandShift": 0 },
+        { "row": 2, "column": 3, "depth": 1, "label": "C4-2", "en": "C4, back", "fr": "C4, fond", "emptyCaption": "C4", "bandShift": 0 }
+      ]
+    },
+    {
+      "about": "A wine fridge whose shelves differ: the top one two deep head-to-tail, the middle one single, the bottom one two deep with its back bottles facing the same way",
+      "kind": "staggered", "rows": 5, "columns": 4, "depth": 2, "shelfLayers": [2, 1, 2], "backReversed": true,
+      "rowDepths": [2, 2, 1, 2, 2], "rowBackReversed": [true, true, false, false, false],
+      "storageType": "wineFridge", "storageCount": 3,
+      "columnsInRow": [3, 4, 4, 3, 4],
+      "fillOrderStart": [[1, 0, 0], [1, 1, 0], [1, 2, 0], [1, 3, 0], [1, 0, 1], [1, 1, 1], [1, 2, 1], [1, 3, 1], [0, 0, 0], [0, 1, 0], [0, 2, 0], [0, 0, 1], [0, 1, 1], [0, 2, 1], [2, 0, 0], [2, 1, 0], [2, 2, 0], [2, 3, 0], [4, 0, 0]],
+      "places": [
+        { "row": 1, "column": 2, "depth": 1, "label": "B3-2", "en": "Shelf 1, back, bottom layer, position 3", "fr": "Étagère 1, fond, couche du bas, position 3", "emptyCaption": "3", "bandShift": 0.5 },
+        { "row": 0, "column": 1, "depth": 1, "label": "A2-2", "en": "Shelf 1, back, top layer, position 2", "fr": "Étagère 1, fond, couche du haut, position 2", "emptyCaption": "2", "bandShift": 0.5 },
+        { "row": 2, "column": 1, "depth": 0, "label": "C2", "en": "Shelf 2, position 2", "fr": "Étagère 2, position 2", "emptyCaption": "2", "bandShift": 0 },
+        { "row": 4, "column": 0, "depth": 1, "label": "E1-2", "en": "Shelf 3, back, bottom layer, position 1", "fr": "Étagère 3, fond, couche du bas, position 1", "emptyCaption": "1", "bandShift": 0 },
+        { "row": 3, "column": 2, "depth": 0, "label": "D3-1", "en": "Shelf 3, front, top layer, position 3", "fr": "Étagère 3, devant, couche du haut, position 3", "emptyCaption": "3", "bandShift": 0 }
       ]
     }
   ]

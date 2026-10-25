@@ -399,7 +399,7 @@ public extension Cellar {
     func freeSlot(in cell: RackCell) -> Slot? {
         guard let rack = rack(cell.rackID), rack.contains(cell) else { return nil }
         let taken = Set(bottles(in: cell).compactMap { $0.slot?.depth })
-        return (0..<rack.positionsPerCell).first { !taken.contains($0) }
+        return (0..<rack.positions(inRow: cell.row)).first { !taken.contains($0) }
             .map { Slot(rackID: cell.rackID, row: cell.row, column: cell.column, depth: $0) }
     }
 

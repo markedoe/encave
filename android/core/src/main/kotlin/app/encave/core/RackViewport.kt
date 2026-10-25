@@ -71,20 +71,24 @@ object RackViewport {
 
     /**
      * Where a place is in the drawing, as fractions of it (its middle, roughly: captions and shelf
-     * bars aside). On a fridge drawn front and back, each shelf shows its front layers, then its
-     * back ones, half a place right when head-to-tail.
+     * bars aside). On a fridge drawn front and back, each shelf two deep shows its front layers,
+     * then its back ones, half a place right when head-to-tail; a shelf one deep shows its
+     * layers once.
      */
     fun center(rack: Rack, cell: RackCell, depth: Int? = null): ViewportPoint {
-        val columns = maxOf(1, rack.maxColumns) + rack.bandShift(1).toDouble() + if (rack.kind == RackKind.Staggered) 0.5 else 0.0
-        val shift = (if (rack.kind == RackKind.Staggered && rack.isOffset(cell.row)) 0.5 else 0.0) + rack.bandShift(depth)
+        val columns = maxOf(1, rack.maxColumns) + rack.maxBandShift.toDouble() + if (rack.kind == RackKind.Staggered) 0.5 else 0.0
+        val shift = (if (rack.kind == RackKind.Staggered && rack.isOffset(cell.row)) 0.5 else 0.0) + rack.bandShift(cell.row, depth)
         val x = minOf(1.0, (cell.column + 0.5 + shift) / columns)
         val shelf = rack.shelfRows.indexOfFirst { cell.row in it }
         if (!rack.hasDepthBands || shelf < 0) return ViewportPoint(x, (cell.row + 0.5) / maxOf(1, rack.rows))
-        // Each shelf is drawn twice: its front layers, then its back ones.
-        val before = rack.shelfRows.take(shelf).sumOf { 2 * it.count() }
+        // Each shelf two deep is drawn twice: its front layers, then its back ones.
+        fun lines(index: Int) = rack.shelfRows[index].count() * if (rack.hasDepthBandsOnShelf(index)) 2 else 1
+        val before = (0 until shelf).sumOf { lines(it) }
+        val total = rack.shelfRows.indices.sumOf { lines(it) }
         val rows = rack.shelfRows[shelf]
-        val line = before + (if (depth == 1) rows.count() else 0) + (cell.row - rows.first)
-        return ViewportPoint(x, (line + 0.5) / maxOf(1, 2 * rack.rows))
+        val back = depth == 1 && rack.hasDepthBandsOnShelf(shelf)
+        val line = before + (if (back) rows.count() else 0) + (cell.row - rows.first)
+        return ViewportPoint(x, (line + 0.5) / maxOf(1, total))
     }
 }
 
