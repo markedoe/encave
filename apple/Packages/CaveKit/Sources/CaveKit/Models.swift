@@ -270,6 +270,14 @@ public enum RackKind: String, Codable, CaseIterable, Sendable {
     case bins
 }
 
+/// What a storage of bins was made as. Written as "binStyle" on the rack (docs/SYNC.md).
+public enum BinStyle: String, Codable, CaseIterable, Sendable {
+    /// Diamond bins in a rack, shown under Rack.
+    case diamond
+    /// Crates or boxes.
+    case crates
+}
+
 /// A place where bottles are stored: a rack, a wine fridge, a set of bins.
 /// Rows (or shelves) are lettered from the top, cells numbered from the left.
 public struct Rack: Identifiable, Codable, Hashable, Sendable {
@@ -297,6 +305,9 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     public var binCapacity: Int
     /// Cells in each row when rows differ (a triangle top, an irregular cellar).
     public var rowColumns: [Int]?
+    /// "binStyle" as read or set: kept even when this version does not know the value, so
+    /// writing the rack back does not lose it (docs/SYNC.md). See `binStyle`.
+    public var binStyleValue: String?
     /// Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1).
     /// Part of equality, so a merge that only brings them in is still saved.
     public var unknownFields = UnknownFields()
@@ -314,7 +325,7 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     public init(
         id: UUID = UUID(), name: String, kind: RackKind = .grid, rows: Int, columns: Int,
         depth: Int = 1, binCapacity: Int = 12, rowColumns: [Int]? = nil, shelfLayers: [Int]? = nil,
-        zoneBreaks: [Int]? = nil, backReversed: Bool? = nil
+        zoneBreaks: [Int]? = nil, backReversed: Bool? = nil, binStyle: BinStyle? = nil
     ) {
         self.id = id; self.name = name; self.kind = kind
         self.rows = Rack.bounded(rows); self.columns = Rack.bounded(columns)
@@ -322,10 +333,19 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         self.rowColumns = rowColumns.map { $0.prefix(Rack.maxSize).map(Rack.bounded) }
         applyShelfLayers(shelfLayers, zoneBreaks: zoneBreaks)
         self.backReversed = backReversed == true && hasDepthBands ? true : nil
+        self.binStyleValue = binStyle?.rawValue
+    }
+
+    /// Bins only: whether they were made as diamond bins in a rack or as crates. Nil when
+    /// not saved (racks from older versions) or unknown to this version: the shape decides
+    /// (see `storageType`).
+    public var binStyle: BinStyle? {
+        get { binStyleValue.flatMap(BinStyle.init(rawValue:)) }
+        set { binStyleValue = newValue?.rawValue }
     }
 
     private enum CodingKeys: String, CodingKey, CaseIterable {
-        case id, name, kind, rows, columns, depth, binCapacity, rowColumns, shelfLayers, zoneBreaks, backReversed
+        case id, name, kind, rows, columns, depth, binCapacity, rowColumns, shelfLayers, zoneBreaks, backReversed, binStyle
         /// Version 0.1 and 0.2 had "grid" and a decorative "diamond" layout, both one bottle per cell.
         case layout
     }
@@ -345,6 +365,8 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
                          zoneBreaks: try c.decodeIfPresent([Int].self, forKey: .zoneBreaks))
         // Absent from older racks; kept only where it applies, true or left out.
         backReversed = try c.decodeIfPresent(Bool.self, forKey: .backReversed) == true && hasDepthBands ? true : nil
+        // Absent from older racks; any string is kept, even one this version does not know.
+        binStyleValue = try c.decodeIfPresent(String.self, forKey: .binStyle)
         // "layout" is a known key (read as a grid), so it is not kept.
         unknownFields = try UnknownFields(from: decoder, known: CodingKeys.self)
     }
@@ -393,6 +415,7 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         try c.encodeIfPresent(shelfLayers, forKey: .shelfLayers)
         try c.encodeIfPresent(zoneBreaks, forKey: .zoneBreaks)
         try c.encodeIfPresent(backReversed == true && hasDepthBands ? true : nil, forKey: .backReversed)
+        try c.encodeIfPresent(binStyleValue, forKey: .binStyle)
         try unknownFields.encode(to: encoder, known: CodingKeys.self)
     }
 

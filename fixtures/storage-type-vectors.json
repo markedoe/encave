@@ -1,0 +1,92 @@
+{
+  "about": "Storage type of bins, shared by CaveKit (StorageTypeVectorTests.swift) and the Kotlin core (StorageTypeVectorTest.kt). A storage is made by the wizard ('wizard': the type, the rack layout and the counts) or read from a record ('record', as files and sync write it), then optionally edited ('edit': fields set on the rack, as an editor of an older version would). 'storageType' and 'storageCount' are what the Storage list shows; 'binStyle' is the value written back when the rack is encoded again, null when left out. Racks saved without binStyle, or with a value the app does not know, are typed by their shape: four bins to a row, the last row possibly shorter, are crates.",
+  "cases": [
+    {
+      "about": "Diamond bins 6 by 4 made by the Rack wizard stay a rack, although four to a row",
+      "wizard": { "type": "rack", "layout": "diamond", "rows": 6, "columns": 4, "bottlesPerBin": 10 },
+      "storageType": "rack", "storageCount": 24, "binStyle": "diamond"
+    },
+    {
+      "about": "One row of 3 diamond bins made by the Rack wizard stays a rack",
+      "wizard": { "type": "rack", "layout": "diamond", "rows": 1, "columns": 3, "bottlesPerBin": 10 },
+      "storageType": "rack", "storageCount": 3, "binStyle": "diamond"
+    },
+    {
+      "about": "Crates of 8 (2 rows of 4) edited to 5 to a row stay crates",
+      "wizard": { "type": "crates", "bins": 8, "bottlesPerBin": 12 },
+      "edit": { "columns": 5 },
+      "storageType": "crates", "storageCount": 10, "binStyle": "crates"
+    },
+    {
+      "about": "A record from an older version without binStyle is typed by its shape, as before: 2 rows of 4 are crates",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000001", "name": "Bins", "kind": "bins", "rows": 2, "columns": 4, "depth": 1, "binCapacity": 12 },
+      "storageType": "crates", "storageCount": 8, "binStyle": null
+    },
+    {
+      "about": "A record from an older version without binStyle is typed by its shape, as before: 2 rows of 3 are diamond bins in a rack",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000002", "name": "Bins", "kind": "bins", "rows": 2, "columns": 3, "depth": 1, "binCapacity": 10 },
+      "storageType": "rack", "storageCount": 6, "binStyle": null
+    },
+    {
+      "about": "A binStyle value from a newer version is typed by the shape and written back unchanged",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000003", "name": "Bins", "kind": "bins", "rows": 6, "columns": 4, "depth": 1, "binCapacity": 10, "binStyle": "pyramid" },
+      "storageType": "crates", "storageCount": 24, "binStyle": "pyramid"
+    },
+    {
+      "about": "binStyle saved as crates wins over a diamond shape",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000004", "name": "Bins", "kind": "bins", "rows": 3, "columns": 5, "depth": 1, "binCapacity": 12, "binStyle": "crates" },
+      "storageType": "crates", "storageCount": 15, "binStyle": "crates"
+    }
+  ],
+  "editorAbout": "The bins editor ('edit': a new name, a type picked with 'choose', a count of 'bins' for crates, or 'rows' and 'columns' otherwise), as Rack.savingBins saves it. A type can be picked only while none is saved; until then binStyle stays as read. Crates keep their shape unless their count of bins changes. 'maxEditableBins' is the most bins the crates editor offers.",
+  "editorCases": [
+    {
+      "about": "A diamond rack 6 by 4 from an older version (no binStyle) reads as crates; renamed, it keeps its shape and still saves no type",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000101", "name": "Bins", "kind": "bins", "rows": 6, "columns": 4, "depth": 1, "binCapacity": 10 },
+      "edit": { "name": "Wall" },
+      "storageType": "crates", "binStyle": null, "columnsInRow": [4, 4, 4, 4, 4, 4], "maxEditableBins": 40
+    },
+    {
+      "about": "The same rack, picked as Rack in the editor: saved as diamond bins, shape kept",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000102", "name": "Bins", "kind": "bins", "rows": 6, "columns": 4, "depth": 1, "binCapacity": 10 },
+      "edit": { "choose": "rack" },
+      "storageType": "rack", "binStyle": "diamond", "columnsInRow": [4, 4, 4, 4, 4, 4], "maxEditableBins": 40
+    },
+    {
+      "about": "Crates 2 by 4 from an older version, picked as Crates with the same bins: saved as crates, shape kept",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000103", "name": "Bins", "kind": "bins", "rows": 2, "columns": 4, "depth": 1, "binCapacity": 12 },
+      "edit": { "choose": "crates" },
+      "storageType": "crates", "binStyle": "crates", "columnsInRow": [4, 4], "maxEditableBins": 40
+    },
+    {
+      "about": "Bins with a binStyle from a newer version, renamed: the value is kept",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000104", "name": "Bins", "kind": "bins", "rows": 6, "columns": 4, "depth": 1, "binCapacity": 10, "binStyle": "pyramid" },
+      "edit": { "name": "Wall" },
+      "storageType": "crates", "binStyle": "pyramid", "columnsInRow": [4, 4, 4, 4, 4, 4], "maxEditableBins": 40
+    },
+    {
+      "about": "Crates of 2 rows of 5 (reshaped by an older editor), renamed: the shape is kept",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000105", "name": "Bins", "kind": "bins", "rows": 2, "columns": 5, "depth": 1, "binCapacity": 12, "binStyle": "crates" },
+      "edit": { "name": "Boxes" },
+      "storageType": "crates", "binStyle": "crates", "columnsInRow": [5, 5], "maxEditableBins": 40
+    },
+    {
+      "about": "The same crates edited to 11 bins: laid out again four to a row",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000106", "name": "Bins", "kind": "bins", "rows": 2, "columns": 5, "depth": 1, "binCapacity": 12, "binStyle": "crates" },
+      "edit": { "bins": 11 },
+      "storageType": "crates", "binStyle": "crates", "columnsInRow": [4, 4, 3], "maxEditableBins": 40
+    },
+    {
+      "about": "Crates of 60 bins (an older editor allowed more than 40): the editor offers up to 60, a rename keeps them all",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000107", "name": "Bins", "kind": "bins", "rows": 15, "columns": 4, "depth": 1, "binCapacity": 12, "binStyle": "crates" },
+      "edit": { "name": "Boxes" },
+      "storageType": "crates", "binStyle": "crates", "columnsInRow": [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4], "maxEditableBins": 60
+    },
+    {
+      "about": "Diamond bins saved as such, edited to 3 rows of 4: still a rack",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000108", "name": "Bins", "kind": "bins", "rows": 6, "columns": 4, "depth": 1, "binCapacity": 10, "binStyle": "diamond" },
+      "edit": { "rows": 3 },
+      "storageType": "rack", "binStyle": "diamond", "columnsInRow": [4, 4, 4], "maxEditableBins": 40
+    }
+  ]
+}
