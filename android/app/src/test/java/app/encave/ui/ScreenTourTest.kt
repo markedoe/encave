@@ -556,7 +556,13 @@ class ScreenTourTest(private val device: String, private val variant: String) {
             val cellar = repository.cellar.value
             return cellar.bottleAt(app.encave.core.Slot(cellar.racks.first().id, 2, 3)) != null
         }
-        compose.waitUntil(10_000, ::dropped)
+        // Idle the main looper on each check so the result posted there is seen, and give a
+        // busy CI runner more time.
+        compose.waitUntil(30_000) {
+            org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
+            compose.mainClock.advanceTimeBy(100)
+            dropped()
+        }
         assertTrue("the dragged bottle is in its new place", dropped())
         capture("rack-dropped")
     }
