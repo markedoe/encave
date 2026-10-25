@@ -1636,6 +1636,8 @@ OLD_FRENCH_ALLOWED = {"help_data_other"}
 # A count first, then a plural noun, outside <plurals>: wrong for 1 ("1 bouteilles sur 40").
 # Say "%1$d sur %2$d bouteilles", or make it a plural.
 COUNT_THEN_PLURAL = re.compile(r"^%1\$d\s+[a-zà-ÿœ’]+s\b", re.I)
+# Counts that are never 1 (a bottle size in millilitres).
+COUNT_NEVER_ONE = {"size_other_spoken"}
 
 
 def count_then_plural(text):
@@ -1657,7 +1659,7 @@ def check(res):
         for found in loose_guillemets(value):
             problems.append(f"« » without a narrow no-break space inside: {found!r} ({name})")
     for row in S:
-        if count_then_plural(text_for(row[2], "fr")):
+        if row[0] not in COUNT_NEVER_ONE and count_then_plural(text_for(row[2], "fr")):
             problems.append(f"French count followed by a plural noun, wrong for 1 (say “%1$d sur %2$d …”): {row[0]}")
     # Typographic apostrophes only: a straight one is written \' in strings.xml.
     for row in S:
