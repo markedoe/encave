@@ -5687,16 +5687,6 @@
         }
       }
     },
-    "Encave is free software: you can redistribute it and modify it under the terms of the GNU Affero General Public License, version 3, as published by the Free Software Foundation. It comes with ABSOLUTELY NO WARRANTY, to the extent permitted by law.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Encave est un logiciel libre : vous pouvez le redistribuer et le modifier selon les termes de la licence publique générale GNU Affero, version 3, publiée par la Free Software Foundation. Il est fourni SANS AUCUNE GARANTIE, dans la mesure permise par la loi."
-          }
-        }
-      }
-    },
     "Encave is in beta: features can still change and some bugs remain. Make a backup from time to time with **Back Up Now** in **Settings**, and report problems on the project page (**Source code** in **Settings › About**).": {
       "localizations": {
         "fr": {
@@ -5753,6 +5743,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Encave garde une copie de votre cave sur cet appareil chaque jour où elle change : une pour chacun des 7 derniers jours où elle a changé, puis une par semaine pour les 4 semaines d’avant, même si vous n’avez pas ouvert Encave depuis longtemps. Ouvrez **Réglages › Vos données › Versions précédentes**, choisissez une date pour voir ce qu’elle contient et en quoi elle diffère de votre cave, puis restaurez-la. Les photos et documents dont une version a besoin sont gardés avec elle."
+          }
+        }
+      }
+    },
+    "Encave’s source code is public under the Functional Source License 1.1 (FSL-1.1-ALv2): you may read, use and change it for any purpose except a competing product. Each version becomes Apache-2.0 two years after its release. It comes with no warranty, to the extent permitted by law.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le code source d’Encave est public sous la Functional Source License 1.1 (FSL-1.1-ALv2) : vous pouvez le lire, l’utiliser et le modifier à toute fin, sauf pour un produit concurrent. Chaque version passe sous Apache-2.0 deux ans après sa publication. Il est fourni sans aucune garantie, dans la mesure permise par la loi."
           }
         }
       }

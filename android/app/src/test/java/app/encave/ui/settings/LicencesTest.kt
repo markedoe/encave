@@ -16,7 +16,7 @@ class LicencesTest {
         val acknowledgements = Acknowledgements.load(ApplicationProvider.getApplicationContext())
         assertNotNull(acknowledgements)
         acknowledgements!!
-        assertTrue(acknowledgements.licences["AGPL-3.0"]!!.text.contains("GNU AFFERO GENERAL PUBLIC LICENSE"))
+        assertTrue(acknowledgements.licences["FSL-1.1-ALv2"]!!.text.contains("Functional Source License"))
         assertTrue(acknowledgements.dependencies.any { it.name == "ZXing" })
         acknowledgements.dependencies.forEach { dependency ->
             assertTrue(dependency.name, acknowledgements.licences[dependency.licence]?.text?.isNotBlank() == true)

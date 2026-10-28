@@ -249,10 +249,10 @@ Postponed by the owner; each needs a protocol version that every device understa
 
 ## Open questions
 
-- **App store distribution and the AGPL.** Store terms are widely considered
-  incompatible with the AGPL for third-party contributions. Before accepting
-  outside contributions, add an AGPL section 7 additional permission for app
-  store distribution, or a contributor license agreement.
+- **App store distribution and the licence.** Settled: Encave is under the
+  FSL-1.1-ALv2, which does not conflict with store terms, so store distribution
+  is fine (the relay stays AGPL-3.0). Contributions need a contributor licence
+  agreement before they are accepted, since the owner sells the app.
 - **Encryption export rules.** Settled for Apple and Android in
   [ENCRYPTION.md](ENCRYPTION.md): both apps use only the system's encryption
   (CryptoKit, the Android platform), so nothing is uploaded to App Store Connect

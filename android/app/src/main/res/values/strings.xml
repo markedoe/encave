@@ -390,7 +390,7 @@
     <string name="settings_source_body">github.com/markedoe/encave</string>
     <string name="settings_privacy_policy">Privacy policy</string>
     <string name="settings_licences">Licences</string>
-    <string name="licences_agpl_notice">Encave is free software: you can redistribute it and modify it under the terms of the GNU Affero General Public License, version 3, as published by the Free Software Foundation. It comes with ABSOLUTELY NO WARRANTY, to the extent permitted by law.</string>
+    <string name="licences_encave_notice">Encave’s source code is public under the Functional Source License 1.1 (FSL-1.1-ALv2): you may read, use and change it for any purpose except a competing product. Each version becomes Apache-2.0 two years after its release. It comes with no warranty, to the extent permitted by law.</string>
     <string name="licences_copyright">Copyright © 2026 the Encave contributors</string>
     <string name="licences_libraries">Libraries</string>
     <string name="licences_libraries_body">Open-source libraries included in Encave, each under its own licence.</string>

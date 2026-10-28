@@ -134,7 +134,7 @@ third backend costs little. Section 10 specifies this layout.
 - **Merge model:** per-object last-writer-wins with Lamport stamps.
   Shipping a full encrypted snapshot plus per-device change logs is
   acceptable. This matters: the protocol needs no server-side logic.
-- **Maintainer:** one person, AGPL, public repository, does not want to run or
+- **Maintainer:** one person, public repository (relay AGPL-3.0, apps FSL-1.1-ALv2), does not want to run or
   pay for servers.
 - **Implied constraints the choice must address:**
   1. **Remote pairing needs a rendezvous.** The roadmap's 6-digit code + PAKE

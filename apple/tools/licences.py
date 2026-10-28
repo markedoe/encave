@@ -21,14 +21,14 @@ KNOWN = {
 }
 
 LICENCE_NAMES = {
-    "AGPL-3.0": "GNU Affero General Public License v3.0",
+    "FSL-1.1-ALv2": "Functional Source License 1.1, ALv2 Future License",
     "Apache-2.0": "Apache License 2.0",
     "MIT": "MIT License",
 }
 
 
 def licence_text(identifier):
-    path = REPO / "LICENSE" if identifier == "AGPL-3.0" else REPO / "licences" / f"{identifier}.txt"
+    path = REPO / "LICENSE" if identifier == "FSL-1.1-ALv2" else REPO / "licences" / f"{identifier}.txt"
     return path.read_text().strip() + "\n"
 
 
@@ -47,7 +47,7 @@ def build():
             "licence": licence,
             "copyright": copyright,
         })
-    used = ["AGPL-3.0"] + sorted({d["licence"] for d in dependencies})
+    used = ["FSL-1.1-ALv2"] + sorted({d["licence"] for d in dependencies})
     data = {
         "dependencies": dependencies,
         "licences": {identifier: {"name": LICENCE_NAMES[identifier], "text": licence_text(identifier)} for identifier in used},

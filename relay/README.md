@@ -5,6 +5,10 @@ network. It stores encrypted files and nothing else: devices encrypt everything
 before sending it, and the relay never has a key (see [docs/SYNC.md](../docs/SYNC.md)
 and [docs/REMOTE_SYNC.md](../docs/REMOTE_SYNC.md)).
 
+The relay is free software under the [GNU Affero General Public License
+v3.0](LICENSE), so anyone can host and audit it. The rest of Encave is under the
+FSL-1.1-ALv2 (see the [root licence](../LICENSE)).
+
 **You do not need a relay** to sync your own devices on the same Wi-Fi. A relay
 is for devices that are apart, or for households with both iPhones and Android
 phones. Anyone can run one; point the apps at it in **Settings › Devices ›

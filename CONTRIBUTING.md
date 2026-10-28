@@ -49,5 +49,7 @@ conversation; see [SECURITY.md](SECURITY.md)).
 - Keep business logic in `CaveKit`; views stay thin.
 - Kotlin with Jetpack Compose and Material 3; logic in `android/core`.
 
-By contributing you agree that your contribution is licensed under the
-[AGPL-3.0](LICENSE).
+Encave is under the [FSL-1.1-ALv2](LICENSE), except the relay, which is under
+the AGPL-3.0 ([relay/LICENSE](relay/LICENSE)). The owner sells the app, so a
+contribution is accepted only after you have signed a contributor licence
+agreement; open an issue before starting work and the owner will send it.

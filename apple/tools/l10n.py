@@ -935,7 +935,7 @@ FR = {
     'Licences': 'Licences',
     'Libraries': 'Bibliothèques',
     'Open-source libraries included in Encave, each under its own licence.': 'Bibliothèques open source incluses dans Encave, chacune sous sa propre licence.',
-    'Encave is free software: you can redistribute it and modify it under the terms of the GNU Affero General Public License, version 3, as published by the Free Software Foundation. It comes with ABSOLUTELY NO WARRANTY, to the extent permitted by law.': 'Encave est un logiciel libre : vous pouvez le redistribuer et le modifier selon les termes de la licence publique générale GNU Affero, version 3, publiée par la Free Software Foundation. Il est fourni SANS AUCUNE GARANTIE, dans la mesure permise par la loi.',
+    'Encave’s source code is public under the Functional Source License 1.1 (FSL-1.1-ALv2): you may read, use and change it for any purpose except a competing product. Each version becomes Apache-2.0 two years after its release. It comes with no warranty, to the extent permitted by law.': 'Le code source d’Encave est public sous la Functional Source License 1.1 (FSL-1.1-ALv2) : vous pouvez le lire, l’utiliser et le modifier à toute fin, sauf pour un produit concurrent. Chaque version passe sous Apache-2.0 deux ans après sa publication. Il est fourni sans aucune garantie, dans la mesure permise par la loi.',
     'Copyright © 2026 the Encave contributors': 'Copyright © 2026 les contributeurs d’Encave',
     "Your data": "Vos données",
     "Zoom In": "Agrandir",

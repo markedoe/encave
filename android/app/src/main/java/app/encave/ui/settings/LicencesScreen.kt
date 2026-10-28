@@ -65,7 +65,7 @@ data class Acknowledgements(val dependencies: List<Dependency>, val licences: Ma
 fun LicencesScreen(navigator: AppNavigator) {
     val context = LocalContext.current
     val acknowledgements = remember { Acknowledgements.load(context) }
-    // The licence shown in full: "AGPL-3.0", or a library's name.
+    // The licence shown in full: "FSL-1.1-ALv2", or a library's name.
     var open by rememberSaveable { mutableStateOf<String?>(null) }
     val dependency = acknowledgements?.dependencies?.firstOrNull { it.name == open }
     val licence = acknowledgements?.licences?.get(dependency?.licence ?: open)
@@ -94,7 +94,7 @@ fun LicencesScreen(navigator: AppNavigator) {
             }
             SectionHeader("Encave")
             Text(
-                stringResource(R.string.licences_agpl_notice),
+                stringResource(R.string.licences_encave_notice),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(horizontal = Dimens.l, vertical = Dimens.s),
             )
@@ -104,10 +104,10 @@ fun LicencesScreen(navigator: AppNavigator) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = Dimens.l, vertical = Dimens.xs),
             )
-            acknowledgements?.licences?.get("AGPL-3.0")?.let { agpl ->
+            acknowledgements?.licences?.get("FSL-1.1-ALv2")?.let { fsl ->
                 ListItem(
-                    modifier = Modifier.clickable { open = "AGPL-3.0" },
-                    headlineContent = { Text(agpl.name) },
+                    modifier = Modifier.clickable { open = "FSL-1.1-ALv2" },
+                    headlineContent = { Text(fsl.name) },
                 )
             }
             ListItem(

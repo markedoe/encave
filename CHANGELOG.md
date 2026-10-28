@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Changed
+- Encave is now under the Functional Source License 1.1 (FSL-1.1-ALv2) instead
+  of the AGPL-3.0: each version becomes Apache-2.0 two years after its release.
+  The relay stays under the AGPL-3.0. Settings › About › Licences shows the new
+  licence in English and French; contributions need a contributor licence
+  agreement
 - Find Current Price no longer reads thresholds and ranges ("à moins de
   30 €", "under £20", "10-20 €") as prices, and takes no price from a page that
   does not name the wine (a guide or a producer's page listing other cuvées)

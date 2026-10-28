@@ -110,4 +110,8 @@ See [docs/development.md](docs/development.md).
 
 ## License
 
-[GNU Affero General Public License v3.0](LICENSE).
+Encave is under the [Functional Source License 1.1, ALv2 Future License](LICENSE)
+(FSL-1.1-ALv2): you may read, use and change the code for any purpose except a
+competing product, and each version becomes Apache-2.0 two years after its
+release. The [relay](relay/LICENSE) is free software under the GNU Affero
+General Public License v3.0, so anyone can host and audit it.

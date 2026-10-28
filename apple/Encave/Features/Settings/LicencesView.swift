@@ -33,14 +33,14 @@ struct LicencesView: View {
     var body: some View {
         List {
             Section {
-                Text("Encave is free software: you can redistribute it and modify it under the terms of the GNU Affero General Public License, version 3, as published by the Free Software Foundation. It comes with ABSOLUTELY NO WARRANTY, to the extent permitted by law.")
+                Text("Encave’s source code is public under the Functional Source License 1.1 (FSL-1.1-ALv2): you may read, use and change it for any purpose except a competing product. Each version becomes Apache-2.0 two years after its release. It comes with no warranty, to the extent permitted by law.")
                 Text("Copyright © 2026 the Encave contributors")
                     .foregroundStyle(.secondary)
-                if let agpl = acknowledgements?.licences["AGPL-3.0"] {
+                if let fsl = acknowledgements?.licences["FSL-1.1-ALv2"] {
                     NavigationLink {
-                        LicenceTextView(title: agpl.name, copyright: nil, text: agpl.text)
+                        LicenceTextView(title: fsl.name, copyright: nil, text: fsl.text)
                     } label: {
-                        Text(verbatim: agpl.name)
+                        Text(verbatim: fsl.name)
                     }
                 }
                 Link(destination: ProjectLinks.source) {
