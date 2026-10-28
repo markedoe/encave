@@ -384,6 +384,23 @@ final class ScreenTourTests: XCTestCase {
             // The chips scroll sideways: at large sizes this one can be off screen.
             print("journal: the Tasted elsewhere chip is off screen")
         }
+        #if os(iOS)
+        // A tasting from the cellar shows its wine and opens it on the Journal's stack.
+        let tasting = element("journal.row.cellar")
+        if tasting.isHittable {
+            tasting.press()
+            let wine = element("tasting.wine")
+            if wine.waitForExistence(timeout: 3) {
+                wine.press()
+                XCTAssertTrue(element("action.wine.add").waitForExistence(timeout: 5), "journal: Show Wine did not open the wine")
+                goBack()
+            } else {
+                XCTFail("journal: the tasting does not show its wine")
+                closeSheet()
+            }
+            XCTAssertTrue(element("journal.row.cellar").waitForExistence(timeout: 5), "journal: not back from the wine")
+        }
+        #endif
         // From the cellar: the wines to choose from.
         if openAddMenu(), pressMenuItem("journal.add.cellar") {
             snapshot("journal-open-bottle")

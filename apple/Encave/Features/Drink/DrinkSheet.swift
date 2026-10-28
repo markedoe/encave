@@ -217,8 +217,11 @@ private struct BottleChoiceLabel: View {
 /// Edit the tasting of a bottle already opened.
 struct TastingEditor: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     @Environment(\.dismiss) private var dismiss
     let bottleID: UUID
+    /// Opened from the Journal: the wine opens there.
+    var fromJournal = false
     @State private var draft = TastingDraft()
     @State private var original = TastingDraft()
     @State private var loaded = false
@@ -236,8 +239,23 @@ struct TastingEditor: View {
                             showWine(wine.id)
                         } label: {
                             HStack(spacing: 14) {
-                                BottleEnd(color: wine.color, size: 40)
-                                Text(wine.displayName).font(.headline).fontDesign(.serif)
+                                // Its picture, as in the Cellar, also once no bottle is left.
+                                if wine.hasShownPhoto {
+                                    WineImage(wine: wine, maxPixelSize: 300, inset: 3)
+                                        .frame(width: 60, height: 80)
+                                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                                        .accessibilityHidden(true)
+                                } else {
+                                    BottleEnd(color: wine.color, size: 40)
+                                        .accessibilityHidden(true)
+                                }
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(wine.displayName).font(.headline).fontDesign(.serif)
+                                    Text("Show Wine")
+                                        .font(.subheadline)
+                                        .foregroundStyle(Color.accentColor)
+                                        .accessibilityHidden(true)
+                                }
                                 Spacer()
                                 Image(systemName: "chevron.forward")
                                     .font(.footnote.weight(.semibold))
@@ -280,7 +298,7 @@ struct TastingEditor: View {
             }
             .discardGuard(isDirty: isDirty, isAsking: $confirmingDiscard) {
                 dismiss()
-                if let pendingWine { model.open(wine: pendingWine) }
+                if let pendingWine { open(wine: pendingWine) }
             }
             .onAppear {
                 guard !loaded else { return }
@@ -306,11 +324,20 @@ struct TastingEditor: View {
     private func showWine(_ id: UUID) {
         guard isDirty else {
             dismiss()
-            model.open(wine: id)
+            open(wine: id)
             return
         }
         pendingWine = id
         confirmingDiscard = true
+    }
+
+    /// Done once the sheet has closed (`SceneRouter` waits for it).
+    private func open(wine id: UUID) {
+        if fromJournal, let router {
+            router.perform(.openWineFromJournal(id))
+        } else {
+            model.open(wine: id)
+        }
     }
 }
 

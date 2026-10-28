@@ -145,8 +145,8 @@ struct SheetContent: View {
             DrinkSheet(bottleID: bottleID)
         case .editWine(let wineID, let field):
             EditWineView(wineID: wineID, field: field)
-        case .editTasting(let bottleID):
-            TastingEditor(bottleID: bottleID)
+        case .editTasting(let bottleID, let fromJournal):
+            TastingEditor(bottleID: bottleID, fromJournal: fromJournal)
         case .editRack(let rackID):
             // A new storage is made step by step; an existing one opens in the editor.
             if let rackID {

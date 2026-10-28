@@ -42,14 +42,7 @@ struct WineRow: View {
         let large = typeSize.isAccessibilitySize
         HStack(spacing: 14) {
             if !large {
-                if group.wine.hasShownPhoto {
-                    WineImage(wine: group.wine, maxPixelSize: 200, inset: 2)
-                        .frame(width: 34, height: 46)
-                        .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
-                        .accessibilityHidden(true)
-                } else {
-                    BottleEnd(color: group.wine.color, size: 34)
-                }
+                WineThumbnail(wine: group.wine)
             }
             VStack(alignment: .leading, spacing: 3) {
                 (Text(group.wine.name).font(.body.weight(.semibold))
@@ -94,6 +87,24 @@ struct WineRow: View {
         .padding(.vertical, 4)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// The wine's picture in a row (its cover, else its label photo, in the studio look when
+/// it is on), or its bottle end when it has none. The row says the wine in words.
+struct WineThumbnail: View {
+    let wine: Wine?
+
+    var body: some View {
+        if let wine, wine.hasShownPhoto {
+            WineImage(wine: wine, maxPixelSize: 200, inset: 2)
+                .frame(width: 34, height: 46)
+                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                .accessibilityHidden(true)
+        } else {
+            BottleEnd(color: wine?.color, size: 34)
+                .accessibilityHidden(true)
+        }
     }
 }
 

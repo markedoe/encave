@@ -807,7 +807,8 @@ struct EmptyCellarView: View {
             // a row and would be cut off in the narrow content column.
             VStack(spacing: 12) {
                 Button {
-                    router?.sheet = .addBottle(AddBottleContext())
+                    // Same as the toolbar's "+": the label scanner first where there is one.
+                    router?.sheet = .addBottle(AddBottleContext(scan: true))
                 } label: {
                     Text("Add a Bottle").frame(minWidth: 200)
                 }

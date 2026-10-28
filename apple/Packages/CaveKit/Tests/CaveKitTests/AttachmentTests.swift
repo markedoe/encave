@@ -152,6 +152,20 @@ enum AttachmentNames {
         ])
     }
 
+    @Test func theLastBottleDrunkKeepsTheWinesPictures() throws {
+        var cellar = Cellar()
+        var wine = Wine(name: "A", photoID: "label")
+        wine.coverPhotoID = "cover"
+        wine.extraPhotoIDs = ["back"]
+        wine.attachments = [doc("sheet")]
+        let bottle = try cellar.addBottles(of: wine, quantity: 1)[0]
+        try cellar.drink(bottle.id, tasting: Tasting(date: .now))
+        // The Journal still shows the wine, its pictures and its page.
+        #expect(cellar.wines[wine.id] != nil)
+        #expect(cellar.photoIDs == ["label", "cover", "back"])
+        #expect(cellar.fileRefs.contains(FileRef(id: doc("sheet").id, kind: .document)))
+    }
+
     @Test func documentsTravelThroughStorageToTheirPlace() async throws {
         let store = MemoryMailboxStore()
         var devices = household(2)

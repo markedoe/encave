@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -47,6 +49,20 @@ val LocalStudioLook = staticCompositionLocalOf { true }
 
 /** True when the wine has a picture on this device: its cover or its label photo. */
 fun PhotoStore.hasPicture(wine: Wine?): Boolean = wine != null && (exists(wine.coverPhotoId) || exists(wine.photoId))
+
+/**
+ * The wine's picture in a Journal row, as the wines tasted elsewhere show it, else its
+ * color dot in the same slot so names line up. The row says the wine in words.
+ */
+@Composable
+fun JournalWinePicture(wine: Wine?) {
+    val photos = LocalPhotoStore.current
+    if (wine != null && photos != null && photos.hasPicture(wine)) {
+        WineImage(wine, Modifier.size(44.dp, 56.dp), maxPixelSize = 200, inset = 3.dp, corner = 8.dp)
+    } else {
+        Box(Modifier.width(44.dp), contentAlignment = Alignment.Center) { WineColorDot(wine?.color, size = 16.dp) }
+    }
+}
 
 /**
  * The picture shown for a wine: its cover (a picture from the internet) if any,

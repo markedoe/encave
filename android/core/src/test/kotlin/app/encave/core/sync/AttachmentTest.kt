@@ -10,6 +10,7 @@ import app.encave.core.CellarJson
 import app.encave.core.FileKind
 import app.encave.core.FileRef
 import app.encave.core.InstantSerializer
+import app.encave.core.Tasting
 import app.encave.core.Wine
 import java.util.UUID
 import kotlinx.coroutines.async
@@ -130,6 +131,18 @@ class AttachmentTest {
         assertEquals(CellarError.UnknownBottle, unknownBottle.error)
         val unknownWine = assertThrows<CellarException> { cellar.attach(listOf(doc("x")), AttachmentTarget.OfWine(UUID.randomUUID())) }
         assertEquals(CellarError.UnknownWine, unknownWine.error)
+    }
+
+    @Test
+    fun theLastBottleDrunkKeepsTheWinesPictures() {
+        val cellar = Cellar()
+        val wine = Wine(name = "A", photoId = "label", coverPhotoId = "cover", extraPhotoIds = listOf("back"), attachments = listOf(doc("sheet")))
+        val bottle = cellar.addBottles(wine, 1)[0]
+        cellar.drink(bottle.id, Tasting())
+        // The Journal still shows the wine, its pictures and its page.
+        assertTrue(cellar.wines[wine.id] != null)
+        assertEquals(setOf("label", "cover", "back"), cellar.photoIds)
+        assertTrue(FileRef(doc("sheet").id, FileKind.Document) in cellar.fileRefs)
     }
 
     @Test

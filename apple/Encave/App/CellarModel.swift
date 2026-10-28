@@ -1207,7 +1207,8 @@ enum AppSheet: Identifiable {
     case drink(bottleID: UUID?)
     /// Edit a wine, scrolled to one of its fields when given.
     case editWine(wineID: UUID, field: WineFormField? = nil)
-    case editTasting(bottleID: UUID)
+    /// From the Journal, "Show Wine" opens the wine there.
+    case editTasting(bottleID: UUID, fromJournal: Bool = false)
     case editRack(rackID: UUID?)
     case moveBottle(bottleID: UUID)
     /// Choose the picture shown for a wine.
@@ -1227,7 +1228,7 @@ enum AppSheet: Identifiable {
         case .addBottle(let context): "add-\(context.id)"
         case .drink(let id): "drink-\(id?.uuidString ?? "choose")"
         case .editWine(let id, _): "wine-\(id)"
-        case .editTasting(let id): "tasting-\(id)"
+        case .editTasting(let id, _): "tasting-\(id)"
         case .editRack(let id): "rack-\(id?.uuidString ?? "new")"
         case .moveBottle(let id): "move-\(id)"
         case .wineImage(let id): "image-\(id)"

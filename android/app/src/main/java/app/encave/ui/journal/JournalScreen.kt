@@ -78,7 +78,11 @@ import app.encave.ui.components.rememberRetained
 import app.encave.ui.components.RatingStars
 import app.encave.ui.components.SectionHeader
 import app.encave.ui.components.StyleLabel
-import app.encave.ui.components.WineColorDot
+import androidx.compose.foundation.layout.Spacer
+import app.encave.ui.components.hasPicture
+import app.encave.ui.components.WineImage
+import app.encave.ui.components.LocalPhotoStore
+import app.encave.ui.components.JournalWinePicture
 import app.encave.ui.components.labelRes
 import app.encave.ui.drink.TastingFields
 import app.encave.ui.drink.TastingFormState
@@ -480,8 +484,8 @@ private fun TastingRow(
                     )
                 },
             colors = if (selected) ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer) else ListItemDefaults.colors(),
-            // The same slot as the wines tasted elsewhere (a picture or a dot): names and stars line up.
-            leadingContent = { Box(Modifier.width(44.dp), contentAlignment = Alignment.Center) { WineColorDot(wine?.color, size = 16.dp) } },
+            // The wine's picture, as for the wines tasted elsewhere (else its dot in the same slot).
+            leadingContent = { JournalWinePicture(wine) },
             overlineContent = {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
                     Icon(Icons.Outlined.Home, contentDescription = null, modifier = Modifier.size(14.dp))
@@ -572,6 +576,11 @@ private fun TastingForm(viewModel: AppViewModel, navigator: AppNavigator, bottle
             verticalArrangement = Arrangement.spacedBy(Dimens.m),
         ) {
             if (wine != null) {
+                val photos = LocalPhotoStore.current
+                // Its picture, as in the cellar, also once no bottle of it is left.
+                if (photos != null && photos.hasPicture(wine)) {
+                    WineImage(wine, Modifier.size(90.dp, 120.dp), maxPixelSize = 400, inset = 4.dp, corner = 12.dp)
+                }
                 StyleLabel(wine.color)
                 Text(
                     wine.displayName, style = SerifDisplay,
@@ -580,6 +589,15 @@ private fun TastingForm(viewModel: AppViewModel, navigator: AppNavigator, bottle
                     },
                 )
                 wine.producer?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                // Its page (pictures, details, other tastings, Add bottles), also with no bottle left.
+                OutlinedButton(
+                    onClick = { navigator.open(WineDetailRoute(wine.id.toString())) },
+                    modifier = Modifier.testTag("tasting.show_wine"),
+                ) {
+                    Icon(Icons.Outlined.WineBar, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(Dimens.s))
+                    Text(stringResource(R.string.action_show_wine))
+                }
             }
             TastingFields(form)
             TextButton(onClick = {

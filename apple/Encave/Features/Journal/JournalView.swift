@@ -5,6 +5,9 @@ import SwiftUI
 /// grouped by month, with filters and insights.
 struct JournalView: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
+    /// A wine opened from a tasting, on this stack: also one with no bottle left.
+    @State private var openedWine: UUID?
     /// On the Mac the window shows Insights in its own column, and provides the navigation.
     var embedded = false
     @State private var query = ""
@@ -92,6 +95,12 @@ struct JournalView: View {
             }
         }
         .searchable(text: $query, prompt: Text("Wine, place, note or tag"))
+        .navigationDestination(item: $openedWine) { WineDetailView(wineID: $0) }
+        .onChange(of: router?.journalWineRequest, initial: true) { _, id in
+            guard let id else { return }
+            openedWine = id
+            router?.journalWineRequest = nil
+        }
         .navigationTitle("Journal")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -240,7 +249,7 @@ private struct DiaryEntryRow: View {
         switch entry {
         case .tasting(let bottle):
             Button {
-                router?.sheet = .editTasting(bottleID: bottle.id)
+                router?.sheet = .editTasting(bottleID: bottle.id, fromJournal: true)
             } label: {
                 TastingRow(bottle: bottle, showsWine: true, showsSource: true)
             }
@@ -289,9 +298,9 @@ struct OpenedBottleActions: ViewModifier {
             }
             .contextMenu {
                 if let wine {
-                    Button("Show Wine", systemImage: "wineglass") { model.open(wine: wine.id) }
+                    Button("Show Wine", systemImage: "wineglass") { router?.perform(.openWineFromJournal(wine.id)) }
                 }
-                Button("Edit Note", systemImage: "pencil") { router?.sheet = .editTasting(bottleID: bottle.id) }
+                Button("Edit Note", systemImage: "pencil") { router?.sheet = .editTasting(bottleID: bottle.id, fromJournal: true) }
                 if let wine {
                     Button("Add Bottles", systemImage: "plus") { router?.sheet = .addBottle(AddBottleContext(wine: wine)) }
                 }
@@ -315,7 +324,7 @@ struct TastingRow: View {
         let tasting = bottle.tasting
         let row = HStack(alignment: .top, spacing: 12) {
             if showsWine {
-                BottleEnd(color: wine?.color, size: 30)
+                WineThumbnail(wine: wine)
             }
             VStack(alignment: .leading, spacing: 4) {
                 if showsWine {
