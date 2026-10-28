@@ -56,3 +56,19 @@ This repository is public.
   12 lines, no pasted conversation or prompt text, no links to AI chat sessions.
 - Enforced by `scripts/check-public-safety.sh`, `scripts/check-commit-message.sh`
   and gitleaks, in pre-commit hooks and CI.
+
+## AI agents and sessions
+
+Pick the model for each agent or session by the task, not by default, and keep
+requests lean:
+
+- Opus (`claude-opus-5-5`): architecture and protocol changes (sync, crypto,
+  synced model fields), adversarial and security reviews, cross-platform
+  features, and failures whose cause is not yet known.
+- Sonnet (`claude-sonnet-5-5`): well-specified work with files and lines named
+  (UI fixes, strings and copy, docs, adding the tests a review listed), CI log
+  triage, screenshot and visual reviews, routine merges.
+- Haiku (`claude-haiku-5-5`): lookups, status polling, simple summaries.
+- Prefer a script or a direct command to an agent for rote work; give each
+  agent only the context it needs (paths, findings, constraints); do not start
+  two agents on the same files; stop or archive agents once their work is done.
