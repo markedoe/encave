@@ -307,7 +307,8 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
                 .imePadding()
                 .verticalScroll(rememberScrollState())
                 .readableWidth()
-                .padding(horizontal = Dimens.l, vertical = Dimens.s),
+                .padding(horizontal = Dimens.l, vertical = Dimens.s)
+                .testTag("add.screen"),
             verticalArrangement = Arrangement.spacedBy(Dimens.m),
         ) {
             barcode?.let { code ->

@@ -484,6 +484,8 @@ private struct WineHeader: View {
                 Button("Show Photo") { showsPhoto = true }
             }
         }
+        // ".picture" when it shows the wine's picture (hidden from VoiceOver): for the tours.
+        .accessibilityIdentifier(wine.hasShownPhoto ? "wine.header.picture" : "wine.header")
     }
 }
 

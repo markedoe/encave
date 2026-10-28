@@ -255,7 +255,9 @@ private struct DiaryEntryRow: View {
             }
             .buttonStyle(.plain)
             .modifier(OpenedBottleActions(bottle: bottle))
-            .accessibilityIdentifier("journal.row.cellar")
+            // ".picture" when it shows the wine's picture (hidden from VoiceOver): for the tours.
+            .accessibilityIdentifier(model.cellar.wines[bottle.wineID]?.hasShownPhoto == true
+                ? "journal.row.cellar.picture" : "journal.row.cellar")
         case .elsewhere(let discovery):
             Button {
                 router?.sheet = .discovery(discoveryID: discovery.id)
@@ -299,6 +301,7 @@ struct OpenedBottleActions: ViewModifier {
             .contextMenu {
                 if let wine {
                     Button("Show Wine", systemImage: "wineglass") { router?.perform(.openWineFromJournal(wine.id)) }
+                        .accessibilityIdentifier("journal.menu.showWine")
                 }
                 Button("Edit Note", systemImage: "pencil") { router?.sheet = .editTasting(bottleID: bottle.id, fromJournal: true) }
                 if let wine {

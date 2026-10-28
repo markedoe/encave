@@ -55,6 +55,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 - Journal tastings from the cellar show the wine's picture, and the tasting
   shows it at the top with Show Wine, which opens the wine's page (also once
   no bottle of it is left) on the Journal on iPhone, iPad and Android
+- On iPhone, a widget, Spotlight or reminder link to a wine with no bottle
+  left opens its page instead of an empty Cellar
 - CSV import reads "12,50 €", "45.00€" or "45.0000" as the price (not 100
   times more), and skips prices over 100,000; "4/5", "16/20" and "8/10"
   ratings are that share of 5 stars

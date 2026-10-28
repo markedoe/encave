@@ -104,14 +104,14 @@ jobs:
         include:
           - device: iPad
             language: English
-            tests: testTourInEnglish
+            tests: testTourInEnglish testEmptyCellarAddMatchesPlus testDrunkWineStaysReachable testNavigationLinks
             model: true
           - device: iPad
             language: French
             tests: testTourInFrench testStudioPicturesInLight testStudioPicturesInDark testStudioPicturesInFrench
           - device: iPhone
             language: English
-            tests: testTourInEnglish testLargeText testLargestText testDarkInEnglish
+            tests: testTourInEnglish testLargeText testLargestText testDarkInEnglish testEmptyCellarAddMatchesPlus testDrunkWineStaysReachable testNavigationLinks
           - device: iPhone
             language: French
             tests: testTourInFrench testStudioPicturesInLight testStudioPicturesInDark testStudioPicturesInFrench testDarkInFrench

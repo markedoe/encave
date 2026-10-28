@@ -369,24 +369,24 @@ final class ScreenTourTests: XCTestCase {
 
     /// The diary mixes both kinds of entries; a filter keeps one; "+" asks where the wine was drunk.
     private func checkJournal() {
-        XCTAssertTrue(element("journal.row.cellar").waitForExistence(timeout: 5), "journal: no tasting from the cellar")
+        XCTAssertTrue(cellarTasting.waitForExistence(timeout: 5), "journal: no tasting from the cellar")
         XCTAssertTrue(element("journal.row.elsewhere").exists, "journal: no wine tasted elsewhere")
         let elsewhere = element("journal.filter.elsewhere")
         if !elsewhere.waitForExistence(timeout: 3) {
             XCTFail("journal: no filter chips")
         } else if elsewhere.isHittable {
             elsewhere.press()
-            XCTAssertTrue(waitUntil { !element("journal.row.cellar").exists }, "journal: the filter still shows bottles from the cellar")
+            XCTAssertTrue(waitUntil { !cellarTasting.exists }, "journal: the filter still shows bottles from the cellar")
             snapshot("journal-tasted-elsewhere")
             element("journal.filter.all").press()
-            XCTAssertTrue(element("journal.row.cellar").waitForExistence(timeout: 5), "journal: All did not bring back the bottles from the cellar")
+            XCTAssertTrue(cellarTasting.waitForExistence(timeout: 5), "journal: All did not bring back the bottles from the cellar")
         } else {
             // The chips scroll sideways: at large sizes this one can be off screen.
             print("journal: the Tasted elsewhere chip is off screen")
         }
         #if os(iOS)
         // A tasting from the cellar shows its wine and opens it on the Journal's stack.
-        let tasting = element("journal.row.cellar")
+        let tasting = cellarTasting
         if tasting.isHittable {
             tasting.press()
             let wine = element("tasting.wine")
@@ -398,7 +398,7 @@ final class ScreenTourTests: XCTestCase {
                 XCTFail("journal: the tasting does not show its wine")
                 closeSheet()
             }
-            XCTAssertTrue(element("journal.row.cellar").waitForExistence(timeout: 5), "journal: not back from the wine")
+            XCTAssertTrue(cellarTasting.waitForExistence(timeout: 5), "journal: not back from the wine")
         }
         #endif
         // From the cellar: the wines to choose from.
@@ -743,6 +743,137 @@ final class ScreenTourTests: XCTestCase {
         #endif
     }
 
+    // MARK: Links
+
+    #if os(iOS)
+    /// The sample's wine 6 with its last bottle drunk (--drink-out-wine): its name-based ID
+    /// (SampleData.id(.wine, 6)) and its name, the same in every language.
+    private let drunkWineID = "6046A0A3-FF3A-5085-A405-951154C9495F"
+    private let drunkWineName = "Vendanges Tardives"
+
+    /// Its Journal entry.
+    private var drunkTasting: XCUIElement {
+        app.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label CONTAINS %@", "journal.row.cellar", drunkWineName))
+            .firstMatch
+    }
+
+    /// The sample cellar in English, with these switches for the tour.
+    private func launchSample(_ switches: [String]) {
+        continueAfterFailure = true
+        app = XCUIApplication()
+        app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "--sample-data"] + switches
+        app.launch()
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 20))
+    }
+
+    /// What Add opened: the scanner, or the form with or without the name being typed.
+    private func addScreen() -> String {
+        guard element("sheet.cancel").waitForExistence(timeout: 5) else { return "scanner or nothing" }
+        sleep(1)
+        let typing = app.textFields.matching(NSPredicate(format: "hasKeyboardFocus == true")).count > 0
+        return typing ? "form, typing the name" : "form"
+    }
+
+    /// The empty cellar's Add a Bottle opens what the "+" opens: the label scanner where the
+    /// device has one, else the form, without typing the name (the scanner's way).
+    func testEmptyCellarAddMatchesPlus() {
+        language = "links"
+        launchSample(["--empty-cellar"])
+        guard let empty = require("empty.add", "empty cellar: no Add a Bottle button", timeout: 15) else { return }
+        empty.press()
+        let fromEmpty = addScreen()
+        closeSheet()
+        guard let plus = requireControl("cellar.add", titles: ["Add Bottle"], "empty cellar: no + button") else { return }
+        plus.press()
+        XCTAssertEqual(addScreen(), fromEmpty, "empty cellar: Add a Bottle and + open different screens")
+        closeSheet()
+    }
+
+    private func checkWinePage(_ link: String) {
+        XCTAssertTrue(wineAnchor.waitForExistence(timeout: 5), "\(link) did not open the wine's page")
+        XCTAssertTrue(element("wine.header.picture").exists, "\(link): the wine's page shows no picture")
+    }
+
+    /// Every bottle of a wine drunk: its Journal entry shows its picture, and the tasting's
+    /// wine link, the entry's Show Wine and a widget's link all open its page.
+    func testDrunkWineStaysReachable() {
+        language = "links"
+        launchSample(["--drink-out-wine"])
+        openSection(3, "journal")
+        guard drunkTasting.waitForExistence(timeout: 10) else {
+            XCTFail("journal: no entry for the drunk wine")
+            return
+        }
+        XCTAssertEqual(drunkTasting.identifier, "journal.row.cellar.picture", "journal: the drunk wine's entry shows no picture")
+        drunkTasting.press()
+        if let link = require("tasting.wine", "journal: the tasting does not show its wine") {
+            link.press()
+            checkWinePage("the tasting's wine link")
+        }
+        launchSample(["--drink-out-wine"])
+        openSection(3, "journal")
+        if drunkTasting.waitForExistence(timeout: 10) {
+            drunkTasting.press(forDuration: 1.2)
+            if let show = require("journal.menu.showWine", "journal: no Show Wine in the entry's menu") {
+                show.press()
+                checkWinePage("the entry's Show Wine")
+            }
+        }
+        app.open(URL(string: "encave://wine/\(drunkWineID)")!)
+        checkWinePage("encave://wine of a wine with no bottle left")
+    }
+
+    /// No dead ends: each link (or button that navigates) opens a screen that shows
+    /// something. Every new link gets a row here (docs/development.md). Each starts from a
+    /// new launch, with one wine whose last bottle was drunk.
+    func testNavigationLinks() {
+        language = "links"
+        struct Link {
+            let name: String
+            let section: (Int, String)
+            let steps: [() -> XCUIElement]
+            let destination: () -> XCUIElement
+        }
+        let winePage = { self.wineAnchor }
+        let links = [
+            Link(name: "cellar row", section: (0, "cellar"), steps: [{ self.element("wine.row") }], destination: winePage),
+            Link(name: "tonight card", section: (2, "tonight"), steps: [{ self.element("action.tonight.open") }], destination: winePage),
+            Link(name: "rack position", section: (1, "racks"),
+                 steps: [{ self.element("rack.card.0") }, { self.element("rack.cell.0-0") }], destination: { self.element("rack.selection") }),
+            Link(name: "rack card wine", section: (1, "racks"),
+                 steps: [{ self.element("rack.card.0") }, { self.element("rack.cell.0-0") }, { self.element("rack.selection.wine") }],
+                 destination: winePage),
+            Link(name: "journal entry", section: (3, "journal"), steps: [{ self.cellarTasting }], destination: { self.element("tasting.wine") }),
+            Link(name: "tasting wine link", section: (3, "journal"),
+                 steps: [{ self.cellarTasting }, { self.element("tasting.wine") }], destination: winePage),
+            Link(name: "tasting wine link, no bottle left", section: (3, "journal"),
+                 steps: [{ self.drunkTasting }, { self.element("tasting.wine") }], destination: winePage),
+        ]
+        for link in links {
+            launchSample(["--drink-out-wine"])
+            openSection(link.section.0, link.section.1)
+            var reached = true
+            for step in link.steps {
+                let item = step()
+                guard item.waitForExistence(timeout: 5) else {
+                    XCTFail("\(link.name): a step is missing (\(item))")
+                    reached = false
+                    break
+                }
+                item.press()
+            }
+            guard reached else { continue }
+            XCTAssertTrue(link.destination().waitForExistence(timeout: 5), "\(link.name) leads nowhere")
+            XCTAssertGreaterThan(app.staticTexts.count, 2, "\(link.name) leads to an empty screen")
+        }
+        // From outside the app (a widget, Spotlight, a reminder), to a wine with no bottle left.
+        launchSample(["--drink-out-wine"])
+        app.open(URL(string: "encave://wine/\(drunkWineID)")!)
+        XCTAssertTrue(wineAnchor.waitForExistence(timeout: 5), "encave://wine of a wine with no bottle left leads nowhere")
+    }
+    #endif
+
     // MARK: Navigation
 
     private func element(_ identifier: String) -> XCUIElement {
@@ -767,6 +898,11 @@ final class ScreenTourTests: XCTestCase {
 
     /// A wine's page is open: its Drink or Add Bottles button.
     private var wineAnchor: XCUIElement { anyElement(["action.wine.drink", "action.wine.add"]) }
+
+    /// A Journal entry from the cellar (".picture" when it shows the wine's picture).
+    private var cellarTasting: XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH %@", "journal.row.cellar")).firstMatch
+    }
 
     /// What a step needs: a missing element fails the tour instead of skipping the step.
     @discardableResult
@@ -797,7 +933,7 @@ final class ScreenTourTests: XCTestCase {
             "cellar": ["wine.row", "cellar.select"],
             "racks": ["rack.card.0", "racks.add"],
             "tonight": ["action.tonight.drink", "tonight.ask"],
-            "journal": ["journal.add", "journal.row.cellar"],
+            "journal": ["journal.add", "journal.row.cellar", "journal.row.cellar.picture"],
         ]
         return anyElement(identifiers[name] ?? [])
     }

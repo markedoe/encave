@@ -268,7 +268,10 @@ final class CellarModel {
         // Launch test in CI: sample data in memory, never written to disk.
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains("--sample-data") {
+            // Screen tour: an empty cellar, or a wine whose last bottle was drunk.
+            if arguments.contains("--empty-cellar") { return CellarModel(store: InMemoryCellarStore()) }
             let model = preview(labelPhotos: true)
+            if arguments.contains("--drink-out-wine") { model.drinkOutForTour() }
             if let index = arguments.firstIndex(of: "--tab"), arguments.indices.contains(index + 1),
                let tab = AppTab(rawValue: arguments[index + 1]) {
                 model.request(.show(tab))
@@ -299,6 +302,20 @@ final class CellarModel {
         var sample = SampleData.cellar(labels: .localized)
         if labelPhotos { SamplePhotos.attach(to: &sample) }
         return CellarModel(store: InMemoryCellarStore(sample), versions: DemoVersions.make(from: sample))
+    }
+
+    /// Screen tour: every bottle of the sample's wine 6 drunk, with a picture, so the tour
+    /// checks that the links to a wine with no bottle left still open it.
+    private func drinkOutForTour() {
+        let id = SampleData.id(.wine, 6)
+        _ = update { cellar in
+            if cellar.wines[id]?.photoID == nil {
+                cellar.wines[id]?.photoID = cellar.wines.values.compactMap(\.photoID).sorted().first
+            }
+            for bottle in cellar.bottles.values where bottle.wineID == id && bottle.status == .inCellar {
+                try cellar.drink(bottle.id, tasting: Tasting(date: .now))
+            }
+        }
     }
 
     var currentYear: Int { CellarYear.current }
