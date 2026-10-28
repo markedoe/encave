@@ -310,7 +310,8 @@ final class CellarModel {
         let id = SampleData.id(.wine, 6)
         _ = update { cellar in
             if cellar.wines[id]?.photoID == nil {
-                cellar.wines[id]?.photoID = cellar.wines.values.compactMap(\.photoID).sorted().first
+                let photoID = cellar.wines.values.compactMap(\.photoID).sorted().first
+                cellar.wines[id]?.photoID = photoID
             }
             for bottle in cellar.bottles.values where bottle.wineID == id && bottle.status == .inCellar {
                 try cellar.drink(bottle.id, tasting: Tasting(date: .now))
