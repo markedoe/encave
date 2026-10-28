@@ -268,7 +268,10 @@ final class CellarModel {
         // Launch test in CI: sample data in memory, never written to disk.
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains("--sample-data") {
+            // Screen tour: an empty cellar, or a wine whose last bottle was drunk.
+            if arguments.contains("--empty-cellar") { return CellarModel(store: InMemoryCellarStore()) }
             let model = preview(labelPhotos: true)
+            if arguments.contains("--drink-out-wine") { model.drinkOutForTour() }
             if let index = arguments.firstIndex(of: "--tab"), arguments.indices.contains(index + 1),
                let tab = AppTab(rawValue: arguments[index + 1]) {
                 model.request(.show(tab))
@@ -299,6 +302,21 @@ final class CellarModel {
         var sample = SampleData.cellar(labels: .localized)
         if labelPhotos { SamplePhotos.attach(to: &sample) }
         return CellarModel(store: InMemoryCellarStore(sample), versions: DemoVersions.make(from: sample))
+    }
+
+    /// Screen tour: every bottle of the sample's wine 6 drunk, with a picture, so the tour
+    /// checks that the links to a wine with no bottle left still open it.
+    private func drinkOutForTour() {
+        let id = SampleData.id(.wine, 6)
+        _ = update { cellar in
+            if cellar.wines[id]?.photoID == nil {
+                let photoID = cellar.wines.values.compactMap(\.photoID).sorted().first
+                cellar.wines[id]?.photoID = photoID
+            }
+            for bottle in cellar.bottles.values where bottle.wineID == id && bottle.status == .inCellar {
+                try cellar.drink(bottle.id, tasting: Tasting(date: .now))
+            }
+        }
     }
 
     var currentYear: Int { CellarYear.current }
@@ -1207,7 +1225,8 @@ enum AppSheet: Identifiable {
     case drink(bottleID: UUID?)
     /// Edit a wine, scrolled to one of its fields when given.
     case editWine(wineID: UUID, field: WineFormField? = nil)
-    case editTasting(bottleID: UUID)
+    /// From the Journal, "Show Wine" opens the wine there.
+    case editTasting(bottleID: UUID, fromJournal: Bool = false)
     case editRack(rackID: UUID?)
     case moveBottle(bottleID: UUID)
     /// Choose the picture shown for a wine.
@@ -1227,7 +1246,7 @@ enum AppSheet: Identifiable {
         case .addBottle(let context): "add-\(context.id)"
         case .drink(let id): "drink-\(id?.uuidString ?? "choose")"
         case .editWine(let id, _): "wine-\(id)"
-        case .editTasting(let id): "tasting-\(id)"
+        case .editTasting(let id, _): "tasting-\(id)"
         case .editRack(let id): "rack-\(id?.uuidString ?? "new")"
         case .moveBottle(let id): "move-\(id)"
         case .wineImage(let id): "image-\(id)"

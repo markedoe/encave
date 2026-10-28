@@ -78,7 +78,11 @@ import app.encave.ui.components.rememberRetained
 import app.encave.ui.components.RatingStars
 import app.encave.ui.components.SectionHeader
 import app.encave.ui.components.StyleLabel
-import app.encave.ui.components.WineColorDot
+import androidx.compose.foundation.layout.Spacer
+import app.encave.ui.components.hasPicture
+import app.encave.ui.components.WineImage
+import app.encave.ui.components.LocalPhotoStore
+import app.encave.ui.components.JournalWinePicture
 import app.encave.ui.components.labelRes
 import app.encave.ui.drink.TastingFields
 import app.encave.ui.drink.TastingFormState
@@ -464,7 +468,9 @@ private fun TastingRow(
         tasting?.occasion?.takeIf { it.isNotBlank() },
         tasting?.note?.takeIf { it.isNotBlank() },
     ).joinToString(", ")
-    Box(modifier) {
+    // The picture is read as part of the row; the tours find it by this tag.
+    val pictured = LocalPhotoStore.current?.hasPicture(wine) == true
+    Box(if (pictured) modifier.testTag("journal.row.picture") else modifier) {
         ListItem(
             // The click before clearAndSetSemantics, so TalkBack still finds the row's actions.
             modifier = Modifier
@@ -480,8 +486,8 @@ private fun TastingRow(
                     )
                 },
             colors = if (selected) ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer) else ListItemDefaults.colors(),
-            // The same slot as the wines tasted elsewhere (a picture or a dot): names and stars line up.
-            leadingContent = { Box(Modifier.width(44.dp), contentAlignment = Alignment.Center) { WineColorDot(wine?.color, size = 16.dp) } },
+            // The wine's picture, as for the wines tasted elsewhere (else its dot in the same slot).
+            leadingContent = { JournalWinePicture(wine) },
             overlineContent = {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
                     Icon(Icons.Outlined.Home, contentDescription = null, modifier = Modifier.size(14.dp))
@@ -500,7 +506,12 @@ private fun TastingRow(
             },
         )
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-            DropdownMenuItem(text = { Text(showLabel) }, leadingIcon = { Icon(Icons.Outlined.WineBar, null) }, onClick = { menu = false; onShowWine() })
+            DropdownMenuItem(
+                text = { Text(showLabel) },
+                leadingIcon = { Icon(Icons.Outlined.WineBar, null) },
+                onClick = { menu = false; onShowWine() },
+                modifier = Modifier.testTag("journal.menu.show_wine"),
+            )
             DropdownMenuItem(text = { Text(editLabel) }, leadingIcon = { Icon(Icons.Outlined.Edit, null) }, onClick = { menu = false; onClick() })
             DropdownMenuItem(text = { Text(addLabel) }, leadingIcon = { Icon(Icons.Filled.Add, null) }, onClick = { menu = false; onAddBottles() })
             DropdownMenuItem(
@@ -568,18 +579,33 @@ private fun TastingForm(viewModel: AppViewModel, navigator: AppNavigator, bottle
             return@Scaffold
         }
         Column(
-            Modifier.padding(padding).fillMaxSize().imePadding().verticalScroll(rememberScrollState()).readableWidth().padding(Dimens.l),
+            Modifier.padding(padding).fillMaxSize().imePadding().verticalScroll(rememberScrollState()).readableWidth().padding(Dimens.l)
+                .testTag("tasting.screen"),
             verticalArrangement = Arrangement.spacedBy(Dimens.m),
         ) {
             if (wine != null) {
+                val photos = LocalPhotoStore.current
+                // Its picture, as in the cellar, also once no bottle of it is left.
+                if (photos != null && photos.hasPicture(wine)) {
+                    WineImage(wine, Modifier.size(90.dp, 120.dp).testTag("tasting.photo"), maxPixelSize = 400, inset = 4.dp, corner = 12.dp)
+                }
                 StyleLabel(wine.color)
                 Text(
                     wine.displayName, style = SerifDisplay,
-                    modifier = Modifier.clickable(onClickLabel = stringResource(R.string.action_show_wine)) {
+                    modifier = Modifier.testTag("tasting.wine_name").clickable(onClickLabel = stringResource(R.string.action_show_wine)) {
                         navigator.open(WineDetailRoute(wine.id.toString()))
                     },
                 )
                 wine.producer?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                // Its page (pictures, details, other tastings, Add bottles), also with no bottle left.
+                OutlinedButton(
+                    onClick = { navigator.open(WineDetailRoute(wine.id.toString())) },
+                    modifier = Modifier.testTag("tasting.show_wine"),
+                ) {
+                    Icon(Icons.Outlined.WineBar, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(Dimens.s))
+                    Text(stringResource(R.string.action_show_wine))
+                }
             }
             TastingFields(form)
             TextButton(onClick = {

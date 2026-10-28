@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
+import androidx.compose.ui.test.longClick
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import app.encave.EncaveApplication
@@ -986,4 +987,149 @@ class ScreenTourTest(private val device: String, private val variant: String) {
             app.encave.ui.cellar.storeCapture = false
         }
     }
+
+    // region Navigation links
+
+    /**
+     * The sample's first wine (by name) whose bottles are all in the cellar, given a label
+     * photo, with every bottle drunk: the state where links to a wine used to lead nowhere.
+     */
+    private fun drinkOutAWine(): app.encave.core.Wine {
+        val application = ApplicationProvider.getApplicationContext<EncaveApplication>()
+        val image = Bitmap.createBitmap(120, 160, Bitmap.Config.ARGB_8888).apply { eraseColor(0xFFF1E6CF.toInt()) }
+        val photo = java.io.ByteArrayOutputStream().also { image.compress(Bitmap.CompressFormat.JPEG, 80, it) }.toByteArray()
+            .let { requireNotNull(application.photos.save(it)) }
+        val drunk = runBlocking {
+            application.repository.update { cellar ->
+                val wine = cellar.wines.values.sortedBy { it.name }.first { wine ->
+                    val bottles = cellar.bottles.values.filter { it.wineId == wine.id }
+                    bottles.isNotEmpty() && bottles.all { it.status == app.encave.core.Bottle.Status.InCellar }
+                }
+                cellar.updateWine(wine.copy(photoId = photo))
+                cellar.bottles.values.filter { it.wineId == wine.id }.forEach { cellar.drink(it.id, app.encave.core.Tasting()) }
+                cellar.wines.getValue(wine.id)
+            }.getOrThrow()
+        }
+        compose.waitForIdle()
+        return drunk
+    }
+
+    /** A new window on the same cellar, opened from [link] (encave://…) if given. */
+    private fun relaunch(link: String? = null) {
+        scenario?.close()
+        val context = ApplicationProvider.getApplicationContext<EncaveApplication>()
+        scenario = if (link != null) {
+            ActivityScenario.launch(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(link), context, MainActivity::class.java))
+        } else {
+            ActivityScenario.launch(MainActivity::class.java)
+        }
+        compose.waitForIdle()
+    }
+
+    /** The screen tagged [anchor] is shown and is not empty: some text or description under it. */
+    private fun assertLeadsTo(anchor: String, link: String) {
+        val nodes = compose.onAllNodesWithTag(anchor, useUnmergedTree = true).fetchSemanticsNodes()
+        assertTrue("$device-$variant: $link leads nowhere (no $anchor)", nodes.isNotEmpty())
+        fun content(node: SemanticsNode): Int =
+            (if (SemanticsProperties.Text in node.config || SemanticsProperties.ContentDescription in node.config) 1 else 0) +
+                node.children.sumOf { content(it) }
+        assertTrue("$device-$variant: $link leads to an empty $anchor", content(nodes.first()) >= 2)
+    }
+
+    /** The Journal row of a bottle of [wine] from the cellar. */
+    private fun journalRow(wine: app.encave.core.Wine): SemanticsMatcher =
+        hasTestTag("journal.row.cellar") and androidx.compose.ui.test.hasContentDescription(wine.displayName, substring = true)
+
+    private fun openJournalRow(wine: app.encave.core.Wine) {
+        tab(JOURNAL)
+        compose.onNodeWithTag("journal.list").performScrollToNode(journalRow(wine))
+        compose.onAllNodes(journalRow(wine)).onFirst().performClick()
+        compose.waitForIdle()
+    }
+
+    /** Opening the cellar's Add button when the cellar is empty leads where the Add button of a full cellar does. */
+    @Test
+    fun emptyCellarAddLeadsWhereAddDoes() {
+        tap("action.fab_add")
+        assertLeadsTo("add.screen", "the Add button")
+        val application = ApplicationProvider.getApplicationContext<EncaveApplication>()
+        runBlocking { application.repository.replace(app.encave.core.Cellar()) }
+        relaunch()
+        tap("action.empty_add")
+        assertLeadsTo("add.screen", "the empty cellar's Add button")
+    }
+
+    /** Every bottle of a wine drunk: the Journal still shows its picture and every link to it opens its page. */
+    @Test
+    fun drunkWineStaysReachableFromTheJournal() {
+        val wine = drinkOutAWine()
+        tab(JOURNAL)
+        compose.onNodeWithTag("journal.list").performScrollToNode(journalRow(wine))
+        assertTrue(
+            "$device-$variant: the Journal row of a drunk wine shows no picture",
+            compose.onAllNodes(hasTestTag("journal.row.picture") and androidx.compose.ui.test.hasAnyDescendant(journalRow(wine)))
+                .fetchSemanticsNodes().isNotEmpty(),
+        )
+        val wineLinks = listOf("tasting.show_wine", "tasting.wine_name", "journal.menu.show_wine")
+        for (link in wineLinks) {
+            relaunch()
+            if (link == "journal.menu.show_wine") {
+                // The row's long press menu.
+                tab(JOURNAL)
+                compose.onNodeWithTag("journal.list").performScrollToNode(journalRow(wine))
+                compose.onAllNodes(journalRow(wine)).onFirst().performTouchInput { longClick() }
+                compose.waitForIdle()
+            } else {
+                openJournalRow(wine)
+                assertLeadsTo("tasting.screen", "a Journal entry")
+                compose.onNodeWithTag("tasting.photo").assertExists()
+            }
+            tap(link)
+            assertLeadsTo("wine.detail", link)
+            compose.onAllNodesWithTag("detail.photo").onFirst().assertExists()
+            // The wine's page, never a Cellar list that no longer shows it.
+            if (device == "phone") compose.onNodeWithTag("cellar.list").assertDoesNotExist()
+        }
+        // A widget, reminder or shortcut link to it.
+        relaunch("encave://wine/${wine.id}")
+        assertLeadsTo("wine.detail", "encave://wine/<id> of a wine with no bottle left")
+    }
+
+    /**
+     * No dead ends: each link (or button that navigates) opens a screen that shows something.
+     * Every new link gets a row here (docs/development.md). Each starts from a new window.
+     */
+    @Test
+    fun navigationLinksLeadSomewhere() {
+        class Link(val name: String, val destination: String, val open: () -> Unit)
+        val links = listOf(
+            Link("cellar row", "wine.detail") { tap("wine.row") },
+            Link("cellar figures", "insights.screen") { tap("cellar.stat.bottles") },
+            Link("tonight row", "wine.detail") { tab(TONIGHT); tap("tonight.row") },
+            Link("rack position", "rack.selection") { tab(RACKS); tap("rack.row.0"); tap("cell.0.0") },
+            Link("rack card wine", "wine.detail") { tab(RACKS); tap("rack.row.0"); tap("cell.0.0"); tap("rack.selection.wine") },
+            Link("journal entry", "tasting.screen") { tab(JOURNAL); tap("journal.row.cellar") },
+            Link("tasting wine name", "wine.detail") { tab(JOURNAL); tap("journal.row.cellar"); tap("tasting.wine_name") },
+            Link("tasting Show wine", "wine.detail") { tab(JOURNAL); tap("journal.row.cellar"); tap("tasting.show_wine") },
+        )
+        for (link in links) {
+            relaunch()
+            link.open()
+            assertLeadsTo(link.destination, link.name)
+        }
+        // The same links once the wine has no bottle left.
+        val wine = drinkOutAWine()
+        val noneLeft = listOf(
+            Link("tasting wine name, no bottle left", "wine.detail") { openJournalRow(wine); tap("tasting.wine_name") },
+            Link("tasting Show wine, no bottle left", "wine.detail") { openJournalRow(wine); tap("tasting.show_wine") },
+            Link("wine link, no bottle left", "wine.detail") { relaunch("encave://wine/${wine.id}") },
+        )
+        for (link in noneLeft) {
+            relaunch()
+            link.open()
+            assertLeadsTo(link.destination, link.name)
+        }
+    }
+
+    // endregion
 }

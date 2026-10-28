@@ -6,6 +6,9 @@ import SwiftUI
 /// from outside it (Spotlight, Shortcuts, a notification, the Mac menu bar).
 enum SceneAction {
     case openWine(UUID)
+    /// From a tasting in the Journal: the wine on the Journal's stack (iPhone, iPad),
+    /// so Back returns there and a wine with no bottle left opens too; the Cellar on the Mac.
+    case openWineFromJournal(UUID)
     case show(AppTab)
     /// Storage, with this position highlighted ("Show in Storage").
     case showInStorage(Slot)
@@ -24,6 +27,8 @@ final class SceneRouter {
     var selectedTab: AppTab = .cellar
     /// A wine for the Cellar to select, then cleared.
     var openWineRequest: UUID?
+    /// A wine for the Journal to push, then cleared.
+    var journalWineRequest: UUID?
     /// Wines to delete once the alert of this window confirms it (`deleteFollowingRule`).
     var confirmingWineDeletion: Set<UUID> = []
     /// The Cellar's search, filters and sort, shared by its list and its table; each
@@ -49,6 +54,13 @@ final class SceneRouter {
         case .openWine(let id):
             selectedTab = .cellar
             openWineRequest = id
+        case .openWineFromJournal(let id):
+            #if os(iOS)
+            selectedTab = .journal
+            journalWineRequest = id
+            #else
+            perform(.openWine(id))
+            #endif
         case .show(let tab):
             if let showsSectionElsewhere { showsSectionElsewhere(action) } else { selectedTab = tab }
         case .showInStorage(let slot):

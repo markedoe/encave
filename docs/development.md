@@ -199,6 +199,18 @@ BUILD_NUMBER=2 ENCAVE_KEYSTORE_PATH=path/to/encave-upload.jks ENCAVE_KEY_ALIAS=u
 # app/build/outputs/bundle/release/app-release.aab and app/build/outputs/mapping/release/mapping.txt
 ```
 
+## Testing navigation
+
+The screen tours (`apple/EncaveUITests/ScreenTourTests.swift`, `testNavigationLinks`,
+and `android/.../ui/ScreenTourTest.kt`, `navigationLinksLeadSomewhere`) keep a table of
+navigation links: where to start, what to tap (by identifier or test tag) and the anchor of
+the screen it must open, which must show something. Each link starts from a new launch, one
+of them on a wine whose last bottle was drunk (`--drink-out-wine` on Apple), the state
+where links used to lead to an empty Cellar.
+
+Rule: every new link or button that navigates gets a row in that table, on both
+platforms, with the identifiers it needs.
+
 ## Sync
 
 The protocol is specified in [SYNC.md](SYNC.md); the Swift implementation is in

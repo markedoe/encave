@@ -10,6 +10,8 @@ struct CellarView: View {
     @Environment(CellarModel.self) private var model
     @Environment(SceneRouter.self) private var router: SceneRouter?
     @State private var selection: UUID?
+    /// iPhone: a wine opened from elsewhere that the list does not show (no bottle left).
+    @State private var pushedWine: UUID?
     /// iPad: show the list next to the wine, also in portrait, instead of an empty page.
     @State private var columns: NavigationSplitViewVisibility = .all
     private var layout = DefaultsFlag.cellarTable
@@ -27,6 +29,7 @@ struct CellarView: View {
             } else {
                 NavigationSplitView(columnVisibility: $columns) {
                     CellarList(selection: $selection)
+                        .navigationDestination(item: $pushedWine) { WineDetailView(wineID: $0) }
                         // Wide enough for names, producers and the figures; wider on the Mac,
                         // whose subtitles are cut at the iPad width.
                         #if os(macOS)
@@ -52,7 +55,11 @@ struct CellarView: View {
         // Opened from Spotlight, Shortcuts or a notification.
         .onChange(of: router?.openWineRequest, initial: true) { _, id in
             guard let id else { return }
-            selection = id
+            // On iPhone, selecting a wine the list does not show (none left, or filtered
+            // out) would show nothing: its page is pushed instead.
+            let listed = model.cellar.groups(filter: router?.cellarFilter ?? CellarFilter(), sort: .name, year: model.currentYear)
+                .contains { $0.wine.id == id }
+            if isWide || listed { selection = id } else { pushedWine = id }
             router?.openWineRequest = nil
         }
         // The Wine menu (iPad with a keyboard) acts on the selected wine.
@@ -807,7 +814,8 @@ struct EmptyCellarView: View {
             // a row and would be cut off in the narrow content column.
             VStack(spacing: 12) {
                 Button {
-                    router?.sheet = .addBottle(AddBottleContext())
+                    // Same as the toolbar's "+": the label scanner first where there is one.
+                    router?.sheet = .addBottle(AddBottleContext(scan: true))
                 } label: {
                     Text("Add a Bottle").frame(minWidth: 200)
                 }
