@@ -82,24 +82,75 @@ jobs:
           fi
           echo "passed=$passed" >> "$GITHUB_OUTPUT"
 
+  screens-build:
+    name: Build the screen tour once
+    needs: [cavekit, l10n, tour-check]
+    # The same condition as the tour: one build for the iOS Simulator, run by all four parts.
+    if: (github.event_name != 'push' || github.ref == 'refs/heads/main') && needs.tour-check.outputs.passed != 'true'
+    runs-on: macos-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: apple
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Select newest Xcode
+        working-directory: .
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)
+          sudo xcode-select -s "$xcode"
+
+      - name: XcodeGen and xcbeautify (pinned, checksums checked)
+        run: tools/install-build-tools.sh
+
+      - name: Generate project, pinned packages
+        # Builds use the package versions of CaveKit's Package.resolved (the ones the
+        # licences list names), never a newer one in Package.swift's range.
+        run: |
+          xcodegen generate
+          mkdir -p Encave.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
+          cp Packages/CaveKit/Package.resolved Encave.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+
+      - name: Build for testing
+        run: |
+          set -o pipefail
+          xcodebuild build-for-testing -project Encave.xcodeproj -scheme Encave -onlyUsePackageVersionsFromResolvedFile -disableAutomaticPackageResolution \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/dd" \
+            CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO | xcbeautify --renderer github-actions
+
+      - name: Zip the products
+        # A zip keeps symlinks and permissions. The .xctestrun file finds the products
+        # relative to itself (__TESTROOT__).
+        run: |
+          cd "$RUNNER_TEMP/dd"
+          zip -qry "$RUNNER_TEMP/tour-build.zip" Build/Products
+          ls -lh "$RUNNER_TEMP/tour-build.zip"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: tour-build
+          path: ${{ runner.temp }}/tour-build.zip
+          compression-level: 0
+          retention-days: 1
+
   screens:
     name: Screen tour (${{ matrix.device }}, ${{ matrix.language }})
-    needs: [cavekit, l10n, tour-check]
+    needs: [cavekit, l10n, tour-check, screens-build]
     # The full tour runs on main before each TestFlight build, on pull requests and on
     # manual runs. Pushes to other branches only build and run the Mac launch test, so
     # fixes reach main faster.
     if: (github.event_name != 'push' || github.ref == 'refs/heads/main') && needs.tour-check.outputs.passed != 'true'
     runs-on: macos-latest
-    # One simulator per job, four jobs, three side by side next to the apps job (macOS
-    # runners are shared by the account's repositories). Two simulators on one runner slow each other,
-    # and three fail to launch the app; one a runner runs at full speed. Measured: 28 to
-    # 43 minutes a job, against 80 to 85 for one job with both simulators.
-    timeout-minutes: 90
+    # One simulator per job, four jobs, all at once; they run the products built once by
+    # screens-build. macOS runners are shared by the account's repositories (a public
+    # repository gets 5 at a time): with the apps job that makes 5, and when more are
+    # wanted the apps job may queue briefly. Two simulators on one runner slow each
+    # other, and three fail to launch the app; one a runner runs at full speed.
+    timeout-minutes: 60
     strategy:
       fail-fast: false
-      # Three at a time, so that the apps job (the TestFlight upload, for the internal
-      # testers) never waits for a free macOS runner. The shortest part runs last.
-      max-parallel: 3
+      max-parallel: 4
       matrix:
         include:
           - device: iPad
@@ -130,21 +181,16 @@ jobs:
       - name: XcodeGen and xcbeautify (pinned, checksums checked)
         run: tools/install-build-tools.sh
 
-      - name: Generate project, pinned packages
-        # Builds use the package versions of CaveKit's Package.resolved (the ones the
-        # licences list names), never a newer one in Package.swift's range.
-        run: |
-          xcodegen generate
-          mkdir -p Encave.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
-          cp Packages/CaveKit/Package.resolved Encave.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
-
-      - name: Build for testing
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         id: build
+        with:
+          name: tour-build
+          path: ${{ runner.temp }}/tour-build
+
+      - name: Unpack the products
         run: |
-          set -o pipefail
-          xcodebuild build-for-testing -project Encave.xcodeproj -scheme Encave -onlyUsePackageVersionsFromResolvedFile -disableAutomaticPackageResolution \
-            -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/dd" \
-            CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO | xcbeautify --renderer github-actions
+          mkdir -p "$RUNNER_TEMP/dd"
+          unzip -q "$RUNNER_TEMP/tour-build/tour-build.zip" -d "$RUNNER_TEMP/dd"
 
       - name: Model tests (macOS)
         if: matrix.model

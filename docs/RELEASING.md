@@ -113,12 +113,14 @@ Apple's expedited review is a web form (no API): optional, by hand.
 Measured on 2026-10-23 for one change: about 15 minutes to upload the build,
 28 to 43 minutes per screen tour job, then Beta App Review.
 
-- `apple.yml` runs the tour as four jobs (iPad and iPhone, English and
-  French), one simulator each, three at a time, so that the `apps` job (build,
-  Mac launch test, TestFlight upload) never waits for a macOS runner: the
-  internal testers get the build about 20 to 30 minutes after the push. The
+- `apple.yml` builds the tour once (`screens-build`, for the iOS Simulator,
+  shared by iPhone and iPad; artifact `tour-build`, kept one day), then runs
+  it as four jobs (iPad and iPhone, English and French), one simulator each,
+  all at once with `test-without-building`. With the `apps` job that is five
+  macOS jobs, the limit of a public repository: if the account's other
+  repositories use runners, the `apps` job may queue briefly. The
   screenshots are merged into the `screens` artifact; "Re-run failed jobs"
-  re-runs only the part that failed. A part whose build fails stops at once.
+  re-runs only the part that failed. A failed build stops the tour at once.
   The Mac is covered by the launch test and the Mac screenshots of the `apps`
   job (GitHub's runners cannot run the Mac UI tests).
 - On `main`, a merge commit whose tree is the same as an earlier run's head
