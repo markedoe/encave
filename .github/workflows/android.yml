@@ -137,6 +137,17 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Upload test reports
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: android-tour-test-reports
+          path: |
+            android/app/build/reports/tests
+            android/app/build/test-results
+          if-no-files-found: warn
+          retention-days: 7
+
   release:
     name: Release bundle and lint
     # Pushes to main and manual runs only (not claude/** branches or pull requests).

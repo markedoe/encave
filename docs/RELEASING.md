@@ -49,7 +49,8 @@ The `testers` job of `apple.yml` gives a build of `main` to the external
 TestFlight groups only when:
 
 - the screen tour of the same run passed, or `tour-check` found an earlier run
-  of the same files (same git tree) whose tour passed;
+  with the same tour fingerprint (the same files the tour reads, see
+  `scripts/tour-fingerprint.sh`) whose tour passed;
 - the Mac launch test passed. When it did not run because the Mac archive
   failed, the iPhone and iPad build goes alone (and the run stays red); one
   failed upload likewise leaves the other platform's build going.
@@ -123,10 +124,15 @@ Measured on 2026-10-23 for one change: about 15 minutes to upload the build,
   re-runs only the part that failed. A failed build stops the tour at once.
   The Mac is covered by the launch test and the Mac screenshots of the `apps`
   job (GitHub's runners cannot run the Mac UI tests).
-- On `main`, a merge commit whose tree is the same as an earlier run's head
-  commit whose tour passed (a pull request merged as it was toured) is not
-  toured again: `tour-check` logs the matching run and the `testers` job goes
-  ahead once the build is uploaded.
+- On `main`, a commit whose tour fingerprint equals that of an earlier run's
+  commit whose tour passed is not toured again: a pull request merged as it
+  was toured, but also a change to docs, Android, the relay or scripts the
+  tour does not use. The fingerprint hashes the files under `apple/`,
+  `design/`, `fixtures/`, `licences/`, `LICENSE`, `scripts/check-privacy-manifest.sh`,
+  `scripts/tour-fingerprint.sh` and `.github/workflows/apple.yml`. `tour-check`
+  logs the matching run and the `testers` job goes ahead once the build is
+  uploaded. When a new file starts to matter to the tour, add its path to
+  `scripts/tour-fingerprint.sh` (and to the `paths` of `apple.yml`).
 
 ## One-time setup by hand (no API)
 

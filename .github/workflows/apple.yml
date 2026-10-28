@@ -3,9 +3,9 @@ name: Apple apps
 on:
   push:
     branches: [main, "claude/**"]
-    paths: ["apple/**", "design/**", "fixtures/**", "licences/**", "LICENSE", "scripts/check-privacy-manifest.sh", ".github/workflows/apple.yml"]
+    paths: ["apple/**", "design/**", "fixtures/**", "licences/**", "LICENSE", "scripts/check-privacy-manifest.sh", "scripts/tour-fingerprint.sh", ".github/workflows/apple.yml"]
   pull_request:
-    paths: ["apple/**", "design/**", "fixtures/**", "licences/**", "LICENSE", "scripts/check-privacy-manifest.sh", ".github/workflows/apple.yml"]
+    paths: ["apple/**", "design/**", "fixtures/**", "licences/**", "LICENSE", "scripts/check-privacy-manifest.sh", "scripts/tour-fingerprint.sh", ".github/workflows/apple.yml"]
   workflow_dispatch:
     inputs:
       external_testers:
@@ -46,39 +46,46 @@ jobs:
 
   tour-check:
     name: Tour already passed on this commit?
-    # On main, a commit whose files were already toured (a pull request merged without
-    # other changes: the merge commit has the tree of the pull request's head) is not
-    # toured again: its build goes to the testers once uploaded.
+    # On main, a commit that changes nothing the tour reads (docs, Android, relay, or a pull
+    # request merged without other changes) is not toured again: its build goes to the
+    # testers once uploaded. "Nothing the tour reads" is a fingerprint of the paths listed in
+    # scripts/tour-fingerprint.sh, equal to that of a commit whose tour passed.
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     permissions:
       actions: read
     outputs:
       passed: ${{ steps.check.outputs.passed }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
       - id: check
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           passed=false
           if [ "$GITHUB_REF" = refs/heads/main ]; then
-            # Main tips are merge commits: earlier runs are matched by the tree of their
-            # head commit (the same files, so the same app, tests and workflow).
-            tree=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA" --jq .commit.tree.sha)
-            echo "Tree of $GITHUB_SHA: $tree"
+            fingerprint=$(scripts/tour-fingerprint.sh "$GITHUB_SHA")
+            echo "Tour fingerprint of $GITHUB_SHA: $fingerprint"
             runs=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/apple.yml/runs?status=completed&per_page=100" \
-              --jq ".workflow_runs[] | select(.id != $GITHUB_RUN_ID and .head_commit.tree_id == \"$tree\") | .id")
-            for run in $runs; do
+              --jq ".workflow_runs[] | select(.id != $GITHUB_RUN_ID) | [.id, .head_sha] | @tsv")
+            while read -r run sha; do
+              [ -n "$run" ] || continue
               # Every tour job of that run's latest attempt passed.
               ok=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run/jobs?filter=latest&per_page=100" \
                 --jq '[.jobs[] | select(.name | startswith("Screen tour"))] | length > 0 and all(.conclusion == "success")')
-              if [ "$ok" = true ]; then
-                echo "The screen tour passed on the same tree in run $run: not run again."
+              [ "$ok" = true ] || continue
+              # Only the trees of that commit are needed, not its files.
+              if ! git fetch -q --depth=1 --filter=blob:none origin "$sha"; then
+                echo "Run $run: commit $sha cannot be fetched, skipped."
+                continue
+              fi
+              if [ "$(scripts/tour-fingerprint.sh "$sha")" = "$fingerprint" ]; then
+                echo "The screen tour passed on the same tour fingerprint in run $run ($sha): not run again."
                 passed=true
                 break
               fi
-              echo "Run $run has the same tree, but its tour did not pass."
-            done
+            done <<< "$runs"
           fi
           echo "passed=$passed" >> "$GITHUB_OUTPUT"
 

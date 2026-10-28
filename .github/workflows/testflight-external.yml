@@ -3,7 +3,7 @@ name: TestFlight external build
 # Run by hand: gives a build already in TestFlight to the external testers
 # (every external group: today Friends-ext) and submits it to Beta App Review. Nothing is built.
 # Only a build whose run of apple.yml passed the screen tour (or skipped it because the
-# same files had passed it, tour-check), unless "force" is ticked. The Mac build goes too
+# same tour fingerprint had passed it, tour-check), unless "force" is ticked. The Mac build goes too
 # only when the Mac launch test of that run passed (else iPhone and iPad only, or force).
 on:
   workflow_dispatch:
@@ -91,12 +91,12 @@ jobs:
             echo "The screen tour of run $run passed."
             exit 0
           fi
-          # Tour skipped because the same files had passed it in an earlier run (tour-check): its
+          # Tour skipped because the same tour fingerprint had passed it in an earlier run (tour-check): its
           # log names that run (a number; the script itself, also in the log, has "$run").
           check=$(jq -r 'select(.name == "Tour already passed on this commit?" and .conclusion == "success") | .id' <<< "$jobs" | head -n 1)
           if [ -n "$check" ] && ! grep -qv '^skipped ' <<< "$tours" \
             && gh api "repos/$GITHUB_REPOSITORY/actions/jobs/$check/logs" \
-              | grep -oE 'The screen tour passed on (the same tree|this commit) in run [0-9]+'; then
+              | grep -oE 'The screen tour passed on (the same tour fingerprint|the same tree|this commit) in run [0-9]+'; then
             exit 0
           fi
           echo "::error::The screen tour of run $run did not pass: build $BUILD_NUMBER stays with the internal testers. Tick \"force\" to give it anyway."
