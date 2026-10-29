@@ -10,6 +10,8 @@ import kotlinx.serialization.Required
 import kotlinx.serialization.KeepGeneratedSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonObject
 
 /** Style of wine. Always shown with a label, never by color alone. */
@@ -79,9 +81,63 @@ data class Wine(
      * [labelFrame]). Null when never found. Synced.
      */
     val labelFrame: WineLabelFrame? = null,
+    /** Alcohol by volume, in percent (13.5). */
+    @Serializable(with = DecimalSerializer::class) val abv: BigDecimal? = null,
+    /** Free text, with suggestions ("Grand Cru", "Cru Bourgeois"). */
+    val classification: String? = null,
+    /** The lieu-dit or climat (a named vineyard). */
+    val lieuDit: String? = null,
+    /** Sparkling wines: a [Vocabulary.dosages] id ("brut"). Kept even when unknown. */
+    val dosage: String? = null,
+    /** Still wines: a [Vocabulary.sweetnesses] id ("dry", "offDry"…). Kept even when unknown. */
+    val sweetness: String? = null,
+    /**
+     * Share of each grape in percent (1 to 100), keyed by the grape as written in [grapes],
+     * which stays the list older versions read. A share whose grape is no longer listed is dropped. Null rather than empty.
+     */
+    val grapeShares: Map<String, Int>? = null,
+    /** How it was aged, [Vocabulary.ageings] ids, each once. Null rather than empty. */
+    val ageing: List<String>? = null,
+    /** [Vocabulary.farmings] id ("organic"), and whether it is certified (true or null, only with a farming). */
+    val farming: String? = null,
+    val farmingCertified: Boolean? = null,
+    /** [Vocabulary.closures] id ("screwCap"). */
+    val closure: String? = null,
+    /** Critics' and guides' scores and awards, as typed. Null rather than empty. */
+    val criticScores: List<CriticScore>? = null,
     /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
     @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {
+    /** The share of a grape in percent, if given. */
+    fun share(grape: String): Int? = grapeShares?.entries?.firstOrNull { grapeKey(it.key) == grapeKey(grape) }?.value
+
+    /** True when any of the details under "More details" is filled. */
+    val hasMoreDetails: Boolean
+        get() = abv != null || !classification.isNullOrEmpty() || !lieuDit.isNullOrEmpty() || dosage != null || sweetness != null ||
+            grapeShares != null || ageing != null || farming != null || closure != null
+
+    /**
+     * The details normalized the same way on every device (docs/SYNC.md §1), as CaveKit
+     * decodes them; ids this version does not know are kept as they are.
+     */
+    fun readNormalized(): Wine {
+        val cleanDosage = dosage?.ifEmpty { null }
+        val cleanSweetness = sweetness?.ifEmpty { null }
+        val cleanShares = keptShares(grapeShares, grapes)
+        val cleanAgeing = Tasting.uniqueIds(ageing)
+        val cleanFarming = farming?.ifEmpty { null }
+        val cleanCertified = if (cleanFarming != null && farmingCertified == true) true else null
+        val cleanClosure = closure?.ifEmpty { null }
+        val cleanCritics = criticScores?.ifEmpty { null }
+        if (cleanDosage == dosage && cleanSweetness == sweetness && cleanShares == grapeShares && cleanAgeing == ageing &&
+            cleanFarming == farming && cleanCertified == farmingCertified && cleanClosure == closure && cleanCritics == criticScores
+        ) return this
+        return copy(
+            dosage = cleanDosage, sweetness = cleanSweetness, grapeShares = cleanShares, ageing = cleanAgeing,
+            farming = cleanFarming, farmingCertified = cleanCertified, closure = cleanClosure, criticScores = cleanCritics,
+        )
+    }
+
     /** The label photo, then the others, then the cover. */
     val allPhotoIds: List<String> get() = listOfNotNull(photoId) + extraPhotoIds.orEmpty() + listOfNotNull(coverPhotoId)
 
@@ -96,10 +152,21 @@ data class Wine(
         get() = listOf(name, producer ?: "", vintage?.toString() ?: "")
             .joinToString("|") { it.trim().lowercase(Locale.ROOT) }
 
-    /** What a search looks in: the label fields, grapes, barcodes and tags. */
+    /**
+     * What a search looks in: the label fields, grapes, barcodes and tags, the details
+     * (classification, lieu-dit, and the labels of dosage, sweetness, ageing, farming and
+     * closure in the person's language) and the critics' sources and awards.
+     */
     val searchFields: List<String>
         get() = listOfNotNull(name, producer, region, country, appellation, vintage?.toString()) + grapes +
-            barcodes.orEmpty() + tags.orEmpty()
+            barcodes.orEmpty() + tags.orEmpty() +
+            listOfNotNull(
+                classification, lieuDit, dosage?.let { Vocabulary.label(Vocabulary.Kind.Dosage, it) },
+                sweetness?.let { Vocabulary.label(Vocabulary.Kind.Sweetness, it) },
+                farming?.let { Vocabulary.label(Vocabulary.Kind.Farming, it) },
+                closure?.let { Vocabulary.label(Vocabulary.Kind.Closure, it) },
+            ) + ageing.orEmpty().map { Vocabulary.label(Vocabulary.Kind.Ageing, it) } +
+            criticScores.orEmpty().flatMap { listOfNotNull(it.source, it.award) }
 
     /** Every word of [needle] is in one of the fields ("Margaux 2015", "syrah guigal"). */
     fun matches(needle: String): Boolean = SearchText.matches(needle, searchFields)
@@ -119,8 +186,9 @@ data class Wine(
         val cleanBarcodes = barcodes?.ifEmpty { null }
         val cleanExtras = extraPhotoIds?.distinct()?.ifEmpty { null }
         val cleanAttachments = Attachment.unique(attachments)
-        return if (cleanTags == tags && cleanBarcodes == barcodes && cleanExtras == extraPhotoIds && cleanAttachments == attachments) this
-        else copy(tags = cleanTags, barcodes = cleanBarcodes, extraPhotoIds = cleanExtras, attachments = cleanAttachments)
+        val same = cleanTags == tags && cleanBarcodes == barcodes && cleanExtras == extraPhotoIds && cleanAttachments == attachments
+        return (if (same) this else copy(tags = cleanTags, barcodes = cleanBarcodes, extraPhotoIds = cleanExtras, attachments = cleanAttachments))
+            .readNormalized()
     }
 
     /** Where the window comes from, to explain it. */
@@ -165,6 +233,27 @@ data class Wine(
     }
 
     companion object {
+        /** A grape compared for its share: trimmed, ignoring case. */
+        fun grapeKey(grape: String): String = grape.trim().lowercase(Locale.ROOT)
+
+        /**
+         * Shares in percent kept for the grapes listed (trimmed, ignoring case), each brought
+         * into 1…100 (0 and below are dropped); null when none are left. A grape written twice
+         * (in another case) keeps the key that sorts first, as in CaveKit.
+         */
+        fun keptShares(shares: Map<String, Int>?, grapes: List<String>): Map<String, Int>? {
+            if (shares == null) return null
+            val listed = grapes.map(::grapeKey).toSet()
+            val seen = HashSet<String>()
+            val kept = LinkedHashMap<String, Int>()
+            for (grape in shares.keys.sorted()) {
+                val key = grapeKey(grape)
+                val share = shares.getValue(grape)
+                if (share > 0 && key in listed && seen.add(key)) kept[grape] = minOf(100, share)
+            }
+            return kept.ifEmpty { null }
+        }
+
         /** Digits only: "3 760 1234 5678 9" and "3760123456789" are the same barcode. */
         fun normalizedBarcode(code: String): String = code.filter { it in '0'..'9' }.take(20)
 
@@ -649,16 +738,99 @@ data class Tasting(
     val palate: String? = null,
     val finish: String? = null,
     val foodPairing: String? = null,
+    /**
+     * The precise score out of 100 (50…100 in quarter points), when the rating was entered
+     * out of 20 or 100; kept only while [rating] is its stars ([Score.kept]). Set both with [withRating].
+     */
+    val score100: Double? = null,
+    /** Aromas of the guided tasting sheet, as vocabulary ids ("fruit.cherry"), each once, in the order chosen; null rather than empty. */
+    val aromas: List<String>? = null,
+    /** Structure, each 1 to 5 ([Vocabulary.structure]), optional. */
+    val sweetness: Int? = null,
+    val acidity: Int? = null,
+    val tannin: Int? = null,
+    val body: Int? = null,
+    val alcohol: Int? = null,
+    val length: Int? = null,
+    /** Appearance: intensity ("pale", "medium", "deep") and hue ("ruby", "gold"…), vocabulary ids. */
+    val intensity: String? = null,
+    val hue: String? = null,
     /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
     @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {
+    /** True when any part of the guided sheet is filled: aromas, structure or appearance. */
+    val hasGuidedNotes: Boolean
+        get() = !aromas.isNullOrEmpty() || listOf(sweetness, acidity, tannin, body, alcohol, length).any { it != null } ||
+            intensity != null || hue != null
+
     /** True when any structured field beyond rating and note is filled. */
     val isDetailed: Boolean
-        get() = listOf(appearance, nose, palate, finish, foodPairing).any { !it.isNullOrEmpty() }
+        get() = listOf(appearance, nose, palate, finish, foodPairing).any { !it.isNullOrEmpty() } || hasGuidedNotes
 
+    /** The labels of its aromas and hue in the person's language, for search. */
+    val searchLabels: List<String>
+        get() = aromas.orEmpty().map { Vocabulary.label(Vocabulary.Kind.Aroma, it) } +
+            listOfNotNull(hue?.let { Vocabulary.label(Vocabulary.Kind.Hue, it) })
+
+    /** The value of a structure attribute by its vocabulary id. */
+    fun level(attribute: String): Int? = when (attribute) {
+        "sweetness" -> sweetness
+        "acidity" -> acidity
+        "tannin" -> tannin
+        "body" -> body
+        "alcohol" -> alcohol
+        "length" -> length
+        else -> null
+    }
+
+    fun withLevel(attribute: String, value: Int?): Tasting {
+        val level = value?.coerceIn(1, 5)
+        return when (attribute) {
+            "sweetness" -> copy(sweetness = level)
+            "acidity" -> copy(acidity = level)
+            "tannin" -> copy(tannin = level)
+            "body" -> copy(body = level)
+            "alcohol" -> copy(alcohol = level)
+            "length" -> copy(length = level)
+            else -> this
+        }
+    }
+
+    /** The rating from a value entered on a scale: stars clear the score, out of 20 or 100 keep it with its stars ([Score.entered]). Null clears both. */
+    fun withRating(value: Double?, scale: RatingScale): Tasting {
+        val entered = value?.let { Score.entered(it, scale) } ?: return copy(rating = null, score100 = null)
+        return copy(rating = entered.rating, score100 = entered.score100)
+    }
+
+    /** Rating clamped to 1..5, and the newer fields as CaveKit reads them ([readNormalized]). */
     fun normalized(): Tasting {
         val clamped = rating?.coerceIn(1, 5)
-        return if (clamped == rating) this else copy(rating = clamped)
+        return (if (clamped == rating) this else copy(rating = clamped)).readNormalized()
+    }
+
+    /**
+     * The newer fields normalized the same way on every device (docs/SYNC.md §1), as CaveKit
+     * decodes them: a score that no longer matches the rating is stale and dropped, levels are
+     * brought into 1…5, ids are kept once and empty ones are left out.
+     */
+    fun readNormalized(): Tasting {
+        val cleanScore = Score.kept(score100, rating)
+        val cleanAromas = uniqueIds(aromas)
+        val levels = listOf(sweetness, acidity, tannin, body, alcohol, length).map { it?.coerceIn(1, 5) }
+        val cleanIntensity = intensity?.ifEmpty { null }
+        val cleanHue = hue?.ifEmpty { null }
+        val unchanged = cleanScore == score100 && cleanAromas == aromas && cleanIntensity == intensity && cleanHue == hue &&
+            levels == listOf(sweetness, acidity, tannin, body, alcohol, length)
+        if (unchanged) return this
+        return copy(
+            score100 = cleanScore, aromas = cleanAromas, sweetness = levels[0], acidity = levels[1], tannin = levels[2],
+            body = levels[3], alcohol = levels[4], length = levels[5], intensity = cleanIntensity, hue = cleanHue,
+        )
+    }
+
+    companion object {
+        /** Each non-empty id once, in the order given; null when none are left. */
+        fun uniqueIds(ids: List<String>?): List<String>? = ids?.filter { it.isNotEmpty() }?.distinct()?.ifEmpty { null }
     }
 }
 
@@ -807,6 +979,13 @@ object SearchText {
 object WineSerializer : KeepingUnknownKeys<Wine>(Wine.generatedSerializer()) {
     override fun unknownKeys(value: Wine) = value.unknownKeys
     override fun withUnknownKeys(value: Wine, keys: JsonObject) = value.copy(unknownKeys = keys)
+
+    /** The details as CaveKit decodes them ([Wine.readNormalized]). */
+    override fun deserialize(decoder: Decoder): Wine = super.deserialize(decoder).readNormalized()
+
+    /** Only `true` is written for `farmingCertified`, and only with a farming. */
+    override fun serialize(encoder: Encoder, value: Wine) =
+        super.serialize(encoder, value.copy(farmingCertified = if (value.farming != null && value.farmingCertified == true) true else null))
 }
 
 /** Keeps the keys of a newer version (see [KeepingUnknownKeys]). */
@@ -819,6 +998,13 @@ object RackSerializer : KeepingUnknownKeys<Rack>(Rack.generatedSerializer(), leg
 object TastingSerializer : KeepingUnknownKeys<Tasting>(Tasting.generatedSerializer()) {
     override fun unknownKeys(value: Tasting) = value.unknownKeys
     override fun withUnknownKeys(value: Tasting, keys: JsonObject) = value.copy(unknownKeys = keys)
+
+    /** The newer fields as CaveKit decodes them ([Tasting.readNormalized]); the rating is read as written. */
+    override fun deserialize(decoder: Decoder): Tasting = super.deserialize(decoder).readNormalized()
+
+    /** A score is written only while it matches the rating ([Score.kept]). */
+    override fun serialize(encoder: Encoder, value: Tasting) =
+        super.serialize(encoder, value.copy(score100 = Score.kept(value.score100, value.rating)))
 }
 
 /** Keeps the keys of a newer version (see [KeepingUnknownKeys]). */

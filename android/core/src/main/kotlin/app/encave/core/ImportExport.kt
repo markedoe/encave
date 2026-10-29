@@ -41,6 +41,7 @@ object CellarExport {
         "purchase_date", "price", "currency", "purchase_place", "received_from", "size_ml",
         "rating", "tasted_on", "note", "expected_on", "tags", "reserved_for",
         "current_price", "current_price_currency", "current_price_date",
+        "score", "abv", "classification", "critic_scores",
     )
 
     /** Pretty-printed JSON backup, readable by the Apple app. */
@@ -89,6 +90,8 @@ object CellarExport {
                 wine.currentPrice?.let(::price),
                 if (wine.currentPrice == null) null else wine.currentPriceCurrency,
                 if (wine.currentPrice == null) null else wine.currentPriceDate?.let(day),
+                bottle.tasting?.score100?.let(CsvColumns::scoreText), wine.abv?.let(DecimalSerializer::plain), wine.classification,
+                wine.criticScores?.let(CsvColumns::criticScoresText),
             )
             lines += fields.joinToString(",") { escape(it ?: "") }
         }
@@ -222,13 +225,16 @@ fun Cellar.importCsv(text: String, now: Instant = ReferenceDates.now(), zone: Zo
             // A label already taken (several bottles listed in one cell) uses the next free place.
             val slot = wanted?.let { if (bottleAt(it) == null) it else freeSlot(it.cell) }
             bottle = when {
-                status == Bottle.Status.Consumed -> bottle.copy(
-                    status = Bottle.Status.Consumed,
-                    tasting = Tasting(
-                        date = value("tasted_on")?.let(day) ?: now,
-                        rating = value("rating")?.let(CsvColumns::rating), note = value("note"),
-                    ).normalized(),
-                )
+                status == Bottle.Status.Consumed -> {
+                    val score = value("score")?.let(CsvColumns::score) ?: value("rating")?.let(CsvColumns::score)
+                    bottle.copy(
+                        status = Bottle.Status.Consumed,
+                        tasting = Tasting(
+                            date = value("tasted_on")?.let(day) ?: now,
+                            rating = score?.rating, note = value("note"), score100 = score?.score100,
+                        ).normalized(),
+                    )
+                }
                 status == Bottle.Status.Gone -> bottle.copy(status = Bottle.Status.Gone)
                 // An ordered bottle has no place yet.
                 status == Bottle.Status.Ordered -> bottle.copy(
@@ -267,11 +273,12 @@ internal fun Cellar.importDiscoveries(
         }
         val wine = CsvColumns.wine(name, ::value, day)
         val known = wines.values.any { it.identityKey == wine.identityKey }
+        val score = value("score")?.let(CsvColumns::score) ?: value("rating")?.let(CsvColumns::score)
         val discovery = Discovery(
             wineId = wine.id, date = value("scan_date")?.let { CsvColumns.date(it, zone) } ?: now, place = value("place"),
-            rating = value("rating")?.let(CsvColumns::rating), note = value("note"),
+            rating = score?.rating, note = value("note"),
             price = value("price")?.let { CsvColumns.price(it, plain = false) },
-            currency = value("currency") ?: settings.currency,
+            currency = value("currency") ?: settings.currency, score100 = score?.score100,
         )
         addDiscovery(discovery, wine)
         added++
@@ -307,6 +314,9 @@ internal object CsvColumns {
         "tags" to "tags", "tag" to "tags", "reservedfor" to "reserved_for", "reserved" to "reserved_for",
         "expectedon" to "expected_on", "deliverydate" to "expected_on", "livraison" to "expected_on",
         "scandate" to "scan_date", "scanreviewlocation" to "place", "place" to "place", "lieu" to "place",
+        "score" to "score", "abv" to "abv", "alcohol" to "abv", "alcool" to "abv", "degre" to "abv",
+        "classification" to "classification", "classement" to "classification",
+        "criticscores" to "critic_scores", "notesdescritiques" to "critic_scores",
     )
 
     private fun fold(text: String): String = Wine.fold(text)
@@ -363,6 +373,8 @@ internal object CsvColumns {
             grapes = (value("grapes") ?: "").split(';', ',').map { it.trim() }.filter { it.isNotEmpty() },
             drinkFrom = from, drinkUntil = until,
             tags = Wine.normalizedTags(value("tags")?.split(';', ',')),
+            abv = value("abv")?.let(::abv), classification = value("classification"),
+            criticScores = value("critic_scores")?.let(::criticScores),
         ).let { wine ->
             val price = value("current_price")?.let { CsvColumns.price(it, plainPrice) }?.takeIf { it.signum() > 0 } ?: return@let wine
             wine.copy(
@@ -437,17 +449,77 @@ internal object CsvColumns {
 
     fun number(text: String): Double? = text.replace(",", ".").filter { it in '0'..'9' || it == '.' || it == '-' }.toDoubleOrNull()
 
-    /** 1 to 5 (decimals rounded); 100-point scores are converted. "4/5", "16/20", "8/10" are that share of 5 stars. */
-    fun rating(text: String): Int? {
+    /** 1 to 5 (decimals rounded), as [score] reads it. */
+    fun rating(text: String): Int? = score(text)?.rating
+
+    /**
+     * A rating and, for a score out of 100 or 20, the precise score, by the shared conversion
+     * ([Score]), as CaveKit reads it. A bare number above 5 is out of 100: from 50 to 100 it is
+     * kept as a score, below it is that share of 5 stars. "93/100" (50 to 100) and "17.5/20"
+     * are scores; other "x/y" ("4/5", "8/10") are that share of 5 stars, without a score.
+     */
+    fun score(text: String): EnteredRating? {
+        fun share(five: Double) = EnteredRating(Math.round(minOf(5.0, five)).toInt().coerceIn(1, 5), null)
         val parts = text.split('/')
         if (parts.size == 2) {
             val value = number(parts[0])?.takeIf { it > 0 } ?: return null
             val scale = number(parts[1])?.takeIf { it > 0 } ?: return null
-            return Math.round(value / scale * 5).toInt().coerceIn(1, 5)
+            if (scale == 100.0 && value >= Score.LOWEST && value <= Score.HIGHEST) return Score.entered(value, RatingScale.Hundred)
+            if (scale == 20.0 && value <= 20) return Score.entered(value, RatingScale.Twenty)
+            return share(value / scale * 5)
         }
         val value = number(text)?.takeIf { it > 0 } ?: return null
-        val five = minOf(5.0, if (value > 5) value / 20 else value)
-        return Math.round(five).toInt().coerceIn(1, 5)
+        if (value <= 5) return share(value)
+        if (value >= Score.LOWEST && value <= Score.HIGHEST) return Score.entered(value, RatingScale.Hundred)
+        return share(value / 20)
+    }
+
+    /** A score out of 100 as the export writes it: "90", "93.75". */
+    fun scoreText(score: Double): String = if (score == Math.floor(score)) score.toLong().toString() else score.toString()
+
+    /** "Guide Hachette: 17.5/20 (2015); Concours de Mâcon: Gold medal", as the export writes critics' scores. */
+    fun criticScoresText(scores: List<CriticScore>): String = scores.joinToString("; ") { item ->
+        val note = item.note?.let { if (it.isEmpty()) "" else " ($it)" } ?: ""
+        "${item.source}: ${item.value ?: ""}$note"
+    }
+
+    /**
+     * The critics' scores of an export: entries separated by ";", each "source: value", the
+     * value "score/scale" or an award, with an optional note in brackets at the end.
+     */
+    fun criticScores(text: String): List<CriticScore>? = text.split(';').filter { it.isNotEmpty() }.mapNotNull { entry ->
+        val colon = entry.indexOf(':')
+        val source = (if (colon < 0) entry else entry.substring(0, colon)).trim(' ')
+        if (source.isEmpty()) return@mapNotNull null
+        var rest = if (colon < 0) "" else entry.substring(colon + 1).trim(' ')
+        var note: String? = null
+        val open = rest.lastIndexOf(" (")
+        if (rest.endsWith(")") && open >= 0) {
+            note = rest.substring(open + 2, rest.length - 1)
+            rest = rest.substring(0, open).trim(' ')
+        } else if (rest.startsWith("(") && rest.endsWith(")")) {
+            note = rest.substring(1, rest.length - 1)
+            rest = ""
+        }
+        val fraction = rest.split('/')
+        val scale = if (fraction.size == 2) fraction[1].trim(' ').let { if (it.all { c -> c in '0'..'9' }) it.toIntOrNull() else null } else null
+        val score = if (fraction.size == 2) decimal(fraction[0]) else null
+        if (scale != null && score != null) CriticScore(source, score = score, scale = scale, note = note)
+        else CriticScore(source, award = rest.ifEmpty { null }, note = note)
+    }.ifEmpty { null }
+
+    private val decimalNumber = Regex("[0-9]+(\\.[0-9]+)?")
+
+    /** "17.5", "17,5" or "94" as a decimal; null unless only digits and one separator. */
+    fun decimal(text: String): BigDecimal? {
+        val trimmed = text.trim(' ').replace(",", ".")
+        return if (decimalNumber.matches(trimmed)) BigDecimal(trimmed).stripTrailingZeros() else null
+    }
+
+    /** Alcohol by volume: "13.5", "13,5 %", "12.5% vol"; null outside 0 (excluded) to 100. */
+    fun abv(text: String): BigDecimal? {
+        val digits = text.replace(",", ".").filter { it in '0'..'9' || it == '.' }
+        return decimal(digits)?.takeIf { it.signum() > 0 && it <= BigDecimal(100) }
     }
 
     fun color(text: String): WineColor? {

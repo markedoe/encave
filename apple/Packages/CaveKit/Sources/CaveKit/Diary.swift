@@ -50,14 +50,22 @@ public enum DiaryEntry: Identifiable, Hashable, Sendable {
         case .elsewhere(let discovery): discovery.rating
         }
     }
+
+    /// The precise score out of 100, when the rating was entered out of 20 or 100.
+    public var score100: Double? {
+        switch self {
+        case .tasting(let bottle): bottle.tasting?.score100
+        case .elsewhere(let discovery): discovery.score100
+        }
+    }
 }
 
 public extension Cellar {
     /// The Journal's diary: opened bottles and wines tasted elsewhere, newest first
     /// (same date: by id, so every device shows the same order).
     ///
-    /// `query` looks in the wine (name, producer, origin, grapes, tags), the tasting note
-    /// (note, occasion, full note, food) and, for wines tasted elsewhere, the place, note and tags.
+    /// `query` looks in the wine (name, producer, origin, grapes, tags, details), the tasting
+    /// note (note, occasion, full note, food, aromas, hue) and, for wines tasted elsewhere, the place, note and tags.
     /// `tag` keeps only the wines tasted elsewhere that have it.
     func diary(filter: DiaryFilter = .all, query: String = "", tag: String? = nil) -> [DiaryEntry] {
         var entries: [DiaryEntry] = []

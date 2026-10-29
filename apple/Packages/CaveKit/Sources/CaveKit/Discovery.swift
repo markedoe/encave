@@ -14,8 +14,13 @@ public struct Discovery: Identifiable, Codable, Hashable, Sendable {
     public var setting: Setting?
     /// Free text: restaurant, city, friend's name.
     public var place: String?
-    /// 1 to 5, optional.
-    public var rating: Int?
+    /// 1 to 5, optional. Always written, also with a precise `score100`, so older versions
+    /// show stars. Changing it drops a score it no longer matches.
+    public var rating: Int? {
+        didSet { score100 = Score.kept(score100, rating: rating) }
+    }
+    /// The precise score out of 100, when entered out of 20 or 100 (see `Tasting.score100`).
+    public var score100: Double?
     public var note: String?
     public var tags: [String]
     /// Price seen (on the wine list, in the shop).
@@ -31,15 +36,18 @@ public struct Discovery: Identifiable, Codable, Hashable, Sendable {
 
     private enum CodingKeys: String, CodingKey, CaseIterable {
         case id, wineID, date, setting, place, rating, note, tags, price, currency, wantsToBuy, boughtAt
+        case score100
     }
 
     public init(
         id: UUID = UUID(), wineID: UUID, date: Date = .now, setting: Setting? = nil, place: String? = nil,
         rating: Int? = nil, note: String? = nil, tags: [String] = [], price: Decimal? = nil,
-        currency: String? = nil, wantsToBuy: Bool = false, boughtAt: Date? = nil
+        currency: String? = nil, wantsToBuy: Bool = false, boughtAt: Date? = nil, score100: Double? = nil
     ) {
         self.id = id; self.wineID = wineID; self.date = date; self.setting = setting; self.place = place
-        self.rating = rating.map { min(5, max(1, $0)) }
+        let rating = rating.map { min(5, max(1, $0)) }
+        self.rating = rating
+        self.score100 = Score.kept(score100, rating: rating)
         self.note = note; self.tags = Discovery.normalized(tags); self.price = price; self.currency = currency
         self.wantsToBuy = wantsToBuy; self.boughtAt = boughtAt
     }
@@ -54,6 +62,8 @@ public struct Discovery: Identifiable, Codable, Hashable, Sendable {
         setting = try c.decodeIfPresent(Setting.self, forKey: .setting)
         place = try c.decodeIfPresent(String.self, forKey: .place)
         rating = try c.decodeIfPresent(Int.self, forKey: .rating).map { min(5, max(1, $0)) }
+        // Stale when it no longer matches the rating (docs/SYNC.md §1).
+        score100 = Score.kept(try c.decodeIfPresent(Double.self, forKey: .score100), rating: rating)
         note = try c.decodeIfPresent(String.self, forKey: .note)
         tags = Discovery.normalized(try c.decodeIfPresent([String].self, forKey: .tags) ?? [])
         price = try c.decodeIfPresent(Decimal.self, forKey: .price)
@@ -77,7 +87,18 @@ public struct Discovery: Identifiable, Codable, Hashable, Sendable {
         try c.encodeIfPresent(currency, forKey: .currency)
         try c.encode(wantsToBuy, forKey: .wantsToBuy)
         try c.encodeIfPresent(boughtAt, forKey: .boughtAt)
+        try c.encodeIfPresent(Score.kept(score100, rating: rating), forKey: .score100)
         try unknownFields.encode(to: encoder, known: CodingKeys.self)
+    }
+
+    /// Sets the rating from a value entered on a scale (see `Tasting.setRating(_:on:)`).
+    public mutating func setRating(_ value: Double?, on scale: RatingScale) {
+        guard let value, let entered = Score.entered(value, on: scale) else {
+            rating = nil
+            return
+        }
+        rating = entered.rating
+        score100 = entered.score100
     }
 
     /// Trimmed, without empty or duplicate tags (ignoring case), in the order given.

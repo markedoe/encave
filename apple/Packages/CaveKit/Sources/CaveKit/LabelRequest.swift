@@ -11,7 +11,7 @@ public struct LabelRequest: Sendable, Equatable {
     public init(findsLabel: Bool) { self.findsLabel = findsLabel }
 
     static let detailKeys = ["name", "producer", "vintage", "color", "appellation", "region", "country",
-                             "grapes", "drinkFrom", "drinkUntil"]
+                             "grapes", "drinkFrom", "drinkUntil", "abv", "classification"]
     static let labelKeys = ["label_box", "label_angle"]
 
     public var prompt: String {
@@ -24,6 +24,9 @@ public struct LabelRequest: Sendable, Equatable {
             "- appellation, region, country: from the label, or from your knowledge of the appellation. Country in English.",
             "- grapes: the grape varieties if printed or typical of the appellation; [] if unsure.",
             "- drinkFrom and drinkUntil: a realistic drinking window in years for this wine and vintage, or 0 if unknown.",
+            "- abv: the alcohol by volume printed on the label, in percent (for example 13.5), or 0 if not printed.",
+            "- classification: a classification printed on the label (for example Grand Cru, Premier Cru, Cru Bourgeois), "
+                + "or \"\" if none is printed.",
         ]
         if findsLabel {
             lines += [
@@ -50,6 +53,8 @@ public struct LabelRequest: Sendable, Equatable {
             "grapes": ["type": "array", "items": ["type": "string"]] as [String: Any],
             "drinkFrom": ["type": "integer"],
             "drinkUntil": ["type": "integer"],
+            "abv": ["type": "number"],
+            "classification": ["type": "string"],
         ]
         if findsLabel {
             let box: [String: Any] = [

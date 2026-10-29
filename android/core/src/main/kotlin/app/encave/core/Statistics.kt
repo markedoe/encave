@@ -26,6 +26,11 @@ data class CellarStatistics(
     val estimatedValueByCurrency: Map<String, BigDecimal> = emptyMap(),
     /** How many bottles [estimatedValueByCurrency] covers. */
     val pricedBottleCount: Int = 0,
+    /** Aromas noted in tastings of opened bottles, most noted first (labels are vocabulary ids of kind aroma): at most 8. */
+    val topAromas: List<Slice> = emptyList(),
+    /** Bottles in the cellar by farming and by closure (labels are vocabulary ids), for the wines that say it. */
+    val byFarming: List<Slice> = emptyList(),
+    val byClosure: List<Slice> = emptyList(),
 ) {
     data class Slice(val label: String, val count: Int)
     data class ColorSlice(val color: WineColor?, val count: Int)
@@ -122,6 +127,9 @@ fun Cellar.statistics(year: Int, now: Instant = Instant.now(), zone: ZoneId = Zo
         topGrapes = slices(winesInCellar.flatMap { it.grapes }, limit = 8),
         estimatedValueByCurrency = estimated,
         pricedBottleCount = priced,
+        topAromas = slices(consumedBottles.flatMap { it.tasting?.aromas.orEmpty() }, limit = 8),
+        byFarming = slices(winesInCellar.map { it.farming }),
+        byClosure = slices(winesInCellar.map { it.closure }),
     )
 }
 

@@ -39,6 +39,13 @@ public struct CellarStatistics: Sendable, Equatable {
     /// that have one; `pricedBottleCount` says how many bottles that covers.
     public var estimatedValueByCurrency: [String: Decimal] = [:]
     public var pricedBottleCount = 0
+    /// Aromas noted in tastings of opened bottles, most noted first (labels are vocabulary
+    /// ids, of kind `aroma`): at most 8.
+    public var topAromas: [Slice] = []
+    /// Bottles in the cellar by farming and by closure (labels are vocabulary ids, of kinds
+    /// `farming` and `closure`), for the wines that say it.
+    public var byFarming: [Slice] = []
+    public var byClosure: [Slice] = []
 }
 
 public extension Cellar {
@@ -116,7 +123,10 @@ public extension Cellar {
             consumptionByMonth: monthly,
             topGrapes: slices(winesInCellar.flatMap(\.grapes), limit: 8),
             estimatedValueByCurrency: estimated,
-            pricedBottleCount: priced
+            pricedBottleCount: priced,
+            topAromas: slices(consumed.flatMap { $0.tasting?.aromas ?? [] }, limit: 8),
+            byFarming: slices(winesInCellar.map(\.farming)),
+            byClosure: slices(winesInCellar.map(\.closure))
         )
     }
 }

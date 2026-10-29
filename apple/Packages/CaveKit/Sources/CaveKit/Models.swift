@@ -15,7 +15,9 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     public var region: String?
     public var country: String?
     public var appellation: String?
-    public var grapes: [String]
+    public var grapes: [String] {
+        didSet { grapeShares = Wine.keptShares(grapeShares, grapes: grapes) }
+    }
     /// First and last year of the drinking window, when known.
     public var drinkFrom: Int?
     public var drinkUntil: Int?
@@ -54,6 +56,36 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     /// to frame the studio picture. Used only while it names the current `photoID`
     /// (see `labelFrame(forPhoto:)`). Nil when never found.
     public var labelFrame: WineLabelFrame?
+    /// Alcohol by volume, in percent (13.5).
+    public var abv: Decimal?
+    /// Free text, with suggestions ("Grand Cru", "Cru Bourgeois").
+    public var classification: String?
+    /// The lieu-dit or climat (a named vineyard).
+    public var lieuDit: String?
+    /// Sparkling wines: a `Vocabulary.dosages` id ("brut"). Kept even when unknown.
+    public var dosage: String?
+    /// Still wines: a `Vocabulary.sweetnesses` id ("dry", "offDry"…). Kept even when unknown.
+    public var sweetness: String?
+    /// Share of each grape in percent (1 to 100), keyed by the grape as written in `grapes`;
+    /// `grapes` stays the list older versions read. A share whose grape is no longer in
+    /// `grapes` is dropped. Nil rather than empty.
+    public var grapeShares: [String: Int]? {
+        didSet { grapeShares = Wine.keptShares(grapeShares, grapes: grapes) }
+    }
+    /// How it was aged, `Vocabulary.ageings` ids, each once. Nil rather than empty.
+    public var ageing: [String]? {
+        didSet { ageing = Tasting.uniqueIDs(ageing) }
+    }
+    /// `Vocabulary.farmings` id ("organic"), and whether it is certified (true or nil, only
+    /// with a farming).
+    public var farming: String?
+    public var farmingCertified: Bool?
+    /// `Vocabulary.closures` id ("screwCap").
+    public var closure: String?
+    /// Critics' and guides' scores and awards, as typed. Nil rather than empty.
+    public var criticScores: [CriticScore]? {
+        didSet { if criticScores?.isEmpty == true { criticScores = nil } }
+    }
     /// Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1).
     /// Part of equality, so a merge that only brings them in is still saved.
     public var unknownFields = UnknownFields()
@@ -62,6 +94,8 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         case id, name, producer, vintage, color, region, country, appellation, grapes, drinkFrom, drinkUntil, notes
         case photoID, barcodes, tags, extraPhotoIDs, currentPrice, currentPriceCurrency, currentPriceDate
         case coverPhotoID, attachments, aiCompletedAt, labelFrame
+        case abv, classification, lieuDit, dosage, sweetness, grapeShares, ageing, farming, farmingCertified, closure
+        case criticScores
     }
 
     public init(
@@ -106,6 +140,20 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         attachments = Attachment.unique(try c.decodeIfPresent([Attachment].self, forKey: .attachments))
         aiCompletedAt = try c.decodeIfPresent(Date.self, forKey: .aiCompletedAt)
         labelFrame = try c.decodeIfPresent(WineLabelFrame.self, forKey: .labelFrame)
+        // The wine details, normalized the same way on every device (docs/SYNC.md §1). Ids
+        // this version does not know are kept as they are.
+        abv = try c.decodeIfPresent(Decimal.self, forKey: .abv)
+        classification = try c.decodeIfPresent(String.self, forKey: .classification)
+        lieuDit = try c.decodeIfPresent(String.self, forKey: .lieuDit)
+        dosage = Tasting.id(try c.decodeIfPresent(String.self, forKey: .dosage))
+        sweetness = Tasting.id(try c.decodeIfPresent(String.self, forKey: .sweetness))
+        grapeShares = Wine.keptShares(try c.decodeIfPresent([String: Int].self, forKey: .grapeShares), grapes: grapes)
+        ageing = Tasting.uniqueIDs(try c.decodeIfPresent([String].self, forKey: .ageing))
+        farming = Tasting.id(try c.decodeIfPresent(String.self, forKey: .farming))
+        let certified = try c.decodeIfPresent(Bool.self, forKey: .farmingCertified)
+        farmingCertified = farming != nil && certified == true ? true : nil
+        closure = Tasting.id(try c.decodeIfPresent(String.self, forKey: .closure))
+        criticScores = try c.decodeIfPresent([CriticScore].self, forKey: .criticScores).flatMap { $0.isEmpty ? nil : $0 }
         unknownFields = try UnknownFields(from: decoder, known: CodingKeys.self)
     }
 
@@ -134,7 +182,51 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         try c.encodeIfPresent(attachments, forKey: .attachments)
         try c.encodeIfPresent(aiCompletedAt, forKey: .aiCompletedAt)
         try c.encodeIfPresent(labelFrame, forKey: .labelFrame)
+        try c.encodeIfPresent(abv, forKey: .abv)
+        try c.encodeIfPresent(classification, forKey: .classification)
+        try c.encodeIfPresent(lieuDit, forKey: .lieuDit)
+        try c.encodeIfPresent(dosage, forKey: .dosage)
+        try c.encodeIfPresent(sweetness, forKey: .sweetness)
+        try c.encodeIfPresent(grapeShares, forKey: .grapeShares)
+        try c.encodeIfPresent(ageing, forKey: .ageing)
+        try c.encodeIfPresent(farming, forKey: .farming)
+        try c.encodeIfPresent(farming != nil && farmingCertified == true ? true : nil, forKey: .farmingCertified)
+        try c.encodeIfPresent(closure, forKey: .closure)
+        try c.encodeIfPresent(criticScores, forKey: .criticScores)
         try unknownFields.encode(to: encoder, known: CodingKeys.self)
+    }
+
+    /// Shares in percent kept for the grapes listed (trimmed, ignoring case), each brought
+    /// into 1…100 (0 and below are dropped); nil when none are left.
+    public static func keptShares(_ shares: [String: Int]?, grapes: [String]) -> [String: Int]? {
+        guard let shares else { return nil }
+        let listed = Set(grapes.map(Wine.grapeKey))
+        var kept: [String: Int] = [:], seen = Set<String>()
+        // A grape written twice (in another case) keeps the key that sorts first, by UTF-16
+        // code units as in Kotlin, so every device keeps the same one.
+        for grape in shares.keys.sorted(by: { $0.utf16.lexicographicallyPrecedes($1.utf16) }) {
+            let key = Wine.grapeKey(grape)
+            guard let share = shares[grape], share > 0, listed.contains(key), seen.insert(key).inserted else { continue }
+            kept[grape] = min(100, share)
+        }
+        return kept.isEmpty ? nil : kept
+    }
+
+    /// A grape compared for its share: trimmed, ignoring case.
+    static func grapeKey(_ grape: String) -> String {
+        grape.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    /// The share of a grape in percent, if given.
+    public func share(of grape: String) -> Int? {
+        let key = Wine.grapeKey(grape)
+        return grapeShares?.first { Wine.grapeKey($0.key) == key }?.value
+    }
+
+    /// True when any of the details under "More details" is filled.
+    public var hasMoreDetails: Bool {
+        abv != nil || !(classification ?? "").isEmpty || !(lieuDit ?? "").isEmpty || dosage != nil || sweetness != nil
+            || grapeShares != nil || ageing != nil || farming != nil || closure != nil
     }
 
     /// The label photo first, then the others, then the cover.
@@ -689,8 +781,15 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
 /// A record of drinking a bottle, from a quick rating to a full tasting note.
 public struct Tasting: Codable, Hashable, Sendable {
     public var date: Date
-    /// 1 to 5, optional.
-    public var rating: Int?
+    /// 1 to 5, optional. Always written, also when a precise `score100` was entered, so
+    /// older versions show stars. Changing it drops a score it no longer matches.
+    public var rating: Int? {
+        didSet { score100 = Score.kept(score100, rating: rating) }
+    }
+    /// The precise score, out of 100 (50…100 in quarter points), when the rating was entered
+    /// out of 20 or 100; kept only while `rating` is its stars (`Score.kept`). Set both with
+    /// `setRating(_:on:)`.
+    public var score100: Double?
     public var note: String?
     public var occasion: String?
     public var appearance: String?
@@ -698,24 +797,49 @@ public struct Tasting: Codable, Hashable, Sendable {
     public var palate: String?
     public var finish: String?
     public var foodPairing: String?
+    /// Aromas of the guided tasting sheet, as vocabulary ids ("fruit.cherry"), each once, in
+    /// the order chosen. Nil rather than empty. Ids this version does not know are kept.
+    public var aromas: [String]? {
+        didSet { aromas = Tasting.uniqueIDs(aromas) }
+    }
+    /// Structure, each 1 to 5 (`Vocabulary.structure`), optional.
+    public var sweetness: Int?
+    public var acidity: Int?
+    public var tannin: Int?
+    public var body: Int?
+    public var alcohol: Int?
+    public var length: Int?
+    /// Appearance: intensity ("pale", "medium", "deep") and hue ("ruby", "gold"…), vocabulary ids.
+    public var intensity: String?
+    public var hue: String?
     /// Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1).
     /// Part of equality, so a merge that only brings them in is still saved.
     public var unknownFields = UnknownFields()
 
     private enum CodingKeys: String, CodingKey, CaseIterable {
         case date, rating, note, occasion, appearance, nose, palate, finish, foodPairing
+        case score100, aromas, sweetness, acidity, tannin, body, alcohol, length, intensity, hue
     }
 
     public init(
         date: Date = .now, rating: Int? = nil, note: String? = nil, occasion: String? = nil,
         appearance: String? = nil, nose: String? = nil, palate: String? = nil, finish: String? = nil,
-        foodPairing: String? = nil
+        foodPairing: String? = nil, score100: Double? = nil, aromas: [String]? = nil,
+        sweetness: Int? = nil, acidity: Int? = nil, tannin: Int? = nil, body: Int? = nil,
+        alcohol: Int? = nil, length: Int? = nil, intensity: String? = nil, hue: String? = nil
     ) {
         self.date = date
-        self.rating = rating.map { min(5, max(1, $0)) }
+        let rating = rating.map { min(5, max(1, $0)) }
+        self.rating = rating
+        self.score100 = Score.kept(score100, rating: rating)
         self.note = note; self.occasion = occasion
         self.appearance = appearance; self.nose = nose; self.palate = palate; self.finish = finish
         self.foodPairing = foodPairing
+        self.aromas = Tasting.uniqueIDs(aromas)
+        self.sweetness = Tasting.level(sweetness); self.acidity = Tasting.level(acidity)
+        self.tannin = Tasting.level(tannin); self.body = Tasting.level(body)
+        self.alcohol = Tasting.level(alcohol); self.length = Tasting.level(length)
+        self.intensity = Tasting.id(intensity); self.hue = Tasting.id(hue)
     }
 
     public init(from decoder: Decoder) throws {
@@ -729,6 +853,19 @@ public struct Tasting: Codable, Hashable, Sendable {
         palate = try c.decodeIfPresent(String.self, forKey: .palate)
         finish = try c.decodeIfPresent(String.self, forKey: .finish)
         foodPairing = try c.decodeIfPresent(String.self, forKey: .foodPairing)
+        // Newer fields, normalized the same way on every device (docs/SYNC.md §1): a score
+        // that no longer matches the rating is stale, levels are brought into 1…5, ids are
+        // kept once and empty ones are left out.
+        score100 = Score.kept(try c.decodeIfPresent(Double.self, forKey: .score100), rating: rating)
+        aromas = Tasting.uniqueIDs(try c.decodeIfPresent([String].self, forKey: .aromas))
+        sweetness = Tasting.level(try c.decodeIfPresent(Int.self, forKey: .sweetness))
+        acidity = Tasting.level(try c.decodeIfPresent(Int.self, forKey: .acidity))
+        tannin = Tasting.level(try c.decodeIfPresent(Int.self, forKey: .tannin))
+        body = Tasting.level(try c.decodeIfPresent(Int.self, forKey: .body))
+        alcohol = Tasting.level(try c.decodeIfPresent(Int.self, forKey: .alcohol))
+        length = Tasting.level(try c.decodeIfPresent(Int.self, forKey: .length))
+        intensity = Tasting.id(try c.decodeIfPresent(String.self, forKey: .intensity))
+        hue = Tasting.id(try c.decodeIfPresent(String.self, forKey: .hue))
         unknownFields = try UnknownFields(from: decoder, known: CodingKeys.self)
     }
 
@@ -743,12 +880,83 @@ public struct Tasting: Codable, Hashable, Sendable {
         try c.encodeIfPresent(palate, forKey: .palate)
         try c.encodeIfPresent(finish, forKey: .finish)
         try c.encodeIfPresent(foodPairing, forKey: .foodPairing)
+        try c.encodeIfPresent(Score.kept(score100, rating: rating), forKey: .score100)
+        try c.encodeIfPresent(aromas, forKey: .aromas)
+        try c.encodeIfPresent(sweetness, forKey: .sweetness)
+        try c.encodeIfPresent(acidity, forKey: .acidity)
+        try c.encodeIfPresent(tannin, forKey: .tannin)
+        try c.encodeIfPresent(body, forKey: .body)
+        try c.encodeIfPresent(alcohol, forKey: .alcohol)
+        try c.encodeIfPresent(length, forKey: .length)
+        try c.encodeIfPresent(intensity, forKey: .intensity)
+        try c.encodeIfPresent(hue, forKey: .hue)
         try unknownFields.encode(to: encoder, known: CodingKeys.self)
+    }
+
+    /// Sets the rating from a value entered on a scale: stars clear the score, out of 20 or
+    /// 100 keep it with its stars (`Score.entered`). Nil clears both.
+    public mutating func setRating(_ value: Double?, on scale: RatingScale) {
+        guard let value, let entered = Score.entered(value, on: scale) else {
+            rating = nil
+            return
+        }
+        rating = entered.rating
+        score100 = entered.score100
+    }
+
+    /// The value of a structure attribute by its vocabulary id.
+    public func level(of attribute: String) -> Int? {
+        switch attribute {
+        case "sweetness": sweetness
+        case "acidity": acidity
+        case "tannin": tannin
+        case "body": body
+        case "alcohol": alcohol
+        case "length": length
+        default: nil
+        }
+    }
+
+    public mutating func setLevel(_ value: Int?, of attribute: String) {
+        let value = Tasting.level(value)
+        switch attribute {
+        case "sweetness": sweetness = value
+        case "acidity": acidity = value
+        case "tannin": tannin = value
+        case "body": body = value
+        case "alcohol": alcohol = value
+        case "length": length = value
+        default: break
+        }
+    }
+
+    /// The labels of its aromas and hue in the person's language, for search.
+    public var searchLabels: [String] {
+        (aromas ?? []).map { Vocabulary.label(.aroma, $0) } + [hue.map { Vocabulary.label(.hue, $0) }].compactMap { $0 }
+    }
+
+    /// True when any part of the guided sheet is filled: aromas, structure or appearance.
+    public var hasGuidedNotes: Bool {
+        !(aromas ?? []).isEmpty || [sweetness, acidity, tannin, body, alcohol, length].contains { $0 != nil }
+            || intensity != nil || hue != nil
     }
 
     /// True when any structured field beyond rating and note is filled.
     public var isDetailed: Bool {
-        [appearance, nose, palate, finish, foodPairing].contains { !($0 ?? "").isEmpty }
+        [appearance, nose, palate, finish, foodPairing].contains { !($0 ?? "").isEmpty } || hasGuidedNotes
+    }
+
+    /// 1 to 5, nil otherwise.
+    static func level(_ value: Int?) -> Int? { value.map { min(5, max(1, $0)) } }
+
+    /// Nil for an empty id.
+    static func id(_ value: String?) -> String? { value?.isEmpty == false ? value : nil }
+
+    /// Each non-empty id once, in the order given; nil when none are left.
+    static func uniqueIDs(_ ids: [String]?) -> [String]? {
+        var seen = Set<String>()
+        let unique = (ids ?? []).filter { !$0.isEmpty && seen.insert($0).inserted }
+        return unique.isEmpty ? nil : unique
     }
 }
 

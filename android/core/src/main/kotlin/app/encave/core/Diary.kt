@@ -34,11 +34,15 @@ sealed class DiaryEntry {
     abstract val date: Instant
     abstract val rating: Int?
 
+    /** The precise score out of 100, when the rating was entered out of 20 or 100. */
+    abstract val score100: Double?
+
     data class Opened(val bottle: Bottle) : DiaryEntry() {
         override val id: UUID get() = bottle.id
         override val wineId: UUID get() = bottle.wineId
         override val date: Instant get() = bottle.tasting?.date ?: bottle.addedAt
         override val rating: Int? get() = bottle.tasting?.rating
+        override val score100: Double? get() = bottle.tasting?.score100
     }
 
     data class Elsewhere(val discovery: Discovery) : DiaryEntry() {
@@ -46,6 +50,7 @@ sealed class DiaryEntry {
         override val wineId: UUID get() = discovery.wineId
         override val date: Instant get() = discovery.date
         override val rating: Int? get() = discovery.rating
+        override val score100: Double? get() = discovery.score100
     }
 }
 
@@ -60,7 +65,7 @@ fun Cellar.tastings(query: String): List<Bottle> {
         val tasting = bottle.tasting
         val fields = listOfNotNull(
             tasting?.note, tasting?.occasion, tasting?.appearance, tasting?.nose, tasting?.palate, tasting?.finish, tasting?.foodPairing,
-        )
+        ) + tasting?.searchLabels.orEmpty()
         SearchText.matches(needle, wines[bottle.wineId]?.searchFields.orEmpty() + fields)
     }
 }

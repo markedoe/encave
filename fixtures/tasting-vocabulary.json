@@ -1,0 +1,653 @@
+{
+  "about": "Shared vocabulary of the guided tasting sheet and the wine details (docs/SYNC.md). Records store these stable ids, never labels; labels are in Localizable.xcstrings (apple/tools/l10n.py) and strings.xml (android/tools/strings.py), both checked to have an English and a French label for every id. 'colors' lists the wine colors (WineColor raw values) an entry is offered for first; a wine without a color is offered everything, and a value already set is always shown. Ids a version does not know are kept and written back unchanged. Read by VocabularyTests.swift and VocabularyTest.kt, which check that the code's tables match this file.",
+  "aromaFamilies": [
+    {
+      "id": "redFruit",
+      "aromas": [
+        {
+          "id": "fruit.strawberry",
+          "colors": [
+            "red",
+            "rose",
+            "sparkling"
+          ]
+        },
+        {
+          "id": "fruit.raspberry",
+          "colors": [
+            "red",
+            "rose",
+            "sparkling"
+          ]
+        },
+        {
+          "id": "fruit.redCherry",
+          "colors": [
+            "red",
+            "rose",
+            "fortified"
+          ]
+        },
+        {
+          "id": "fruit.redcurrant",
+          "colors": [
+            "red",
+            "rose"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "blackFruit",
+      "aromas": [
+        {
+          "id": "fruit.blackberry",
+          "colors": [
+            "red",
+            "fortified"
+          ]
+        },
+        {
+          "id": "fruit.blackcurrant",
+          "colors": [
+            "red",
+            "fortified"
+          ]
+        },
+        {
+          "id": "fruit.blackCherry",
+          "colors": [
+            "red",
+            "fortified"
+          ]
+        },
+        {
+          "id": "fruit.plum",
+          "colors": [
+            "red",
+            "fortified"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "citrus",
+      "aromas": [
+        {
+          "id": "fruit.lemon",
+          "colors": [
+            "white",
+            "rose",
+            "sparkling",
+            "orange"
+          ]
+        },
+        {
+          "id": "fruit.grapefruit",
+          "colors": [
+            "white",
+            "rose",
+            "sparkling",
+            "orange"
+          ]
+        },
+        {
+          "id": "fruit.orangePeel",
+          "colors": [
+            "white",
+            "sparkling",
+            "dessert",
+            "fortified",
+            "orange"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "orchardFruit",
+      "aromas": [
+        {
+          "id": "fruit.greenApple",
+          "colors": [
+            "white",
+            "sparkling",
+            "orange"
+          ]
+        },
+        {
+          "id": "fruit.pear",
+          "colors": [
+            "white",
+            "sparkling",
+            "dessert"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stoneTropicalFruit",
+      "aromas": [
+        {
+          "id": "fruit.peach",
+          "colors": [
+            "white",
+            "rose",
+            "sparkling",
+            "dessert"
+          ]
+        },
+        {
+          "id": "fruit.apricot",
+          "colors": [
+            "white",
+            "dessert",
+            "orange"
+          ]
+        },
+        {
+          "id": "fruit.pineapple",
+          "colors": [
+            "white",
+            "dessert"
+          ]
+        },
+        {
+          "id": "fruit.passionFruit",
+          "colors": [
+            "white",
+            "sparkling"
+          ]
+        },
+        {
+          "id": "fruit.lychee",
+          "colors": [
+            "white",
+            "rose"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "floral",
+      "aromas": [
+        {
+          "id": "floral.rose",
+          "colors": [
+            "red",
+            "white",
+            "rose"
+          ]
+        },
+        {
+          "id": "floral.violet",
+          "colors": [
+            "red"
+          ]
+        },
+        {
+          "id": "floral.acacia",
+          "colors": [
+            "white",
+            "sparkling",
+            "dessert"
+          ]
+        },
+        {
+          "id": "floral.elderflower",
+          "colors": [
+            "white",
+            "sparkling"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "herbal",
+      "aromas": [
+        {
+          "id": "herbal.cutGrass",
+          "colors": [
+            "white",
+            "sparkling"
+          ]
+        },
+        {
+          "id": "herbal.greenPepper",
+          "colors": [
+            "red",
+            "white"
+          ]
+        },
+        {
+          "id": "herbal.mint",
+          "colors": [
+            "red",
+            "white"
+          ]
+        },
+        {
+          "id": "herbal.garrigue",
+          "colors": [
+            "red",
+            "white",
+            "rose"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "spice",
+      "aromas": [
+        {
+          "id": "spice.blackPepper",
+          "colors": [
+            "red",
+            "fortified"
+          ]
+        },
+        {
+          "id": "spice.clove",
+          "colors": [
+            "red",
+            "dessert",
+            "fortified"
+          ]
+        },
+        {
+          "id": "spice.cinnamon",
+          "colors": [
+            "red",
+            "white",
+            "dessert",
+            "fortified"
+          ]
+        },
+        {
+          "id": "spice.liquorice",
+          "colors": [
+            "red",
+            "fortified"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "oakToast",
+      "aromas": [
+        {
+          "id": "oak.vanilla",
+          "colors": [
+            "red",
+            "white",
+            "fortified"
+          ]
+        },
+        {
+          "id": "oak.toast",
+          "colors": [
+            "red",
+            "white",
+            "sparkling"
+          ]
+        },
+        {
+          "id": "oak.smoke",
+          "colors": [
+            "red",
+            "white"
+          ]
+        },
+        {
+          "id": "oak.cedar",
+          "colors": [
+            "red"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "earthMineral",
+      "aromas": [
+        {
+          "id": "earth.flint",
+          "colors": [
+            "white",
+            "sparkling"
+          ]
+        },
+        {
+          "id": "earth.petrol",
+          "colors": [
+            "white"
+          ]
+        },
+        {
+          "id": "earth.mushroom",
+          "colors": [
+            "red",
+            "white"
+          ]
+        },
+        {
+          "id": "earth.forestFloor",
+          "colors": [
+            "red"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "animalLeather",
+      "aromas": [
+        {
+          "id": "animal.leather",
+          "colors": [
+            "red",
+            "fortified"
+          ]
+        },
+        {
+          "id": "animal.game",
+          "colors": [
+            "red"
+          ]
+        },
+        {
+          "id": "animal.tobacco",
+          "colors": [
+            "red",
+            "fortified"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pastryButter",
+      "aromas": [
+        {
+          "id": "pastry.brioche",
+          "colors": [
+            "white",
+            "sparkling"
+          ]
+        },
+        {
+          "id": "pastry.butter",
+          "colors": [
+            "white"
+          ]
+        },
+        {
+          "id": "pastry.hazelnut",
+          "colors": [
+            "white",
+            "sparkling",
+            "dessert",
+            "fortified",
+            "orange"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "honeyDriedFruit",
+      "aromas": [
+        {
+          "id": "dried.honey",
+          "colors": [
+            "white",
+            "sparkling",
+            "dessert",
+            "fortified",
+            "orange"
+          ]
+        },
+        {
+          "id": "dried.raisin",
+          "colors": [
+            "dessert",
+            "fortified"
+          ]
+        },
+        {
+          "id": "dried.fig",
+          "colors": [
+            "red",
+            "dessert",
+            "fortified"
+          ]
+        },
+        {
+          "id": "dried.walnut",
+          "colors": [
+            "white",
+            "dessert",
+            "fortified",
+            "orange"
+          ]
+        }
+      ]
+    }
+  ],
+  "structure": [
+    {
+      "id": "sweetness",
+      "scale": "sweetness"
+    },
+    {
+      "id": "acidity",
+      "scale": "level"
+    },
+    {
+      "id": "tannin",
+      "scale": "level",
+      "colors": [
+        "red",
+        "orange",
+        "fortified"
+      ]
+    },
+    {
+      "id": "body",
+      "scale": "body"
+    },
+    {
+      "id": "alcohol",
+      "scale": "level"
+    },
+    {
+      "id": "length",
+      "scale": "length"
+    }
+  ],
+  "structureScales": {
+    "level": [
+      "low",
+      "mediumMinus",
+      "medium",
+      "mediumPlus",
+      "high"
+    ],
+    "sweetness": [
+      "dry",
+      "offDry",
+      "medium",
+      "sweet",
+      "luscious"
+    ],
+    "body": [
+      "light",
+      "mediumMinus",
+      "medium",
+      "mediumPlus",
+      "full"
+    ],
+    "length": [
+      "short",
+      "mediumMinus",
+      "medium",
+      "mediumPlus",
+      "long"
+    ]
+  },
+  "intensities": [
+    "pale",
+    "medium",
+    "deep"
+  ],
+  "hues": [
+    {
+      "id": "purple",
+      "colors": [
+        "red"
+      ]
+    },
+    {
+      "id": "ruby",
+      "colors": [
+        "red",
+        "fortified"
+      ]
+    },
+    {
+      "id": "garnet",
+      "colors": [
+        "red",
+        "fortified"
+      ]
+    },
+    {
+      "id": "tawny",
+      "colors": [
+        "red",
+        "fortified",
+        "dessert"
+      ]
+    },
+    {
+      "id": "lemonGreen",
+      "colors": [
+        "white",
+        "sparkling"
+      ]
+    },
+    {
+      "id": "lemon",
+      "colors": [
+        "white",
+        "sparkling",
+        "dessert"
+      ]
+    },
+    {
+      "id": "gold",
+      "colors": [
+        "white",
+        "sparkling",
+        "dessert",
+        "orange"
+      ]
+    },
+    {
+      "id": "amber",
+      "colors": [
+        "white",
+        "dessert",
+        "fortified",
+        "orange"
+      ]
+    },
+    {
+      "id": "pink",
+      "colors": [
+        "rose",
+        "sparkling"
+      ]
+    },
+    {
+      "id": "salmon",
+      "colors": [
+        "rose",
+        "sparkling"
+      ]
+    },
+    {
+      "id": "onionSkin",
+      "colors": [
+        "rose",
+        "sparkling"
+      ]
+    },
+    {
+      "id": "orange",
+      "colors": [
+        "rose",
+        "orange"
+      ]
+    },
+    {
+      "id": "brown",
+      "colors": [
+        "red",
+        "white",
+        "dessert",
+        "fortified"
+      ]
+    }
+  ],
+  "dosage": [
+    "brutNature",
+    "extraBrut",
+    "brut",
+    "extraDry",
+    "sec",
+    "demiSec",
+    "doux"
+  ],
+  "sweetness": [
+    "dry",
+    "offDry",
+    "mediumSweet",
+    "sweet"
+  ],
+  "ageing": [
+    "oakBarrel",
+    "newOak",
+    "foudre",
+    "stainlessSteel",
+    "concrete",
+    "amphora",
+    "onLees"
+  ],
+  "farming": [
+    "organic",
+    "biodynamic",
+    "natural",
+    "sustainable",
+    "conventional"
+  ],
+  "closure": [
+    "naturalCork",
+    "technicalCork",
+    "screwCap",
+    "glass",
+    "synthetic",
+    "crownCap"
+  ],
+  "classificationSuggestions": [
+    "Grand Cru",
+    "Premier Cru",
+    "Grand Cru Classé",
+    "Premier Grand Cru Classé",
+    "Cru Classé",
+    "Cru Bourgeois",
+    "Cru Artisan",
+    "Village",
+    "DOCG",
+    "Riserva",
+    "Reserva",
+    "Gran Reserva",
+    "Grosses Gewächs",
+    "Erste Lage"
+  ]
+}

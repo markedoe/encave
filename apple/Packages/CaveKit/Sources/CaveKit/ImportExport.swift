@@ -72,6 +72,7 @@ public enum CellarExport {
         "purchase_date", "price", "currency", "purchase_place", "received_from", "size_ml",
         "rating", "tasted_on", "note", "expected_on", "tags", "reserved_for",
         "current_price", "current_price_currency", "current_price_date",
+        "score", "abv", "classification", "critic_scores",
     ]
 
     /// One row per bottle, including bottles on order. Includes consumed and
@@ -108,6 +109,8 @@ public enum CellarExport {
                 bottle.reservedFor,
                 wine.currentPrice.map(price), wine.currentPrice == nil ? nil : wine.currentPriceCurrency,
                 wine.currentPrice == nil ? nil : wine.currentPriceDate.map(day.string(from:)),
+                bottle.tasting?.score100.map(CSVColumns.scoreText), wine.abv.map { "\($0)" }, wine.classification,
+                wine.criticScores.map(CSVColumns.criticScoresText),
             ]
             lines.append(fields.map { escape($0 ?? "") }.joined(separator: ","))
         }
@@ -244,8 +247,9 @@ public extension Cellar {
                 let status = value("status").flatMap { Bottle.Status(rawValue: $0) } ?? .inCellar
                 if status == .consumed {
                     bottle.status = .consumed
+                    let score = value("score").flatMap(CSVColumns.score) ?? value("rating").flatMap(CSVColumns.score)
                     bottle.tasting = Tasting(date: value("tasted_on").flatMap { CSVColumns.day($0, day) } ?? now,
-                                             rating: value("rating").flatMap(CSVColumns.rating), note: value("note"))
+                                             rating: score?.rating, note: value("note"), score100: score?.score100)
                 } else if status == .gone {
                     bottle.status = .gone
                 } else if status == .ordered {
@@ -284,11 +288,12 @@ extension Cellar {
             }
             let wine = CSVColumns.wine(name: name, value: value, day: day)
             let known = wines.values.contains { $0.identityKey == wine.identityKey }
+            let score = value("score").flatMap(CSVColumns.score) ?? value("rating").flatMap(CSVColumns.score)
             let discovery = Discovery(
                 wineID: wine.id, date: value("scan_date").flatMap { CSVColumns.date($0, timeZone: timeZone) } ?? now,
-                place: value("place"), rating: value("rating").flatMap(CSVColumns.rating), note: value("note"),
+                place: value("place"), rating: score?.rating, note: value("note"),
                 price: value("price").flatMap { CSVColumns.price($0, plain: false) },
-                currency: value("currency") ?? settings.currency
+                currency: value("currency") ?? settings.currency, score100: score?.score100
             )
             addDiscovery(discovery, wine: wine)
             if !known { summary.winesAdded += 1 }
@@ -324,6 +329,9 @@ enum CSVColumns {
         "tags": "tags", "tag": "tags", "reservedfor": "reserved_for", "reserved": "reserved_for",
         "expectedon": "expected_on", "deliverydate": "expected_on", "livraison": "expected_on",
         "scandate": "scan_date", "scanreviewlocation": "place", "place": "place", "lieu": "place",
+        "score": "score", "abv": "abv", "alcohol": "abv", "alcool": "abv", "degre": "abv",
+        "classification": "classification", "classement": "classification",
+        "criticscores": "critic_scores", "notesdescritiques": "critic_scores",
     ]
 
     /// "Wine Name", "wine_name" and "Millésime" become "name" and "vintage".
@@ -375,6 +383,9 @@ enum CSVColumns {
             drinkFrom: from, drinkUntil: until,
             tags: value("tags")?.split(whereSeparator: { $0 == ";" || $0 == "," }).map(String.init)
         )
+        wine.abv = value("abv").flatMap(abv)
+        wine.classification = value("classification")
+        wine.criticScores = value("critic_scores").flatMap(criticScores)
         if let price = value("current_price").flatMap({ CSVColumns.price($0, plain: plainPrice) }), price > 0 {
             wine.currentPrice = price
             wine.currentPriceCurrency = value("current_price_currency") ?? value("currency")
@@ -446,17 +457,84 @@ enum CSVColumns {
         Double(text.replacingOccurrences(of: ",", with: ".").filter { $0.isASCIIDigit || $0 == "." || $0 == "-" })
     }
 
-    /// 1 to 5 (decimals rounded); 100-point scores are converted. "4/5", "16/20", "8/10" are
-    /// that share of 5 stars.
-    static func rating(_ text: String) -> Int? {
+    /// 1 to 5 (decimals rounded), as `score(_:)` reads it.
+    static func rating(_ text: String) -> Int? { score(text)?.rating }
+
+    /// A rating and, for a score out of 100 or 20, the precise score, by the shared
+    /// conversion (`Score`). A bare number above 5 is out of 100: from 50 to 100 it is kept as
+    /// a score, below it is that share of 5 stars. "93/100" (50 to 100) and "17.5/20" are
+    /// scores; other "x/y" ("4/5", "8/10") are that share of 5 stars, without a score.
+    static func score(_ text: String) -> (rating: Int, score100: Double?)? {
+        func share(_ five: Double) -> (rating: Int, score100: Double?) { (min(5, max(1, Int(min(5, five).rounded()))), nil) }
         let parts = text.split(separator: "/", omittingEmptySubsequences: false)
         if parts.count == 2 {
             guard let value = number(String(parts[0])), let scale = number(String(parts[1])), value > 0, scale > 0 else { return nil }
-            return min(5, max(1, Int((value / scale * 5).rounded())))
+            if scale == 100, value >= Score.lowest, value <= Score.highest { return Score.entered(value, on: .hundred) }
+            if scale == 20, value <= 20 { return Score.entered(value, on: .twenty) }
+            return share(value / scale * 5)
         }
         guard let value = number(text), value > 0 else { return nil }
-        let five = min(5, value > 5 ? value / 20 : value)
-        return min(5, max(1, Int(five.rounded())))
+        guard value > 5 else { return share(value) }
+        if value >= Score.lowest, value <= Score.highest { return Score.entered(value, on: .hundred) }
+        return share(value / 20)
+    }
+
+    /// A score out of 100 as the export writes it: "90", "93.75".
+    static func scoreText(_ score: Double) -> String {
+        score == score.rounded() ? String(Int(score)) : String(score)
+    }
+
+    /// "Guide Hachette: 17.5/20 (2015); Concours de Mâcon: Gold medal", as the export writes
+    /// critics' scores and the import reads them back.
+    static func criticScoresText(_ scores: [CriticScore]) -> String {
+        scores.map { item in
+            let note = item.note.map { $0.isEmpty ? "" : " (\($0))" } ?? ""
+            return "\(item.source): \(item.value ?? "")\(note)"
+        }.joined(separator: "; ")
+    }
+
+    /// The critics' scores of an export: entries separated by ";", each "source: value",
+    /// the value "score/scale" or an award, with an optional note in brackets at the end.
+    static func criticScores(_ text: String) -> [CriticScore]? {
+        func trimmed(_ text: Substring) -> String { String(text).trimmingCharacters(in: CharacterSet(charactersIn: " ")) }
+        let items = text.split(separator: ";").compactMap { entry -> CriticScore? in
+            let colon = entry.firstIndex(of: ":")
+            let source = trimmed(colon.map { entry[..<$0] } ?? entry)
+            guard !source.isEmpty else { return nil }
+            var rest = colon.map { trimmed(entry[entry.index(after: $0)...]) } ?? ""
+            var note: String?
+            if rest.hasSuffix(")"), let open = rest.range(of: " (", options: .backwards) {
+                note = String(rest[open.upperBound..<rest.index(before: rest.endIndex)])
+                rest = trimmed(rest[..<open.lowerBound])
+            } else if rest.hasPrefix("("), rest.hasSuffix(")") {
+                note = String(rest.dropFirst().dropLast())
+                rest = ""
+            }
+            let fraction = rest.split(separator: "/", omittingEmptySubsequences: false)
+            if fraction.count == 2 {
+                let scaleText = trimmed(fraction[1])
+                if !scaleText.isEmpty, scaleText.allSatisfy(\.isASCIIDigit), let scale = Int(scaleText),
+                   let score = decimal(String(fraction[0])) {
+                    return CriticScore(source: source, score: score, scale: scale, note: note)
+                }
+            }
+            return CriticScore(source: source, award: rest.isEmpty ? nil : rest, note: note)
+        }
+        return items.isEmpty ? nil : items
+    }
+
+    /// "17.5", "17,5" or "94" as a decimal; nil unless only digits and one separator.
+    static func decimal(_ text: String) -> Decimal? {
+        let trimmed = text.trimmingCharacters(in: CharacterSet(charactersIn: " ")).replacingOccurrences(of: ",", with: ".")
+        guard trimmed.range(of: #"^[0-9]+(\.[0-9]+)?$"#, options: .regularExpression) != nil else { return nil }
+        return Decimal(string: trimmed, locale: Locale(identifier: "en_US_POSIX"))
+    }
+
+    /// Alcohol by volume: "13.5", "13,5 %", "12.5% vol"; nil outside 0 (excluded) to 100.
+    static func abv(_ text: String) -> Decimal? {
+        let digits = text.replacingOccurrences(of: ",", with: ".").filter { $0.isASCIIDigit || $0 == "." }
+        guard let value = decimal(digits), value > 0, value <= 100 else { return nil }
+        return value
     }
 
     static func color(_ text: String) -> WineColor? {

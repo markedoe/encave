@@ -9,6 +9,8 @@ import kotlinx.serialization.Required
 import kotlinx.serialization.KeepGeneratedSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonObject
 
 /**
@@ -35,6 +37,8 @@ data class Discovery(
     val wantsToBuy: Boolean = false,
     /** When a bottle of it was added to the cellar from the shopping list. */
     @Serializable(with = InstantSerializer::class) val boughtAt: Instant? = null,
+    /** The precise score out of 100, when entered out of 20 or 100 (see [Tasting.score100]). */
+    val score100: Double? = null,
     /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
     @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {
@@ -53,7 +57,15 @@ data class Discovery(
     fun normalized(): Discovery {
         val clamped = rating?.coerceIn(1, 5)
         val clean = normalized(tags)
-        return if (clamped == rating && clean == tags) this else copy(rating = clamped, tags = clean)
+        // Stale when it no longer matches the rating (docs/SYNC.md §1).
+        val score = Score.kept(score100, clamped)
+        return if (clamped == rating && clean == tags && score == score100) this else copy(rating = clamped, tags = clean, score100 = score)
+    }
+
+    /** The rating from a value entered on a scale (see [Tasting.withRating]). */
+    fun withRating(value: Double?, scale: RatingScale): Discovery {
+        val entered = value?.let { Score.entered(it, scale) } ?: return copy(rating = null, score100 = null)
+        return copy(rating = entered.rating, score100 = entered.score100)
     }
 
     companion object {
@@ -128,4 +140,12 @@ fun Cellar.markBought(id: UUID, date: Instant = ReferenceDates.now()) {
 object DiscoverySerializer : KeepingUnknownKeys<Discovery>(Discovery.generatedSerializer()) {
     override fun unknownKeys(value: Discovery) = value.unknownKeys
     override fun withUnknownKeys(value: Discovery, keys: JsonObject) = value.copy(unknownKeys = keys)
+
+    /** A stale score is read as left out, as CaveKit decodes it. */
+    override fun deserialize(decoder: Decoder): Discovery =
+        super.deserialize(decoder).let { it.copy(score100 = Score.kept(it.score100, it.rating?.coerceIn(1, 5))) }
+
+    /** A score is written only while it matches the rating ([Score.kept]). */
+    override fun serialize(encoder: Encoder, value: Discovery) =
+        super.serialize(encoder, value.copy(score100 = Score.kept(value.score100, value.rating)))
 }

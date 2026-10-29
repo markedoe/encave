@@ -363,15 +363,16 @@ public extension Cellar {
         }.map(\.1)
     }
 
-    /// Opened bottles whose wine (name, producer, origin, grapes, tags) and tasting
-    /// (note, occasion, full note, food) contain every word of `query`, most recent first.
+    /// Opened bottles whose wine (name, producer, origin, grapes, tags, details) and tasting
+    /// (note, occasion, full note, food, aromas and hue by their labels) contain every word
+    /// of `query`, most recent first.
     func tastings(matching query: String) -> [Bottle] {
         let needle = query.trimmingCharacters(in: .whitespaces)
         guard !needle.isEmpty else { return consumedBottles }
         return consumedBottles.filter { bottle in
             let tasting = bottle.tasting
             let fields = [tasting?.note, tasting?.occasion, tasting?.appearance, tasting?.nose, tasting?.palate,
-                          tasting?.finish, tasting?.foodPairing].compactMap { $0 }
+                          tasting?.finish, tasting?.foodPairing].compactMap { $0 } + (tasting?.searchLabels ?? [])
             return SearchText.matches(needle, in: (wines[bottle.wineID]?.searchFields ?? []) + fields)
         }
     }
@@ -869,10 +870,19 @@ extension Wine {
             .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
     }
 
-    /// What a search looks in: the label fields, grapes, barcodes and tags.
+    /// What a search looks in: the label fields, grapes, barcodes and tags, the details
+    /// (classification, lieu-dit, and the labels of dosage, sweetness, ageing, farming and
+    /// closure in the person's language) and the critics' sources and awards.
     var searchFields: [String] {
-        ([name, producer, region, country, appellation, vintage.map(String.init)] + grapes.map(Optional.some)
-            + (barcodes ?? []).map(Optional.some) + (tags ?? []).map(Optional.some)).compactMap { $0 }
+        let details: [String?] = [classification, lieuDit, dosage.map { Vocabulary.label(.dosage, $0) },
+                                  sweetness.map { Vocabulary.label(.sweetness, $0) },
+                                  farming.map { Vocabulary.label(.farming, $0) }, closure.map { Vocabulary.label(.closure, $0) }]
+        let label: [String?] = [name, producer, region, country, appellation, vintage.map(String.init)]
+        var fields: [String] = label.compactMap { $0 } + grapes + (barcodes ?? []) + (tags ?? [])
+        fields += details.compactMap { $0 }
+        fields += (ageing ?? []).map { Vocabulary.label(.ageing, $0) }
+        for critic in criticScores ?? [] { fields += [critic.source, critic.award].compactMap { $0 } }
+        return fields
     }
 
     /// Every word of `needle` is in one of the fields ("Margaux 2015", "syrah guigal").
