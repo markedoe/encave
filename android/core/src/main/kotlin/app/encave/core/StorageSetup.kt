@@ -50,6 +50,10 @@ data class StorageSettings(
     val depth: Int = if (type == StorageType.WineFridge) 2 else 1,
     /** Diamond bins and crates. */
     val bottlesPerBin: Int = if (type == StorageType.Crates) 12 else 10,
+    /** Diamond bins: the sides whose edge triangles hold bottles ([Rack.diamondLayout]). */
+    val diamondEdges: Set<DiamondEdge> = emptySet(),
+    /** Diamond bins with triangles: bottles per triangle; null for half a bin. */
+    val bottlesPerTriangle: Int? = null,
     // Wine fridge.
     val shelves: Int = 5,
     val bottlesPerShelf: Int = 6,
@@ -65,6 +69,9 @@ data class StorageSettings(
      */
     val rowSettings: List<StorageRowSettings>? = null,
 ) {
+    /** Edge triangles apply to diamond bins whose rows are all the same. */
+    val offersDiamondEdges: Boolean get() = type == StorageType.Rack && layout == RackLayout.Diamond && rowSettings == null
+
     /** Head-to-tail applies to a fridge with layers, two deep. */
     val offersHeadToTail: Boolean get() = type == StorageType.WineFridge && layersPerShelf > 1 && depth == 2
 
@@ -94,7 +101,8 @@ data class StorageSettings(
     fun withRowsDiffer(differ: Boolean): StorageSettings {
         if (!differ || !offersRowSettings) return copy(rowSettings = null)
         if (rowSettings != null) return fittedRows()
-        val rack = copy(rowSettings = null).rack(name = "")
+        // Rows set one by one have no edge triangles.
+        val rack = copy(rowSettings = null, diamondEdges = emptySet()).rack(name = "")
         val rows = if (type == StorageType.WineFridge && rack.hasShelfLayers) {
             rack.shelfRows.indices.map { shelf ->
                 val rows = rack.shelfRows[shelf]
@@ -103,7 +111,7 @@ data class StorageSettings(
         } else {
             (0 until rack.rows).map { StorageRowSettings(rack.columnsInRow(it), rack.depthOfRow(it)) }
         }
-        return copy(rowSettings = rows)
+        return copy(rowSettings = rows, diamondEdges = emptySet())
     }
 
     /** Rows set one by one follow the number of rows: new ones copy the last one. */
@@ -133,8 +141,10 @@ data class StorageSettings(
                     depth = depth.coerceIn(1, 2))
                 RackLayout.Honeycomb -> Rack(id = id, name = name, kind = RackKind.Staggered, rows = count(rows),
                     columns = count(columns), depth = depth)
-                RackLayout.Diamond -> Rack(id = id, name = name, kind = RackKind.Bins, rows = count(rows), columns = count(columns),
-                    binCapacity = count(bottlesPerBin), binStyleValue = BinStyle.Diamond.raw)
+                RackLayout.Diamond -> diamondRack(
+                    id = id, name = name, rows = count(rows), columns = count(columns), binCapacity = count(bottlesPerBin),
+                    edges = diamondEdges, triangleCapacity = bottlesPerTriangle?.coerceIn(1, count(bottlesPerBin)),
+                )
             }
             StorageType.WineFridge -> {
                 val shelves = shelves.coerceIn(1, MAX_SHELVES)
@@ -247,7 +257,13 @@ data class StorageSettings(
                     },
                     rows = rack.rows, columns = rack.columns, depth = rack.depth,
                     bottlesPerBin = if (rack.kind == RackKind.Bins) rack.binCapacity else base.bottlesPerBin,
-                )
+                ).let { settings ->
+                    val layout = rack.diamondLayout ?: return@let settings
+                    settings.copy(
+                        rows = layout.rows, columns = layout.columns, diamondEdges = layout.edges,
+                        bottlesPerTriangle = rack.triangleCapacity,
+                    )
+                }
                 StorageType.WineFridge -> {
                     val layers = rack.shelfLayers?.takeIf { rack.hasShelfLayers }
                     base.copy(
@@ -275,9 +291,11 @@ data class StorageSettings(
         /** Same places, depths and head-to-tail, row by row. */
         internal fun sameShape(a: Rack, b: Rack): Boolean =
             a.kind == b.kind && a.rows == b.rows && a.shelfLayers == b.shelfLayers && a.binCapacity == b.binCapacity &&
+                a.diamondLayout == b.diamondLayout &&
                 (0 until a.rows).all { row ->
                     a.columnsInRow(row) == b.columnsInRow(row) && a.positionsInRow(row) == b.positionsInRow(row) &&
-                        a.isBackReversedRow(row) == b.isBackReversedRow(row)
+                        a.isBackReversedRow(row) == b.isBackReversedRow(row) &&
+                        (0 until a.columnsInRow(row)).all { a.positions(row, it) == b.positions(row, it) }
                 }
 
         /** [base], or "base 2", "base 3"… when a storage already has that name. */

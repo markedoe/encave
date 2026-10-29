@@ -13,7 +13,8 @@ fun Rack.emptyCaption(cell: RackCell): String = if (numbersPlacesOnShelves) "${c
  * A position for people, in English (files and reports for other apps), always in the order
  * shelf, side, layer, position, leaving out what does not apply: "B3", "B3, back",
  * "Shelf 2, back, position 3", "Shelf 1, top layer, position 3",
- * "Shelf 3, back, bottom layer, position 2", "Bin B3"; no side on a row one bottle deep, even
+ * "Shelf 3, back, bottom layer, position 2", "Bin B3", "Top triangle 3" (a diamond rack with
+ * edge triangles names its diamonds from the first row of diamonds, [diamondPlace]); no side on a row one bottle deep, even
  * when other rows are deeper. Grids and honeycombs keep the code of
  * the cell ("B3"). The app shows the same words in the person's language. Same as CaveKit's
  * `Rack.placeName(for:)`.
@@ -39,6 +40,6 @@ fun Rack.placeName(slot: Slot): String {
     return when (kind) {
         RackKind.Grid, RackKind.Staggered -> listOfNotNull(label(slot.row, slot.column), side).joinToString(", ")
         RackKind.Shelves -> listOfNotNull("Shelf ${slot.row + 1}", side, position).joinToString(", ")
-        RackKind.Bins -> "Bin ${label(slot.row, slot.column)}"
+        RackKind.Bins -> diamondPlace(slot.cell)?.let { diamondPlaceName(it) } ?: "Bin ${label(slot.row, slot.column)}"
     }
 }

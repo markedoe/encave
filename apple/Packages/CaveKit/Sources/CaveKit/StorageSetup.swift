@@ -48,6 +48,10 @@ public struct StorageSettings: Equatable, Sendable {
     public var depth = 1
     /// Diamond bins and crates.
     public var bottlesPerBin = 10
+    /// Diamond bins: the sides whose edge triangles hold bottles (`Rack.diamondLayout`).
+    public var diamondEdges: Set<DiamondEdge> = []
+    /// Diamond bins with triangles: bottles per triangle; nil for half a bin.
+    public var bottlesPerTriangle: Int?
     // Wine fridge.
     public var shelves = 5
     public var bottlesPerShelf = 6
@@ -92,6 +96,12 @@ public struct StorageSettings: Equatable, Sendable {
             rows = rack.rows
             columns = rack.columns
             depth = rack.depth
+            if let layout = rack.diamondLayout {
+                rows = layout.rows
+                columns = layout.columns
+                diamondEdges = layout.edges
+                bottlesPerTriangle = rack.triangleCapacity
+            }
         case .wineFridge:
             depth = rack.depth
             if let layers = rack.shelfLayers, rack.hasShelfLayers {
@@ -122,11 +132,16 @@ public struct StorageSettings: Equatable, Sendable {
     /// Same places, depths and head-to-tail, row by row.
     static func sameShape(_ a: Rack, _ b: Rack) -> Bool {
         a.kind == b.kind && a.rows == b.rows && a.shelfLayers == b.shelfLayers && a.binCapacity == b.binCapacity
+            && a.diamondLayout == b.diamondLayout
             && (0..<a.rows).allSatisfy { row in
                 a.columns(inRow: row) == b.columns(inRow: row) && a.positions(inRow: row) == b.positions(inRow: row)
                     && a.isBackReversed(row: row) == b.isBackReversed(row: row)
+                    && (0..<a.columns(inRow: row)).allSatisfy { a.positions(row: row, column: $0) == b.positions(row: row, column: $0) }
             }
     }
+
+    /// Edge triangles apply to diamond bins whose rows are all the same.
+    public var offersDiamondEdges: Bool { type == .rack && layout == .diamond && rowSettings == nil }
 
     /// Head-to-tail applies to a fridge with layers, two deep.
     public var offersHeadToTail: Bool { type == .wineFridge && layersPerShelf > 1 && depth == 2 }
@@ -169,6 +184,8 @@ public struct StorageSettings: Equatable, Sendable {
             return
         }
         guard rowSettings == nil else { return fitRowSettings() }
+        // Rows set one by one have no edge triangles.
+        diamondEdges = []
         var uniform = self
         uniform.rowSettings = nil
         let rack = uniform.rack(name: "")
@@ -209,8 +226,9 @@ public struct StorageSettings: Equatable, Sendable {
             case .honeycomb:
                 return Rack(id: id, name: name, kind: .staggered, rows: count(rows), columns: count(columns), depth: depth)
             case .diamond:
-                return Rack(id: id, name: name, kind: .bins, rows: count(rows), columns: count(columns),
-                            binCapacity: count(bottlesPerBin), binStyle: .diamond)
+                return Rack.diamond(id: id, name: name, rows: count(rows), columns: count(columns),
+                                    binCapacity: count(bottlesPerBin), edges: diamondEdges,
+                                    triangleCapacity: bottlesPerTriangle.map { min(count(bottlesPerBin), max(1, $0)) })
             }
         case .wineFridge:
             let shelves = min(Self.maxShelves, max(1, shelves)), depth = min(2, max(1, depth))
