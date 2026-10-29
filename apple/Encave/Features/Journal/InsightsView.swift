@@ -171,6 +171,8 @@ struct InsightsView: View {
                         }
                     }
                 }
+
+                TastingAndDetailCards(stats: stats)
             }
             .padding()
             .frame(maxWidth: 900)
@@ -186,6 +188,72 @@ struct InsightsView: View {
             return String(localized: "\(decade)s", comment: "A decade of vintages, such as 2010s")
         }
         return label
+    }
+}
+
+/// From the guided tasting sheet and the wine details: the aromas noted most in opened
+/// bottles, and the bottles by farming and by closure. Each only when there is data.
+private struct TastingAndDetailCards: View {
+    let stats: CellarStatistics
+
+    var body: some View {
+        // From the guided tasting sheet: the aromas noted most in opened bottles.
+        if !stats.topAromas.isEmpty {
+            ChartCard(title: "Aromas in your tastings") {
+                FlowLayout(spacing: 8) {
+                    ForEach(stats.topAromas) { aroma in
+                        let aromaName = VocabularyLabels.text(.aroma, aroma.label)
+                        Text(verbatim: "\(aromaName) · \(aroma.count.formatted())")
+                            .font(.subheadline)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color.secondary.opacity(0.1), in: Capsule())
+                            .accessibilityLabel(Text(verbatim: aromaName))
+                            .accessibilityValue(Text("\(aroma.count) tastings"))
+                    }
+                }
+            }
+        }
+
+        // The wine details, for the bottles whose wine says it.
+        if !stats.byFarming.isEmpty {
+            ChartCard(title: "By farming") {
+                DetailBars(slices: stats.byFarming, kind: .farming)
+            }
+        }
+        if !stats.byClosure.isEmpty {
+            ChartCard(title: "By closure") {
+                DetailBars(slices: stats.byClosure, kind: .closure)
+            }
+        }
+    }
+}
+
+/// Bottles by a wine detail (farming, closure): the label in words, the count, and a bar.
+private struct DetailBars: View {
+    let slices: [CellarStatistics.Slice]
+    let kind: Vocabulary.Kind
+
+    var body: some View {
+        let largest = Double(slices.map(\.count).max() ?? 1)
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(slices) { slice in
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(verbatim: VocabularyLabels.text(kind, slice.label))
+                        Spacer()
+                        Text(verbatim: slice.count.formatted()).monospacedDigit().foregroundStyle(.secondary)
+                    }
+                    .font(.subheadline)
+                    ProgressView(value: Double(slice.count), total: largest)
+                        .tint(Color.accentColor)
+                        .accessibilityHidden(true)
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(Text(verbatim: VocabularyLabels.text(kind, slice.label)))
+                .accessibilityValue(Text("\(slice.count) bottles"))
+            }
+        }
     }
 }
 
@@ -376,7 +444,7 @@ private struct YearInWineFacts: View {
             }
             VStack(alignment: .leading, spacing: 8) {
                 if let favorite = recap.favorite {
-                    let starsLabel = String(localized: "\(favorite.rating) stars")
+                    let starsLabel = ScoreText.spoken(rating: favorite.rating, score100: nil, on: RatingScaleSetting.shared.scale) ?? ""
                     fact("star.fill", Text("Favorite: \(favorite.name), \(starsLabel)"))
                 }
                 if let regionName = recap.topRegion {

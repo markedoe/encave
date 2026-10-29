@@ -17,6 +17,8 @@ struct DiscoveryEditor: View {
     @State private var setting: Discovery.Setting?
     @State private var place = ""
     @State private var rating: Int?
+    /// The precise score, when entered out of 20 or 100.
+    @State private var score100: Double?
     @State private var note = ""
     @State private var tags: [String] = []
     @State private var pendingTag = ""
@@ -33,6 +35,7 @@ struct DiscoveryEditor: View {
         var setting: Discovery.Setting?
         var place: String
         var rating: Int?
+        var score100: Double?
         var note: String
         var tags: [String]
         var pendingTag: String
@@ -41,7 +44,7 @@ struct DiscoveryEditor: View {
     }
 
     private var formState: FormState {
-        FormState(draft: draft, date: date, setting: setting, place: place, rating: rating, note: note,
+        FormState(draft: draft, date: date, setting: setting, place: place, rating: rating, score100: score100, note: note,
                   tags: tags, pendingTag: pendingTag, price: price, wantsToBuy: wantsToBuy)
     }
 
@@ -95,7 +98,7 @@ struct DiscoveryEditor: View {
                 }
 
                 Section("Your impression") {
-                    RatingPicker(rating: $rating)
+                    RatingInput(rating: $rating, score100: $score100)
                     TextField("Notes", text: $note, prompt: Text("What you liked, the dish, the moment…"), axis: .vertical)
                         .lineLimit(3...8)
                 }
@@ -176,6 +179,7 @@ struct DiscoveryEditor: View {
         setting = discovery.setting
         place = discovery.place ?? ""
         rating = discovery.rating
+        score100 = discovery.score100
         note = discovery.note ?? ""
         tags = discovery.tags
         price = discovery.price
@@ -193,6 +197,7 @@ struct DiscoveryEditor: View {
         discovery.setting = setting
         discovery.place = clean(place)
         discovery.rating = rating
+        discovery.score100 = Score.kept(score100, rating: rating)
         discovery.note = clean(note)
         discovery.tags = Discovery.normalized(tags + pendingTag.split(separator: ",").map(String.init))
         discovery.price = price

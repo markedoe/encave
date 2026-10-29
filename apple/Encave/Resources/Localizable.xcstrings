@@ -51,6 +51,36 @@
         }
       }
     },
+    "%@ out of %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ sur %@"
+          }
+        }
+      }
+    },
+    "%@ out of 100": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ sur 100"
+          }
+        }
+      }
+    },
+    "%@ out of 20": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ sur 20"
+          }
+        }
+      }
+    },
     "%@ · %@ · Not on this device yet": {
       "localizations": {
         "fr": {
@@ -107,6 +137,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@, %2$lld sur %3$lld trouvées"
+          }
+        }
+      }
+    },
+    "%@, certified": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, certifiée"
           }
         }
       }
@@ -1231,6 +1271,46 @@
         }
       }
     },
+    "%lld tastings": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld tasting"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld tastings"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld dégustation"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld dégustations"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld to drink soon": {
       "localizations": {
         "fr": {
@@ -1471,12 +1551,12 @@
         }
       }
     },
-    "**Insights**, at the top of the Journal (beside it on the Mac), shows your cellar in figures: its value, bottles by style, maturity, country, region, vintage and grape, what you opened each month, the pace to drink your bottles before their windows close, and your year in wine, which **Share** sends as an image.": {
+    "**Insights**, at the top of the Journal (beside it on the Mac), shows your cellar in figures: its value, bottles by style, maturity, country, region, vintage and grape, the aromas you note most, farming and closure, what you opened each month, the pace to drink your bottles before their windows close, and your year in wine, which **Share** sends as an image.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Statistiques**, en haut du Journal (à côté sur Mac), montre votre cave en chiffres : sa valeur, les bouteilles par style, maturité, pays, région, millésime et cépage, ce que vous avez ouvert chaque mois, le rythme pour boire vos bouteilles avant la fin de leur fenêtre, et votre année en vin, que **Partager** envoie en image."
+            "value": "**Statistiques**, en haut du Journal (à côté sur Mac), montre votre cave en chiffres : sa valeur, les bouteilles par style, maturité, pays, région, millésime et cépage, les arômes que vous notez le plus, la viticulture et le bouchage, ce que vous avez ouvert chaque mois, le rythme pour boire vos bouteilles avant la fin de leur fenêtre, et votre année en vin, que **Partager** envoie en image."
           }
         }
       }
@@ -1697,6 +1777,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Une caisse de"
+          }
+        }
+      }
+    },
+    "A classification printed on the label. Type your own or choose a suggestion.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une classification imprimée sur l’étiquette. Tapez la vôtre ou choisissez une suggestion."
           }
         }
       }
@@ -1997,6 +2087,26 @@
         }
       }
     },
+    "Acacia": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acacia"
+          }
+        }
+      }
+    },
+    "Acidity": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acidité"
+          }
+        }
+      }
+    },
     "Add": {
       "localizations": {
         "fr": {
@@ -2033,6 +2143,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajouter des bouteilles…"
+          }
+        }
+      }
+    },
+    "Add Critic Score": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une note de critique"
           }
         }
       }
@@ -2447,6 +2567,46 @@
         }
       }
     },
+    "Ageing": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Élevage"
+          }
+        }
+      }
+    },
+    "Alcohol": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alcool"
+          }
+        }
+      }
+    },
+    "Alcohol by volume, as printed on the label.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Degré d’alcool, tel qu’imprimé sur l’étiquette."
+          }
+        }
+      }
+    },
+    "Alcohol, in percent": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alcool, en pourcentage"
+          }
+        }
+      }
+    },
     "All": {
       "localizations": {
         "fr": {
@@ -2547,6 +2707,26 @@
         }
       }
     },
+    "Amber": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ambré"
+          }
+        }
+      }
+    },
+    "Amphora": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Amphore"
+          }
+        }
+      }
+    },
     "An app password created on the server is recommended. Stored in the Keychain on this device.": {
       "localizations": {
         "fr": {
@@ -2583,6 +2763,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les appareils Android ne peuvent pas utiliser iCloud. Pour vous synchroniser à distance avec %@, choisissez un dossier WebDAV ou un relais."
+          }
+        }
+      }
+    },
+    "Animal and leather": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Animal et cuir"
           }
         }
       }
@@ -2727,6 +2917,16 @@
         }
       }
     },
+    "Appearance, aromas and structure in a few taps, for a wine-course style note.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Robe, arômes et structure en quelques touches, pour une note comme en cours d’œnologie."
+          }
+        }
+      }
+    },
     "Appellation": {
       "localizations": {
         "fr": {
@@ -2813,6 +3013,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Appliquer à toutes les étagères"
+          }
+        }
+      }
+    },
+    "Apricot": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abricot"
+          }
+        }
+      }
+    },
+    "Aromas": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arômes"
+          }
+        }
+      }
+    },
+    "Aromas in your tastings": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arômes de vos dégustations"
           }
         }
       }
@@ -2973,6 +3203,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Automatique"
+          }
+        }
+      }
+    },
+    "Award": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Distinction"
           }
         }
       }
@@ -3177,6 +3417,16 @@
         }
       }
     },
+    "Biodynamic": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Biodynamique"
+          }
+        }
+      }
+    },
     "Birth year": {
       "localizations": {
         "fr": {
@@ -3193,6 +3443,76 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bistrot sur le port, Lisbonne"
+          }
+        }
+      }
+    },
+    "Black cherry": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerise noire"
+          }
+        }
+      }
+    },
+    "Black fruit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fruits noirs"
+          }
+        }
+      }
+    },
+    "Black pepper": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poivre noir"
+          }
+        }
+      }
+    },
+    "Blackberry": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mûre"
+          }
+        }
+      }
+    },
+    "Blackcurrant": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cassis"
+          }
+        }
+      }
+    },
+    "Blend": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Assemblage"
+          }
+        }
+      }
+    },
+    "Body": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corps"
           }
         }
       }
@@ -3657,6 +3977,46 @@
         }
       }
     },
+    "Brioche": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brioche"
+          }
+        }
+      }
+    },
+    "Brown": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brun"
+          }
+        }
+      }
+    },
+    "Brut": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brut"
+          }
+        }
+      }
+    },
+    "Brut Nature": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brut nature"
+          }
+        }
+      }
+    },
     "Busiest month: %@": {
       "localizations": {
         "fr": {
@@ -3667,12 +4027,42 @@
         }
       }
     },
+    "Butter": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beurre"
+          }
+        }
+      }
+    },
+    "By closure": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par bouchage"
+          }
+        }
+      }
+    },
     "By country": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Par pays"
+          }
+        }
+      }
+    },
+    "By farming": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par viticulture"
           }
         }
       }
@@ -3777,6 +4167,16 @@
         }
       }
     },
+    "Cedar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cèdre"
+          }
+        }
+      }
+    },
     "Celebration": {
       "localizations": {
         "fr": {
@@ -3833,6 +4233,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cave, Rangements, Ce soir, Journal"
+          }
+        }
+      }
+    },
+    "Certified": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Certifiée"
+          }
+        }
+      }
+    },
+    "Certified by a recognized label, such as AB, Demeter or HVE.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Certifiée par un label reconnu, comme AB, Demeter ou HVE."
           }
         }
       }
@@ -4023,6 +4443,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fromage"
+          }
+        }
+      }
+    },
+    "Cherry, vanilla, leather…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerise, vanille, cuir…"
           }
         }
       }
@@ -4237,6 +4667,36 @@
         }
       }
     },
+    "Cinnamon": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannelle"
+          }
+        }
+      }
+    },
+    "Citrus": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agrumes"
+          }
+        }
+      }
+    },
+    "Classification": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classification"
+          }
+        }
+      }
+    },
     "Clavelin 62 cl": {
       "localizations": {
         "fr": {
@@ -4267,12 +4727,32 @@
         }
       }
     },
+    "Clear %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effacer %@"
+          }
+        }
+      }
+    },
     "Clear Filters": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Effacer les filtres"
+          }
+        }
+      }
+    },
+    "Clear Rating": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effacer la note"
           }
         }
       }
@@ -4297,12 +4777,42 @@
         }
       }
     },
+    "Climat or named vineyard": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Climat ou parcelle nommée"
+          }
+        }
+      }
+    },
     "Close": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Fermer"
+          }
+        }
+      }
+    },
+    "Closure": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouchage"
+          }
+        }
+      }
+    },
+    "Clove": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clou de girofle"
           }
         }
       }
@@ -4437,6 +4947,16 @@
         }
       }
     },
+    "Concrete": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuve béton"
+          }
+        }
+      }
+    },
     "Confirm the code on the other device too.": {
       "localizations": {
         "fr": {
@@ -4473,6 +4993,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Centre de contrôle (iPhone et iPad)"
+          }
+        }
+      }
+    },
+    "Conventional": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conventionnelle"
           }
         }
       }
@@ -4627,6 +5157,46 @@
         }
       }
     },
+    "Critic Score": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Note de critique"
+          }
+        }
+      }
+    },
+    "Critic Scores": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notes de la critique"
+          }
+        }
+      }
+    },
+    "Critic scores": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notes de la critique"
+          }
+        }
+      }
+    },
+    "Crown cap": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capsule couronne"
+          }
+        }
+      }
+    },
     "Currency": {
       "localizations": {
         "fr": {
@@ -4643,6 +5213,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Prix actuel"
+          }
+        }
+      }
+    },
+    "Cut grass": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Herbe coupée"
           }
         }
       }
@@ -4673,6 +5253,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Carafage"
+          }
+        }
+      }
+    },
+    "Deep": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profonde"
           }
         }
       }
@@ -4773,6 +5363,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Supprimer le fichier"
+          }
+        }
+      }
+    },
+    "Delete Score": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer la note"
           }
         }
       }
@@ -4933,6 +5533,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Livraison prévue aujourd’hui"
+          }
+        }
+      }
+    },
+    "Demi-Sec": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demi-sec"
           }
         }
       }
@@ -5267,6 +5877,16 @@
         }
       }
     },
+    "Dosage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dosage"
+          }
+        }
+      }
+    },
     "Double magnum": {
       "localizations": {
         "fr": {
@@ -5293,6 +5913,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Casier double profondeur"
+          }
+        }
+      }
+    },
+    "Doux": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Doux"
           }
         }
       }
@@ -5333,6 +5963,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Glisser vers un rangement (Mac)"
+          }
+        }
+      }
+    },
+    "Dried fig": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Figue sèche"
           }
         }
       }
@@ -5447,6 +6087,16 @@
         }
       }
     },
+    "Dry": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sec"
+          }
+        }
+      }
+    },
     "Duplicate": {
       "localizations": {
         "fr": {
@@ -5533,6 +6183,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La fiche de chaque vin propose une température de service et, pour les rouges jeunes et corsés, une durée de carafage."
+          }
+        }
+      }
+    },
+    "Earth and mineral": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terre et minéral"
           }
         }
       }
@@ -5637,12 +6297,42 @@
         }
       }
     },
+    "Edits the wine's details.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifie les détails du vin."
+          }
+        }
+      }
+    },
     "Edits this detail of the wine.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Modifie ce détail du vin."
+          }
+        }
+      }
+    },
+    "Edits this score.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifie cette note."
+          }
+        }
+      }
+    },
+    "Elderflower": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fleur de sureau"
           }
         }
       }
@@ -5813,6 +6503,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Saisir un nom de modèle"
+          }
+        }
+      }
+    },
+    "Enter a score from 0 to %lld.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisissez une note de 0 à %lld."
           }
         }
       }
@@ -6037,6 +6737,36 @@
         }
       }
     },
+    "Extra Brut": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extra-brut"
+          }
+        }
+      }
+    },
+    "Extra Dry": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extra-dry"
+          }
+        }
+      }
+    },
+    "Farming": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Viticulture"
+          }
+        }
+      }
+    },
     "Favorite occasion: %@": {
       "localizations": {
         "fr": {
@@ -6053,6 +6783,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Préféré : %1$@, %2$@"
+          }
+        }
+      }
+    },
+    "Fewer Aromas": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moins d’arômes"
           }
         }
       }
@@ -6187,6 +6927,26 @@
         }
       }
     },
+    "Flint": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pierre à fusil"
+          }
+        }
+      }
+    },
+    "Floral": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Floral"
+          }
+        }
+      }
+    },
     "Food Pairing": {
       "localizations": {
         "fr": {
@@ -6317,6 +7077,26 @@
         }
       }
     },
+    "For the 2015, tasted from barrel…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour le 2015, dégusté en barrique…"
+          }
+        }
+      }
+    },
+    "Forest floor": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sous-bois"
+          }
+        }
+      }
+    },
     "Format": {
       "localizations": {
         "fr": {
@@ -6333,6 +7113,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Muté"
+          }
+        }
+      }
+    },
+    "Foudre": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foudre"
           }
         }
       }
@@ -6447,6 +7237,16 @@
         }
       }
     },
+    "Full": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ample"
+          }
+        }
+      }
+    },
     "Full note": {
       "localizations": {
         "fr": {
@@ -6473,6 +7273,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Gibier"
+          }
+        }
+      }
+    },
+    "Garnet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grenat"
+          }
+        }
+      }
+    },
+    "Garrigue": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garrigue"
           }
         }
       }
@@ -6577,6 +7397,56 @@
         }
       }
     },
+    "Glass stopper": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouchon en verre"
+          }
+        }
+      }
+    },
+    "Gold": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Doré"
+          }
+        }
+      }
+    },
+    "Gold medal": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Médaille d’or"
+          }
+        }
+      }
+    },
+    "Gold medal, Coup de cœur…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Médaille d’or, coup de cœur…"
+          }
+        }
+      }
+    },
+    "Grand Cru, Cru Bourgeois…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grand Cru, Cru Bourgeois…"
+          }
+        }
+      }
+    },
     "Grape": {
       "localizations": {
         "fr": {
@@ -6597,6 +7467,16 @@
         }
       }
     },
+    "Grapefruit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pamplemousse"
+          }
+        }
+      }
+    },
     "Grapes": {
       "localizations": {
         "fr": {
@@ -6613,6 +7493,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Excellent accord"
+          }
+        }
+      }
+    },
+    "Green apple": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pomme verte"
+          }
+        }
+      }
+    },
+    "Green pepper": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poivron vert"
           }
         }
       }
@@ -6647,6 +7547,26 @@
         }
       }
     },
+    "Guide, magazine or competition": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guide, magazine ou concours"
+          }
+        }
+      }
+    },
+    "Guided tasting": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dégustation guidée"
+          }
+        }
+      }
+    },
     "Half bottle": {
       "localizations": {
         "fr": {
@@ -6673,6 +7593,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Demi-bouteille, 37,5 centilitres"
+          }
+        }
+      }
+    },
+    "Hazelnut": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noisette"
           }
         }
       }
@@ -6743,6 +7673,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aide sur le Journal"
+          }
+        }
+      }
+    },
+    "Herbal": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Végétal"
+          }
+        }
+      }
+    },
+    "High": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Élevé"
           }
         }
       }
@@ -6897,6 +7847,26 @@
         }
       }
     },
+    "Honey": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Miel"
+          }
+        }
+      }
+    },
+    "Honey and dried fruit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Miel et fruits secs"
+          }
+        }
+      }
+    },
     "Honeycomb": {
       "localizations": {
         "fr": {
@@ -6967,6 +7937,16 @@
         }
       }
     },
+    "How much sugar was added after the second fermentation, from Brut Nature to Doux.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le sucre ajouté après la seconde fermentation, de Brut nature à Doux."
+          }
+        }
+      }
+    },
     "How often": {
       "localizations": {
         "fr": {
@@ -7027,6 +8007,16 @@
         }
       }
     },
+    "Hue": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teinte"
+          }
+        }
+      }
+    },
     "Ideas": {
       "localizations": {
         "fr": {
@@ -7037,12 +8027,12 @@
         }
       }
     },
-    "If an AI service is set up in Settings, the label photo is also sent to it to fill in or complete the name, producer, vintage, style, appellation, region, country, grapes and drinking window. No need to wait: if you add the bottles first, the answer completes the wine afterwards, and one banner says so; its **Undo** takes back the bottles and the AI's details together. Only that photo is sent, never your cellar.": {
+    "If an AI service is set up in Settings, the label photo is also sent to it to fill in or complete the name, producer, vintage, style, appellation, region, country, grapes and drinking window, and the alcohol and classification printed on the label. No need to wait: if you add the bottles first, the answer completes the wine afterwards, and one banner says so; its **Undo** takes back the bottles and the AI's details together. Only that photo is sent, never your cellar.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Si un service d’IA est configuré dans les réglages, la photo de l’étiquette lui est aussi envoyée pour remplir ou compléter le nom, le producteur, le millésime, le style, l’appellation, la région, le pays, les cépages et la fenêtre de dégustation. Inutile d’attendre : si vous ajoutez les bouteilles avant, la réponse complète le vin ensuite, et un seul bandeau l’indique ; son **Annuler** retire ensemble les bouteilles et les informations de l’IA. Seule cette photo est envoyée, jamais votre cave."
+            "value": "Si un service d’IA est configuré dans les réglages, la photo de l’étiquette lui est aussi envoyée pour remplir ou compléter le nom, le producteur, le millésime, le style, l’appellation, la région, le pays, les cépages, la fenêtre de dégustation, ainsi que le degré d’alcool et la classification imprimés sur l’étiquette. Inutile d’attendre : si vous ajoutez les bouteilles avant, la réponse complète le vin ensuite, et un seul bandeau l’indique ; son **Annuler** retire ensemble les bouteilles et les informations de l’IA. Seule cette photo est envoyée, jamais votre cave."
           }
         }
       }
@@ -7253,6 +8243,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Installez un modèle qui lit les images, par exemple : ollama pull gemma3. Pour l’utiliser depuis l’iPhone ou l’iPad, lancez Ollama avec OLLAMA_HOST=0.0.0.0 sur l’ordinateur."
+          }
+        }
+      }
+    },
+    "Intensity": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intensité"
           }
         }
       }
@@ -7687,6 +8687,16 @@
         }
       }
     },
+    "Kind": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type"
+          }
+        }
+      }
+    },
     "Kind of storage": {
       "localizations": {
         "fr": {
@@ -7817,6 +8827,16 @@
         }
       }
     },
+    "Leather": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuir"
+          }
+        }
+      }
+    },
     "Leave and Join": {
       "localizations": {
         "fr": {
@@ -7853,6 +8873,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "Laissez l’adresse du serveur vide pour utiliser l’adresse habituelle du fournisseur."
+          }
+        }
+      }
+    },
+    "Lemon": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Citron"
+          }
+        }
+      }
+    },
+    "Lemon [hue]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lemon"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jaune citron"
+          }
+        }
+      }
+    },
+    "Lemon-green": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jaune-vert"
+          }
+        }
+      }
+    },
+    "Length": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Longueur"
           }
         }
       }
@@ -7907,6 +8973,26 @@
         }
       }
     },
+    "Lieu-dit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lieu-dit"
+          }
+        }
+      }
+    },
+    "Light": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Léger"
+          }
+        }
+      }
+    },
     "Liked a wine at friends’ or in a restaurant? Tap + and choose Somewhere Else to remember it, add notes and tags, and put it on your shopping list.": {
       "localizations": {
         "fr": {
@@ -7923,6 +9009,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les liens s’ouvrent dans votre navigateur."
+          }
+        }
+      }
+    },
+    "Liquorice": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réglisse"
           }
         }
       }
@@ -8027,6 +9123,16 @@
         }
       }
     },
+    "Long": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Long"
+          }
+        }
+      }
+    },
     "Looking for the device showing %@…": {
       "localizations": {
         "fr": {
@@ -8037,12 +9143,42 @@
         }
       }
     },
+    "Low": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faible"
+          }
+        }
+      }
+    },
     "Lower zone": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Zone basse"
+          }
+        }
+      }
+    },
+    "Luscious": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Liquoreux"
+          }
+        }
+      }
+    },
+    "Lychee": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Litchi"
           }
         }
       }
@@ -8167,6 +9303,62 @@
         }
       }
     },
+    "Medium": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moyen"
+          }
+        }
+      }
+    },
+    "Medium [intensity]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medium"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moyenne"
+          }
+        }
+      }
+    },
+    "Medium+": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moyen+"
+          }
+        }
+      }
+    },
+    "Medium-sweet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moelleux"
+          }
+        }
+      }
+    },
+    "Medium−": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moyen−"
+          }
+        }
+      }
+    },
     "Menu bar (Mac)": {
       "localizations": {
         "fr": {
@@ -8217,6 +9409,16 @@
         }
       }
     },
+    "Mint": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Menthe"
+          }
+        }
+      }
+    },
     "Model": {
       "localizations": {
         "fr": {
@@ -8263,6 +9465,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Plus"
+          }
+        }
+      }
+    },
+    "More Aromas": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plus d’arômes"
+          }
+        }
+      }
+    },
+    "More details": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plus de détails"
           }
         }
       }
@@ -8367,6 +9589,16 @@
         }
       }
     },
+    "Mushroom": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Champignon"
+          }
+        }
+      }
+    },
     "My Tasting": {
       "localizations": {
         "fr": {
@@ -8403,6 +9635,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nom non trouvé"
+          }
+        }
+      }
+    },
+    "Natural": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nature"
+          }
+        }
+      }
+    },
+    "Natural cork": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Liège naturel"
           }
         }
       }
@@ -8453,6 +9705,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nouvelle fenêtre"
+          }
+        }
+      }
+    },
+    "New oak": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fût neuf"
           }
         }
       }
@@ -8543,6 +9805,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pas de réponse cette fois. Réessayez."
+          }
+        }
+      }
+    },
+    "No aromas found": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun arôme trouvé"
           }
         }
       }
@@ -8997,12 +10269,32 @@
         }
       }
     },
+    "Not noted": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non noté"
+          }
+        }
+      }
+    },
     "Not on this device yet": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Pas encore sur cet appareil"
+          }
+        }
+      }
+    },
+    "Not set": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non indiqué"
           }
         }
       }
@@ -9043,6 +10335,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ne fonctionne pas"
+          }
+        }
+      }
+    },
+    "Note": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remarque"
           }
         }
       }
@@ -9227,6 +10529,26 @@
         }
       }
     },
+    "Oak and toast": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boisé et grillé"
+          }
+        }
+      }
+    },
+    "Oak barrel": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fût de chêne"
+          }
+        }
+      }
+    },
     "Occasion": {
       "localizations": {
         "fr": {
@@ -9263,6 +10585,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Désactivée par défaut"
+          }
+        }
+      }
+    },
+    "Off-dry": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demi-sec"
           }
         }
       }
@@ -9313,6 +10645,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sur un nouvel appareil dont la cave est vide, touchez **Rejoindre la cave d’un autre appareil** sur l’écran Cave. Sur l’appareil qui a votre cave (iPhone, iPad, Mac ou Android), ouvrez **Réglages › Appareils › Ajouter un appareil**, puis scannez le code QR qu’il affiche (iPhone et iPad) ou saisissez son code."
+          }
+        }
+      }
+    },
+    "On a wine's page, **Add Critic Score** keeps a score from a guide, a magazine or a competition: who gave it, a score out of 100 or out of 20, or an award in words such as a gold medal, and a note. You type them yourself: Encave looks nothing up and sends nothing. Tap a score to change it; swipe it to the left to delete it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur la page d’un vin, **Ajouter une note de critique** garde la note d’un guide, d’un magazine ou d’un concours : qui l’a donnée, une note sur 100 ou sur 20, ou une distinction en toutes lettres comme une médaille d’or, et une remarque. C’est vous qui les saisissez : Encave ne cherche rien et n’envoie rien. Touchez une note pour la modifier ; balayez-la vers la gauche pour la supprimer."
           }
         }
       }
@@ -9403,6 +10745,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sur iPhone et iPad, utilisez l’adresse de votre ordinateur sur le réseau au lieu de localhost. Choisissez un modèle qui lit les images pour reconnaître les étiquettes."
+          }
+        }
+      }
+    },
+    "On lees": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur lies"
           }
         }
       }
@@ -9613,6 +10965,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Un seul carnet"
+          }
+        }
+      }
+    },
+    "Onion skin": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pelure d’oignon"
           }
         }
       }
@@ -10107,6 +11469,16 @@
         }
       }
     },
+    "Optional: alcohol, classification, blend, ageing, farming and closure.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facultatif : alcool, classification, assemblage, élevage, viticulture et bouchage."
+          }
+        }
+      }
+    },
     "Optional: price per bottle, date, shop or the person who gave it to you. Prices are used for the value of your cellar in Insights.": {
       "localizations": {
         "fr": {
@@ -10127,6 +11499,42 @@
         }
       }
     },
+    "Orange [hue]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orange"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orangé"
+          }
+        }
+      }
+    },
+    "Orange peel": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zeste d’orange"
+          }
+        }
+      }
+    },
+    "Orchard fruit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fruits du verger"
+          }
+        }
+      }
+    },
     "Order cancelled": {
       "localizations": {
         "fr": {
@@ -10143,6 +11551,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ordre des rangements"
+          }
+        }
+      }
+    },
+    "Organic": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Biologique"
           }
         }
       }
@@ -10183,6 +11601,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Autres formats"
+          }
+        }
+      }
+    },
+    "Out of %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur %lld"
+          }
+        }
+      }
+    },
+    "Out of 100": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur 100"
+          }
+        }
+      }
+    },
+    "Out of 20": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur 20"
           }
         }
       }
@@ -10233,6 +11681,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bouche"
+          }
+        }
+      }
+    },
+    "Pale": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pâle"
+          }
+        }
+      }
+    },
+    "Passion fruit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fruit de la passion"
           }
         }
       }
@@ -10293,6 +11761,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pâtes, pizza"
+          }
+        }
+      }
+    },
+    "Pastry and butter": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pâtisserie et beurre"
+          }
+        }
+      }
+    },
+    "Peach": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pêche"
+          }
+        }
+      }
+    },
+    "Pear": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poire"
+          }
+        }
+      }
+    },
+    "Petrol": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hydrocarbure"
           }
         }
       }
@@ -10387,6 +11895,26 @@
         }
       }
     },
+    "Pineapple": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ananas"
+          }
+        }
+      }
+    },
+    "Pink": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rose vif"
+          }
+        }
+      }
+    },
     "Pinot Noir, Gamay": {
       "localizations": {
         "fr": {
@@ -10403,6 +11931,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lieu"
+          }
+        }
+      }
+    },
+    "Plum": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prune"
           }
         }
       }
@@ -10687,6 +12225,16 @@
         }
       }
     },
+    "Purple": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Violacé"
+          }
+        }
+      }
+    },
     "Put Back in the Cellar": {
       "localizations": {
         "fr": {
@@ -10777,6 +12325,46 @@
         }
       }
     },
+    "Raisin": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raisin sec"
+          }
+        }
+      }
+    },
+    "Raspberry": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Framboise"
+          }
+        }
+      }
+    },
+    "Rate in stars, out of 20 or out of 100: choose in **Settings › Ratings**, for this device only. Out of 20 takes half points; out of 100, whole points from 50. Each rating is also kept in stars, which older versions show; a rating given in stars shows on the other scales as an approximate score, such as ≈ 90/100.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notez en étoiles, sur 20 ou sur 100 : choisissez dans **Réglages › Notes**, pour cet appareil seulement. Sur 20 accepte les demi-points ; sur 100, les points entiers à partir de 50. Chaque note est aussi gardée en étoiles, que les versions plus anciennes affichent ; une note donnée en étoiles s’affiche sur les autres échelles comme une note approchée, par exemple ≈ 90/100."
+          }
+        }
+      }
+    },
+    "Rated %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noté %@"
+          }
+        }
+      }
+    },
     "Rated %lld out of 5": {
       "localizations": {
         "fr": {
@@ -10793,6 +12381,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Note"
+          }
+        }
+      }
+    },
+    "Rating scale": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échelle de notation"
+          }
+        }
+      }
+    },
+    "Ratings": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notes"
+          }
+        }
+      }
+    },
+    "Ratings are shown and entered on this scale on this device. A score out of 20 or 100 is kept with its stars, which older versions show; a rating in stars shows as an approximate score (≈).": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les notes sont affichées et saisies sur cette échelle sur cet appareil. Une note sur 20 ou sur 100 est gardée avec ses étoiles, que les versions plus anciennes affichent ; une note en étoiles s’affiche comme une note approchée (≈)."
           }
         }
       }
@@ -10967,12 +12585,42 @@
         }
       }
     },
+    "Red cherry": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerise rouge"
+          }
+        }
+      }
+    },
+    "Red fruit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fruits rouges"
+          }
+        }
+      }
+    },
     "Red meat": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Viande rouge"
+          }
+        }
+      }
+    },
+    "Redcurrant": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Groseille"
           }
         }
       }
@@ -11407,6 +13055,16 @@
         }
       }
     },
+    "Rose": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rose"
+          }
+        }
+      }
+    },
     "Rosé": {
       "localizations": {
         "fr": {
@@ -11503,6 +13161,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rangées, depuis le haut"
+          }
+        }
+      }
+    },
+    "Ruby": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rubis"
+          }
+        }
+      }
+    },
+    "Salmon": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saumon"
           }
         }
       }
@@ -11747,6 +13425,36 @@
         }
       }
     },
+    "Score": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Note"
+          }
+        }
+      }
+    },
+    "Scores and awards you copy from a guide, a magazine or the bottle. Encave looks nothing up.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les notes et distinctions que vous recopiez d’un guide, d’un magazine ou de la bouteille. Encave ne cherche rien."
+          }
+        }
+      }
+    },
+    "Screw cap": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capsule à vis"
+          }
+        }
+      }
+    },
     "SearXNG must answer in JSON: add json under search: formats: in its settings.yml.": {
       "localizations": {
         "fr": {
@@ -11763,6 +13471,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Chercher"
+          }
+        }
+      }
+    },
+    "Search Aromas": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chercher des arômes"
           }
         }
       }
@@ -11873,6 +13591,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Recherche…"
+          }
+        }
+      }
+    },
+    "Sec": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sec"
           }
         }
       }
@@ -12107,6 +13835,16 @@
         }
       }
     },
+    "Share of %@, in percent": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Part de %@, en pourcentage"
+          }
+        }
+      }
+    },
     "Shares this summary as an image. You choose where.": {
       "localizations": {
         "fr": {
@@ -12327,12 +14065,42 @@
         }
       }
     },
+    "Short": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Court"
+          }
+        }
+      }
+    },
     "Shortcuts and Siri": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Raccourcis et Siri"
+          }
+        }
+      }
+    },
+    "Show All": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout afficher"
+          }
+        }
+      }
+    },
+    "Show Fewer": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En afficher moins"
           }
         }
       }
@@ -12717,6 +14485,16 @@
         }
       }
     },
+    "Smoke": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fumée"
+          }
+        }
+      }
+    },
     "Some bottles are in positions you removed.": {
       "localizations": {
         "fr": {
@@ -12797,6 +14575,16 @@
         }
       }
     },
+    "Source": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Source"
+          }
+        }
+      }
+    },
     "Source code": {
       "localizations": {
         "fr": {
@@ -12817,6 +14605,16 @@
         }
       }
     },
+    "Spice": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Épices"
+          }
+        }
+      }
+    },
     "Spicy": {
       "localizations": {
         "fr": {
@@ -12833,6 +14631,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tableur"
+          }
+        }
+      }
+    },
+    "Stainless steel": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuve inox"
+          }
+        }
+      }
+    },
+    "Stars": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étoiles"
           }
         }
       }
@@ -12883,6 +14701,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rester synchronisé"
+          }
+        }
+      }
+    },
+    "Stone and tropical fruit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fruits à noyau et exotiques"
           }
         }
       }
@@ -12977,6 +14805,26 @@
         }
       }
     },
+    "Strawberry": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fraise"
+          }
+        }
+      }
+    },
+    "Structure": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Structure"
+          }
+        }
+      }
+    },
     "Studio Look for Label Photos": {
       "localizations": {
         "fr": {
@@ -13047,12 +14895,42 @@
         }
       }
     },
+    "Sustainable": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durable"
+          }
+        }
+      }
+    },
     "Swaps the two bottles": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Échange les deux bouteilles"
+          }
+        }
+      }
+    },
+    "Sweet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Doux"
+          }
+        }
+      }
+    },
+    "Sweetness": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sucre"
           }
         }
       }
@@ -13257,6 +15135,16 @@
         }
       }
     },
+    "Synthetic cork": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouchon synthétique"
+          }
+        }
+      }
+    },
     "Table": {
       "localizations": {
         "fr": {
@@ -13343,6 +15231,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Photographie un papier et le garde en PDF."
+          }
+        }
+      }
+    },
+    "Tannin": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tanins"
           }
         }
       }
@@ -13457,6 +15355,16 @@
         }
       }
     },
+    "Tasted from barrel": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dégusté en barrique"
+          }
+        }
+      }
+    },
     "Tasting": {
       "localizations": {
         "fr": {
@@ -13483,6 +15391,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dégustations"
+          }
+        }
+      }
+    },
+    "Tawny": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuilé"
+          }
+        }
+      }
+    },
+    "Technical cork": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Liège technique"
           }
         }
       }
@@ -13963,6 +15891,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le nom sur l’étiquette, sans le millésime. Obligatoire."
+          }
+        }
+      }
+    },
+    "The named vineyard or climat on the label, such as Les Clos.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La parcelle nommée ou le climat sur l’étiquette, comme Les Clos."
           }
         }
       }
@@ -14807,6 +16745,26 @@
         }
       }
     },
+    "Toast": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pain grillé"
+          }
+        }
+      }
+    },
+    "Tobacco": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tabac"
+          }
+        }
+      }
+    },
     "Today": {
       "localizations": {
         "fr": {
@@ -15127,6 +17085,36 @@
         }
       }
     },
+    "Typed by you, from a guide, a magazine or a sticker on the bottle. Encave looks nothing up.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisie par vous, depuis un guide, un magazine ou une pastille sur la bouteille. Encave ne cherche rien."
+          }
+        }
+      }
+    },
+    "Under **More details** in a tasting, a guided sheet as in a wine course: the intensity and hue of the wine, the aromas you find, as chips grouped by family, and its structure (sweetness, acidity, tannin, body, alcohol and length) from low to high. The aromas and hues of the wine's style come first; **More Aromas** shows the others, or search them by name. Tap a chosen aroma or level again to clear it. Everything is optional, and search in the Journal finds the aromas.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sous **Plus de détails** dans une dégustation, une fiche guidée comme en cours d’œnologie : l’intensité et la teinte de la robe, les arômes que vous trouvez, en pastilles regroupées par famille, et la structure (sucre, acidité, tanins, corps, alcool et longueur) du plus faible au plus élevé. Les arômes et teintes du style du vin viennent en premier ; **Plus d’arômes** montre les autres, ou cherchez-les par leur nom. Touchez à nouveau un arôme ou un niveau choisi pour l’effacer. Tout est facultatif, et la recherche du Journal trouve les arômes."
+          }
+        }
+      }
+    },
+    "Under **More details** in the wine form, closed so adding a bottle stays quick: the alcohol, a classification (type it or choose a suggestion), the lieu-dit, the dosage of a sparkling wine or the sweetness of another, the share of each grape, how it was aged, the farming (and whether it is certified) and the closure. Filled details show under **Details** on the wine's page, where a tap edits them, and search finds them.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sous **Plus de détails** dans la fiche du vin, fermé pour qu’ajouter une bouteille reste rapide : le degré d’alcool, une classification (tapez-la ou choisissez une suggestion), le lieu-dit, le dosage d’un effervescent ou la douceur des autres vins, la part de chaque cépage, l’élevage, la viticulture (et si elle est certifiée) et le bouchage. Les détails remplis s’affichent sous **Détails** sur la page du vin, où un toucher les modifie, et la recherche les trouve."
+          }
+        }
+      }
+    },
     "Under the gauge, each wine says where its window comes from: estimated from the style and the vintage, or entered by you. **Drink Sooner** and **Keep Longer** move its end by a year.": {
       "localizations": {
         "fr": {
@@ -15397,6 +17385,16 @@
         }
       }
     },
+    "Vanilla": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vanille"
+          }
+        }
+      }
+    },
     "Vegetarian": {
       "localizations": {
         "fr": {
@@ -15447,6 +17445,16 @@
         }
       }
     },
+    "Violet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Violette"
+          }
+        }
+      }
+    },
     "Waiting for the other device": {
       "localizations": {
         "fr": {
@@ -15463,6 +17471,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "En attente de l’autre appareil…"
+          }
+        }
+      }
+    },
+    "Walnut": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noix"
           }
         }
       }
@@ -15893,6 +17911,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Image du vin"
+          }
+        }
+      }
+    },
+    "Wine details": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Détails du vin"
           }
         }
       }
@@ -16539,6 +18567,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zoomer"
+          }
+        }
+      }
+    },
+    "about %@ out of 100": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "environ %@ sur 100"
+          }
+        }
+      }
+    },
+    "about %@ out of 20": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "environ %@ sur 20"
           }
         }
       }

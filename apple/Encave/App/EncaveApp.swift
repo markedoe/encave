@@ -4,6 +4,9 @@ import UserNotifications
 
 @main
 struct EncaveApp: App {
+    // First, before the cellar loads: search matches the tasting and wine details by
+    // their labels in the person's language.
+    private let vocabularyLabels: Void = VocabularyLabels.install()
     #if os(macOS)
     // First, before the model sets up this device: it tells whether the app ran before.
     private let menuBarKept: Void = MenuBarSetting.keepForExistingUsers()

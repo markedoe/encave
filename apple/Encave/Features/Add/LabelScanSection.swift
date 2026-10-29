@@ -346,6 +346,8 @@ struct WineSummarySections: View {
         let details = [
             SummaryDetail(title: "Appellation", value: draft.appellation), SummaryDetail(title: "Region", value: draft.region),
             SummaryDetail(title: "Country", value: draft.country), SummaryDetail(title: "Grapes", value: draft.grapes),
+            SummaryDetail(title: "Classification", value: draft.classification),
+            SummaryDetail(title: "Alcohol", value: draft.abv.map(WineDetailText.alcohol) ?? ""),
         ].filter { !$0.value.trimmingCharacters(in: .whitespaces).isEmpty }
         if !details.isEmpty || window != nil {
             Section {

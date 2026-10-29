@@ -133,7 +133,7 @@ struct DiscoveryRow: View {
                 .foregroundStyle(.secondary)
                 .labelStyle(CompactLabelStyle())
                 if let rating = discovery.rating {
-                    RatingView(rating: rating)
+                    RatingView(rating: rating, score100: discovery.score100)
                 }
                 if let note = discovery.note {
                     Text(note)
@@ -170,7 +170,9 @@ struct DiscoveryRow: View {
         var parts = [discovery.sourceText, wine?.displayName ?? String(localized: "Unknown wine")]
         // The style in words, as shown under the name.
         if let style = wine?.color?.name { parts.append(style) }
-        if let rating = discovery.rating { parts.append(String(localized: "\(rating) stars")) }
+        if let rating = ScoreText.spoken(rating: discovery.rating, score100: discovery.score100, on: RatingScaleSetting.shared.scale) {
+            parts.append(rating)
+        }
         parts.append(discovery.date.formatted(.dateTime.day().month(.wide)))
         if discovery.wantsToBuy {
             parts.append(String(localized: "To buy"))

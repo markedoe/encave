@@ -119,7 +119,7 @@ FR = {
     'Sync now, on the same Wi-Fi and away from home': 'Synchroniser maintenant, sur le même Wi-Fi et loin de la maison',
     '⌘?': '⌘?',
     '⌘R': '⌘R',
-    '**Insights**, at the top of the Journal (beside it on the Mac), shows your cellar in figures: its value, bottles by style, maturity, country, region, vintage and grape, what you opened each month, the pace to drink your bottles before their windows close, and your year in wine, which **Share** sends as an image.': '**Statistiques**, en haut du Journal (à côté sur Mac), montre votre cave en chiffres : sa valeur, les bouteilles par style, maturité, pays, région, millésime et cépage, ce que vous avez ouvert chaque mois, le rythme pour boire vos bouteilles avant la fin de leur fenêtre, et votre année en vin, que **Partager** envoie en image.',
+    '**Insights**, at the top of the Journal (beside it on the Mac), shows your cellar in figures: its value, bottles by style, maturity, country, region, vintage and grape, the aromas you note most, farming and closure, what you opened each month, the pace to drink your bottles before their windows close, and your year in wine, which **Share** sends as an image.': '**Statistiques**, en haut du Journal (à côté sur Mac), montre votre cave en chiffres : sa valeur, les bouteilles par style, maturité, pays, région, millésime et cépage, les arômes que vous notez le plus, la viticulture et le bouchage, ce que vous avez ouvert chaque mois, le rythme pour boire vos bouteilles avant la fin de leur fenêtre, et votre année en vin, que **Partager** envoie en image.',
     'Documents': 'Documents',
     "Keep an invoice, a certificate of authenticity, a technical sheet or an article with a wine: **Add a Document…** (a PDF, an image, a text or an office file, up to 8 MB) or, on iPhone and iPad, **Scan a Document**, which makes a PDF. Add them while adding bottles, or later under **Documents** on the wine's page: they are for every bottle of the wine. For one bottle only (its certificate, its receipt), touch and hold the bottle on the wine's page and choose **Attach a Document…**, or tap it in its storage and use the paperclip; a paperclip shows how many it has. Tap a document to open it; touch and hold it to share, rename or delete it. Documents sync with your devices, encrypted, and are never sent to the AI service or the web search.": 'Gardez une facture, un certificat d’authenticité, une fiche technique ou un article avec un vin : **Ajouter un document…** (un PDF, une image, un texte ou un fichier bureautique, jusqu’à 8 Mo) ou, sur iPhone et iPad, **Numériser un document**, qui en fait un PDF. Ajoutez-les en ajoutant des bouteilles, ou plus tard dans **Documents** sur la fiche du vin : ils valent pour toutes les bouteilles du vin. Pour une seule bouteille (son certificat, son ticket), touchez longuement la bouteille sur la fiche du vin et choisissez **Joindre un document…**, ou touchez-la dans son rangement puis le trombone ; un trombone indique combien elle en a. Touchez un document pour l’ouvrir ; touchez-le longuement pour le partager, le renommer ou le supprimer. Les documents se synchronisent avec vos appareils, chiffrés, et ne sont jamais envoyés au service d’IA ni à la recherche web.',
     'PDF': 'PDF',
@@ -1055,7 +1055,7 @@ FR = {
     'How many bottles fit one behind the other on a shelf.': 'Combien de bouteilles tiennent l’une derrière l’autre sur une étagère.',
     'How many identical bottles you add.': 'Combien de bouteilles identiques vous ajoutez.',
     'How to set up AI': 'Comment configurer l’IA',
-    "If an AI service is set up in Settings, the label photo is also sent to it to fill in or complete the name, producer, vintage, style, appellation, region, country, grapes and drinking window. No need to wait: if you add the bottles first, the answer completes the wine afterwards, and one banner says so; its **Undo** takes back the bottles and the AI's details together. Only that photo is sent, never your cellar.": 'Si un service d’IA est configuré dans les réglages, la photo de l’étiquette lui est aussi envoyée pour remplir ou compléter le nom, le producteur, le millésime, le style, l’appellation, la région, le pays, les cépages et la fenêtre de dégustation. Inutile d’attendre : si vous ajoutez les bouteilles avant, la réponse complète le vin ensuite, et un seul bandeau l’indique ; son **Annuler** retire ensemble les bouteilles et les informations de l’IA. Seule cette photo est envoyée, jamais votre cave.',
+    "If an AI service is set up in Settings, the label photo is also sent to it to fill in or complete the name, producer, vintage, style, appellation, region, country, grapes and drinking window, and the alcohol and classification printed on the label. No need to wait: if you add the bottles first, the answer completes the wine afterwards, and one banner says so; its **Undo** takes back the bottles and the AI's details together. Only that photo is sent, never your cellar.": 'Si un service d’IA est configuré dans les réglages, la photo de l’étiquette lui est aussi envoyée pour remplir ou compléter le nom, le producteur, le millésime, le style, l’appellation, la région, le pays, les cépages, la fenêtre de dégustation, ainsi que le degré d’alcool et la classification imprimés sur l’étiquette. Inutile d’attendre : si vous ajoutez les bouteilles avant, la réponse complète le vin ensuite, et un seul bandeau l’indique ; son **Annuler** retire ensemble les bouteilles et les informations de l’IA. Seule cette photo est envoyée, jamais votre cave.',
     'In **Settings › AI**, choose a provider. You need an account with it and an API key; the provider bills you directly for what you use, usually a fraction of a cent per label.': 'Dans **Réglages › IA**, choisissez un fournisseur. Il vous faut un compte chez lui et une clé d’API ; le fournisseur vous facture directement ce que vous utilisez, en général une fraction de centime par étiquette.',
     'Install a local server (Ollama)': 'Installer un serveur local (Ollama)',
     'Irregular racks': 'Casiers irréguliers',
@@ -1596,6 +1596,203 @@ FR = {
     'Bottles stacked in quincunx, each layer resting in the gaps of the one below. 1 is a single row.': 'Bouteilles empilées en quinconce, chaque couche reposant dans les creux de celle du dessous. 1 : une seule rangée.',
     'Each crate or box is a bin, named like B3.': 'Chaque caisse ou carton est une case, nommée comme B3.',
     'A wooden crate usually holds 6 or 12 bottles.': 'Une caisse en bois contient en général 6 ou 12 bouteilles.',
+    'Guided tasting': 'Dégustation guidée',
+    "Under **More details** in a tasting, a guided sheet as in a wine course: the intensity and hue of the wine, the aromas you find, as chips grouped by family, and its structure (sweetness, acidity, tannin, body, alcohol and length) from low to high. The aromas and hues of the wine's style come first; **More Aromas** shows the others, or search them by name. Tap a chosen aroma or level again to clear it. Everything is optional, and search in the Journal finds the aromas.": 'Sous **Plus de détails** dans une dégustation, une fiche guidée comme en cours d’œnologie : l’intensité et la teinte de la robe, les arômes que vous trouvez, en pastilles regroupées par famille, et la structure (sucre, acidité, tanins, corps, alcool et longueur) du plus faible au plus élevé. Les arômes et teintes du style du vin viennent en premier ; **Plus d’arômes** montre les autres, ou cherchez-les par leur nom. Touchez à nouveau un arôme ou un niveau choisi pour l’effacer. Tout est facultatif, et la recherche du Journal trouve les arômes.',
+    'Rating scale': 'Échelle de notation',
+    'Rate in stars, out of 20 or out of 100: choose in **Settings › Ratings**, for this device only. Out of 20 takes half points; out of 100, whole points from 50. Each rating is also kept in stars, which older versions show; a rating given in stars shows on the other scales as an approximate score, such as ≈ 90/100.': 'Notez en étoiles, sur 20 ou sur 100 : choisissez dans **Réglages › Notes**, pour cet appareil seulement. Sur 20 accepte les demi-points ; sur 100, les points entiers à partir de 50. Chaque note est aussi gardée en étoiles, que les versions plus anciennes affichent ; une note donnée en étoiles s’affiche sur les autres échelles comme une note approchée, par exemple ≈ 90/100.',
+    'Wine details': 'Détails du vin',
+    "Under **More details** in the wine form, closed so adding a bottle stays quick: the alcohol, a classification (type it or choose a suggestion), the lieu-dit, the dosage of a sparkling wine or the sweetness of another, the share of each grape, how it was aged, the farming (and whether it is certified) and the closure. Filled details show under **Details** on the wine's page, where a tap edits them, and search finds them.": 'Sous **Plus de détails** dans la fiche du vin, fermé pour qu’ajouter une bouteille reste rapide : le degré d’alcool, une classification (tapez-la ou choisissez une suggestion), le lieu-dit, le dosage d’un effervescent ou la douceur des autres vins, la part de chaque cépage, l’élevage, la viticulture (et si elle est certifiée) et le bouchage. Les détails remplis s’affichent sous **Détails** sur la page du vin, où un toucher les modifie, et la recherche les trouve.',
+    'Critic scores': 'Notes de la critique',
+    "On a wine's page, **Add Critic Score** keeps a score from a guide, a magazine or a competition: who gave it, a score out of 100 or out of 20, or an award in words such as a gold medal, and a note. You type them yourself: Encave looks nothing up and sends nothing. Tap a score to change it; swipe it to the left to delete it.": 'Sur la page d’un vin, **Ajouter une note de critique** garde la note d’un guide, d’un magazine ou d’un concours : qui l’a donnée, une note sur 100 ou sur 20, ou une distinction en toutes lettres comme une médaille d’or, et une remarque. C’est vous qui les saisissez : Encave ne cherche rien et n’envoie rien. Touchez une note pour la modifier ; balayez-la vers la gauche pour la supprimer.',
+    # Guided tasting sheet, rating scales, wine details and critic scores.
+    'Aromas in your tastings': 'Arômes de vos dégustations',
+    'By farming': 'Par viticulture',
+    'By closure': 'Par bouchage',
+    'Strawberry': 'Fraise',
+    'Raspberry': 'Framboise',
+    'Red cherry': 'Cerise rouge',
+    'Redcurrant': 'Groseille',
+    'Blackberry': 'Mûre',
+    'Blackcurrant': 'Cassis',
+    'Black cherry': 'Cerise noire',
+    'Plum': 'Prune',
+    'Lemon': 'Citron',
+    'Grapefruit': 'Pamplemousse',
+    'Orange peel': 'Zeste d’orange',
+    'Green apple': 'Pomme verte',
+    'Pear': 'Poire',
+    'Peach': 'Pêche',
+    'Apricot': 'Abricot',
+    'Pineapple': 'Ananas',
+    'Passion fruit': 'Fruit de la passion',
+    'Lychee': 'Litchi',
+    'Rose': 'Rose',
+    'Violet': 'Violette',
+    'Acacia': 'Acacia',
+    'Elderflower': 'Fleur de sureau',
+    'Cut grass': 'Herbe coupée',
+    'Green pepper': 'Poivron vert',
+    'Mint': 'Menthe',
+    'Garrigue': 'Garrigue',
+    'Black pepper': 'Poivre noir',
+    'Clove': 'Clou de girofle',
+    'Cinnamon': 'Cannelle',
+    'Liquorice': 'Réglisse',
+    'Vanilla': 'Vanille',
+    'Toast': 'Pain grillé',
+    'Smoke': 'Fumée',
+    'Cedar': 'Cèdre',
+    'Flint': 'Pierre à fusil',
+    'Petrol': 'Hydrocarbure',
+    'Mushroom': 'Champignon',
+    'Forest floor': 'Sous-bois',
+    'Leather': 'Cuir',
+    'Tobacco': 'Tabac',
+    'Brioche': 'Brioche',
+    'Butter': 'Beurre',
+    'Hazelnut': 'Noisette',
+    'Honey': 'Miel',
+    'Raisin': 'Raisin sec',
+    'Dried fig': 'Figue sèche',
+    'Walnut': 'Noix',
+    'Red fruit': 'Fruits rouges',
+    'Black fruit': 'Fruits noirs',
+    'Citrus': 'Agrumes',
+    'Orchard fruit': 'Fruits du verger',
+    'Stone and tropical fruit': 'Fruits à noyau et exotiques',
+    'Floral': 'Floral',
+    'Herbal': 'Végétal',
+    'Spice': 'Épices',
+    'Oak and toast': 'Boisé et grillé',
+    'Earth and mineral': 'Terre et minéral',
+    'Animal and leather': 'Animal et cuir',
+    'Pastry and butter': 'Pâtisserie et beurre',
+    'Honey and dried fruit': 'Miel et fruits secs',
+    'Sweetness': 'Sucre',
+    'Acidity': 'Acidité',
+    'Tannin': 'Tanins',
+    'Body': 'Corps',
+    'Alcohol': 'Alcool',
+    'Length': 'Longueur',
+    'Low': 'Faible',
+    'Medium−': 'Moyen−',
+    'Medium': 'Moyen',
+    'Medium+': 'Moyen+',
+    'High': 'Élevé',
+    'Dry': 'Sec',
+    'Off-dry': 'Demi-sec',
+    'Sweet': 'Doux',
+    'Luscious': 'Liquoreux',
+    'Light': 'Léger',
+    'Full': 'Ample',
+    'Short': 'Court',
+    'Long': 'Long',
+    'Medium-sweet': 'Moelleux',
+    'Pale': 'Pâle',
+    'Deep': 'Profonde',
+    'Purple': 'Violacé',
+    'Ruby': 'Rubis',
+    'Garnet': 'Grenat',
+    'Tawny': 'Tuilé',
+    'Lemon-green': 'Jaune-vert',
+    'Gold': 'Doré',
+    'Amber': 'Ambré',
+    'Pink': 'Rose vif',
+    'Salmon': 'Saumon',
+    'Onion skin': 'Pelure d’oignon',
+    'Brown': 'Brun',
+    'Brut Nature': 'Brut nature',
+    'Extra Brut': 'Extra-brut',
+    'Brut': 'Brut',
+    'Extra Dry': 'Extra-dry',
+    'Sec': 'Sec',
+    'Demi-Sec': 'Demi-sec',
+    'Doux': 'Doux',
+    'Oak barrel': 'Fût de chêne',
+    'New oak': 'Fût neuf',
+    'Foudre': 'Foudre',
+    'Stainless steel': 'Cuve inox',
+    'Concrete': 'Cuve béton',
+    'Amphora': 'Amphore',
+    'On lees': 'Sur lies',
+    'Organic': 'Biologique',
+    'Biodynamic': 'Biodynamique',
+    'Natural': 'Nature',
+    'Sustainable': 'Durable',
+    'Conventional': 'Conventionnelle',
+    'Natural cork': 'Liège naturel',
+    'Technical cork': 'Liège technique',
+    'Screw cap': 'Capsule à vis',
+    'Glass stopper': 'Bouchon en verre',
+    'Synthetic cork': 'Bouchon synthétique',
+    'Crown cap': 'Capsule couronne',
+    'More details': 'Plus de détails',
+    'Appearance, aromas and structure in a few taps, for a wine-course style note.': 'Robe, arômes et structure en quelques touches, pour une note comme en cours d’œnologie.',
+    'Aromas': 'Arômes',
+    'Search Aromas': 'Chercher des arômes',
+    'Cherry, vanilla, leather…': 'Cerise, vanille, cuir…',
+    'No aromas found': 'Aucun arôme trouvé',
+    'More Aromas': 'Plus d’arômes',
+    'Fewer Aromas': 'Moins d’arômes',
+    'Structure': 'Structure',
+    'Intensity': 'Intensité',
+    'Hue': 'Teinte',
+    'Show All': 'Tout afficher',
+    'Show Fewer': 'En afficher moins',
+    'Not noted': 'Non noté',
+    'Clear %@': 'Effacer %@',
+    'Clear Rating': 'Effacer la note',
+    'Ratings': 'Notes',
+    'Stars': 'Étoiles',
+    'Out of 20': 'Sur 20',
+    'Out of 100': 'Sur 100',
+    'Out of %lld': 'Sur %lld',
+    'Rated %@': 'Noté %@',
+    '%@ out of 20': '%@ sur 20',
+    '%@ out of 100': '%@ sur 100',
+    'about %@ out of 20': 'environ %@ sur 20',
+    'about %@ out of 100': 'environ %@ sur 100',
+    '%@ out of %@': '%@ sur %@',
+    'Ratings are shown and entered on this scale on this device. A score out of 20 or 100 is kept with its stars, which older versions show; a rating in stars shows as an approximate score (≈).': 'Les notes sont affichées et saisies sur cette échelle sur cet appareil. Une note sur 20 ou sur 100 est gardée avec ses étoiles, que les versions plus anciennes affichent ; une note en étoiles s’affiche comme une note approchée (≈).',
+    'Classification': 'Classification',
+    'Lieu-dit': 'Lieu-dit',
+    'Dosage': 'Dosage',
+    'Ageing': 'Élevage',
+    'Farming': 'Viticulture',
+    'Closure': 'Bouchage',
+    'Certified': 'Certifiée',
+    'Blend': 'Assemblage',
+    'Not set': 'Non indiqué',
+    '%@, certified': '%@, certifiée',
+    'Alcohol, in percent': 'Alcool, en pourcentage',
+    'Share of %@, in percent': 'Part de %@, en pourcentage',
+    'Alcohol by volume, as printed on the label.': 'Degré d’alcool, tel qu’imprimé sur l’étiquette.',
+    'A classification printed on the label. Type your own or choose a suggestion.': 'Une classification imprimée sur l’étiquette. Tapez la vôtre ou choisissez une suggestion.',
+    'Grand Cru, Cru Bourgeois…': 'Grand Cru, Cru Bourgeois…',
+    'Climat or named vineyard': 'Climat ou parcelle nommée',
+    'The named vineyard or climat on the label, such as Les Clos.': 'La parcelle nommée ou le climat sur l’étiquette, comme Les Clos.',
+    'How much sugar was added after the second fermentation, from Brut Nature to Doux.': 'Le sucre ajouté après la seconde fermentation, de Brut nature à Doux.',
+    'Certified by a recognized label, such as AB, Demeter or HVE.': 'Certifiée par un label reconnu, comme AB, Demeter ou HVE.',
+    'Optional: alcohol, classification, blend, ageing, farming and closure.': 'Facultatif : alcool, classification, assemblage, élevage, viticulture et bouchage.',
+    "Edits the wine's details.": 'Modifie les détails du vin.',
+    'Critic Scores': 'Notes de la critique',
+    'Critic Score': 'Note de critique',
+    'Add Critic Score': 'Ajouter une note de critique',
+    'Delete Score': 'Supprimer la note',
+    'Edits this score.': 'Modifie cette note.',
+    'Source': 'Source',
+    'Kind': 'Type',
+    'Score': 'Note',
+    'Award': 'Distinction',
+    'Note': 'Remarque',
+    'Guide, magazine or competition': 'Guide, magazine ou concours',
+    'Gold medal, Coup de cœur…': 'Médaille d’or, coup de cœur…',
+    'For the 2015, tasted from barrel…': 'Pour le 2015, dégusté en barrique…',
+    'Enter a score from 0 to %lld.': 'Saisissez une note de 0 à %lld.',
+    'Scores and awards you copy from a guide, a magazine or the bottle. Encave looks nothing up.': 'Les notes et distinctions que vous recopiez d’un guide, d’un magazine ou de la bouteille. Encave ne cherche rien.',
+    'Typed by you, from a guide, a magazine or a sticker on the bottle. Encave looks nothing up.': 'Saisie par vous, depuis un guide, un magazine ou une pastille sur la bouteille. Encave ne cherche rien.',
+    'Gold medal': 'Médaille d’or',
+    'Tasted from barrel': 'Dégusté en barrique',
 }
 
 # Keys with plural forms: English one/other and French one/other.
@@ -1632,6 +1829,7 @@ PLURALS = {
     "%lld other changes": (("%lld other change", "%lld other changes"),
                            ("%lld autre modification", "%lld autres modifications")),
     "%lld bottles": (("%lld bottle", "%lld bottles"), ("%lld bouteille", "%lld bouteilles")),
+    "%lld tastings": (("%lld tasting", "%lld tastings"), ("%lld dégustation", "%lld dégustations")),
     "%lld bottles to drink soon": (("%lld bottle to drink soon", "%lld bottles to drink soon"),
                                    ("%lld bouteille à boire bientôt", "%lld bouteilles à boire bientôt")),
     "%lld bottles in the cellar": (("%lld bottle in the cellar", "%lld bottles in the cellar"),
@@ -1702,6 +1900,11 @@ VARIANTS = {
     "About %@ bottles a month [under two]": ("About %@ bottles a month", "Environ %@ bouteille par mois"),
     # The drink sheet's search field is narrower than the Cellar's (Cancel beside it).
     "Wine, producer, region, grape, vintage [drink]": ("Wine, producer, region, grape, vintage", "Vin, producteur, millésime…"),
+    # Vocabulary (VocabularyLabels.swift): an intensity is "moyenne", a level "moyen"; a hue
+    # is a color of the wine, not the fruit or a style.
+    "Medium [intensity]": ("Medium", "Moyenne"),
+    "Lemon [hue]": ("Lemon", "Jaune citron"),
+    "Orange [hue]": ("Orange", "Orangé"),
 }
 
 INFO_PLIST = {
@@ -1917,9 +2120,58 @@ def intent_metadata_problems():
     return problems
 
 
+VOCABULARY = ROOT.parent / "fixtures" / "tasting-vocabulary.json"
+VOCABULARY_LABELS = ROOT / "Encave" / "DesignSystem" / "VocabularyLabels.swift"
+
+
+def vocabulary_ids():
+    """The ids of fixtures/tasting-vocabulary.json, by kind (the functions of VocabularyLabels.swift)."""
+    data = json.loads(VOCABULARY.read_text())
+    families = data["aromaFamilies"]
+    return {
+        "aroma": [a["id"] for f in families for a in f["aromas"]],
+        "aromaFamily": [f["id"] for f in families],
+        "structure": [s["id"] for s in data["structure"]],
+        "level": sorted({w for words in data["structureScales"].values() for w in words}),
+        "intensity": data["intensities"],
+        "hue": [h["id"] for h in data["hues"]],
+        "dosage": data["dosage"],
+        "sweetness": data["sweetness"],
+        "ageing": data["ageing"],
+        "farming": data["farming"],
+        "closure": data["closure"],
+    }
+
+
+def vocabulary_label_problems():
+    """Every id of the shared vocabulary needs an English and a French label in
+    VocabularyLabels.swift (one function per kind, a case per id)."""
+    source = VOCABULARY_LABELS.read_text()
+    functions = dict(re.findall(r"private static func (\w+)\(_ id: String\) -> String\? \{(.*?)\n    \}", source, re.S))
+    problems = []
+    for kind, ids in vocabulary_ids().items():
+        cases = dict(re.findall(r'case "([^"]+)": String\(localized: "((?:[^"\\]|\\.)*)"\)', functions.get(kind, "")))
+        if kind not in functions:
+            problems.append(f"VocabularyLabels.swift: no labels for the kind {kind!r}")
+            continue
+        for id in ids:
+            key = cases.get(id)
+            if key is None:
+                problems.append(f"vocabulary: no label for {kind} {id!r} in VocabularyLabels.swift")
+                continue
+            english = VARIANTS[key][0] if key in VARIANTS else (None if re.search(r" \[\w+\]$", key) else key)
+            french_text = VARIANTS[key][1] if key in VARIANTS else FR.get(key)
+            if not english:
+                problems.append(f"vocabulary: no English label for {kind} {id!r} (key {key!r} needs a VARIANTS entry)")
+            if not french_text:
+                problems.append(f"vocabulary: no French label for {kind} {id!r} (key {key!r})")
+    return problems
+
+
 def check():
     known = set(FR) | set(PLURALS) | set(VARIANTS)
     problems = intent_metadata_problems()
+    problems += vocabulary_label_problems()
     for key in sorted(k for k in extract() | extract(widget_sources()) if to_key(k) not in known and k not in known):
         problems.append(f"missing French: {key!r} (key {to_key(key)!r})")
     # A translation must use the same placeholders as its key, or it shows the wrong value or crashes.

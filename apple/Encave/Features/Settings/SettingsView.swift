@@ -20,6 +20,7 @@ struct SettingsView: View {
     @Bindable private var menuBar = DefaultsFlag.menuBar
     #endif
     @AppStorage(StudioPhoto.settingKey) private var studioPhotos = true
+    @Bindable private var ratings = RatingScaleSetting.shared
     @State private var remindersRefused = false
 
     private static let currencies = ["EUR", "CHF", "USD", "GBP", "CAD", "AUD", "JPY", "SEK", "NOK", "DKK"]
@@ -128,6 +129,14 @@ struct SettingsView: View {
             }
 
             Section {
+                Picker(selection: $ratings.scale) {
+                    ForEach(RatingScale.allCases, id: \.self) { scale in
+                        Text(scale.title).tag(scale)
+                    }
+                } label: {
+                    Label("Ratings", systemImage: "star")
+                }
+                .accessibilityIdentifier("settings.ratingScale")
                 Toggle(isOn: $studioPhotos) {
                     Label("Studio Look for Label Photos", systemImage: "wand.and.stars")
                 }
@@ -135,6 +144,7 @@ struct SettingsView: View {
                 Text("Display")
             } footer: {
                 VStack(alignment: .leading, spacing: 6) {
+                    Text("Ratings are shown and entered on this scale on this device. A score out of 20 or 100 is kept with its stars, which older versions show; a rating in stars shows as an approximate score (≈).")
                     Text("Label photos are shown cut out and framed on the label, on a backdrop in the wine's color, made on this device. The photo you took is kept as is; turn this off to see it as taken.")
                     Text("When AI is set up below, the AI also finds the label in the photo, so the picture is framed on it. Otherwise it is framed on this device.")
                 }

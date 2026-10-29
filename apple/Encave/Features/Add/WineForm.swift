@@ -28,6 +28,21 @@ struct WineDraft: Equatable {
     var labelFrame: WineLabelFrame?
     /// A tag being typed, kept on save.
     var pendingTag = ""
+    /// More details, under a disclosure: alcohol, classification, lieu-dit, dosage or
+    /// sweetness, the share of each grape, ageing, farming and closure (ids of `Vocabulary`).
+    var abv: Decimal?
+    var classification = ""
+    var lieuDit = ""
+    var dosage: String?
+    var sweetness: String?
+    /// Percent by grape, as the grape is written in `grapes`.
+    var grapeShares: [String: Int] = [:]
+    var ageing: [String] = []
+    var farming: String?
+    var farmingCertified = false
+    var closure: String?
+    /// Edited on the wine's page, not in the form, but kept.
+    var criticScores: [CriticScore]?
 
     init() {}
 
@@ -53,6 +68,39 @@ struct WineDraft: Equatable {
         coverPhotoID = wine.coverPhotoID
         aiCompletedAt = wine.aiCompletedAt
         labelFrame = wine.labelFrame
+        abv = wine.abv
+        classification = wine.classification ?? ""
+        lieuDit = wine.lieuDit ?? ""
+        dosage = wine.dosage
+        sweetness = wine.sweetness
+        grapeShares = wine.grapeShares ?? [:]
+        ageing = wine.ageing ?? []
+        farming = wine.farming
+        farmingCertified = wine.farmingCertified == true
+        closure = wine.closure
+        criticScores = wine.criticScores
+    }
+
+    /// The grapes as listed, each once, in the order typed.
+    var grapeList: [String] {
+        var seen = Set<String>()
+        return grapes.split(whereSeparator: { $0 == "," || $0 == ";" })
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty && seen.insert($0.lowercased()).inserted }
+    }
+
+    /// The share of a grape, whatever its case or spaces in the list.
+    func share(of grape: String) -> Int? {
+        let key = grape.trimmingCharacters(in: .whitespaces).lowercased()
+        return grapeShares.first { $0.key.trimmingCharacters(in: .whitespaces).lowercased() == key }?.value
+    }
+
+    mutating func setShare(_ share: Int?, of grape: String) {
+        let key = grape.trimmingCharacters(in: .whitespaces).lowercased()
+        for old in grapeShares.keys where old.trimmingCharacters(in: .whitespaces).lowercased() == key {
+            grapeShares[old] = nil
+        }
+        if let share, share > 0 { grapeShares[grape] = min(100, share) }
     }
 
     var isValid: Bool { !name.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -90,13 +138,25 @@ struct WineDraft: Equatable {
         wine.coverPhotoID = coverPhotoID
         wine.aiCompletedAt = aiCompletedAt
         wine.labelFrame = labelFrame
+        wine.abv = abv.flatMap { $0 > 0 ? $0 : nil }
+        wine.classification = clean(classification)
+        wine.lieuDit = clean(lieuDit)
+        wine.dosage = dosage
+        wine.sweetness = sweetness
+        // After the grapes: shares of grapes no longer listed are dropped.
+        wine.grapeShares = grapeShares.isEmpty ? nil : grapeShares
+        wine.ageing = ageing
+        wine.farming = farming
+        wine.farmingCertified = farming != nil && farmingCertified ? true : nil
+        wine.closure = closure
+        wine.criticScores = criticScores
         return wine
     }
 }
 
 /// A field of the wine form, to open "Edit wine" scrolled to it (a detail tapped on the wine's page).
 enum WineFormField: Hashable, Sendable {
-    case name, producer, vintage, style, appellation, region, country, grapes, window, tags, notes
+    case name, producer, vintage, style, appellation, region, country, grapes, window, tags, notes, moreDetails
 }
 
 /// Form sections describing a wine. Used by "Add bottle" and "Edit wine".
@@ -201,6 +261,9 @@ struct WineFormSections: View {
 
     @ViewBuilder
     private var cellarDetails: some View {
+        // Closed unless asked for: adding a scanned bottle stays under ten seconds.
+        WineMoreDetailsSection(draft: $draft, startsExpanded: focusField == .moreDetails)
+
         Section {
             Toggle("Estimate automatically", isOn: $draft.windowIsAutomatic.animation())
                 .fieldHelp("Works out the window from the style and the vintage. Turn off to enter the years yourself.")
@@ -424,11 +487,13 @@ struct EditWineView: View {
 
 extension Wine {
     /// Takes the fields the form does not edit from the wine as it is now: photos added
-    /// elsewhere while the form was open (another window, sync), the documents and the
-    /// current price.
+    /// elsewhere while the form was open (another window, sync), the documents, the
+    /// current price and the critics' scores.
     mutating func keepUnedited(from live: Wine) {
         extraPhotoIDs = live.extraPhotoIDs
         attachments = live.attachments
+        // Added and changed on the wine's page.
+        criticScores = live.criticScores
         coverPhotoID = live.coverPhotoID
         currentPrice = live.currentPrice
         currentPriceCurrency = live.currentPriceCurrency

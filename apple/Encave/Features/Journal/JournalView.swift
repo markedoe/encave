@@ -357,7 +357,7 @@ struct TastingRow: View {
                         .foregroundStyle(.secondary)
                 }
                 if let rating = tasting?.rating {
-                    RatingView(rating: rating)
+                    RatingView(rating: rating, score100: tasting?.score100)
                 }
                 if let note = tasting?.note, !note.isEmpty {
                     Text(note)
@@ -384,7 +384,9 @@ struct TastingRow: View {
         var parts = [String(localized: "From my cellar"), wine?.displayName ?? String(localized: "Unknown wine")]
         // The style in words, as shown under the note.
         if let style = wine?.color?.name { parts.append(style) }
-        if let rating = tasting?.rating { parts.append(String(localized: "\(rating) stars")) }
+        if let rating = ScoreText.spoken(rating: tasting?.rating, score100: tasting?.score100, on: RatingScaleSetting.shared.scale) {
+            parts.append(rating)
+        }
         parts.append((tasting?.date ?? bottle.addedAt).formatted(.dateTime.day().month(.wide)))
         if let occasion = tasting?.occasion { parts.append(Occasion.displayName(occasion)) }
         if let note = tasting?.note, !note.isEmpty { parts.append(note) }

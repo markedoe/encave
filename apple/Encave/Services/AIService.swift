@@ -219,12 +219,18 @@ struct LabelAnalysis: Codable, Equatable, Sendable {
     var grapes: [String]
     var drinkFrom: Int
     var drinkUntil: Int
+    /// Alcohol by volume printed on the label, in percent; 0 when not printed. Older answers
+    /// and providers may leave it out (read as 0).
+    var abv: Double = 0
+    /// A classification printed on the label ("Grand Cru"); "" when none (or left out).
+    var classification: String = ""
     /// Where the whole front label is in the photo ("label_box" and "label_angle"), checked
     /// when the answer is read; nil when absent or invalid, which never fails the answer.
     var placement: AILabelPlacement? = nil
 
     private enum CodingKeys: String, CodingKey {
         case name, producer, vintage, color, appellation, region, country, grapes, drinkFrom, drinkUntil
+        case abv, classification
     }
 
     /// The label's frame for the studio picture, for the photo that was read.
@@ -255,6 +261,13 @@ struct LabelAnalysis: Codable, Equatable, Sendable {
         fill(\.region, region)
         fill(\.country, country)
         fill(\.grapes, grapes.joined(separator: ", "))
+        fill(\.classification, classification)
+        // A plausible strength only (a misread "135" is not one).
+        if abv > 0, abv <= 100, let value = Decimal(string: String(format: "%.2f", locale: Locale(identifier: "en_US_POSIX"), abv)),
+           draft.abv == nil || draft.abv == filled.abv {
+            draft.abv = value
+            filled.abv = value
+        }
         if (1900...2100).contains(vintage), draft.vintage == nil || draft.vintage == filled.vintage {
             draft.vintage = vintage
             filled.vintage = vintage
@@ -269,6 +282,26 @@ struct LabelAnalysis: Codable, Equatable, Sendable {
             draft.drinkUntil = drinkUntil
         }
         return draft != before
+    }
+}
+
+extension LabelAnalysis {
+    /// The details asked since the wine details came (alcohol, classification) may be
+    /// missing or of another type in an answer: they never fail it.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        name = try c.decode(String.self, forKey: .name)
+        producer = try c.decode(String.self, forKey: .producer)
+        vintage = try c.decode(Int.self, forKey: .vintage)
+        color = try c.decode(String.self, forKey: .color)
+        appellation = try c.decode(String.self, forKey: .appellation)
+        region = try c.decode(String.self, forKey: .region)
+        country = try c.decode(String.self, forKey: .country)
+        grapes = try c.decode([String].self, forKey: .grapes)
+        drinkFrom = try c.decode(Int.self, forKey: .drinkFrom)
+        drinkUntil = try c.decode(Int.self, forKey: .drinkUntil)
+        abv = (try? c.decodeIfPresent(Double.self, forKey: .abv)) ?? 0
+        classification = (try? c.decodeIfPresent(String.self, forKey: .classification)) ?? ""
     }
 }
 

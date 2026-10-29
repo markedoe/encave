@@ -13,6 +13,8 @@ struct WineDetailView: View {
     /// "Search the Web" on one detail.
     @State private var searchingDetail: WebSearchTerms?
     @State private var documents = DocumentActions()
+    /// A critic's score being added or changed.
+    @State private var editingCritic: CriticScoreEdit?
     private let webSearchEnabled = WebSearchSettings.load().isEnabled
 
     var body: some View {
@@ -158,6 +160,8 @@ struct WineDetailView: View {
                     ForEach(distinctValues(wine.tags ?? []), id: \.self) { tag in
                         exploreRow("Tag", .tag(tag))
                     }
+                    // More details, in words: a tap edits them.
+                    moreDetailRows(wine)
                     if let notes = wine.notes, !notes.isEmpty {
                         EditDetailRow(hint: Text("Edits the notes.")) {
                             router?.sheet = .editWine(wineID: wineID, field: .notes)
@@ -189,6 +193,8 @@ struct WineDetailView: View {
                         .accessibilityIdentifier("action.wine.searchOnline")
                     }
                 }
+
+                CriticScoresSection(wine: wine, editing: $editingCritic)
 
                 MorePhotosSection(wine: wine)
 
@@ -239,6 +245,10 @@ struct WineDetailView: View {
                 ) { price, currency in
                     setPrice(price, currency: currency)
                 }
+            }
+            .sheet(item: $editingCritic) { edit in
+                CriticScoreEditor(wineID: wineID, original: edit.original)
+                    .environment(model)
             }
             .sheet(isPresented: $searchingOnline) {
                 WebSearchView(
@@ -353,6 +363,38 @@ struct WineDetailView: View {
         if let attribute, !attribute.value.isEmpty {
             ExploreDetailRow(title: title, attribute: attribute, wineID: wineID,
                              onSearchWeb: webSearchEnabled ? { searchingDetail = WebSearchTerms(terms: $0) } : nil)
+        }
+    }
+
+    /// The more details the wine has (alcohol, classification, blend…), by their labels.
+    @ViewBuilder
+    private func moreDetailRows(_ wine: Wine) -> some View {
+        moreDetailRow("Classification", wine.classification)
+        moreDetailRow("Lieu-dit", wine.lieuDit)
+        moreDetailRow("Alcohol", wine.abv.map(WineDetailText.alcohol))
+        moreDetailRow("Dosage", wine.dosage.map { VocabularyLabels.text(.dosage, $0) })
+        moreDetailRow("Sweetness", wine.sweetness.map { VocabularyLabels.text(.sweetness, $0) })
+        moreDetailRow("Blend", WineDetailText.blend(of: wine))
+        moreDetailRow("Ageing", WineDetailText.ageing(of: wine))
+        moreDetailRow("Farming", WineDetailText.farming(of: wine))
+        moreDetailRow("Closure", wine.closure.map { VocabularyLabels.text(.closure, $0) })
+    }
+
+    /// One of the wine's more details, when it has it; a tap edits it.
+    @ViewBuilder
+    private func moreDetailRow(_ title: LocalizedStringKey, _ value: String?) -> some View {
+        if let value, !value.trimmingCharacters(in: .whitespaces).isEmpty {
+            EditDetailRow(hint: Text("Edits the wine's details.")) {
+                router?.sheet = .editWine(wineID: wineID, field: .moreDetails)
+            } content: {
+                LabeledContent {
+                    Text(verbatim: value)
+                        .multilineTextAlignment(.trailing)
+                } label: {
+                    Text(title)
+                }
+            }
+            .contextMenu { editMenu(value, field: .moreDetails) }
         }
     }
 

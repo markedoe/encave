@@ -150,7 +150,7 @@ private struct DrinkForm: View {
                                 .accessibilityIdentifier("drink.which")
                             }
                         }
-                        TastingFormSections(draft: $draft)
+                        TastingFormSections(draft: $draft, color: wine.color)
                         Section {
                             HelpLink(topic: .drinking, title: "Help with Tasting Notes")
                         }
@@ -269,7 +269,8 @@ struct TastingEditor: View {
                         .listRowBackground(Color.clear)
                     }
                 }
-                TastingFormSections(draft: $draft, startsExpanded: true)
+                TastingFormSections(draft: $draft, startsExpanded: true,
+                                    color: model.cellar.bottles[bottleID].flatMap { model.cellar.wines[$0.wineID] }?.color)
                 Section {
                     Button("Put Back in the Cellar", role: .destructive) {
                         model.putBack(bottleID)
@@ -344,6 +345,8 @@ struct TastingEditor: View {
 struct TastingDraft: Equatable {
     var date = Date.now
     var rating: Int?
+    /// The precise score out of 100, when entered out of 20 or 100 (`Score`).
+    var score100: Double?
     var note = ""
     var occasion = ""
     var appearance = ""
@@ -351,12 +354,23 @@ struct TastingDraft: Equatable {
     var palate = ""
     var finish = ""
     var foodPairing = ""
+    /// The guided sheet: aromas (vocabulary ids, in the order chosen), structure levels
+    /// (1 to 5, by attribute id), intensity and hue.
+    var aromas: [String] = []
+    var levels: [String: Int] = [:]
+    var intensity: String?
+    var hue: String?
+    /// The tasting as stored, so what this form does not show (keys of a newer version)
+    /// is written back unchanged.
+    private var stored: Tasting?
 
     init() {}
 
     init(_ tasting: Tasting) {
+        stored = tasting
         date = tasting.date
         rating = tasting.rating
+        score100 = tasting.score100
         note = tasting.note ?? ""
         occasion = tasting.occasion ?? ""
         appearance = tasting.appearance ?? ""
@@ -364,6 +378,12 @@ struct TastingDraft: Equatable {
         palate = tasting.palate ?? ""
         finish = tasting.finish ?? ""
         foodPairing = tasting.foodPairing ?? ""
+        aromas = tasting.aromas ?? []
+        for attribute in Vocabulary.structure {
+            if let value = tasting.level(of: attribute.id) { levels[attribute.id] = value }
+        }
+        intensity = tasting.intensity
+        hue = tasting.hue
     }
 
     func makeTasting() -> Tasting {
@@ -371,24 +391,40 @@ struct TastingDraft: Equatable {
             let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
             return trimmed.isEmpty ? nil : trimmed
         }
-        return Tasting(date: date, rating: rating, note: clean(note), occasion: clean(occasion),
-                       appearance: clean(appearance), nose: clean(nose), palate: clean(palate),
-                       finish: clean(finish), foodPairing: clean(foodPairing))
+        var tasting = stored ?? Tasting(date: date)
+        tasting.date = date
+        tasting.rating = rating
+        tasting.score100 = Score.kept(score100, rating: rating)
+        tasting.note = clean(note)
+        tasting.occasion = clean(occasion)
+        tasting.appearance = clean(appearance)
+        tasting.nose = clean(nose)
+        tasting.palate = clean(palate)
+        tasting.finish = clean(finish)
+        tasting.foodPairing = clean(foodPairing)
+        tasting.aromas = aromas
+        for attribute in Vocabulary.structure {
+            tasting.setLevel(levels[attribute.id], of: attribute.id)
+        }
+        tasting.intensity = intensity
+        tasting.hue = hue
+        return tasting
     }
 }
 
-/// Rating, quick note and occasion, with the full tasting grid behind a disclosure.
+/// Rating, quick note and occasion, with the full tasting grid and the guided sheet behind
+/// disclosures.
 struct TastingFormSections: View {
     @Binding var draft: TastingDraft
     var startsExpanded = false
+    /// The wine's style: the aromas and hues that suit it come first.
+    var color: WineColor?
     @State private var showsDetails = false
-
+    @State private var showsGuided = false
 
     var body: some View {
         Section {
-            RatingPicker(rating: $draft.rating)
-                .frame(maxWidth: .infinity)
-                .fieldHelp("From one star (disappointing) to five (exceptional). Tap the same star again to clear it.")
+            RatingInput(rating: $draft.rating, score100: $draft.score100)
             TextField("How was it?", text: $draft.note, axis: .vertical)
                 .lineLimit(2...6)
                 .fieldHelp("A few words to remember the bottle.")
@@ -426,6 +462,18 @@ struct TastingFormSections: View {
         } footer: {
             Text("A structured note: appearance, nose, palate, finish and the food you had with it.")
         }
+
+        Section {
+            DisclosureGroup(isExpanded: $showsGuided) {
+                GuidedTastingRows(draft: $draft, color: color)
+            } label: {
+                Text("More details")
+                    .accessibilityIdentifier("tasting.more")
+            }
+        } footer: {
+            Text("Appearance, aromas and structure in a few taps, for a wine-course style note.")
+        }
+        // The guided sheet stays closed until asked for: rating a bottle stays one tap.
         .onAppear { if startsExpanded { showsDetails = true } }
     }
 }

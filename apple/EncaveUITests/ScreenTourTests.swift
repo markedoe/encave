@@ -213,6 +213,7 @@ final class ScreenTourTests: XCTestCase {
             }
             checkExplore()
             goBack()
+            checkCriticScores()
         } else {
             XCTFail("No wine in the sample cellar list")
         }
@@ -385,6 +386,7 @@ final class ScreenTourTests: XCTestCase {
             print("journal: the Tasted elsewhere chip is off screen")
         }
         #if os(iOS)
+        checkGuidedTasting()
         // A tasting from the cellar shows its wine and opens it on the Journal's stack.
         let tasting = cellarTasting
         if tasting.isHittable {
@@ -415,6 +417,73 @@ final class ScreenTourTests: XCTestCase {
                 closeSheet()
             }
         }
+    }
+
+    #if os(iOS)
+    /// The newest tasting from the cellar (Vieilles Vignes in the sample, a full guided
+    /// tasting scored out of 100): its More details open, appearance and aromas first, then
+    /// the structure.
+    private func checkGuidedTasting() {
+        let tasting = cellarTasting
+        guard tasting.waitForExistence(timeout: 5), tasting.isHittable else {
+            XCTFail("journal: no tasting from the cellar to open")
+            return
+        }
+        tasting.press()
+        // By identifier, or by title: a disclosure's label does not always carry it.
+        guard let more = requireControl("tasting.more", titles: ["More details", "Plus de détails"],
+                                        "tasting: no More details") else {
+            closeSheet()
+            return
+        }
+        scrollIntoView(more)
+        more.press()
+        let intensity = element("tasting.intensity")
+        if intensity.waitForExistence(timeout: 3) {
+            scrollIntoView(intensity)
+            swipeContentUp()
+            snapshot("tasting-guided")
+            let length = element("tasting.level.length")
+            scrollIntoView(length)
+            snapshot("tasting-guided-structure")
+        } else {
+            XCTFail("tasting: More details did not open the guided sheet")
+        }
+        // Nothing was changed: Cancel closes without asking.
+        closeSheet()
+        XCTAssertTrue(cellarTasting.waitForExistence(timeout: 5), "tasting: the guided sheet did not close")
+    }
+    #endif
+
+    // MARK: Critic scores
+
+    /// The wine of the sample cellar with critics' scores and every detail (Clos des
+    /// Tilleuls, second by name): its page scrolled to the scores.
+    private func checkCriticScores() {
+        let rows = app.descendants(matching: .any).matching(identifier: "wine.row")
+        let row = rows.element(boundBy: 1)
+        guard row.waitForExistence(timeout: 5), row.isHittable else {
+            XCTFail("cellar: no second wine in the list")
+            return
+        }
+        row.press()
+        guard wineAnchor.waitForExistence(timeout: 5) else {
+            XCTFail("critic scores: the wine page did not open")
+            return
+        }
+        let critic = element("wine.critic")
+        scrollIntoView(critic)
+        if critic.exists {
+            // The add button under the scores too.
+            scrollIntoView(element("wine.critics.add"))
+            snapshot("wine-critic-scores")
+        } else if app.horizontalSizeClassIsCompact {
+            XCTFail("critic scores: the second wine of the sample cellar shows no critic's score")
+        } else {
+            // The detail column can be out of reach of the scroll on some layouts, as for Explore.
+            print("critic scores: not reached on this layout")
+        }
+        goBack()
     }
 
     private func openAddMenu() -> Bool {
