@@ -115,4 +115,87 @@ class AddFormLogicTest {
         again.apply(LabelAnalysis(region = "Côte de Nuits"))
         assertEquals("Côte de Nuits", again.region)
     }
+
+    /** A wine with every detail, a critic's score and a key of a newer version. */
+    private fun detailed(): Wine = app.encave.core.CellarJson.json.decodeFromString(
+        Wine.serializer(),
+        """{"id":"8E3F1C2A-0B1D-4C55-9C7E-2D5B9A4E7F10","name":"Clos des Tilleuls","color":"red","grapes":["Cabernet Sauvignon","Merlot"],""" +
+            """"abv":13.5,"classification":"Cru Bourgeois","lieuDit":"Les Tilleuls","sweetness":"dry",""" +
+            """"grapeShares":{"Cabernet Sauvignon":70,"Merlot":30},"ageing":["oakBarrel","futureVessel"],"farming":"organic",""" +
+            """"farmingCertified":true,"closure":"naturalCork","criticScores":[{"source":"Cellar Review","score":93,"scale":100}],""" +
+            """"futureField":"kept"}""",
+    )
+
+    @Test
+    fun editingAWineKeepsEveryDetailAndTheKeysOfANewerVersion() {
+        val stored = detailed()
+        assertNotNull(stored.unknownKeys["futureField"])
+        val form = WineFormState(stored, 2026)
+        assertEquals("13.5", form.abvText)
+        assertEquals(mapOf("Cabernet Sauvignon" to "70", "Merlot" to "30"), form.grapeShares)
+        // Saved untouched: the same record, critic scores and unknown keys included.
+        assertEquals(stored, form.build())
+        form.abvText = "14,5"
+        form.classification = " Grand Cru "
+        form.ageing = form.ageing - "oakBarrel" + "amphora"
+        form.farming = null
+        form.grapeShares = form.grapeShares + ("Merlot" to "25")
+        val edited = form.build()
+        assertEquals(java.math.BigDecimal("14.5"), edited.abv)
+        assertEquals("Grand Cru", edited.classification)
+        assertEquals(listOf("futureVessel", "amphora"), edited.ageing)
+        assertNull(edited.farming)
+        // Certified only goes with a farming.
+        assertNull(edited.farmingCertified)
+        assertEquals(25, edited.share("Merlot"))
+        assertEquals(stored.criticScores, edited.criticScores)
+        assertEquals(stored.unknownKeys, edited.unknownKeys)
+    }
+
+    @Test
+    fun aSharePerListedGrapeAndAnAlcoholThatIsANumber() {
+        val form = WineFormState(null, 2026)
+        form.name = "Assemblage"
+        form.grapes.addAll(listOf("Grenache", "Syrah"))
+        form.grapeShares = mapOf("Grenache" to "60", "Syrah" to "0", "Mourvèdre" to "40")
+        form.abvText = "abc"
+        assertEquals(true, form.abvInvalid)
+        val wine = form.build()
+        // A share of 0 or of a grape no longer listed is left out.
+        assertEquals(mapOf("Grenache" to 60), wine.grapeShares)
+        assertNull(wine.abv)
+        assertNull(wine.ageing)
+    }
+
+    @Test
+    fun theWineDetailsAreSavedWithWhatWasTyped() {
+        val photo = WineFormPhoto(null)
+        val form = WineFormState(detailed(), 2026, photo)
+        form.lieuDit = "Clos du Moulin"
+        form.dosage = "brut"
+        form.farmingCertified = false
+        val saver = WineFormState.saver(detailed(), 2026, photo)
+        val restored = saver.restore(with(saver) { SaverScope { true }.save(form) }!!)!!
+        assertEquals(form.snapshot(), restored.snapshot())
+        assertEquals(form.build(), restored.build())
+    }
+
+    @Test
+    fun theAiFillsTheAlcoholAndClassificationOnlyWhenEmpty() {
+        val form = WineFormState(null, 2026)
+        assertEquals(true, form.apply(LabelAnalysis(name = "Clos", abv = 13.0, classification = "Grand Cru")))
+        assertEquals("13", form.abvText)
+        assertEquals("Grand Cru", form.classification)
+        // Filled from the label: the next answer may replace it; typed, never.
+        form.apply(LabelAnalysis(abv = 13.5, classification = "Premier Cru"))
+        assertEquals("13.5", form.abvText)
+        form.classification = "Village"
+        form.apply(LabelAnalysis(classification = "Grand Cru"))
+        assertEquals("Village", form.classification)
+        val saved = Wine(name = "Clos", abv = java.math.BigDecimal("12.5"))
+        val completed = LabelAnalysis(abv = 14.0, classification = "Cru Classé").completing(saved)
+        assertEquals(java.math.BigDecimal("12.5"), completed.abv)
+        assertEquals("Cru Classé", completed.classification)
+        assertNotNull(completed.aiCompletedAt)
+    }
 }

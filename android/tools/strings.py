@@ -204,7 +204,6 @@ S = [
  ("rating_label", "Rating", "Note"),
  ("rating_input_none", "No rating", "Sans note"),
  ("drink_note", "How was it?", "Comment était-il ?"),
- ("drink_full_note", "Full tasting note", "Note de dégustation complète"),
  ("occasion_dinner", "Dinner at home", "Dîner à la maison"),
  ("occasion_friends", "With friends", "Entre amis"),
  ("occasion_celebration", "Celebration", "Fête"),
@@ -645,7 +644,7 @@ S = [
  ("help_field_palate", "Taste and structure: sweetness, acidity, tannins, body.", "Goût et structure : sucrosité, acidité, tanins, corps."),
  ("help_field_finish", "How long the flavors last after swallowing.", "Combien de temps les saveurs persistent après avoir avalé."),
  ("help_field_food", "What you ate with it, to remember good pairings.", "Ce que vous avez mangé avec, pour retenir les bons accords."),
- ("help_full_note_footer", "A structured note: appearance, nose, palate, finish and the food you had with it.", "Une note structurée : robe, nez, bouche, finale et le plat qui l’accompagnait."),
+ ("help_full_note_footer", "A guided note: appearance, aromas and structure to pick, and your own words for the nose, palate, finish and the food you had with it.", "Une note guidée : robe, arômes et structure à choisir, et vos propres mots pour le nez, la bouche, la finale et le plat qui l’accompagnait."),
  ("help_field_rack_name", "A name you will recognize: basement left wall, kitchen wine fridge…", "Un nom que vous reconnaîtrez : mur gauche du sous-sol, cave à vin réfrigérée de la cuisine…"),
  ("help_field_rows", "Counted from the top. Rows are lettered A, B, C…", "Comptées depuis le haut. Les rangées sont nommées A, B, C…"),
  ('help_field_columns', 'Counted from the left. Positions are numbered 1, 2, 3…', 'Comptées depuis la gauche. Les positions sont numérotées 1, 2, 3…'),
@@ -749,7 +748,7 @@ S = [
  ("help_drinking_drink", "Swipe a wine to the right, use **Drink** on its page, or tap **Add a tasting** in the Journal and choose **A bottle from my cellar**. When the wine has several bottles, choose the bottle under **Which bottle?**: free bottles come first, and those kept for an occasion say so. The bottle leaves the cellar and its position in the storage becomes free. **Undo** appears for a few seconds.",
   "Balayez un vin vers la droite, utilisez **Boire** sur sa fiche, ou touchez **Noter une dégustation** dans le Journal et choisissez **Une bouteille de ma cave**. Quand le vin a plusieurs bouteilles, choisissez la bouteille sous **Quelle bouteille ?** : les bouteilles libres viennent d’abord, et celles réservées pour une occasion le disent. La bouteille quitte la cave et sa position dans le rangement se libère. **Annuler** reste affiché quelques secondes."),
  ("help_drinking_note_title", "Your note", "Votre note"),
- ('help_drinking_note', 'Add a rating, a few words, an occasion (Dinner at home, With friends…), or open the full tasting note (appearance, nose, palate, finish, food); hiding it again keeps what you wrote. Everything is optional and can be edited later from the Journal. If you close the sheet or leave a note after changing it, Encave asks before discarding it.', 'Ajoutez une note, quelques mots, une occasion (Dîner à la maison, Entre amis…), ou ouvrez la fiche de dégustation complète (robe, nez, bouche, finale, plat) ; la masquer garde ce que vous avez écrit. Tout est facultatif et modifiable plus tard depuis le Journal. Si vous fermez la feuille ou quittez une note après l’avoir modifiée, Encave demande avant de l’abandonner.'),
+ ('help_drinking_note', 'Add a rating, a few words, an occasion (Dinner at home, With friends…), or open **More details** (appearance, aromas, structure, nose, palate, finish, food); hiding it again keeps what you wrote. Everything is optional and can be edited later from the Journal. If you close the sheet or leave a note after changing it, Encave asks before discarding it.', 'Ajoutez une note, quelques mots, une occasion (Dîner à la maison, Entre amis…), ou ouvrez **Plus de détails** (robe, arômes, structure, nez, bouche, finale, plat) ; la masquer garde ce que vous avez écrit. Tout est facultatif et modifiable plus tard depuis le Journal. Si vous fermez la feuille ou quittez une note après l’avoir modifiée, Encave demande avant de l’abandonner.'),
  ("help_drinking_gone_title", "No longer in the cellar", "Plus en cave"),
  ('help_drinking_gone', 'For a bottle that left the cellar without being drunk by you (given away, sold or broken), choose **No longer in cellar** in its menu. For one entered by mistake, choose **Delete bottle**. Deleting a wine deletes its bottles and tastings too. **Undo** puts it all back. A bottle opened by mistake: touch and hold it in the Journal (or open its tasting) and choose **Put back in the cellar**. It returns without a position and its note is deleted; **Undo** restores it.', 'Pour une bouteille sortie de la cave sans que vous l’ayez bue (donnée, vendue ou cassée), choisissez **Plus en cave** dans son menu. Pour une bouteille saisie par erreur, choisissez **Supprimer la bouteille**. Supprimer un vin supprime aussi ses bouteilles et ses dégustations. **Annuler** remet tout en place. Une bouteille ouverte par erreur : maintenez-la appuyée dans le Journal (ou ouvrez sa dégustation) et choisissez **Remettre en cave**. Elle revient sans position et sa note est supprimée ; **Annuler** la rétablit.'),
  ("help_journal_title", "Journal and shopping list", "Journal et liste d’achats"),
@@ -1502,6 +1501,97 @@ S = [
  ("wizard_bins_body", "Each crate or box is a bin, named like B3.", "Chaque caisse ou carton est une case, nommée comme B3."),
  ("wizard_crate_body", "A wooden crate usually holds 6 or 12 bottles.", "Une caisse en bois contient en général 6 ou 12 bouteilles."),
  ("storage_menu", "Actions for %1$s", "Actions pour %1$s"),
+ # Guided tasting sheet (TastingFields).
+ ("tasting_more_details", "More details", "Plus de détails"),
+ ("tasting_section_appearance", "Appearance", "Robe"),
+ ("tasting_section_nose", "Nose", "Nez"),
+ ("tasting_section_palate", "Palate", "Bouche"),
+ ("tasting_intensity", "Intensity", "Intensité"),
+ ("tasting_hue", "Hue", "Teinte"),
+ ("tasting_show_all", "Show all", "Tout afficher"),
+ ("tasting_show_fewer", "Show fewer", "Afficher moins"),
+ ("tasting_aromas", "Aromas", "Arômes"),
+ ("tasting_aroma_search", "Find an aroma", "Chercher un arôme"),
+ ("tasting_more_aromas", "More aromas", "Plus d’arômes"),
+ ("tasting_fewer_aromas", "Fewer aromas", "Moins d’arômes"),
+ ("tasting_aromas_none_found", "No aroma matches.", "Aucun arôme ne correspond."),
+ ("tasting_aromas_other", "Other", "Autres"),
+ ("tasting_structure", "Structure", "Structure"),
+ ("tasting_level_none", "Not noted", "Non noté"),
+ ("tasting_structure_footer", "From low to high; all the way to the left leaves it out.", "De faible à élevé ; tout à gauche pour ne rien noter."),
+ # Rating scales (device preference).
+ ("settings_ratings", "Ratings", "Notes"),
+ ("settings_ratings_body", "How ratings are shown and entered on this device.", "Comment les notes sont affichées et saisies sur cet appareil."),
+ ("rating_scale_stars", "Stars", "Étoiles"),
+ ("rating_scale_20", "Out of 20", "Sur 20"),
+ ("rating_scale_100", "Out of 100", "Sur 100"),
+ ("rating_score_20", "%1$s/20", "%1$s/20"),
+ ("rating_score_100", "%1$s/100", "%1$s/100"),
+ ("rating_approx", "≈\u00a0%1$s", "≈\u00a0%1$s"),
+ ("rating_spoken_20", "%1$s out of 20", "%1$s sur 20"),
+ ("rating_spoken_100", "%1$s out of 100", "%1$s sur 100"),
+ ("rating_spoken_approx", "about %1$s", "environ %1$s"),
+ ("rating_value_score", "Rated %1$s", "Noté %1$s"),
+ ("rating_clear", "Clear rating", "Effacer la note"),
+ ("help_field_rating_20", "Out of 20, by half points. The scale is chosen in Settings.", "Sur 20, au demi-point près. L’échelle se choisit dans les Réglages."),
+ ("help_field_rating_100", "Out of 100, from 50. The scale is chosen in Settings.", "Sur 100, à partir de 50. L’échelle se choisit dans les Réglages."),
+ ("insights_rating_value_20", "%1$s / 20", "%1$s / 20"),
+ ("insights_rating_value_100", "%1$s / 100", "%1$s / 100"),
+ ("insights_year_favorite_score", "Favorite: %1$s, %2$s", "Préféré : %1$s, %2$s"),
+ # Critic scores (wine page).
+ ("detail_critics", "Critic scores", "Notes de la critique"),
+ ("critic_add", "Add a score or award", "Ajouter une note ou une distinction"),
+ ("critic_title", "Critic score", "Note de la critique"),
+ ("critic_source", "Source", "Source"),
+ ("critic_source_hint", "A guide, a magazine or a competition", "Un guide, un magazine ou un concours"),
+ ("critic_kind", "Kind", "Type"),
+ ("critic_kind_100", "Score /100", "Note /100"),
+ ("critic_kind_20", "Score /20", "Note /20"),
+ ("critic_kind_award", "Award", "Distinction"),
+ ("critic_score", "Score", "Note"),
+ ("critic_score_range", "From 0 to %1$d", "De 0 à %1$d"),
+ ("critic_award", "Medal or award", "Médaille ou distinction"),
+ ("critic_note", "Note (optional)", "Remarque (facultatif)"),
+ ("critic_footer", "Typed by you from a guide, a magazine or a sticker on the bottle. Encave looks nothing up.", "Saisies par vous depuis un guide, un magazine ou un macaron sur la bouteille. Encave ne recherche rien."),
+ ("critic_action_edit", "Edit this score", "Modifier cette note"),
+ # Wine details (wine form and page).
+ ("field_abv", "Alcohol", "Alcool"),
+ ("help_field_abv", "As printed on the label, such as 13.5.", "Comme sur l’étiquette, par exemple 13,5."),
+ ("field_classification", "Classification", "Classement"),
+ ("field_lieu_dit", "Lieu-dit or climat", "Lieu-dit ou climat"),
+ ("field_dosage", "Dosage", "Dosage"),
+ ("field_sweetness", "Sweetness", "Douceur"),
+ ("field_grape_shares", "Grape shares", "Part des cépages"),
+ ("help_field_grape_shares", "In percent, for the grapes listed above.", "En pourcentage, pour les cépages listés plus haut."),
+ ("field_ageing", "Ageing", "Élevage"),
+ ("field_farming", "Farming", "Viticulture"),
+ ("field_farming_certified", "Certified", "Certifiée"),
+ ("field_closure", "Closure", "Bouchage"),
+ ("option_not_set", "Not set", "Non renseigné"),
+ ("detail_farming_certified", "%1$s, certified", "%1$s, certifiée"),
+ ("detail_grape_share", "%1$s %2$s", "%1$s %2$s"),
+ ("detail_action_more_details", "Edit the details", "Modifier les détails"),
+ ("help_wine_details_footer", "All optional: kept closed, adding a bottle stays quick.", "Tout est facultatif : fermé, l’ajout d’une bouteille reste rapide."),
+ # Insights.
+ ("insights_aromas", "Top aromas", "Arômes principaux"),
+ ("insights_by_farming", "By farming", "Par viticulture"),
+ ("insights_by_closure", "By closure", "Par bouchage"),
+ # Sample cellar.
+ ("sample_gold_medal", "Gold medal", "Médaille d’or"),
+ ("sample_critic_note", "Tasted from barrel", "Dégusté sur fût"),
+ # Help.
+ ("help_drinking_guided_title", "Guided tasting", "Dégustation guidée"),
+ ("help_drinking_guided", "Under **More details**, note the appearance (intensity and hue), pick aromas by family and set the structure, from low to high. The aromas and hues that suit the wine’s style come first; **More aromas** and the search find the others. A chosen aroma has a check mark. Everything is optional, and your own words keep their fields.",
+  "Sous **Plus de détails**, notez la robe (intensité et teinte), choisissez des arômes par famille et réglez la structure, de faible à élevé. Les arômes et teintes qui conviennent au style du vin viennent d’abord ; **Plus d’arômes** et la recherche trouvent les autres. Un arôme choisi porte une coche. Tout est facultatif, et vos propres mots gardent leurs champs."),
+ ("help_drinking_scale_title", "Rating scale", "Échelle de notation"),
+ ("help_drinking_scale", "In **Settings**, under **Ratings**, choose **Stars**, **Out of 20** or **Out of 100** for this device. Ratings are shown and entered on that scale. A score out of 20 or 100 also keeps its stars, so your other devices still show it; a rating given in stars shows as an approximate score, such as ≈ 90/100.",
+  "Dans les **Réglages**, sous **Notes**, choisissez **Étoiles**, **Sur 20** ou **Sur 100** pour cet appareil. Les notes sont affichées et saisies sur cette échelle. Une note sur 20 ou sur 100 garde aussi ses étoiles, pour que vos autres appareils l’affichent ; une note donnée en étoiles s’affiche comme une note approchée, par exemple ≈ 90/100."),
+ ("help_adding_details_title", "Wine details", "Détails du vin"),
+ ("help_adding_details", "Under **More details**: the alcohol, a classification, the lieu-dit, the dosage of a sparkling wine or the sweetness of a still one, the share of each grape, the ageing, the farming and the closure. All optional; the wine’s page lists those you fill under **Details**.",
+  "Sous **Plus de détails** : le degré d’alcool, un classement, le lieu-dit, le dosage d’un effervescent ou la douceur d’un vin tranquille, la part de chaque cépage, l’élevage, la viticulture et le bouchage. Tout est facultatif ; la fiche du vin liste ceux que vous remplissez sous **Détails**."),
+ ("help_adding_critics_title", "Critic scores", "Notes de la critique"),
+ ("help_adding_critics", "On a wine’s page, **Critic scores** keeps the scores and awards you add: the source, a score out of 100 or 20 or an award such as a medal, and a note. You type them yourself, from a guide, a magazine or a sticker on the bottle: Encave looks nothing up and sends nothing.",
+  "Sur la fiche d’un vin, **Notes de la critique** garde les notes et distinctions que vous ajoutez : la source, une note sur 100 ou sur 20 ou une distinction comme une médaille, et une remarque. Vous les saisissez vous-même, depuis un guide, un magazine ou un macaron sur la bouteille : Encave ne recherche rien et n’envoie rien."),
 ]
 
 P = [
@@ -1550,7 +1640,215 @@ P = [
  ("stat_bottles_opened", ("bottle opened", "bottles opened"), ("bouteille ouverte", "bouteilles ouvertes")),
  ("stat_tasted_elsewhere", ("tasted elsewhere", "tasted elsewhere"), ("goûté ailleurs", "goûtés ailleurs")),
  ("chart_item_bottles", ("%1$s: %2$d bottle", "%1$s: %2$d bottles"), ("%1$s : %2$d bouteille", "%1$s : %2$d bouteilles")),
+ ("chart_item_tastings", ("%1$s: %2$d tasting", "%1$s: %2$d tastings"), ("%1$s : %2$d dégustation", "%1$s : %2$d dégustations")),
 ]
+
+# The shared vocabulary of the guided tasting sheet and the wine details
+# (fixtures/tasting-vocabulary.json): records store ids, the app shows these labels.
+# Each id is the string vocab_<kind>_<id>, its dots made underscores
+# (fruit.redCherry of kind aroma: vocab_aroma_fruit_redCherry); the app maps ids to
+# them in ui/components/VocabularyLabels.kt. --check fails when an id of the fixture
+# has no label here.
+VOCAB = {
+ "aromaFamily": [
+  ("redFruit", "Red fruit", "Fruits rouges"),
+  ("blackFruit", "Black fruit", "Fruits noirs"),
+  ("citrus", "Citrus", "Agrumes"),
+  ("orchardFruit", "Orchard fruit", "Fruits du verger"),
+  ("stoneTropicalFruit", "Stone and tropical fruit", "Fruits à noyau et exotiques"),
+  ("floral", "Floral", "Floral"),
+  ("herbal", "Herbal", "Végétal"),
+  ("spice", "Spice", "Épices"),
+  ("oakToast", "Oak and toast", "Boisé et grillé"),
+  ("earthMineral", "Earth and mineral", "Terre et minéral"),
+  ("animalLeather", "Animal and leather", "Animal et cuir"),
+  ("pastryButter", "Pastry and butter", "Pâtisserie et beurre"),
+  ("honeyDriedFruit", "Honey and dried fruit", "Miel et fruits secs"),
+ ],
+ "aroma": [
+  ("fruit.strawberry", "Strawberry", "Fraise"),
+  ("fruit.raspberry", "Raspberry", "Framboise"),
+  ("fruit.redCherry", "Red cherry", "Cerise rouge"),
+  ("fruit.redcurrant", "Redcurrant", "Groseille"),
+  ("fruit.blackberry", "Blackberry", "Mûre"),
+  ("fruit.blackcurrant", "Blackcurrant", "Cassis"),
+  ("fruit.blackCherry", "Black cherry", "Cerise noire"),
+  ("fruit.plum", "Plum", "Prune"),
+  ("fruit.lemon", "Lemon", "Citron"),
+  ("fruit.grapefruit", "Grapefruit", "Pamplemousse"),
+  ("fruit.orangePeel", "Orange peel", "Zeste d’orange"),
+  ("fruit.greenApple", "Green apple", "Pomme verte"),
+  ("fruit.pear", "Pear", "Poire"),
+  ("fruit.peach", "Peach", "Pêche"),
+  ("fruit.apricot", "Apricot", "Abricot"),
+  ("fruit.pineapple", "Pineapple", "Ananas"),
+  ("fruit.passionFruit", "Passion fruit", "Fruit de la passion"),
+  ("fruit.lychee", "Lychee", "Litchi"),
+  ("floral.rose", "Rose", "Rose"),
+  ("floral.violet", "Violet", "Violette"),
+  ("floral.acacia", "Acacia", "Acacia"),
+  ("floral.elderflower", "Elderflower", "Fleur de sureau"),
+  ("herbal.cutGrass", "Cut grass", "Herbe coupée"),
+  ("herbal.greenPepper", "Green pepper", "Poivron vert"),
+  ("herbal.mint", "Mint", "Menthe"),
+  ("herbal.garrigue", "Garrigue", "Garrigue"),
+  ("spice.blackPepper", "Black pepper", "Poivre noir"),
+  ("spice.clove", "Clove", "Clou de girofle"),
+  ("spice.cinnamon", "Cinnamon", "Cannelle"),
+  ("spice.liquorice", "Liquorice", "Réglisse"),
+  ("oak.vanilla", "Vanilla", "Vanille"),
+  ("oak.toast", "Toast", "Pain grillé"),
+  ("oak.smoke", "Smoke", "Fumée"),
+  ("oak.cedar", "Cedar", "Cèdre"),
+  ("earth.flint", "Flint", "Pierre à fusil"),
+  ("earth.petrol", "Petrol", "Hydrocarbure"),
+  ("earth.mushroom", "Mushroom", "Champignon"),
+  ("earth.forestFloor", "Forest floor", "Sous-bois"),
+  ("animal.leather", "Leather", "Cuir"),
+  ("animal.game", "Game", "Gibier"),
+  ("animal.tobacco", "Tobacco", "Tabac"),
+  ("pastry.brioche", "Brioche", "Brioche"),
+  ("pastry.butter", "Butter", "Beurre"),
+  ("pastry.hazelnut", "Hazelnut", "Noisette"),
+  ("dried.honey", "Honey", "Miel"),
+  ("dried.raisin", "Raisin", "Raisin sec"),
+  ("dried.fig", "Fig", "Figue"),
+  ("dried.walnut", "Walnut", "Noix"),
+ ],
+ "structure": [
+  ("sweetness", "Sweetness", "Sucre"),
+  ("acidity", "Acidity", "Acidité"),
+  ("tannin", "Tannin", "Tanins"),
+  ("body", "Body", "Corps"),
+  ("alcohol", "Alcohol", "Alcool"),
+  ("length", "Length", "Longueur"),
+ ],
+ # Masculine in French (le sucre, les tanins, le corps, l’alcool); acidity and length,
+ # feminine, take the LEVEL_FEMININE words below.
+ "level": [
+  ("low", "Low", "Faible"),
+  ("mediumMinus", "Medium−", "Moyen−"),
+  ("medium", "Medium", "Moyen"),
+  ("mediumPlus", "Medium+", "Moyen+"),
+  ("high", "High", "Élevé"),
+  ("dry", "Dry", "Sec"),
+  ("offDry", "Off-dry", "Demi-sec"),
+  ("sweet", "Sweet", "Doux"),
+  ("luscious", "Luscious", "Liquoreux"),
+  ("light", "Light", "Léger"),
+  ("full", "Full", "Ample"),
+  ("short", "Short", "Court"),
+  ("long", "Long", "Long"),
+ ],
+ # Of the wine's color (la robe, l’intensité: feminine).
+ "intensity": [
+  ("pale", "Pale", "Pâle"),
+  ("medium", "Medium", "Moyenne"),
+  ("deep", "Deep", "Profonde"),
+ ],
+ "hue": [
+  ("purple", "Purple", "Pourpre"),
+  ("ruby", "Ruby", "Rubis"),
+  ("garnet", "Garnet", "Grenat"),
+  ("tawny", "Tawny", "Tuilé"),
+  ("lemonGreen", "Lemon-green", "Jaune-vert"),
+  ("lemon", "Lemon", "Jaune citron"),
+  ("gold", "Gold", "Doré"),
+  ("amber", "Amber", "Ambré"),
+  ("pink", "Pink", "Rose"),
+  ("salmon", "Salmon", "Saumon"),
+  ("onionSkin", "Onion skin", "Pelure d’oignon"),
+  ("orange", "Orange", "Orangé"),
+  ("brown", "Brown", "Brun"),
+ ],
+ "dosage": [
+  ("brutNature", "Brut nature", "Brut nature"),
+  ("extraBrut", "Extra brut", "Extra-brut"),
+  ("brut", "Brut", "Brut"),
+  ("extraDry", "Extra dry", "Extra-dry"),
+  ("sec", "Sec", "Sec"),
+  ("demiSec", "Demi-sec", "Demi-sec"),
+  ("doux", "Doux", "Doux"),
+ ],
+ "sweetness": [
+  ("dry", "Dry", "Sec"),
+  ("offDry", "Off-dry", "Demi-sec"),
+  ("mediumSweet", "Medium sweet", "Moelleux"),
+  ("sweet", "Sweet", "Doux"),
+ ],
+ "ageing": [
+  ("oakBarrel", "Oak barrel", "Fût de chêne"),
+  ("newOak", "New oak", "Fût neuf"),
+  ("foudre", "Large cask", "Foudre"),
+  ("stainlessSteel", "Stainless steel", "Cuve inox"),
+  ("concrete", "Concrete", "Cuve béton"),
+  ("amphora", "Amphora", "Amphore"),
+  ("onLees", "On lees", "Sur lies"),
+ ],
+ # La viticulture: feminine.
+ "farming": [
+  ("organic", "Organic", "Biologique"),
+  ("biodynamic", "Biodynamic", "Biodynamique"),
+  ("natural", "Natural", "Nature"),
+  ("sustainable", "Sustainable", "Durable"),
+  ("conventional", "Conventional", "Conventionnelle"),
+ ],
+ "closure": [
+  ("naturalCork", "Natural cork", "Liège naturel"),
+  ("technicalCork", "Technical cork", "Bouchon technique"),
+  ("screwCap", "Screw cap", "Capsule à vis"),
+  ("glass", "Glass stopper", "Bouchon en verre"),
+  ("synthetic", "Synthetic cork", "Bouchon synthétique"),
+  ("crownCap", "Crown cap", "Capsule couronne"),
+ ],
+}
+
+# The level words of acidity and length, feminine in French (l’acidité, la longueur).
+LEVEL_FEMININE = [
+ ("low", "Low", "Faible"),
+ ("mediumMinus", "Medium−", "Moyenne−"),
+ ("medium", "Medium", "Moyenne"),
+ ("mediumPlus", "Medium+", "Moyenne+"),
+ ("high", "High", "Élevée"),
+ ("short", "Short", "Courte"),
+ ("long", "Long", "Longue"),
+]
+
+
+def vocab_key(kind, ident):
+    return "vocab_%s_%s" % (kind, ident.replace(".", "_"))
+
+
+S += [(vocab_key(kind, ident), en, fr) for kind, rows in VOCAB.items() for ident, en, fr in rows]
+S += [("level_feminine_" + ident, en, fr) for ident, en, fr in LEVEL_FEMININE]
+
+
+def fixture_ids():
+    """(kind, id) of every id in fixtures/tasting-vocabulary.json, by the kinds of Vocabulary.Kind."""
+    import json
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "fixtures", "tasting-vocabulary.json")
+    data = json.load(open(path, encoding="utf-8"))
+    ids = [("aromaFamily", f["id"]) for f in data["aromaFamilies"]]
+    ids += [("aroma", a["id"]) for f in data["aromaFamilies"] for a in f["aromas"]]
+    ids += [("structure", a["id"]) for a in data["structure"]]
+    ids += [("level", w) for words in data["structureScales"].values() for w in words]
+    ids += [("intensity", i) for i in data["intensities"]]
+    ids += [("hue", h["id"]) for h in data["hues"]]
+    for kind in ("dosage", "sweetness", "ageing", "farming", "closure"):
+        ids += [(kind, i) for i in data[kind]]
+    return sorted(set(ids))
+
+
+def vocabulary_problems():
+    rows = {row[0]: row for row in S}
+    problems = []
+    for kind, ident in fixture_ids():
+        row = rows.get(vocab_key(kind, ident))
+        if row is None:
+            problems.append(f"no English or French label for the {kind} id {ident!r} of fixtures/tasting-vocabulary.json ({vocab_key(kind, ident)})")
+        elif not row[1].strip() or not row[2].strip():
+            problems.append(f"empty label for the {kind} id {ident!r}: {row[0]}")
+    return problems
 
 # French typography: a narrow no-break space before ? ! ; and inside « », and a no-break
 # space before :, so the mark never starts or ends a line. URLs and format specifiers are
@@ -1713,6 +2011,7 @@ def check(res):
         texts = [row[idx] for row in others] + [form for row in P for form in row[idx]]
         for name, word in help_words_missing([(row[0], row[idx]) for row in helps], texts):
             problems.append(f"help names something no other {lang} string holds: {word!r} ({name})")
+    problems += vocabulary_problems()
     for problem in problems:
         print(problem)
     return 1 if problems else 0

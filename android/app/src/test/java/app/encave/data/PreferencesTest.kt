@@ -2,6 +2,7 @@ package app.encave.data
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -31,5 +32,12 @@ class PreferencesTest {
         assertTrue(Preferences(context).dynamicColor.value)
         Preferences(context).setDynamicColor(false)
         assertFalse(Preferences(context).dynamicColor.value)
+    }
+
+    @Test
+    fun ratingsInStarsUntilAnotherScaleIsChosen() {
+        assertEquals(app.encave.core.RatingScale.Stars, Preferences(context).ratingScale.value)
+        Preferences(context).setRatingScale(app.encave.core.RatingScale.Hundred)
+        assertEquals(app.encave.core.RatingScale.Hundred, Preferences(context).ratingScale.value)
     }
 }

@@ -510,6 +510,7 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
                         DrinkingWindowField(form)
                         Header(R.string.add_more_details)
                         WineMoreDetails(form, known)
+                        WineDetailsSection(form, collapsible = false)
                     }
                 }
             }
@@ -906,7 +907,7 @@ private fun EditWineForm(viewModel: AppViewModel, navigator: AppNavigator, wineI
                     WineFormField.Window -> window
                     WineFormField.Appellation, WineFormField.Region, WineFormField.Country, WineFormField.Grapes -> origin
                     // Tags and notes: done by WineMoreDetails.
-                    WineFormField.Tags, WineFormField.Notes, null -> null
+                    WineFormField.Tags, WineFormField.Notes, WineFormField.Details, null -> null
                 } ?: return@LaunchedEffect
                 delay(FIELD_TARGET_DELAY_MS)
                 requester.bringIntoView()
@@ -918,6 +919,7 @@ private fun EditWineForm(viewModel: AppViewModel, navigator: AppNavigator, wineI
             DrinkingWindowField(form)
             Header(R.string.add_more_details, Modifier.bringIntoViewRequester(origin))
             WineMoreDetails(form, known, target = field)
+            WineDetailsSection(form, collapsible = true, initiallyExpanded = wine.hasMoreDetails, target = field)
         }
     }
 }

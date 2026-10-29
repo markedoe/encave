@@ -151,10 +151,7 @@ fun InsightsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 StatTile(Formats.integer(stats.bottleCount), pluralStringResource(R.plurals.stat_bottles_in_cellar, stats.bottleCount))
                 StatTile(Formats.integer(stats.wineCount), pluralStringResource(R.plurals.stat_wines_with_bottles, stats.wineCount))
                 StatTile(Formats.integer(stats.consumedCount), pluralStringResource(R.plurals.stat_bottles_opened, stats.consumedCount))
-                StatTile(
-                    stats.averageRating?.let { stringResource(R.string.insights_rating_value, Formats.decimal(it)) } ?: "–",
-                    stringResource(R.string.insights_avg_rating),
-                )
+                StatTile(averageRatingText(cellar, stats.averageRating), stringResource(R.string.insights_avg_rating))
             }
             ChartCard(stringResource(R.string.insights_value)) {
                 if (stats.valueByCurrency.isEmpty()) {
@@ -210,6 +207,18 @@ fun InsightsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 }
             }
             if (stats.topGrapes.isNotEmpty()) ChartCard(stringResource(R.string.insights_grapes)) { Bars(stats.topGrapes.map { BarItem(it.label, it.count) }) }
+            // From the guided tastings and the wine details: only once some say it.
+            if (stats.topAromas.isNotEmpty()) {
+                ChartCard(stringResource(R.string.insights_aromas)) {
+                    Bars(vocabularyBars(stats.topAromas, app.encave.core.Vocabulary.Kind.Aroma), counted = R.plurals.chart_item_tastings)
+                }
+            }
+            if (stats.byFarming.isNotEmpty()) {
+                ChartCard(stringResource(R.string.insights_by_farming)) { Bars(vocabularyBars(stats.byFarming, app.encave.core.Vocabulary.Kind.Farming)) }
+            }
+            if (stats.byClosure.isNotEmpty()) {
+                ChartCard(stringResource(R.string.insights_by_closure)) { Bars(vocabularyBars(stats.byClosure, app.encave.core.Vocabulary.Kind.Closure)) }
+            }
             ChartCard(stringResource(R.string.insights_by_month)) { MonthColumns(stats.consumptionByMonth) }
         }
     }
@@ -295,15 +304,22 @@ private fun StyleDonut(stats: CellarStatistics) {
 
 private class BarItem(val label: String, val value: Int, val icon: (@Composable () -> Unit)? = null)
 
-/** Horizontal bars in one hue (magnitude), each with its label and value as text. */
+/** Vocabulary ids counted by the core, as bars labeled in the person's language. */
 @Composable
-private fun Bars(items: List<BarItem>) {
+private fun vocabularyBars(slices: List<CellarStatistics.Slice>, kind: app.encave.core.Vocabulary.Kind): List<BarItem> {
+    val resources = LocalResources.current
+    return slices.map { BarItem(app.encave.ui.components.VocabularyLabels.label(resources, kind, it.label), it.count) }
+}
+
+/** Horizontal bars in one hue (magnitude), each with its label and value as text; [counted] says what is counted, for TalkBack. */
+@Composable
+private fun Bars(items: List<BarItem>, counted: Int = R.plurals.chart_item_bottles) {
     val max = items.maxOfOrNull { it.value }?.coerceAtLeast(1) ?: 1
     val bar = MaterialTheme.colorScheme.primary
     val track = MaterialTheme.colorScheme.surfaceVariant
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
         items.forEach { item ->
-            val description = pluralStringResource(R.plurals.chart_item_bottles, item.value, item.label, item.value)
+            val description = pluralStringResource(counted, item.value, item.label, item.value)
             Column(Modifier.clearAndSetSemantics { contentDescription = description }) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
                     item.icon?.invoke()
@@ -560,7 +576,7 @@ private fun YearInWineCard(cellar: Cellar) {
                     if (recap.discoveries > 0) YearFigure(recap.discoveries, pluralStringResource(R.plurals.stat_tasted_elsewhere, recap.discoveries))
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
-                    recap.favorite?.let { (name, rating) -> YearFact(Icons.Outlined.Star, androidx.compose.ui.res.pluralStringResource(R.plurals.insights_year_favorite, rating, name, rating)) }
+                    recap.favorite?.let { (name, rating) -> YearFact(Icons.Outlined.Star, favoriteText(name, rating, recap.favoriteScore100)) }
                     recap.topRegion?.let { YearFact(Icons.Outlined.Map, stringResource(R.string.insights_year_region, it)) }
                     recap.topColor?.let { YearFact(Icons.Outlined.WineBar, stringResource(R.string.insights_year_style, stringResource(it.labelRes))) }
                     recap.topOccasion?.let { occasion ->
@@ -641,4 +657,26 @@ private fun YearFact(icon: androidx.compose.ui.graphics.vector.ImageVector, text
         Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
         Text(text, style = MaterialTheme.typography.bodyMedium)
     }
+}
+
+/** The average rating of the bottles opened, on the device's scale: "4.2 / 5", "16.5 / 20" or "91.0 / 100". */
+@Composable
+private fun averageRatingText(cellar: Cellar, stars: Double?): String {
+    val scale = app.encave.ui.components.LocalRatingScale.current
+    if (scale == app.encave.core.RatingScale.Stars) return stars?.let { stringResource(R.string.insights_rating_value, Formats.decimal(it)) } ?: "–"
+    val values = cellar.consumedBottles.mapNotNull { bottle -> bottle.tasting?.let { app.encave.core.Score.shown(it.rating, it.score100, scale) } }
+    if (values.isEmpty()) return "–"
+    val res = if (scale == app.encave.core.RatingScale.Twenty) R.string.insights_rating_value_20 else R.string.insights_rating_value_100
+    return stringResource(res, Formats.decimal(values.average()))
+}
+
+/** "Favorite: Clos des Tilleuls, 5 stars", or with its score on the device's scale ("95/100"). */
+@Composable
+private fun favoriteText(name: String, rating: Int, score100: Double?): String {
+    val scale = app.encave.ui.components.LocalRatingScale.current
+    if (scale == app.encave.core.RatingScale.Stars) {
+        return androidx.compose.ui.res.pluralStringResource(R.plurals.insights_year_favorite, rating, name, rating)
+    }
+    val text = app.encave.ui.components.RatingTexts.score(LocalResources.current, rating, score100, scale).orEmpty()
+    return stringResource(R.string.insights_year_favorite_score, name, text)
 }

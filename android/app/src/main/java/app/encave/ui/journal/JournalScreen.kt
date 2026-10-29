@@ -75,7 +75,6 @@ import app.encave.ui.components.Formats
 import app.encave.ui.components.LocalSnackbarHostState
 import app.encave.ui.components.WhenLoaded
 import app.encave.ui.components.rememberRetained
-import app.encave.ui.components.RatingStars
 import app.encave.ui.components.SectionHeader
 import app.encave.ui.components.StyleLabel
 import androidx.compose.foundation.layout.Spacer
@@ -127,7 +126,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import app.encave.ui.components.ListDetailPanes
 import app.encave.ui.discoveries.DiscoveryEditorScreen
-import androidx.compose.ui.res.pluralStringResource
 import app.encave.core.bottleToOpen
 import app.encave.ui.drink.DrinkSheet
 import app.encave.ui.drink.rememberDrinking
@@ -463,7 +461,7 @@ private fun TastingRow(
         source,
         wine?.displayName ?: stringResource(R.string.unknown_wine),
         style,
-        tasting?.rating?.let { pluralStringResource(R.plurals.journal_rating_stars, it, it) },
+        app.encave.ui.components.spokenRating(tasting?.rating, tasting?.score100),
         Formats.day(date),
         tasting?.occasion?.takeIf { it.isNotBlank() },
         tasting?.note?.takeIf { it.isNotBlank() },
@@ -497,7 +495,7 @@ private fun TastingRow(
             headlineContent = { Text(wine?.displayName ?: stringResource(R.string.unknown_wine), maxLines = 2, overflow = TextOverflow.Ellipsis) },
             supportingContent = {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    tasting?.rating?.let { RatingStars(it) }
+                    tasting?.rating?.let { app.encave.ui.components.RatingDisplay(it, tasting.score100) }
                     tasting?.note?.takeIf { it.isNotBlank() }?.let { Text(it, maxLines = 3, overflow = TextOverflow.Ellipsis) }
                     tasting?.occasion?.takeIf { it.isNotBlank() }?.let {
                         Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
@@ -607,7 +605,7 @@ private fun TastingForm(viewModel: AppViewModel, navigator: AppNavigator, bottle
                     Text(stringResource(R.string.action_show_wine))
                 }
             }
-            TastingFields(form)
+            TastingFields(form, color = wine?.color)
             TextButton(onClick = {
                 viewModel.putBack(bottle.id)
                 navigator.back()

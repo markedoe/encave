@@ -361,6 +361,8 @@ fun sampleLabels(resources: Resources) = SampleData.Labels(
     merchant = resources.getString(R.string.sample_merchant),
     tagBirthYear = resources.getString(R.string.sample_tag_birth_year),
     occasion2 = resources.getString(R.string.sample_occasion2),
+    goldMedal = resources.getString(R.string.sample_gold_medal),
+    criticNote = resources.getString(R.string.sample_critic_note),
 )
 
 val Discovery.Setting.labelRes: Int

@@ -72,6 +72,8 @@ class EncaveApplication : Application() {
         super.onCreate()
         // Before any request: they say "Encave/<version>", not the device model.
         Http.setVersion(BuildConfig.VERSION_NAME)
+        // Before any search: the core matches aromas, closures… by their labels in the person's language.
+        app.encave.ui.components.VocabularyLabels.install(this)
         sync.start()
         // Widgets follow every change, made here or synced from another device.
         WidgetPublisher(

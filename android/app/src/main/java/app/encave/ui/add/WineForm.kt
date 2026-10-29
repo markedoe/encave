@@ -120,6 +120,20 @@ class WineFormState(
     val tags = mutableStateListOf<String>().apply { initial?.tags?.let { addAll(it) } }
     /** Tag being typed; added on save so nothing is lost. */
     var tagInput by mutableStateOf("")
+
+    /** Under "More details": alcohol (as typed), classification, lieu-dit, and vocabulary ids. */
+    var abvText by mutableStateOf(initial?.abv?.let { abvText(it) }.orEmpty())
+    var classification by mutableStateOf(initial?.classification.orEmpty())
+    var lieuDit by mutableStateOf(initial?.lieuDit.orEmpty())
+    var dosage by mutableStateOf(initial?.dosage)
+    var sweetness by mutableStateOf(initial?.sweetness)
+
+    /** The share of each grape in percent, as typed, by the grape as listed. */
+    var grapeShares by mutableStateOf(initial?.let { wine -> wine.grapes.mapNotNull { g -> wine.share(g)?.let { g to it.toString() } }.toMap() }.orEmpty())
+    var ageing by mutableStateOf(initial?.ageing.orEmpty())
+    var farming by mutableStateOf(initial?.farming)
+    var farmingCertified by mutableStateOf(initial?.farmingCertified == true)
+    var closure by mutableStateOf(initial?.closure)
     var showErrors by mutableStateOf(false)
 
     /** Photo already stored for this wine, a new prepared JPEG, or removal. */
@@ -146,6 +160,11 @@ class WineFormState(
     var windowEnabled by mutableStateOf(initial == null || manualWindow != null)
 
     val vintage: Int? get() = vintageText.trim().toIntOrNull()?.takeIf { it in 1800..2200 }
+
+    /** The alcohol typed ("13,5" or "13.5"), between 0 and 100; null when empty or not a number. */
+    val abv: java.math.BigDecimal?
+        get() = abvText.trim().replace(',', '.').toBigDecimalOrNull()?.takeIf { it > java.math.BigDecimal.ZERO && it <= java.math.BigDecimal(100) }
+    val abvInvalid: Boolean get() = abvText.isNotBlank() && abv == null
     val vintageInvalid: Boolean get() = vintageText.isNotBlank() && vintage == null
     val nameMissing: Boolean get() = name.isBlank()
 
@@ -192,6 +211,9 @@ class WineFormState(
             this.color = color
             autoFilled["color"] = color
         }
+        // Alcohol and classification, when printed on the label.
+        analysis.abv?.let { value -> fill("abv", abvText, abvText(value)) { abvText = it } }
+        fill("classification", classification, analysis.classification) { classification = it }
         if (manualWindow == null && analysis.drinkFrom > 1900 && analysis.drinkUntil >= analysis.drinkFrom) {
             manualWindow = analysis.drinkFrom..analysis.drinkUntil
             windowEnabled = true
@@ -212,10 +234,24 @@ class WineFormState(
         appellation = wine.appellation.orEmpty()
         grapes.clear()
         grapes.addAll(wine.grapes)
+        // What another vintage shares; the alcohol changes from one to the next.
+        classification = wine.classification.orEmpty()
+        lieuDit = wine.lieuDit.orEmpty()
+        dosage = wine.dosage
+        sweetness = wine.sweetness
+        grapeShares = wine.grapes.mapNotNull { g -> wine.share(g)?.let { g to it.toString() } }.toMap()
+        ageing = wine.ageing.orEmpty()
+        farming = wine.farming
+        farmingCertified = wine.farmingCertified == true
+        closure = wine.closure
         autoFilled.clear()
     }
 
     companion object {
+        /** "13.5", "12": the alcohol as typed, with a dot (the field takes a comma too). */
+        fun abvText(value: java.math.BigDecimal): String = value.stripTrailingZeros().toPlainString()
+        fun abvText(value: Double): String = abvText(java.math.BigDecimal(value.toString()))
+
         /** Saves what was typed and chosen (not the photo, kept in [photo]). */
         fun saver(initial: Wine?, year: Int, photo: WineFormPhoto): Saver<WineFormState, Any> = listSaver(
             save = { f ->
@@ -224,6 +260,8 @@ class WineFormState(
                     ArrayList(f.grapes), f.grapeInput, f.notes, ArrayList(f.tags), f.tagInput, f.showErrors, f.photoRemoved,
                     f.aiCompletedAt?.toString(), f.manualWindow?.first, f.manualWindow?.last, f.windowEnabled,
                     ArrayList(f.autoFilled.keys), ArrayList(f.autoFilled.values.map { (it as? WineColor)?.raw ?: it.toString() }),
+                    f.abvText, f.classification, f.lieuDit, f.dosage, f.sweetness,
+                    ArrayList(f.grapeShares.keys), ArrayList(f.grapeShares.values), ArrayList(f.ageing), f.farming, f.farmingCertified, f.closure,
                 )
             },
             restore = { v ->
@@ -255,6 +293,16 @@ class WineFormState(
                             else -> value
                         }
                     }
+                    abvText = v[21] as String
+                    classification = v[22] as String
+                    lieuDit = v[23] as String
+                    dosage = v[24] as String?
+                    sweetness = v[25] as String?
+                    grapeShares = (v[26] as List<String>).zip(v[27] as List<String>).toMap()
+                    ageing = (v[28] as List<String>).toList()
+                    farming = v[29] as String?
+                    farmingCertified = v[30] as Boolean
+                    closure = v[31] as String?
                 }
             },
         )
@@ -264,6 +312,7 @@ class WineFormState(
     fun snapshot(): List<Any?> = listOf(
         name, producer, vintageText, color, region, country, appellation, grapes.toList(), grapeInput, notes,
         tags.toList(), tagInput, newPhoto != null, photoRemoved, manualWindow, windowEnabled, aiCompletedAt,
+        abvText, classification, lieuDit, dosage, sweetness, grapeShares, ageing, farming, farmingCertified, closure,
     )
 
     fun addGrape() {
@@ -291,13 +340,30 @@ class WineFormState(
             tags = tags.toList().ifEmpty { null },
             aiCompletedAt = aiCompletedAt,
             labelFrame = labelFrame,
+            // A typed alcohol that is not a number leaves the stored one.
+            abv = if (abvInvalid) initial?.abv else abv,
+            classification = classification.orNull(),
+            lieuDit = lieuDit.orNull(),
+            dosage = dosage,
+            sweetness = sweetness,
+            grapeShares = Wine.keptShares(
+                grapes.mapNotNull { grape -> grapeShares[grape]?.trim()?.toIntOrNull()?.let { grape to it } }.toMap().ifEmpty { null },
+                grapes.toList(),
+            ),
+            ageing = ageing.ifEmpty { null },
+            farming = farming,
+            farmingCertified = if (farming != null && farmingCertified) true else null,
+            closure = closure,
         )
     }
 }
 
 /** A field of the wine form, to open "Edit wine" scrolled to it (a detail tapped on the wine's page). */
 enum class WineFormField {
-    Name, Producer, Vintage, Style, Appellation, Region, Country, Grapes, Window, Tags, Notes;
+    Name, Producer, Vintage, Style, Appellation, Region, Country, Grapes, Window, Tags, Notes,
+
+    /** Under "More details": alcohol, classification, dosage, grape shares, ageing, farming, closure. */
+    Details;
 
     companion object {
         fun from(name: String?): WineFormField? = entries.firstOrNull { it.name == name }

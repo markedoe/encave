@@ -34,6 +34,12 @@ import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.StarOutline
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material.icons.outlined.TableChart
@@ -191,6 +197,7 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 },
                 trailingContent = { Switch(checked = studioLook, onCheckedChange = null) },
             )
+            RatingScaleSetting(viewModel)
 
             AiSettingsSection(viewModel)
 
@@ -430,3 +437,33 @@ private fun RemindersSection() {
 private fun currencyName(code: String): String =
     runCatching { java.util.Currency.getInstance(code).getDisplayName(java.util.Locale.getDefault()) }
         .getOrNull()?.takeIf { it.isNotBlank() && it != code }?.let { "$it ($code)" } ?: code
+
+/** Settings › Ratings: stars, out of 20 or out of 100, on this device only. */
+@Composable
+private fun RatingScaleSetting(viewModel: AppViewModel) {
+    val scale by viewModel.preferences.ratingScale.collectAsStateWithLifecycle()
+    val options = listOf(
+        app.encave.core.RatingScale.Stars to R.string.rating_scale_stars,
+        app.encave.core.RatingScale.Twenty to R.string.rating_scale_20,
+        app.encave.core.RatingScale.Hundred to R.string.rating_scale_100,
+    )
+    ListItem(
+        leadingContent = { Icon(Icons.Outlined.StarOutline, contentDescription = null) },
+        headlineContent = { Text(stringResource(R.string.settings_ratings), Modifier.semantics { heading() }) },
+        supportingContent = {
+            Column(verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
+                Text(stringResource(R.string.settings_ratings_body))
+                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().testTag("settings.rating_scale")) {
+                    options.forEachIndexed { index, (option, label) ->
+                        SegmentedButton(
+                            selected = scale == option,
+                            onClick = { viewModel.preferences.setRatingScale(option) },
+                            shape = SegmentedButtonDefaults.itemShape(index, options.size),
+                            modifier = Modifier.testTag("settings.rating_scale.${option.raw}"),
+                        ) { Text(stringResource(label), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
+                    }
+                }
+            }
+        },
+    )
+}

@@ -49,6 +49,13 @@ data class LabelAnalysis(
     @Transient val placement: AiLabelPlacement? = null,
     /** The ID of the photo read (its content's hash, as [app.encave.data.PhotoStore] names it). */
     @Transient val photoId: String? = null,
+    /**
+     * The alcohol by volume printed on the label, in percent; null when not printed or not
+     * understood. Read when the answer is read ([AiService.decode]), never failing it.
+     */
+    @Transient val abv: Double? = null,
+    /** A classification printed on the label ("Grand Cru"), "" when none; read as [abv]. */
+    @Transient val classification: String = "",
 ) {
     /** The label's frame for the studio picture, for the photo read. */
     val labelFrame: WineLabelFrame? get() = photoId?.let { id -> placement?.frame(id) }
@@ -56,7 +63,9 @@ data class LabelAnalysis(
     companion object {
         private val colors = listOf("red", "white", "rose", "sparkling", "dessert", "fortified", "orange")
 
-        private val detailKeys = listOf("name", "producer", "vintage", "color", "appellation", "region", "country", "grapes", "drinkFrom", "drinkUntil")
+        private val detailKeys = listOf(
+            "name", "producer", "vintage", "color", "appellation", "region", "country", "grapes", "drinkFrom", "drinkUntil", "abv", "classification",
+        )
 
         /**
          * The JSON schema of the answer, the same for every provider. With [findsLabel] (the
@@ -83,6 +92,8 @@ data class LabelAnalysis(
                 }
                 putJsonObject("drinkFrom") { put("type", "integer") }
                 putJsonObject("drinkUntil") { put("type", "integer") }
+                putJsonObject("abv") { put("type", "number") }
+                putJsonObject("classification") { put("type", "string") }
                 if (findsLabel) {
                     putJsonObject("label_box") {
                         putJsonArray("anyOf") {
@@ -119,6 +130,11 @@ data class LabelAnalysis(
             add("- appellation, region, country: from the label, or from your knowledge of the appellation. Country in English.")
             add("- grapes: the grape varieties if printed or typical of the appellation; [] if unsure.")
             add("- drinkFrom and drinkUntil: a realistic drinking window in years for this wine and vintage, or 0 if unknown.")
+            add("- abv: the alcohol by volume printed on the label, in percent (for example 13.5), or 0 if not printed.")
+            add(
+                "- classification: a classification printed on the label (for example Grand Cru, Premier Cru, Cru Bourgeois), " +
+                    "or \"\" if none is printed.",
+            )
             if (findsLabel) {
                 add(
                     "- label_box: where the whole paper front label is in the photo, including its borders and any logo or " +
@@ -459,6 +475,22 @@ object AiService {
         val end = trimmed.lastIndexOf('}')
         if (start >= 0 && end > start) trimmed = trimmed.substring(start, end + 1)
         val analysis = runCatching { json.decodeFromString(LabelAnalysis.serializer(), trimmed) }.getOrElse { throw AiError.InvalidResponse }
-        return analysis.copy(placement = AiLabelPlacement.parse(trimmed))
+        val fields = runCatching { json.parseToJsonElement(trimmed) as? JsonObject }.getOrNull()
+        return analysis.copy(
+            placement = AiLabelPlacement.parse(trimmed),
+            abv = abv(fields?.get("abv")),
+            classification = (fields?.get("classification") as? JsonPrimitive)?.takeIf { it.isString }?.content?.trim().orEmpty(),
+        )
+    }
+
+    /**
+     * The alcohol from the answer: a number, or text such as "13,5 %" from a model that did
+     * not follow the schema; null for 0 (not printed), anything outside 0.5…25, or no number.
+     */
+    internal fun abv(element: JsonElement?): Double? {
+        val primitive = element as? JsonPrimitive ?: return null
+        val text = primitive.content.replace("%", "").replace("vol", "", ignoreCase = true).replace(',', '.').trim()
+        val value = text.toDoubleOrNull() ?: return null
+        return value.takeIf { it.isFinite() && it in 0.5..25.0 }
     }
 }

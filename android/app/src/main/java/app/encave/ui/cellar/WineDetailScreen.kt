@@ -101,7 +101,6 @@ import app.encave.ui.components.EmptyState
 import app.encave.ui.components.Formats
 import app.encave.ui.components.LocalSnackbarHostState
 import app.encave.ui.components.MaturityLabel
-import app.encave.ui.components.RatingStars
 import app.encave.ui.components.SectionHeader
 import app.encave.ui.components.StyleLabel
 import app.encave.ui.components.labelRes
@@ -354,6 +353,14 @@ fun WineDetailScreen(
                     onSearchWeb = if (webSearch.isEnabled) ({ value -> searchingDetail = value }) else null,
                 )
             }
+            item {
+                // Typed by the person; saved on the latest version of the wine (a sync may have changed it meanwhile).
+                CriticScoresSection(wine.criticScores.orEmpty()) { scores ->
+                    viewModel.cellar.value.wines[wine.id]?.let { latest ->
+                        viewModel.updateWine(latest.copy(criticScores = scores.ifEmpty { null }), quiet = true)
+                    }
+                }
+            }
             item { MorePhotosSection(viewModel, wine) }
             item { WineDocumentsSection(viewModel, wine) }
             val discoveries = cellar.discoveriesOf(wine.id)
@@ -375,7 +382,7 @@ fun WineDetailScreen(
                         headlineContent = { Text(Formats.day(tasting.date)) },
                         supportingContent = {
                             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                RatingStars(tasting.rating)
+                                app.encave.ui.components.RatingDisplay(tasting.rating, tasting.score100)
                                 listOfNotNull(tasting.note, tasting.occasion).filter { it.isNotBlank() }.forEach { Text(it) }
                             }
                         },
@@ -900,6 +907,15 @@ private fun Details(
                 onSearchWeb = if (attribute.isSearchable) onSearchWeb?.let { search -> { search(value) } } else null,
                 supporting = if (explores) sharedCount(sharing.bottleCount) else null,
                 leading = if (attribute is WineAttribute.Color) ({ WineColorDot(attribute.color, size = 16.dp) }) else null,
+            )
+        }
+        // The details under "More details" in the form: a tap opens it there.
+        wineDetailRows(wine, androidx.compose.ui.platform.LocalResources.current).forEach { (label, value) ->
+            DetailItem(
+                label = stringResource(label), value = value,
+                actionLabel = stringResource(R.string.detail_action_more_details), explores = false,
+                onClick = { onEdit(WineFormField.Details) }, onEdit = { onEdit(WineFormField.Details) },
+                modifier = Modifier.testTag("detail.edit.details"),
             )
         }
         wine.notes?.takeIf { it.isNotBlank() }?.let { notes ->

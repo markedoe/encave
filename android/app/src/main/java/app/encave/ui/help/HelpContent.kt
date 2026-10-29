@@ -41,6 +41,10 @@ import androidx.compose.material.icons.outlined.WineBar
 import androidx.compose.material.icons.outlined.ZoomIn
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material.icons.outlined.Science
+import androidx.compose.material.icons.outlined.EmojiEvents
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Spa
+import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.ui.graphics.vector.ImageVector
 import app.encave.R
 import androidx.compose.material.icons.filled.Add
@@ -94,6 +98,8 @@ data class HelpArticle(
                     HelpSection(R.string.help_adding_quantity, R.string.help_adding_quantity_title),
                     HelpSection(R.string.help_adding_purchase, R.string.help_adding_purchase_title),
                     HelpSection(R.string.help_adding_tags, R.string.field_tags, Icons.Outlined.Tag),
+                    HelpSection(R.string.help_adding_details, R.string.help_adding_details_title, Icons.Outlined.Info),
+                    HelpSection(R.string.help_adding_critics, R.string.help_adding_critics_title, Icons.Outlined.EmojiEvents),
                     HelpSection(R.string.help_adding_orders, R.string.help_adding_orders_title, Icons.Outlined.LocalShipping),
                     HelpSection(R.string.help_adding_documents, R.string.help_adding_documents_title, Icons.Outlined.AttachFile),
                 ),
@@ -145,6 +151,8 @@ data class HelpArticle(
                 listOf(
                     HelpSection(R.string.help_drinking_drink, R.string.drink_title),
                     HelpSection(R.string.help_drinking_note, R.string.help_drinking_note_title),
+                    HelpSection(R.string.help_drinking_guided, R.string.help_drinking_guided_title, Icons.Outlined.Spa),
+                    HelpSection(R.string.help_drinking_scale, R.string.help_drinking_scale_title, Icons.Outlined.StarOutline),
                     HelpSection(R.string.help_drinking_gone, R.string.help_drinking_gone_title),
                 ),
             ),

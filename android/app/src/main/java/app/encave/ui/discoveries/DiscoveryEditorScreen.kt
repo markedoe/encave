@@ -75,7 +75,6 @@ import app.encave.ui.components.Formats
 import app.encave.ui.components.LocalSnackbarHostState
 import app.encave.ui.components.WhenLoaded
 import app.encave.ui.components.rememberRetained
-import app.encave.ui.components.RatingInput
 import app.encave.ui.components.icon
 import app.encave.ui.components.labelRes
 import app.encave.ui.drink.DateDialog
@@ -108,13 +107,15 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
     var date by rememberSaveable { mutableStateOf(existing?.date ?: app.encave.core.ReferenceDates.now()) }
     var pickingDate by remember { mutableStateOf(false) }
     var rating by rememberSaveable { mutableStateOf(existing?.rating) }
+    // The precise score out of 20 or 100 kept with the rating, if any.
+    var score100 by rememberSaveable { mutableStateOf(existing?.score100) }
     var note by rememberSaveable { mutableStateOf(existing?.note.orEmpty()) }
     val tags = rememberRetained("discovery.tags") { mutableStateListOf<String>().apply { existing?.tags?.let { addAll(it) } } }
     var pendingTag by rememberSaveable { mutableStateOf("") }
     var wantsToBuy by rememberSaveable { mutableStateOf(existing?.wantsToBuy ?: false) }
     var price by rememberSaveable { mutableStateOf(existing?.price?.toPlainString().orEmpty()) }
     // Back, the back gesture and ✕ ask first when something was entered.
-    val snapshot = form.snapshot() + listOf(setting, place, date, rating, note, tags.toList(), pendingTag, wantsToBuy, price)
+    val snapshot = form.snapshot() + listOf(setting, place, date, rating, score100, note, tags.toList(), pendingTag, wantsToBuy, price)
     val start = rememberRetained("discovery.start") { snapshot }
     val leave = app.encave.ui.components.rememberDiscardGuard(snapshot != start) { navigator.back() }
 
@@ -134,6 +135,7 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
         val base = existing ?: Discovery(wineId = record.id)
         val discovery = base.copy(
             date = date, setting = setting, place = place.trim().ifEmpty { null }, rating = rating,
+            score100 = app.encave.core.Score.kept(score100, rating),
             note = note.trim().ifEmpty { null }, tags = tags.toList(), price = priceValue,
             currency = if (priceValue == null) null else base.currency ?: cellar.settings.currency,
             wantsToBuy = wantsToBuy, boughtAt = if (wantsToBuy && !base.wantsToBuy) null else base.boughtAt,
@@ -172,6 +174,7 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
             Header(R.string.add_section_wine)
             WineEssentials(form, known)
             WineMoreDetails(form, known, showsTags = false)
+            app.encave.ui.add.WineDetailsSection(form, collapsible = true, initiallyExpanded = wine?.hasMoreDetails == true)
 
             Header(R.string.discovery_where)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
@@ -201,7 +204,7 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
             Hint(stringResource(R.string.help_where_footer))
 
             Header(R.string.discovery_impression)
-            RatingInput(rating, onChange = { rating = it })
+            app.encave.ui.components.RatingField(rating, score100, onChange = { r, s -> rating = r; score100 = s })
             OutlinedTextField(
                 value = note, onValueChange = { note = it },
                 label = { Text(stringResource(R.string.field_notes)) },

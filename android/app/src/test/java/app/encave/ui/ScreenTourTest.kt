@@ -100,7 +100,7 @@ class ScreenTourTest(private val device: String, private val variant: String) {
             "cellar", "cellar-drink-soon", "cellar-tag", "cellar-occasion", "cellar-menu", "save-search",
             "saved-search", "cellar-on-order", "cellar-select", "cellar-select-delete", "cellar-table",
             "cellar-table-wine", "insights", "insights-drink-down",
-            "wine", "drink-sheet", "wine-on-order", "wine-occasion", "wine-explore", "wine-edit-window",
+            "wine", "wine-critic-scores", "drink-sheet", "wine-on-order", "wine-occasion", "wine-explore", "wine-edit-window",
             "wine-tags", "more-photos",
             "add-bottle", "add-bottle-end", "add-bottle-on-order", "barcode-scanner", "barcode-match",
             "racks", "rack", "rack-place-sheet", "rack-card", "rack-key", "rack-zoomed", "rack-bottle-list",
@@ -108,7 +108,7 @@ class ScreenTourTest(private val device: String, private val variant: String) {
             "rack-check", "rack-check-missing", "rack-dragging", "rack-dropped", "rack-editor", "rack-editor-end",
             "rack-wizard",
             "tonight", "journal", "journal-tasted-elsewhere", "journal-add-tasting", "tasted-elsewhere-editor",
-            "journal-which-bottle", "journal-open-a-bottle",
+            "journal-which-bottle", "journal-open-a-bottle", "tasting-guided",
             "settings", "help", "devices", "devices-invite", "devices-join", "settings-backup",
             "previous-versions", "restore-preview", "restore-actions", "inventory-pdf",
             "cellar-font-200", "tonight-font-200",
@@ -864,6 +864,40 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         tap("drink.pick.row")
         compose.onNodeWithTag("action.drink_confirm").assertExists()
         capture("journal-open-a-bottle")
+    }
+
+    /** A sample wine, by name (sample data, the same in every language). */
+    private fun sampleWine(name: String): app.encave.core.Wine =
+        ApplicationProvider.getApplicationContext<EncaveApplication>().repository.cellar.value.wines.values.first { it.name == name }
+
+    /**
+     * The guided tasting sheet: the sample's full tasting of Vieilles Vignes, scored 95/100,
+     * on a device that rates out of 100, scrolled to its open "More details".
+     */
+    @Test
+    fun guidedTasting() {
+        val preferences = ApplicationProvider.getApplicationContext<EncaveApplication>().preferences
+        preferences.setRatingScale(app.encave.core.RatingScale.Hundred)
+        try {
+            // The newest tasting of the wine comes first: the guided one.
+            openJournalRow(sampleWine("Vieilles Vignes"))
+            compose.onNodeWithTag("rating.slider").assertExists()
+            compose.onNodeWithTag("aroma.fruit.redCherry").assertIsSelected()
+            compose.onNodeWithTag("hue.ruby").assertIsSelected()
+            scrollToTop("tasting.screen", "tasting.more_details")
+            capture("tasting-guided")
+        } finally {
+            preferences.setRatingScale(app.encave.core.RatingScale.Stars)
+        }
+    }
+
+    /** The wine page of the sample's Clos des Tilleuls, scrolled to its details and critics' scores. */
+    @Test
+    fun wineCriticScores() {
+        relaunch("encave://wine/${sampleWine("Clos des Tilleuls").id}")
+        scrollToTop("wine.detail", "detail.critics")
+        assertEquals("$device-$variant: the sample's critic scores", 3, compose.onAllNodesWithTag("critic.row").fetchSemanticsNodes().size)
+        capture("wine-critic-scores")
     }
 
     @Test

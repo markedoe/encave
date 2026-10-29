@@ -104,4 +104,38 @@ class LabelFrameAnswerTest {
         form.apply(LabelAnalysis(placement = AiLabelPlacement(0.1, 0.2, 0.6, 0.5), photoId = "sha256-a"))
         assertEquals(WineLabelFrame("sha256-a", 0.1, 0.2, 0.6, 0.5, 0.0), form.build().labelFrame)
     }
+
+    @Test
+    fun theRequestAsksForTheAlcoholAndClassificationAsCaveKitDoes() {
+        for (findsLabel in listOf(true, false)) {
+            val schema = LabelAnalysis.schema(findsLabel)
+            assertTrue("abv" in required(schema) && "classification" in required(schema))
+            val properties = schema["properties"] as JsonObject
+            assertEquals("number", (properties["abv"] as JsonObject)["type"]!!.jsonPrimitive.content)
+            assertEquals("string", (properties["classification"] as JsonObject)["type"]!!.jsonPrimitive.content)
+            val lines = LabelAnalysis.prompt(findsLabel).lines()
+            // Right after the drinking window, in CaveKit's words.
+            val window = lines.indexOfFirst { it.startsWith("- drinkFrom and drinkUntil") }
+            assertEquals("- abv: the alcohol by volume printed on the label, in percent (for example 13.5), or 0 if not printed.", lines[window + 1])
+            assertEquals(
+                "- classification: a classification printed on the label (for example Grand Cru, Premier Cru, Cru Bourgeois), or \"\" if none is printed.",
+                lines[window + 2],
+            )
+        }
+    }
+
+    @Test
+    fun theAlcoholAndClassificationAreReadTolerantly() {
+        val read = AiService.decode("""{$details,"abv":13.5,"classification":" Grand Cru "}""")
+        assertEquals(13.5, read.abv!!, 0.0)
+        assertEquals("Grand Cru", read.classification)
+        // Not printed, absent, as text, or not a number: unknown, never a failed answer.
+        assertNull(AiService.decode("""{$details,"abv":0,"classification":""}""").abv)
+        assertNull(AiService.decode("""{$details}""").abv)
+        assertEquals("", AiService.decode("""{$details}""").classification)
+        assertEquals(12.5, AiService.decode("""{$details,"abv":"12,5 % vol"}""").abv!!, 0.0)
+        assertNull(AiService.decode("""{$details,"abv":"strong","classification":3}""").abv)
+        assertEquals("", AiService.decode("""{$details,"classification":3}""").classification)
+        assertNull(AiService.decode("""{$details,"abv":135}""").abv)
+    }
 }

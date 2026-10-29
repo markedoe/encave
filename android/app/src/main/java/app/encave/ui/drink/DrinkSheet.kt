@@ -71,7 +71,13 @@ import app.encave.ui.components.Formats
 import app.encave.ui.components.Hint
 import app.encave.ui.help.HelpLink
 import app.encave.ui.help.HelpTopic
-import app.encave.ui.components.RatingInput
+import app.encave.ui.components.RatingField
+import app.encave.ui.components.LocalRatingScale
+import app.encave.core.CellarJson
+import app.encave.core.RatingScale
+import app.encave.core.Score
+import app.encave.core.Vocabulary
+import app.encave.core.WineColor
 import app.encave.ui.theme.Dimens
 import java.time.Instant
 import java.time.LocalDate
@@ -79,10 +85,19 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 
-/** Editable copy of a tasting, shared by the drink sheet and the tasting screen. */
+/**
+ * Editable copy of a tasting, shared by the drink sheet and the tasting screen. Starts from
+ * the stored tasting, so what the form does not show (keys of a newer version) is kept.
+ */
 class TastingFormState(initial: Tasting, start: Tasting? = null) {
+    /** The tasting the form was made from: what it does not show is saved as it was. */
+    private val base: Tasting = initial
+
     var date by mutableStateOf(initial.date)
     var rating by mutableStateOf(initial.rating)
+
+    /** The precise score out of 100, kept only while [rating] is its stars ([Score.kept]). */
+    var score100 by mutableStateOf(initial.score100)
     var note by mutableStateOf(initial.note.orEmpty())
     var occasion by mutableStateOf(initial.occasion.orEmpty())
     var appearance by mutableStateOf(initial.appearance.orEmpty())
@@ -91,16 +106,40 @@ class TastingFormState(initial: Tasting, start: Tasting? = null) {
     var finish by mutableStateOf(initial.finish.orEmpty())
     var food by mutableStateOf(initial.foodPairing.orEmpty())
 
-    /** The full tasting note is shown: a disclosure only, what it holds is always saved. */
+    /** The guided sheet: aromas in the order chosen, structure levels (1 to 5) by attribute id, intensity and hue. */
+    var aromas by mutableStateOf(initial.aromas.orEmpty())
+    var levels by mutableStateOf(Vocabulary.structure.mapNotNull { a -> initial.level(a.id)?.let { a.id to it } }.toMap())
+    var intensity by mutableStateOf(initial.intensity)
+    var hue by mutableStateOf(initial.hue)
+
+    /** "More details" is shown: a disclosure only, what it holds is always saved. */
     var expanded by mutableStateOf(initial.isDetailed)
+
+    /** Sets the rating from a value entered on [scale] ([Tasting.withRating]); null clears it. */
+    fun rate(value: Double?, scale: RatingScale) {
+        val rated = Tasting().withRating(value, scale)
+        rating = rated.rating
+        score100 = rated.score100
+    }
+
+    fun toggleAroma(id: String) {
+        aromas = if (id in aromas) aromas - id else aromas + id
+    }
+
+    fun setLevel(attribute: String, value: Int?) {
+        levels = if (value == null) levels - attribute else levels + (attribute to value.coerceIn(1, 5))
+    }
 
     fun toTasting(): Tasting {
         fun String.orNull() = trim().ifEmpty { null }
-        return Tasting(
-            date = date, rating = rating, note = note.orNull(), occasion = occasion.orNull(),
+        var tasting = base.copy(
+            date = date, rating = rating, score100 = Score.kept(score100, rating), note = note.orNull(), occasion = occasion.orNull(),
             appearance = appearance.orNull(), nose = nose.orNull(), palate = palate.orNull(),
             finish = finish.orNull(), foodPairing = food.orNull(),
+            aromas = aromas.ifEmpty { null }, intensity = intensity, hue = hue,
         )
+        Vocabulary.structure.forEach { tasting = tasting.withLevel(it.id, levels[it.id]) }
+        return tasting
     }
 
     /** The tasting as the form opened, to know whether something changed. */
@@ -109,33 +148,45 @@ class TastingFormState(initial: Tasting, start: Tasting? = null) {
     val isDirty: Boolean get() = toTasting() != original
 
     companion object {
-        private fun Tasting.saved() = arrayListOf(date.toString(), rating, note, occasion, appearance, nose, palate, finish, foodPairing)
+        /** The whole tasting, its keys of a newer version included; the date exactly (JSON keeps whole seconds). */
+        private fun Tasting.saved(): List<String> =
+            listOf(CellarJson.json.encodeToString(Tasting.serializer(), this), date.toString())
 
-        private fun restored(v: List<Any?>) = Tasting(
-            date = java.time.Instant.parse(v[0] as String), rating = v[1] as Int?, note = v[2] as String?,
-            occasion = v[3] as String?, appearance = v[4] as String?, nose = v[5] as String?, palate = v[6] as String?,
-            finish = v[7] as String?, foodPairing = v[8] as String?,
-        )
+        private fun restored(v: List<*>): Tasting =
+            CellarJson.json.decodeFromString(Tasting.serializer(), v[0] as String).copy(date = java.time.Instant.parse(v[1] as String))
 
         /** Saves the tasting typed and the one the form opened with, when the app's process is ended meanwhile. */
         val Saver: Saver<TastingFormState, Any> = listSaver(
-            save = { listOf(it.toTasting().saved(), it.original.saved(), it.expanded) },
+            save = { listOf(ArrayList(it.toTasting().saved()), ArrayList(it.original.saved()), it.expanded) },
             restore = { v ->
-                TastingFormState(restored(v[0] as List<Any?>), start = restored(v[1] as List<Any?>)).apply { expanded = v[2] as Boolean }
+                TastingFormState(restored(v[0] as List<*>), start = restored(v[1] as List<*>)).apply { expanded = v[2] as Boolean }
             },
         )
     }
 }
 
 
-/** Rating, note, occasion and date, plus the optional full tasting note. */
+/**
+ * Rating, note, occasion and date, plus "More details": the guided sheet (appearance,
+ * aromas, structure) with the written notes. [color] is the wine's style, which puts the
+ * aromas and hues that suit it first.
+ */
 @Composable
-fun TastingFields(state: TastingFormState, modifier: Modifier = Modifier) {
+fun TastingFields(state: TastingFormState, modifier: Modifier = Modifier, color: WineColor? = null) {
     var pickingDate by rememberSaveable { mutableStateOf(false) }
+    val scale = LocalRatingScale.current
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
         Text(stringResource(R.string.drink_rating), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
-        RatingInput(state.rating, onChange = { state.rating = it })
-        Hint(stringResource(R.string.help_field_rating))
+        RatingField(state.rating, state.score100, onChange = { rating, score -> state.rating = rating; state.score100 = score })
+        Hint(
+            stringResource(
+                when (scale) {
+                    RatingScale.Stars -> R.string.help_field_rating
+                    RatingScale.Twenty -> R.string.help_field_rating_20
+                    RatingScale.Hundred -> R.string.help_field_rating_100
+                },
+            ),
+        )
         OutlinedTextField(
             value = state.note, onValueChange = { state.note = it },
             label = { Text(stringResource(R.string.drink_note)) },
@@ -183,28 +234,33 @@ fun TastingFields(state: TastingFormState, modifier: Modifier = Modifier) {
                     state.expanded = !state.expanded
                 }
                 .semantics { stateDescription = expandedLabel }
+                .testTag("tasting.more_details")
                 .padding(vertical = Dimens.s),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(stringResource(R.string.drink_full_note), Modifier.weight(1f).padding(end = Dimens.l), style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(R.string.tasting_more_details), Modifier.weight(1f).padding(end = Dimens.l), style = MaterialTheme.typography.bodyLarge)
             Icon(if (state.expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore, contentDescription = null)
         }
         if (state.expanded) {
             Hint(stringResource(R.string.help_full_note_footer))
-            listOf(
-                Triple(R.string.field_appearance to R.string.help_field_appearance, state.appearance) { v: String -> state.appearance = v },
-                Triple(R.string.field_nose to R.string.help_field_nose, state.nose) { v: String -> state.nose = v },
-                Triple(R.string.field_palate to R.string.help_field_palate, state.palate) { v: String -> state.palate = v },
-                Triple(R.string.field_finish to R.string.help_field_finish, state.finish) { v: String -> state.finish = v },
-                Triple(R.string.field_food to R.string.help_field_food, state.food) { v: String -> state.food = v },
-            ).forEach { (labels, value, onChange) ->
-                OutlinedTextField(
-                    value = value, onValueChange = onChange, label = { Text(stringResource(labels.first)) },
-                    supportingText = { Text(stringResource(labels.second)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                )
-            }
+            @Composable
+            fun written(labels: Pair<Int, Int>, value: String, onChange: (String) -> Unit) = OutlinedTextField(
+                value = value, onValueChange = onChange, label = { Text(stringResource(labels.first)) },
+                supportingText = { Text(stringResource(labels.second)) },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            )
+            GuidedHeader(R.string.tasting_section_appearance)
+            AppearanceFields(state, color)
+            written(R.string.field_appearance to R.string.help_field_appearance, state.appearance) { state.appearance = it }
+            GuidedHeader(R.string.tasting_section_nose)
+            AromaFields(state, color)
+            written(R.string.field_nose to R.string.help_field_nose, state.nose) { state.nose = it }
+            GuidedHeader(R.string.tasting_section_palate)
+            StructureFields(state, color)
+            written(R.string.field_palate to R.string.help_field_palate, state.palate) { state.palate = it }
+            written(R.string.field_finish to R.string.help_field_finish, state.finish) { state.finish = it }
+            written(R.string.field_food to R.string.help_field_food, state.food) { state.food = it }
         }
     }
     if (pickingDate) {
@@ -364,7 +420,7 @@ fun DrinkSheet(
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary,
                 )
             }
-            TastingFields(form)
+            TastingFields(form, color = wine?.color)
             Button(
                 onClick = {
                     onDrink(chosen, form.toTasting())

@@ -211,10 +211,12 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
     }
 
     val studioLook by viewModel.preferences.studioLook.collectAsStateWithLifecycle()
+    val ratingScale by viewModel.preferences.ratingScale.collectAsStateWithLifecycle()
     CompositionLocalProvider(
         LocalSnackbarHostState provides snackbar,
         app.encave.ui.components.LocalPhotoStore provides viewModel.photos,
         app.encave.ui.components.LocalStudioLook provides studioLook,
+        app.encave.ui.components.LocalRatingScale provides ratingScale,
     ) {
         NavigationSuiteScaffold(
             layoutType = layoutType,

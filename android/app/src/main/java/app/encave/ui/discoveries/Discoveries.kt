@@ -35,7 +35,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -50,7 +49,6 @@ import app.encave.core.Discovery
 import app.encave.core.discoveries
 import app.encave.data.PhotoStore
 import app.encave.ui.components.Formats
-import app.encave.ui.components.RatingStars
 import app.encave.ui.components.WineColorDot
 import app.encave.ui.components.hasPicture
 import app.encave.ui.components.icon
@@ -174,7 +172,7 @@ fun DiscoveryRow(
         source,
         wine?.displayName ?: stringResource(R.string.unknown_wine),
         style,
-        discovery.rating?.let { pluralStringResource(R.plurals.journal_rating_stars, it, it) },
+        app.encave.ui.components.spokenRating(discovery.rating, discovery.score100),
         Formats.day(discovery.date),
         when {
             discovery.wantsToBuy -> stringResource(R.string.discovery_to_buy)
@@ -236,7 +234,7 @@ fun DiscoveryRow(
                         Text(if (where != null) "· $tail" else tail, maxLines = 1)
                     }
                 }
-                discovery.rating?.let { RatingStars(it) }
+                discovery.rating?.let { app.encave.ui.components.RatingDisplay(it, discovery.score100) }
                 discovery.note?.let { Text(it, maxLines = 2, overflow = TextOverflow.Ellipsis) }
                 val extras = listOfNotNull(
                     price,
