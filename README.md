@@ -47,6 +47,9 @@ where each bottle sits in your storage, and when it is ready to drink.
 - **Journal:**
   - your tastings and insights, your year in wine, and the pace to drink your
     cellar before windows close;
+  - a guided tasting sheet when you want one (aromas, structure, appearance),
+    ratings in stars, out of 20 or out of 100, and the critics' scores you type
+    on the wine page;
   - wines tasted elsewhere, in the same diary, with tags and a shopping list.
 - **Your devices:**
   - Pair them with a QR code or a 6-digit code.
