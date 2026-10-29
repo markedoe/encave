@@ -33,6 +33,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import app.encave.EncaveApplication
 import app.encave.MainActivity
+import app.encave.core.diamondLayout
 import app.encave.core.SampleData
 import app.encave.ui.components.sampleLabels
 import java.io.File
@@ -106,6 +107,7 @@ class ScreenTourTest(private val device: String, private val variant: String) {
             "racks", "rack", "rack-place-sheet", "rack-card", "rack-key", "rack-zoomed", "rack-bottle-list",
             "rack-list-picked", "rack-head-to-tail", "rack-back-bottle", "rack-head-to-tail-zoomed",
             "rack-check", "rack-check-missing", "rack-dragging", "rack-dropped", "rack-editor", "rack-editor-end",
+            "rack-diamond-triangles",
             "rack-wizard",
             "tonight", "journal", "journal-tasted-elsewhere", "journal-add-tasting", "tasted-elsewhere-editor",
             "journal-which-bottle", "journal-open-a-bottle", "tasting-guided",
@@ -819,6 +821,42 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         capture("rack-editor")
         scrollTo("action.delete_rack")
         capture("rack-editor-end")
+    }
+
+    @Test
+    fun diamondRackWithTriangles() {
+        // Diamond bins with their top and left edge triangles holding bottles too: a triangle
+        // holds half a bin, drawn as a triangle with its count and pile.
+        val application = ApplicationProvider.getApplicationContext<EncaveApplication>()
+        runBlocking {
+            application.repository.update { cellar ->
+                val rack = app.encave.core.diamondRack(
+                    name = application.resources.getString(app.encave.R.string.layout_diamond), rows = 3, columns = 4, binCapacity = 10,
+                    edges = listOf(app.encave.core.DiamondEdge.Top, app.encave.core.DiamondEdge.Left),
+                )
+                cellar.addRack(rack)
+                val layout = rack.diamondLayout!!
+                val wines = cellar.groups().map { it.wine }
+                fun put(wine: app.encave.core.Wine, place: app.encave.core.DiamondPlace, count: Int) {
+                    val (row, column) = layout.cellOf(place)!!
+                    cellar.addBottles(wine, quantity = count, slots = (0 until count).map { app.encave.core.Slot(rack.id, row, column, it) })
+                }
+                put(wines[0], app.encave.core.DiamondPlace.Triangle(app.encave.core.DiamondEdge.Top, 1), 3)
+                put(wines[1], app.encave.core.DiamondPlace.Triangle(app.encave.core.DiamondEdge.Left, 0), 2)
+                put(wines[2], app.encave.core.DiamondPlace.Diamond(0, 0), 6)
+                put(wines[3 % wines.size], app.encave.core.DiamondPlace.Diamond(1, 2), 4)
+            }
+        }
+        compose.waitForIdle()
+        tab(RACKS)
+        val index = application.repository.cellar.value.racks.lastIndex
+        scrollIn("racks.list", "rack.row.$index")
+        compose.onAllNodesWithTag("rack.row.$index").onFirst().performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        // The top triangles are the row after the three rows of diamonds.
+        compose.onAllNodesWithTag("cell.3.1", useUnmergedTree = true).onFirst().assertExists()
+        capture("rack-diamond-triangles")
+        checkRackFits("diamond rack with triangles")
     }
 
     @Test

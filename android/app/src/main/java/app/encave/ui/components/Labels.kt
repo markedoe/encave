@@ -33,6 +33,9 @@ import app.encave.core.Maturity
 import app.encave.core.PairingReason
 import app.encave.core.Bottle
 import app.encave.core.Cellar
+import app.encave.core.DiamondEdge
+import app.encave.core.DiamondPlace
+import app.encave.core.diamondPlace
 import app.encave.core.Rack
 import app.encave.core.RackCell
 import app.encave.core.RackKind
@@ -234,8 +237,22 @@ private fun Rack.displayLabelByKind(cell: RackCell, resources: Resources): Strin
     RackKind.Grid, RackKind.Staggered -> label(cell)
     // Shelves are numbered from the top, as in layered fridges.
     RackKind.Shelves -> resources.getString(R.string.place_shelf, cell.row + 1, cell.column + 1)
-    RackKind.Bins -> resources.getString(R.string.place_bin, label(cell))
+    RackKind.Bins -> when (val place = diamondPlace(cell)) {
+        // A diamond rack with edge triangles names its diamonds from the first row of diamonds.
+        is DiamondPlace.Diamond -> resources.getString(R.string.place_bin, "${Rack.rowLetters(place.row)}${place.column + 1}")
+        is DiamondPlace.Triangle -> resources.getString(place.edge.nameRes, place.index + 1)
+        null -> resources.getString(R.string.place_bin, label(cell))
+    }
 }
+
+/** "Top triangle %1$d": an edge triangle of a diamond rack, by its side and number. */
+val DiamondEdge.nameRes: Int
+    get() = when (this) {
+        DiamondEdge.Top -> R.string.place_triangle_top
+        DiamondEdge.Left -> R.string.place_triangle_left
+        DiamondEdge.Bottom -> R.string.place_triangle_bottom
+        DiamondEdge.Right -> R.string.place_triangle_right
+    }
 
 /** "Main rack · Shelf 2, back, position 3", the storage note, or null. */
 fun Cellar.displayLocation(bottle: Bottle, resources: Resources): String? {

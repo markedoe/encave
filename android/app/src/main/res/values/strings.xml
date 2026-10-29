@@ -547,6 +547,17 @@
     <string name="rack_size_title">Size</string>
     <string name="place_shelf">Shelf %1$d, position %2$d</string>
     <string name="place_bin">Bin %1$s</string>
+    <string name="place_triangle_top">Top triangle %1$d</string>
+    <string name="place_triangle_left">Left triangle %1$d</string>
+    <string name="place_triangle_bottom">Bottom triangle %1$d</string>
+    <string name="place_triangle_right">Right triangle %1$d</string>
+    <string name="rack_edges_title">Edge triangles</string>
+    <string name="rack_edges_top">Top triangles</string>
+    <string name="rack_edges_left">Left triangles</string>
+    <string name="rack_edges_bottom">Bottom triangles</string>
+    <string name="rack_edges_right">Right triangles</string>
+    <string name="rack_edges_capacity">Bottles per triangle</string>
+    <string name="rack_edges_body">Along the sides of a diamond rack, the frame leaves half bins: triangles that hold bottles too, about half a bin each. They are named by their side, like “Top triangle 3”.</string>
     <string name="place_shelf_layer_single">Shelf %1$d, position %2$d</string>
     <string name="place_shelf_layer_bottom">Shelf %1$d, bottom layer, position %2$d</string>
     <string name="place_shelf_layer_middle">Shelf %1$d, middle layer, position %2$d</string>
@@ -684,6 +695,7 @@
     <string name="help_racks_layers">For a wine fridge whose shelves hold bottles stacked in quincunx, choose **Wine fridge** when adding the storage, then 2 or 3 in **Layers per shelf**. Each shelf holds one to three layers: for example 6 bottles at the bottom and 5 on top, resting in the gaps. Shelves can differ: set the layers and bottles of each one, or set one and choose **Apply to all shelves**. Positions are named by shelf, layer and number, like **Shelf 1, top layer, position 3**; each shelf fills from its bottom layer. For two temperature zones, turn on **New zone from this shelf** on the first shelf of the lower zone, in the editor.</string>
     <string name="help_racks_shelves">Shelves holding a row of bottles, one to three deep. The dots under each bottle show which positions are filled, front first.</string>
     <string name="help_racks_bins">Crates, and the diamond bins of a rack, hold several bottles in a pile. Set how many bottles fit in each; tap a bin to see what is inside.</string>
+    <string name="help_racks_triangles">Along the sides of a diamond rack, the frame leaves triangles that hold bottles too. When you create or edit a diamond rack, turn on the top, left, bottom or right triangles under Edge triangles. Each triangle holds about half a bin; set Bottles per triangle to change it. Triangles are named by their side, like “Top triangle 3”, and the bins by their row of diamonds, like “Bin A3”. Turning a side off lists the bottles in its triangles and asks before taking them out of their places. Older versions of the app show the triangles as whole bins and keep every bottle where it is.</string>
     <string name="help_racks_places_title">Positions</string>
     <string name="help_racks_places">In grids and honeycombs, rows are lettered from the top and positions numbered from the left: **B3** is the second row, third position. With two bottles in a position, **B3, back** is the one behind. In a wine fridge, shelves are numbered from the top and positions along each shelf: **Shelf 2, position 3**, and the one behind it **Shelf 2, back, position 3**; an empty position shows only its number. Bins read like **Bin B3**. The same name shows on the wine’s page and in the bottle list.</string>
     <string name="help_racks_finding_title">Finding a bottle</string>

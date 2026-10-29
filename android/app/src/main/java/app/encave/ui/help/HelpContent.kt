@@ -16,6 +16,7 @@ import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Devices
+import androidx.compose.material.icons.outlined.ChangeHistory
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.GridOn
 import androidx.compose.material.icons.outlined.Hive
@@ -124,6 +125,7 @@ data class HelpArticle(
                     HelpSection(R.string.help_racks_bands, R.string.help_racks_bands_title, Icons.Outlined.SwapHoriz),
                     HelpSection(R.string.help_racks_shelves, R.string.kind_shelves, Icons.Outlined.Kitchen),
                     HelpSection(R.string.help_racks_bins, R.string.storage_type_crates, Icons.Outlined.Inventory2),
+                    HelpSection(R.string.help_racks_triangles, R.string.rack_edges_title, Icons.Outlined.ChangeHistory),
                     HelpSection(R.string.help_racks_places, R.string.help_racks_places_title),
                     HelpSection(R.string.help_racks_finding, R.string.help_racks_finding_title, Icons.Outlined.Search),
                     HelpSection(R.string.help_racks_zooming, R.string.help_racks_zooming_title, Icons.Outlined.ZoomIn),

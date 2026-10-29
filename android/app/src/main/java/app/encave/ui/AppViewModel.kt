@@ -35,6 +35,7 @@ import app.encave.core.ImportException
 import app.encave.core.ImportSummary
 import app.encave.core.PurchaseInfo
 import app.encave.core.Rack
+import app.encave.core.RackCell
 import app.encave.ui.components.displayLabel
 import app.encave.ui.components.volumeText
 import app.encave.core.SampleData
@@ -990,21 +991,27 @@ class AppViewModel(
      * the bottles in removed places leave the rack, with a long Undo that puts the rack and
      * the bottles back as they were. Calls [onDone] only when the rack was saved.
      */
-    fun updateRack(rack: Rack, rowMap: Map<Int, Int?> = emptyMap(), takingOut: Boolean = false, onDone: () -> Unit) {
+    fun updateRack(
+        rack: Rack,
+        rowMap: Map<Int, Int?> = emptyMap(),
+        takingOut: Boolean = false,
+        cellMap: Map<RackCell, RackCell?> = emptyMap(),
+        onDone: () -> Unit,
+    ) {
         val before = cellar.value
         val old = before.rack(rack.id)
         val bottles = before.bottlesInCellar.filter { it.slot?.rackId == rack.id }
-        val displaced = before.displacedBottles(rack, rowMap).size
+        val displaced = before.displacedBottles(rack, rowMap, cellMap).size
         change<Unit>({
             onDone()
             if (takingOut && displaced > 0 && old != null) {
                 post(UiText.Res(R.string.msg_bottles_taken_out, listOf(displaced)), long = true) {
                     // The bottles in the rack now go back with their rows, those taken out to their
                     // place if still free: what was placed, moved or opened since stays.
-                    change<Unit> { c -> c.undoRackUpdate(old, rowMap, bottles) }
+                    change<Unit> { c -> c.undoRackUpdate(old, rowMap, bottles, cellMap) }
                 }
             }
-        }) { it.updateRack(rack, rowMap, takingOut) }
+        }) { it.updateRack(rack, rowMap, takingOut, cellMap) }
     }
 
     /**
