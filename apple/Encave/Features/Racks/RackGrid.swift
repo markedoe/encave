@@ -956,19 +956,31 @@ struct RackCellView: View {
                 )
                 .rotationEffect(.degrees(45))
                 .scaleEffect(0.7)
-            VStack(spacing: size * 0.03) {
-                Pile(colors: bottles.map(color), size: size * 0.11)
-                Text(verbatim: "\(bottles.count)/\(capacity)")
-                    .font(.system(size: max(10, size * 0.13), weight: .semibold).monospacedDigit())
-                    .foregroundStyle(isFull ? Color.primary : Color.secondary)
-                if selectedCount > 0 {
-                    // Checking: found of the bottles there; choosing places: how many are chosen.
-                    Text(verbatim: interaction.mode == .auditing ? "✓ \(selectedCount)/\(bottles.count)" : "+\(selectedCount)")
-                        .font(.system(size: max(10, size * 0.12), weight: .bold).monospacedDigit())
-                        .foregroundStyle(Color.accentColor)
+            // The count at the middle of the diamond, the pile resting above it and, while
+            // checking or choosing, what is found or chosen below it.
+            Text(verbatim: "\(bottles.count)/\(capacity)")
+                .font(.system(size: max(10, size * 0.13), weight: .semibold).monospacedDigit())
+                .foregroundStyle(isFull ? Color.primary : Color.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .frame(maxWidth: size * 0.5)
+                .overlay(alignment: .top) {
+                    Pile(colors: bottles.map(color), size: size * 0.11)
+                        .fixedSize()
+                        .alignmentGuide(.top) { $0[.bottom] + size * 0.02 }
                 }
-            }
-            .offset(y: size * 0.04)
+                .overlay(alignment: .bottom) {
+                    if selectedCount > 0 {
+                        // Checking: found of the bottles there; choosing places: how many are chosen.
+                        Text(verbatim: interaction.mode == .auditing ? "✓ \(selectedCount)/\(bottles.count)" : "+\(selectedCount)")
+                            .font(.system(size: max(10, size * 0.12), weight: .bold).monospacedDigit())
+                            .foregroundStyle(Color.accentColor)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
+                            .fixedSize()
+                            .alignmentGuide(.bottom) { $0[.top] - size * 0.02 }
+                    }
+                }
         }
     }
 
@@ -979,10 +991,11 @@ struct RackCellView: View {
         let isFull = bottles.count >= capacity
         let width = edge == .left || edge == .right ? size / 2 : size
         let center: CGPoint = switch edge {
-        case .top: CGPoint(x: width / 2, y: size * 0.67)
-        case .bottom: CGPoint(x: width / 2, y: size * 0.33)
-        case .left: CGPoint(x: size * 0.18, y: size / 2)
-        case .right: CGPoint(x: width - size * 0.18, y: size / 2)
+        // The centroid of each triangle.
+        case .top: CGPoint(x: width / 2, y: size * 2 / 3)
+        case .bottom: CGPoint(x: width / 2, y: size / 3)
+        case .left: CGPoint(x: size / 6, y: size / 2)
+        case .right: CGPoint(x: width - size / 6, y: size / 2)
         }
         return ZStack(alignment: .topLeading) {
             EdgeTriangle(edge: edge, inset: size * 0.03)
@@ -992,28 +1005,30 @@ struct RackCellView: View {
                         .stroke(isHighlighted || isFocused ? Color.accentColor : Color.secondary.opacity(0.3),
                                 style: StrokeStyle(lineWidth: isHighlighted || isFocused ? 3 : 1.5, lineJoin: .round))
                 )
-            VStack(spacing: size * 0.02) {
-                let count = Text(verbatim: "\(bottles.count)/\(capacity)")
-                    .font(.system(size: max(9, size * 0.1), weight: .semibold).monospacedDigit())
-                    .foregroundStyle(isFull ? Color.primary : Color.secondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                if edge == .bottom {
+            // The count at the triangle's centroid, the pile above it (below it in a bottom
+            // triangle, toward its wide edge) and what is found or chosen on the other side.
+            Text(verbatim: "\(bottles.count)/\(capacity)")
+                .font(.system(size: max(9, size * 0.1), weight: .semibold).monospacedDigit())
+                .foregroundStyle(isFull ? Color.primary : Color.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .frame(maxWidth: edge == .left || edge == .right ? size * 0.28 : size * 0.45)
+                .overlay(alignment: edge == .bottom ? .bottom : .top) {
                     Pile(colors: bottles.map(color), size: size * 0.065, widest: 3)
-                    count
-                } else {
-                    count
-                    Pile(colors: bottles.map(color), size: size * 0.065, widest: 3)
+                        .fixedSize()
+                        .alignmentGuide(edge == .bottom ? .bottom : .top) { edge == .bottom ? $0[.top] - size * 0.015 : $0[.bottom] + size * 0.015 }
                 }
-                if selectedCount > 0 {
-                    Text(verbatim: interaction.mode == .auditing ? "✓ \(selectedCount)/\(bottles.count)" : "+\(selectedCount)")
-                        .font(.system(size: max(9, size * 0.09), weight: .bold).monospacedDigit())
-                        .foregroundStyle(Color.accentColor)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
+                .overlay(alignment: edge == .bottom ? .top : .bottom) {
+                    if selectedCount > 0 {
+                        Text(verbatim: interaction.mode == .auditing ? "✓ \(selectedCount)/\(bottles.count)" : "+\(selectedCount)")
+                            .font(.system(size: max(9, size * 0.09), weight: .bold).monospacedDigit())
+                            .foregroundStyle(Color.accentColor)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
+                            .fixedSize()
+                            .alignmentGuide(edge == .bottom ? .top : .bottom) { edge == .bottom ? $0[.bottom] + size * 0.015 : $0[.top] - size * 0.015 }
+                    }
                 }
-            }
-            .frame(maxWidth: edge == .left || edge == .right ? size * 0.3 : size * 0.5)
             .position(center)
         }
         .frame(width: width, height: size)
