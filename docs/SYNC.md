@@ -293,6 +293,11 @@ implementations:
     the change (a row of triangles after a row of diamonds added, a last cell
     after a diamond added), in the same change as the rack; bottles whose
     triangle is gone are listed and taken out once the person agrees, with Undo.
+    Two such edits still move a row of triangles: resizing while the top or
+    bottom side is on, and turning off the first of two rows of triangles. If
+    another device's edit of the same rack wins meanwhile, the bottles of that
+    row may land outside the rack (left without a place by the repair) or in
+    the other row of triangles; no bottle in a diamond moves.
     Editors keep the values of sides they do not know. Apps that do not know
     either key keep it as an unknown field (below). Shared vectors:
     `fixtures/diamond-edge-vectors.json`;

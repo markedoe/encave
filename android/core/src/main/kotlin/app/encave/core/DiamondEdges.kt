@@ -220,7 +220,9 @@ fun Rack.keepingEdgeValues(original: Rack): Rack {
     val read = original.edgeTrianglesValue ?: return this
     val sameCells = rows == original.rows && (0 until rows).all { columnsInRow(it) == original.columnsInRow(it) }
     if (diamondLayout == null && original.diamondLayout == null && sameCells) {
-        return copy(edgeTrianglesValue = read, triangleCapacityValue = original.triangleCapacityValue)
+        // Kept only while it still does not apply: otherwise cells shown as whole bins would turn into triangles on saving.
+        val kept = copy(edgeTrianglesValue = read, triangleCapacityValue = original.triangleCapacityValue)
+        return if (kept.diamondLayout == null) kept else this
     }
     val unknown = read.filter { DiamondEdge.of(it) == null }
     if (unknown.isEmpty()) return this

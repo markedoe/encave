@@ -199,7 +199,9 @@ extension Rack {
         if diamondLayout == nil, original.diamondLayout == nil, sameCells {
             rack.edgeTrianglesValue = read
             rack.triangleCapacityValue = original.triangleCapacityValue
-            return rack
+            // Kept only while it still does not apply (bins picked as diamond bins, for one):
+            // otherwise cells shown as whole bins would turn into triangles on saving.
+            return rack.diamondLayout == nil ? rack : self
         }
         let unknown = read.filter { DiamondEdge(rawValue: $0) == nil }
         guard !unknown.isEmpty else { return rack }

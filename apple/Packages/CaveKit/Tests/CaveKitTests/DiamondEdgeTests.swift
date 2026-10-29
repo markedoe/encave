@@ -194,4 +194,18 @@ import Testing
         renamed = renamed.keepingEdgeValues(from: stale)
         #expect(renamed.edgeTrianglesValue == stale.edgeTrianglesValue)
     }
+
+    /// Bins without a type whose stale key would fit once picked as diamond bins: saving them
+    /// does not turn whole bins into triangles.
+    @Test func aStaleKeyIsNotRevivedBySaving() {
+        var crates = Rack(id: id, name: "Bins", kind: .bins, rows: 2, columns: 4, binCapacity: 10)
+        crates.edgeTrianglesValue = ["top"]
+        #expect(crates.storageType == .crates && crates.diamondLayout == nil)
+        var picked = crates
+        picked.binStyle = .diamond
+        #expect(picked.diamondLayout != nil)
+        // The editor saves the shape it showed: whole bins, without the key.
+        picked.edgeTrianglesValue = nil
+        #expect(picked.keepingEdgeValues(from: crates).diamondLayout == nil)
+    }
 }

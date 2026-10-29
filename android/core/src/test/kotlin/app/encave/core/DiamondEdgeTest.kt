@@ -180,4 +180,16 @@ class DiamondEdgeTest {
             binStyleValue = "diamond").normalized().keepingEdgeValues(stale)
         assertEquals(stale.edgeTrianglesValue, renamed.edgeTrianglesValue)
     }
+
+    /** Bins without a type whose stale key would fit once picked as diamond bins: saving them does not turn whole bins into triangles. */
+    @Test
+    fun aStaleKeyIsNotRevivedBySaving() {
+        val crates = Rack(id = id, name = "Bins", kind = RackKind.Bins, rows = 2, columns = 4, binCapacity = 10,
+            edgeTrianglesValue = listOf("top")).normalized()
+        assertEquals(StorageType.Crates, crates.storageType)
+        assertNull(crates.diamondLayout)
+        val picked = crates.copy(binStyleValue = "diamond")
+        assertTrue(picked.diamondLayout != null)
+        assertNull(picked.copy(edgeTrianglesValue = null).keepingEdgeValues(crates).diamondLayout)
+    }
 }
