@@ -31,8 +31,12 @@ sync between devices and users (see `docs/ROADMAP.md`):
 - User data stays on device; anything sent over the network is end-to-end
   encrypted. The relay must never see plaintext (protocol: `docs/SYNC.md`).
 - Exception: the optional AI label recognition, off by default, which sends
-  only the label photo directly to the provider the user sets up with their
-  own key. Never send the cellar or anything else to it.
+  only the label photo to the models the user sets up with their own keys:
+  one at a time, the next only when the previous one fails or when the user
+  asks to read the label again with another model. Through OpenRouter the
+  photo reaches the chosen model's provider; requests ask OpenRouter to skip
+  providers that keep or train on the data, unless the user turns that off.
+  Never send the cellar or anything else to them.
 - Exception: the optional web search, off by default, which sends only the
   search terms (producer, name, appellation, vintage, and for a price the
   bottle size; shown and editable before sending) to the search provider the
