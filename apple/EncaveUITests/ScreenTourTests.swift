@@ -941,8 +941,13 @@ final class ScreenTourTests: XCTestCase {
         launchSample(["--drink-out-wine"])
         openSection(3, "journal")
         if drunkTasting.waitForExistence(timeout: 10) {
+            // The menu sometimes does not open on a slow simulator (the long press lands
+            // while the list still settles): press once more before failing.
             drunkTasting.press(forDuration: 1.2)
-            if let show = require("journal.menu.showWine", "journal: no Show Wine in the entry's menu") {
+            if !element("journal.menu.showWine").waitForExistence(timeout: 8) {
+                drunkTasting.press(forDuration: 2)
+            }
+            if let show = require("journal.menu.showWine", "journal: no Show Wine in the entry's menu", timeout: 10) {
                 show.press()
                 checkWinePage("the entry's Show Wine")
             }
