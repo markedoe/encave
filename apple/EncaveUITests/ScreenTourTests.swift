@@ -430,15 +430,25 @@ final class ScreenTourTests: XCTestCase {
             return
         }
         tasting.press()
-        // By identifier, or by title: a disclosure's label does not always carry it.
-        guard let more = requireControl("tasting.more", titles: ["More details", "Plus de détails"],
-                                        "tasting: no More details") else {
-            closeSheet()
-            return
-        }
-        scrollIntoView(more)
-        more.press()
+        // The guided sheet is at the end of the form, which builds its rows only as they come
+        // into view: scroll down to it. A tasting with guided notes opens it by itself.
         let intensity = element("tasting.intensity")
+        // Its title comes before its rows: scroll on until the rows show, or to the end.
+        var tries = 0
+        while !intensity.exists, tries < 8 {
+            swipeContentUp()
+            tries += 1
+        }
+        if !intensity.exists {
+            // By identifier, or by title: a disclosure's label does not always carry it.
+            guard let more = requireControl("tasting.more", titles: ["More details", "Plus de détails"],
+                                            "tasting: no More details") else {
+                closeSheet()
+                return
+            }
+            scrollIntoView(more)
+            more.press()
+        }
         if intensity.waitForExistence(timeout: 3) {
             scrollIntoView(intensity)
             swipeContentUp()

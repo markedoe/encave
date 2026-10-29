@@ -360,6 +360,10 @@ struct TastingDraft: Equatable {
     var levels: [String: Int] = [:]
     var intensity: String?
     var hue: String?
+
+    /// Any part of the guided sheet is filled.
+    var hasGuidedNotes: Bool { !aromas.isEmpty || !levels.isEmpty || intensity != nil || hue != nil }
+
     /// The tasting as stored, so what this form does not show (keys of a newer version)
     /// is written back unchanged.
     private var stored: Tasting?
@@ -474,7 +478,13 @@ struct TastingFormSections: View {
             Text("Appearance, aromas and structure in a few taps, for a wine-course style note.")
         }
         // The guided sheet stays closed until asked for: rating a bottle stays one tap.
-        .onAppear { if startsExpanded { showsDetails = true } }
+        // Editing a tasting that has guided notes shows them (as on Android).
+        .onAppear {
+            if startsExpanded {
+                showsDetails = true
+                if draft.hasGuidedNotes { showsGuided = true }
+            }
+        }
     }
 }
 
