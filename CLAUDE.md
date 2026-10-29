@@ -69,6 +69,8 @@ requests lean:
   (UI fixes, strings and copy, docs, adding the tests a review listed), CI log
   triage, screenshot and visual reviews, routine merges.
 - Haiku (`claude-haiku-5-5`): lookups, status polling, simple summaries.
+- Do the work yourself by default. Start an agent or session only when the task
+  needs a fresh context or a different model.
 - Prefer a script or a direct command to an agent for rote work; give each
   agent only the context it needs (paths, findings, constraints); do not start
   two agents on the same files; stop or archive agents once their work is done.
