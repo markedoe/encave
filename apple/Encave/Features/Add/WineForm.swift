@@ -382,6 +382,8 @@ struct EditWineView: View {
     /// another model replaces it, never what was typed).
     @State private var readBy: AIReading?
     @State private var aiFilled = WineDraft()
+    /// Closing the form stops the reading: the photo goes to no further model.
+    @State private var aiTask: Task<Void, Never>?
     private let aiConfiguration = AISettings.load()
     private var aiEnabled: Bool { aiConfiguration.isEnabled }
 
@@ -428,6 +430,7 @@ struct EditWineView: View {
             // A reading was about the photo it read.
             .onChange(of: newPhoto) { _, _ in readBy = nil }
             .onChange(of: photoRemoved) { _, _ in readBy = nil }
+            .onDisappear { aiTask?.cancel() }
             .navigationTitle("Edit Wine")
             .inlineTitle()
             .toolbar {
@@ -457,7 +460,7 @@ struct EditWineView: View {
         aiProblem = nil
         let isNewPhoto = newPhoto != nil
         let storedPhotoID = draft.photoID
-        Task {
+        aiTask = Task {
             defer { analyzing = false }
             do {
                 let reading = try await AIService.analyzeLabel(jpeg: photo, only: model)

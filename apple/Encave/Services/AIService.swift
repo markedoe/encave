@@ -47,13 +47,15 @@ struct AIEndpoint: Sendable {
     let connection: AIConnection
     let model: String
     let apiKey: String?
-    var timeLimit: TimeInterval = .infinity
+    /// When this model's turn ends, whatever number of requests it takes (another format,
+    /// another try without options): each one gets only the time left.
+    var deadline: Date = .distantFuture
 
     var provider: AIProvider { connection.provider }
     var baseURL: String { connection.effectiveBaseURL }
 
     /// Local models can take a while, especially the first time they load.
-    var requestTimeout: TimeInterval { min(provider.isLocal ? 300 : 120, timeLimit) }
+    var requestTimeout: TimeInterval { max(1, min(provider.isLocal ? 300 : 120, deadline.timeIntervalSinceNow)) }
 }
 
 /// A label read: what it says, and which model read it.
@@ -228,7 +230,8 @@ enum AIService {
         do {
             let (model, analysis) = try await AIFallback.read(order) { model, left in
                 guard let connection = configuration.connection(for: model) else { throw AIServiceError.notConfigured }
-                let endpoint = AIEndpoint(connection: connection, model: model.model, apiKey: keys.key(for: connection), timeLimit: left)
+                let endpoint = AIEndpoint(connection: connection, model: model.model, apiKey: keys.key(for: connection),
+                                          deadline: Date().addingTimeInterval(left))
                 return try await analyze(jpeg: jpeg, endpoint: endpoint, request: request)
             }
             guard let connection = configuration.connection(for: model) else { throw AIServiceError.notConfigured }

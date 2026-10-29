@@ -225,21 +225,31 @@ fun AiConnectionScreen(viewModel: AppViewModel, navigator: AppNavigator, connect
     fun change(connection: AiConnection) {
         if (connection.provider != draft.provider || connection.baseUrl != draft.baseUrl) check = KeyCheck.Idle
         draft = connection
-        if (!isNew) viewModel.ai.update { it.upserting(connection) }
+        if (!isNew) viewModel.ai.update { config -> if (config.connection(connection.id) != null) config.upserting(connection) else config }
+    }
+
+    /** Another provider while adding: what was typed for the previous one does not follow. */
+    fun changeProvider(provider: AiProvider) {
+        if (provider == draft.provider) return
+        apiKey = ""
+        check = KeyCheck.Idle
+        draft = draft.withProvider(provider).copy(baseUrl = "", allowsDataCollection = false)
     }
 
     fun checkKey() {
         check = KeyCheck.Checking
         val checked = draft
         val key = AiPreferencesKey.clean(apiKey)
+        fun isCurrent() = checked.provider == draft.provider && checked.baseUrl == draft.baseUrl && key == AiPreferencesKey.clean(apiKey)
         scope.launch {
             viewModel.loadModels(checked, key)
                 .onSuccess { list ->
-                    if (checked.provider != draft.provider || checked.baseUrl != draft.baseUrl) return@onSuccess
+                    if (!isCurrent()) { check = KeyCheck.Idle; return@onSuccess }
                     AiLoadedModels.lists[checked.id] = list
                     check = KeyCheck.Valid(list.size)
                 }
                 .onFailure { error ->
+                    if (!isCurrent()) { check = KeyCheck.Idle; return@onFailure }
                     val message = (error as? AiError.Server)?.message?.takeIf { it.isNotBlank() } ?: viewModel.aiErrorText(error).resolve(resources)
                     check = KeyCheck.Failed(message)
                 }
@@ -264,7 +274,8 @@ fun AiConnectionScreen(viewModel: AppViewModel, navigator: AppNavigator, connect
         },
     ) {
         Column(Modifier.padding(Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
-            ProviderField(provider) { change(draft.withProvider(it)) }
+            // An existing connection keeps its provider: its key was made for it.
+            ProviderField(provider, enabled = isNew) { changeProvider(it) }
             OutlinedTextField(
                 value = draft.name,
                 onValueChange = { change(draft.copy(name = it)) },
@@ -289,7 +300,8 @@ fun AiConnectionScreen(viewModel: AppViewModel, navigator: AppNavigator, connect
                 onValueChange = { key ->
                     apiKey = key
                     if (check != KeyCheck.Checking) check = KeyCheck.Idle
-                    if (!isNew) viewModel.ai.saveApiKey(draft, key)
+                    // Deleted meanwhile (another window): no key is written for it.
+                    if (!isNew && viewModel.ai.configuration.value.connection(draft.id) != null) viewModel.ai.saveApiKey(draft, key)
                 },
                 label = { Text(stringResource(if (provider.requiresKey) R.string.ai_key else R.string.ai_key_optional)) },
                 supportingText = { Text(stringResource(R.string.help_field_ai_key)) },
@@ -654,20 +666,21 @@ fun keyLinkLabel(provider: AiProvider): String = when (provider) {
 
 /** Provider menu: global services, Chinese services, OpenRouter and a local server. */
 @Composable
-private fun ProviderField(selected: AiProvider, onSelect: (AiProvider) -> Unit) {
+private fun ProviderField(selected: AiProvider, enabled: Boolean, onSelect: (AiProvider) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+    ExposedDropdownMenuBox(expanded = expanded && enabled, onExpandedChange = { if (enabled) expanded = it }) {
         OutlinedTextField(
             value = selected.title(),
             onValueChange = {},
             readOnly = true,
             singleLine = true,
+            enabled = enabled,
             label = { Text(stringResource(R.string.ai_provider)) },
             supportingText = { Text(stringResource(R.string.help_field_ai_provider)) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            trailingIcon = { if (enabled) ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
         )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        ExposedDropdownMenu(expanded = expanded && enabled, onDismissRequest = { expanded = false }) {
             listOf(AiProvider.global, AiProvider.chinese, AiProvider.others, AiProvider.localServers).forEachIndexed { index, group ->
                 if (index > 0) HorizontalDivider()
                 group.forEach { option ->

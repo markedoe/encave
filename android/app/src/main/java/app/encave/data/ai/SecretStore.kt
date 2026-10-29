@@ -46,15 +46,16 @@ class SecretStore(context: Context) {
         return String(cipher.doFinal(bytes, IV_SIZE, bytes.size - IV_SIZE), Charsets.UTF_8)
     }
 
-    fun set(name: String, value: String?) {
+    /** [commit]: written to disk before returning (a key moved from its old place). */
+    fun set(name: String, value: String?, commit: Boolean = false) {
         if (value.isNullOrEmpty()) {
-            prefs.edit { remove(name) }
+            prefs.edit(commit = commit) { remove(name) }
             return
         }
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, key())
         val encrypted = cipher.iv + cipher.doFinal(value.toByteArray(Charsets.UTF_8))
-        prefs.edit { putString(name, Base64.encodeToString(encrypted, Base64.NO_WRAP)) }
+        prefs.edit(commit = commit) { putString(name, Base64.encodeToString(encrypted, Base64.NO_WRAP)) }
     }
 
     companion object {

@@ -1,3 +1,4 @@
+import Crypto
 import Foundation
 
 /// AI services the user can connect with their own key, plus a server of their own.
@@ -135,7 +136,12 @@ public struct AIConnection: Codable, Equatable, Identifiable, Sendable {
 
     /// Every request through OpenRouter refuses providers that keep or train on data,
     /// unless this connection allows it.
-    public var deniesDataCollection: Bool { provider == .openRouter && !allowsDataCollection }
+    /// A connection to another kind pointed at OpenRouter's address is treated the same.
+    public var deniesDataCollection: Bool {
+        let host = URL(string: effectiveBaseURL)?.host?.lowercased() ?? ""
+        let isOpenRouter = provider == .openRouter || host == "openrouter.ai" || host.hasSuffix(".openrouter.ai")
+        return isOpenRouter && !allowsDataCollection
+    }
 }
 
 /// A model of a connection, in the user's order of preference.
@@ -273,14 +279,17 @@ public enum AIKeys {
 
 public enum AIConfigurationStore {
     public static let defaultsKey = "ai.configuration"
+    /// Set once the settings of earlier versions are moved (`migrate`).
+    public static let migratedKey = "ai.configuration.migrated"
 
     /// The saved configuration; on first launch after the update, the earlier single
-    /// provider, model, address and keys become connections and the first model.
+    /// provider, model, address and keys become connections and the first model. If that
+    /// could not be done yet (a key could not be read), it is tried again at the next
+    /// load, keeping what the user set up meanwhile.
     public static func load(defaults: UserDefaults = .standard, keys: AIKeyStore) -> AIConfiguration {
-        if let data = defaults.data(forKey: defaultsKey) {
-            return (try? JSONDecoder().decode(AIConfiguration.self, from: data)) ?? AIConfiguration()
-        }
-        return migrate(defaults: defaults, keys: keys) ?? AIConfiguration()
+        let saved = defaults.data(forKey: defaultsKey).flatMap { try? JSONDecoder().decode(AIConfiguration.self, from: $0) }
+        if defaults.bool(forKey: migratedKey) { return saved ?? AIConfiguration() }
+        return migrate(defaults: defaults, keys: keys, into: saved ?? AIConfiguration()) ?? saved ?? AIConfiguration()
     }
 
     public static func save(_ configuration: AIConfiguration, defaults: UserDefaults = .standard) {
@@ -324,7 +333,8 @@ public enum AIConfigurationStore {
     /// gets a connection too, so no key is lost. Keys are copied to their connection, the
     /// configuration saved, and only then the old keys removed. Nil when a key could not
     /// be read or written (device locked): nothing changes, it is tried again next time.
-    public static func migrate(defaults: UserDefaults, keys: AIKeyStore) -> AIConfiguration? {
+    public static func migrate(defaults: UserDefaults, keys: AIKeyStore,
+                               into existing: AIConfiguration = AIConfiguration()) -> AIConfiguration? {
         let legacy = legacySettings(defaults)
         var found: [AIProvider: String] = [:]
         var oldAccounts: [String] = []
@@ -341,14 +351,14 @@ public enum AIConfigurationStore {
         }
         var configuration = AIConfiguration()
         if let provider = legacy.provider {
-            let connection = AIConnection(provider: provider, baseURL: legacy.baseURL)
+            let connection = AIConnection(id: migratedID(provider), provider: provider, baseURL: legacy.baseURL)
             configuration.connections.append(connection)
             let model = legacy.model.trimmingCharacters(in: .whitespaces)
             configuration.addModel(model.isEmpty ? provider.suggestedModel : model, connection: connection.id)
         }
         for provider in AIProvider.allCases where provider != legacy.provider && found[provider] != nil {
             let baseURL = defaults.string(forKey: "ai.baseURL.\(provider.rawValue)") ?? ""
-            configuration.connections.append(AIConnection(provider: provider, baseURL: baseURL))
+            configuration.connections.append(AIConnection(id: migratedID(provider), provider: provider, baseURL: baseURL))
         }
         var written: [AIConnection] = []
         for connection in configuration.connections {
@@ -359,9 +369,27 @@ public enum AIConfigurationStore {
             }
             written.append(connection)
         }
+        // What was set up before the move could be made stays, after the earlier settings.
+        let earlier = Set(configuration.connections.map(\.id))
+        configuration.connections += existing.connections.filter { !earlier.contains($0.id) }
+        configuration.models += existing.models.filter { model in
+            !configuration.models.contains { $0.connectionID == model.connectionID && $0.model == model.model }
+        }
         save(configuration, defaults: defaults)
+        defaults.set(true, forKey: migratedKey)
         for account in oldAccounts { keys.writeKey(nil, account: account) }
         return configuration
+    }
+
+    /// The same identifier for a provider's moved connection each time the move is tried, so
+    /// a move interrupted (the app quit) and done again writes its key at the same place.
+    static func migratedID(_ provider: AIProvider) -> UUID {
+        let digest = Array(SHA256.hash(data: Data("encave.ai.migrated.\(provider.rawValue)".utf8)))
+        var bytes = Array(digest.prefix(16))
+        bytes[6] = (bytes[6] & 0x0F) | 0x50
+        bytes[8] = (bytes[8] & 0x3F) | 0x80
+        return UUID(uuid: (bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
+                           bytes[8], bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]))
     }
 }
 

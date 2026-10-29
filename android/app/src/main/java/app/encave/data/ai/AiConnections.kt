@@ -45,7 +45,13 @@ data class AiConnection(
     val keyName: String get() = "ai.connection.$id"
 
     /** Every request through OpenRouter refuses providers that keep or train on data, unless allowed here. */
-    val deniesDataCollection: Boolean get() = provider == AiProvider.OpenRouter && !allowsDataCollection
+    val deniesDataCollection: Boolean
+        get() {
+            // A connection of another kind pointed at OpenRouter's address is treated the same.
+            val host = runCatching { java.net.URI(effectiveBaseUrl).host?.lowercase() }.getOrNull().orEmpty()
+            val isOpenRouter = provider == AiProvider.OpenRouter || host == "openrouter.ai" || host.endsWith(".openrouter.ai")
+            return isOpenRouter && !allowsDataCollection
+        }
 
     fun withProvider(provider: AiProvider) = copy(providerRaw = provider.raw)
 }
@@ -129,18 +135,27 @@ class SecretKeys(private val secrets: SecretStore) : AiKeyStore {
     override fun readKey(name: String): KeyRead = runCatching { secrets.read(name) }
         .fold({ it?.let(KeyRead::Found) ?: KeyRead.Missing }, { KeyRead.Failed })
 
-    override fun writeKey(name: String, value: String?): Boolean = runCatching { secrets.set(name, value) }.isSuccess
+    /** Written to disk before returning, so a key is never removed from its old place before it is in its new one. */
+    override fun writeKey(name: String, value: String?): Boolean = runCatching { secrets.set(name, value, commit = true) }.isSuccess
 }
 
 /** The configuration in preferences ("configuration" in "ai"), and the settings of versions with one provider. */
 object AiConfigurationStore {
     const val KEY = "configuration"
+
+    /** Set once the settings of earlier versions are moved ([migrate]). */
+    const val MIGRATED = "configuration.migrated"
     private val json = Json { ignoreUnknownKeys = true }
 
-    /** The saved configuration; the first time, the earlier provider, model, address and keys moved into it. */
+    /**
+     * The saved configuration; the first time, the earlier provider, model, address and keys
+     * moved into it. If that could not be done yet (a key could not be read), it is tried
+     * again at the next load, keeping what the user set up meanwhile.
+     */
     fun load(prefs: SharedPreferences, keys: AiKeyStore): AiConfiguration {
-        val saved = prefs.getString(KEY, null) ?: return migrate(prefs, keys) ?: AiConfiguration()
-        return runCatching { decode(saved) }.getOrDefault(AiConfiguration())
+        val saved = prefs.getString(KEY, null)?.let { runCatching { decode(it) }.getOrNull() }
+        if (prefs.getBoolean(MIGRATED, false)) return saved ?: AiConfiguration()
+        return migrate(prefs, keys, saved ?: AiConfiguration()) ?: saved ?: AiConfiguration()
     }
 
     /** [commit]: written before returning (the migration removes the old keys only then). */
@@ -192,7 +207,7 @@ object AiConfigurationStore {
      * then the old keys removed. Null when a key could not be read or written: nothing
      * changes, it is tried again next time.
      */
-    fun migrate(prefs: SharedPreferences, keys: AiKeyStore): AiConfiguration? {
+    fun migrate(prefs: SharedPreferences, keys: AiKeyStore, existing: AiConfiguration = AiConfiguration()): AiConfiguration? {
         val legacy = legacySettings(prefs)
         val found = mutableMapOf<AiProvider, String>()
         val oldNames = mutableListOf<String>()
@@ -211,12 +226,13 @@ object AiConfigurationStore {
         }
         var configuration = AiConfiguration()
         if (legacy.isEnabled) {
-            val connection = AiConnection(legacy.provider, baseUrl = legacy.baseUrl)
+            val connection = AiConnection(migratedId(legacy.provider), legacy.provider.raw, baseUrl = legacy.baseUrl)
             configuration = configuration.upserting(connection).addingModel(legacy.effectiveModel, connection.id)
         }
         for (provider in AiProvider.entries) {
             if (provider == legacy.provider || provider !in found) continue
-            configuration = configuration.upserting(AiConnection(provider, baseUrl = prefs.getString("baseURL.${provider.raw}", "").orEmpty()))
+            val baseUrl = prefs.getString("baseURL.${provider.raw}", "").orEmpty()
+            configuration = configuration.upserting(AiConnection(migratedId(provider), provider.raw, baseUrl = baseUrl))
         }
         val written = mutableListOf<AiConnection>()
         for (connection in configuration.connections) {
@@ -227,10 +243,22 @@ object AiConfigurationStore {
             }
             written += connection
         }
+        // What was set up before the move could be made stays, after the earlier settings.
+        val earlier = configuration.connections.map { it.id }.toSet()
+        configuration = configuration.copy(
+            connections = configuration.connections + existing.connections.filter { it.id !in earlier },
+            models = configuration.models + existing.models.filter { model ->
+                configuration.models.none { it.connectionId == model.connectionId && it.model == model.model }
+            },
+        )
         save(prefs, configuration, commit = true)
+        prefs.edit(commit = true) { putBoolean(MIGRATED, true) }
         oldNames.forEach { keys.writeKey(it, null) }
         return configuration
     }
+
+    /** The same id for a provider's moved connection each time the move is tried: an interrupted move writes its key at the same place. */
+    internal fun migratedId(provider: AiProvider): String = UUID.nameUUIDFromBytes("encave.ai.migrated.${provider.raw}".toByteArray()).toString()
 }
 
 /** One model that could not read the label, and why. */

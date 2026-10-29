@@ -12,7 +12,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.json.Json
@@ -164,13 +167,15 @@ data class AiEndpoint(
     val connection: AiConnection,
     val model: String,
     val apiKey: String?,
-    val timeLimitMs: Long = Long.MAX_VALUE,
+    /** When this model's turn ends (System.currentTimeMillis), whatever number of requests it takes. */
+    val deadline: Long = Long.MAX_VALUE,
 ) {
     val provider: AiProvider get() = connection.provider
     val baseUrl: String get() = connection.effectiveBaseUrl
 
-    /** Local models can take a while, especially the first time they load. */
-    val requestTimeout: Int get() = minOf(if (provider.isLocal) 300_000L else 120_000L, timeLimitMs).toInt()
+    /** Local models can take a while, especially the first time they load; never past [deadline]. */
+    val requestTimeout: Int
+        get() = minOf(if (provider.isLocal) 300_000L else 120_000L, deadline - System.currentTimeMillis()).coerceAtLeast(1_000L).toInt()
 
     override fun toString() = "AiEndpoint(${connection.id}, $model)"
 }
@@ -207,7 +212,10 @@ object AiService {
             AiFallback.read(order) { model, left ->
                 val connection = configuration.connection(model) ?: throw AiError.NotConfigured
                 val key = withContext(Dispatchers.IO) { keys(connection) }
-                analyze(jpeg, AiEndpoint(connection, model.model, key, left), findsLabel)
+                // The whole turn of a model, every request included, ends with its time.
+                withTimeoutOrNull(left) {
+                    analyze(jpeg, AiEndpoint(connection, model.model, key, System.currentTimeMillis() + left), findsLabel)
+                } ?: throw AiError.Server(0, "")
             }
         } catch (error: AiAllModelsFailed) {
             // One model: its own error, as before.
@@ -501,6 +509,9 @@ object AiService {
     private suspend fun httpSend(url: URL, headers: Map<String, String>, body: JsonObject?, timeout: Int): JsonObject = withContext(Dispatchers.IO) {
         if (!isAllowed(url)) throw AiError.InsecureUrl
         val connection = Http.openChecked(LocalName.resolve(url))
+        // Cancelled (another photo, the form closed, the model's time up): the connection is
+        // closed at once, so a request never goes on while the next model is asked.
+        val closeOnCancel = launch { try { awaitCancellation() } finally { connection.disconnect() } }
         try {
             // A redirect could take the key to another server.
             connection.instanceFollowRedirects = false
@@ -521,6 +532,7 @@ object AiService {
         } catch (error: IOException) {
             throw AiError.Server(0, error.localizedMessage.orEmpty())
         } finally {
+            closeOnCancel.cancel()
             connection.disconnect()
         }
     }

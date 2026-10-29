@@ -102,6 +102,35 @@ class AiConnectionsTest {
     }
 
     @Test
+    fun aMoveRetriedLaterKeepsWhatWasSetUpMeanwhile() {
+        prefs.edit().putString("provider", "openAI").putString("model.openAI", "gpt-test").commit()
+        val keys = MemoryKeys()
+        keys.items["ai.apiKey.openAI"] = "test-key-openai"
+        keys.failing += "ai.apiKey.xai"
+        val added = AiConnection(AiProvider.Ollama)
+        AiPreferences(context, keys).update { it.upserting(added).addingModel("gemma3", added.id) }
+        keys.failing.clear()
+        val configuration = AiPreferences(context, keys).configuration.value
+        assertEquals(listOf(AiProvider.OpenAi, AiProvider.Ollama), configuration.connections.map { it.provider })
+        assertEquals(listOf("gpt-test", "gemma3"), configuration.models.map { it.model })
+        assertEquals("test-key-openai", keys.key(configuration.connections.first()))
+        assertTrue(prefs.getBoolean(AiConfigurationStore.MIGRATED, false))
+    }
+
+    @Test
+    fun aMoveDoneTwiceWritesItsKeyAtTheSamePlace() {
+        assertEquals(AiConfigurationStore.migratedId(AiProvider.Mistral), AiConfigurationStore.migratedId(AiProvider.Mistral))
+        assertTrue(AiConfigurationStore.migratedId(AiProvider.Mistral) != AiConfigurationStore.migratedId(AiProvider.OpenAi))
+    }
+
+    @Test
+    fun aConnectionPointedAtOpenRouterAlsoRefusesDataCollection() {
+        assertTrue(AiConnection(AiProvider.Local, baseUrl = "https://openrouter.ai/api/v1").deniesDataCollection)
+        assertFalse(AiConnection(AiProvider.OpenAi).deniesDataCollection)
+        assertFalse(AiConnection(AiProvider.OpenRouter, allowsDataCollection = true).deniesDataCollection)
+    }
+
+    @Test
     fun nothingSetUpStaysOff() {
         assertFalse(AiPreferences(context, MemoryKeys()).configuration.value.isEnabled)
     }

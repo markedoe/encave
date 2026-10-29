@@ -231,6 +231,10 @@ struct AIConnectionEditor: View {
     var body: some View {
         Form {
             Section {
+                // An existing connection keeps its provider: its key was made for it.
+                if !isNew {
+                    LabeledContent("Provider") { Text(verbatim: connection.provider.title) }
+                } else {
                 Picker("Provider", selection: $connection.provider) {
                     Section {
                         ForEach(AIProvider.global, id: \.self) { Text(verbatim: $0.name).tag($0) }
@@ -246,6 +250,7 @@ struct AIConnectionEditor: View {
                     }
                 }
                 .fieldHelp("The AI service that reads label photos. You need an account and an API key with it.")
+                }
                 TextField("Name (optional)", text: $connection.name, prompt: Text(verbatim: connection.provider.title))
                     .fieldHelp("To tell apart several connections to the same service.")
                 TextField("Server URL", text: $connection.baseURL, prompt: Text(verbatim: connection.provider.defaultBaseURL))
@@ -345,11 +350,20 @@ struct AIConnectionEditor: View {
         }
         .onChange(of: connection) { old, new in
             if old.provider != new.provider || old.baseURL != new.baseURL, check != .checking { check = .idle }
+            // Another provider while adding: what was typed for the previous one does not follow.
+            if isNew, old.provider != new.provider {
+                apiKey = ""
+                connection.baseURL = ""
+                connection.allowsDataCollection = false
+            }
             // Only an existing connection is saved as it changes; a new one on Add.
             if !isNew, store.configuration.connection(id: new.id) != nil { store.update { $0.upsert(new) } }
         }
         .onChange(of: apiKey) { _, key in
-            if !isNew { store.setKey(AISettings.cleanKey(key), for: connection) }
+            // Deleted meanwhile (another window): no key is written for it.
+            if !isNew, store.configuration.connection(id: connection.id) != nil {
+                store.setKey(AISettings.cleanKey(key), for: connection)
+            }
             if check != .checking { check = .idle }
         }
         .macSheetFrame(width: 520, height: 680)

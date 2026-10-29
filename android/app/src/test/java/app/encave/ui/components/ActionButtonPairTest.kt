@@ -92,7 +92,7 @@ class ActionButtonPairTest {
         val texts = listOf(
             fr.getString(R.string.err_missing_name),
             fr.getString(R.string.rack_delete_title, "Cave"),
-            fr.getString(R.string.settings_ai_on_body),
+            fr.getString(R.string.help_ai_complete),
             fr.getString(R.string.ai_tip_lmstudio),
         )
         texts.forEach { text ->

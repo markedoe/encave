@@ -92,6 +92,40 @@ private func freshDefaults() -> UserDefaults {
         #expect(keys.key(for: configuration.connections[0]) == "test-key-openai")
     }
 
+    @Test func aMoveRetriedLaterKeepsWhatWasSetUpMeanwhile() {
+        let defaults = freshDefaults()
+        defaults.set("openAI", forKey: "ai.provider")
+        defaults.set("gpt-test", forKey: "ai.model.openAI")
+        let keys = MemoryKeys()
+        keys.items["ai.apiKey.openAI"] = "test-key-openai"
+        keys.failing = ["ai.apiKey.xai"]
+        // The move fails; the user adds a connection meanwhile.
+        var meanwhile = AIConfigurationStore.load(defaults: defaults, keys: keys)
+        let added = AIConnection(provider: .ollama)
+        meanwhile.upsert(added)
+        meanwhile.addModel("gemma3", connection: added.id)
+        AIConfigurationStore.save(meanwhile, defaults: defaults)
+        keys.failing = []
+        let configuration = AIConfigurationStore.load(defaults: defaults, keys: keys)
+        #expect(configuration.connections.map(\.provider) == [.openAI, .ollama])
+        #expect(configuration.models.map(\.model) == ["gpt-test", "gemma3"])
+        #expect(keys.key(for: configuration.connections[0]) == "test-key-openai")
+        #expect(defaults.bool(forKey: AIConfigurationStore.migratedKey))
+    }
+
+    @Test func aMoveDoneTwiceWritesItsKeyAtTheSamePlace() {
+        let first = AIConfigurationStore.migratedID(.mistral)
+        #expect(first == AIConfigurationStore.migratedID(.mistral))
+        #expect(first != AIConfigurationStore.migratedID(.openAI))
+        #expect(first.uuidString.dropFirst(14).first == "5")
+    }
+
+    @Test func aConnectionPointedAtOpenRouterAlsoRefusesDataCollection() {
+        #expect(AIConnection(provider: .local, baseURL: "https://openrouter.ai/api/v1").deniesDataCollection)
+        #expect(!AIConnection(provider: .openAI).deniesDataCollection)
+        #expect(!AIConnection(provider: .openRouter, allowsDataCollection: true).deniesDataCollection)
+    }
+
     @Test func nothingSetUpStaysOff() {
         let configuration = AIConfigurationStore.load(defaults: freshDefaults(), keys: MemoryKeys())
         #expect(configuration.connections.isEmpty && !configuration.isEnabled)
