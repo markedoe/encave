@@ -277,8 +277,17 @@ final class ScreenTourTests: XCTestCase {
                 let matches = app.descendants(matching: .any)
                     .matching(NSPredicate(format: "identifier == %@ OR label IN %@", "wizard.layout.diamond", titles))
                 _ = matches.firstMatch.waitForExistence(timeout: 5)
-                let diamond = matches.allElementsBoundByIndex.first { $0.isHittable } ?? matches.firstMatch
-                if diamond.exists, diamond.isHittable {
+                // Below the preview, out of view in the iPad sheet: scrolled to first.
+                var diamond = matches.allElementsBoundByIndex.first { $0.isHittable }
+                for _ in 0..<8 where diamond == nil {
+                    #if os(iOS)
+                    swipeContentUp()
+                    #else
+                    app.scroll(byDeltaX: 0, deltaY: -300)
+                    #endif
+                    diamond = matches.allElementsBoundByIndex.first { $0.isHittable }
+                }
+                if let diamond {
                     diamond.press()
                     for edge in ["top", "left"] { turnOn(element("rack.edges.\(edge)"), "wizard: \(edge) triangles") }
                     snapshot("rack-wizard-diamond-switches")
