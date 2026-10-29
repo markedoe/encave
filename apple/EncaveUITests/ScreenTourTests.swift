@@ -290,8 +290,9 @@ final class ScreenTourTests: XCTestCase {
                 snapshot("help")
                 goBack()
             }
-            checkAI()
+            // In the order of Settings, top to bottom: the tour only scrolls down.
             checkDevices()
+            checkAI()
             checkPreviousVersions()
             closeSheet()
         }
@@ -594,7 +595,13 @@ final class ScreenTourTests: XCTestCase {
             }
             entry.press()
             snapshot(name)
-            goBack()
+            // Back is the leftmost bar button: the Models screen also has Edit and Add.
+            let leftmost = app.navigationBars.buttons.allElementsBoundByIndex
+                .filter { $0.exists && $0.isHittable }
+                .min { $0.frame.minX < $1.frame.minX }
+            if let leftmost { leftmost.press() } else { goBack() }
+            sleep(1)
+            XCTAssertTrue(element(identifier).waitForExistence(timeout: 5), "settings: not back from \(name)")
         }
     }
 
