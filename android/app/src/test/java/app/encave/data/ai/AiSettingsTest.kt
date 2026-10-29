@@ -35,15 +35,15 @@ class AiSettingsTest {
 
     @Test
     fun aKeyIsNeverSentOverPlainHttpToTheInternet() {
-        val settings = AiSettings(provider = AiProvider.OpenAi, model = "gpt-test", baseUrl = "http://203.0.113.7/v1")
+        val connection = AiConnection(AiProvider.OpenAi, baseUrl = "http://203.0.113.7/v1")
         val error = runCatching {
-            kotlinx.coroutines.runBlocking { AiService.analyzeLabel(ByteArray(4), settings, "sk-test") }
+            kotlinx.coroutines.runBlocking { AiService.analyze(ByteArray(4), AiEndpoint(connection, "gpt-test", "sk-test"), findsLabel = true) }
         }.exceptionOrNull()
         assertEquals(AiError.InsecureUrl, error)
-        val listing = runCatching { kotlinx.coroutines.runBlocking { AiService.models(settings, "sk-test") } }.exceptionOrNull()
+        val listing = runCatching { kotlinx.coroutines.runBlocking { AiService.models(connection, "sk-test") } }.exceptionOrNull()
         assertEquals(AiError.InsecureUrl, listing)
         // A name is resolved first, and only a local one gets the request (".invalid" never resolves).
-        val named = settings.copy(baseUrl = "http://api.invalid/v1")
+        val named = connection.copy(baseUrl = "http://api.invalid/v1")
         val unresolved = runCatching { kotlinx.coroutines.runBlocking { AiService.models(named, "sk-test") } }.exceptionOrNull()
         assertTrue(unresolved is LocalNetworkException)
     }
@@ -66,36 +66,38 @@ class AiSettingsTest {
 
     @Test
     fun emptyBaseUrlMeansTheDefault() {
-        assertEquals("https://api.mistral.ai/v1", AiSettings(AiProvider.Mistral).effectiveBaseUrl)
-        assertEquals("https://example.test/v1", AiSettings(AiProvider.Mistral, baseUrl = "https://example.test/v1").effectiveBaseUrl)
-        assertEquals("http://example.test:11434/v1", AiSettings(AiProvider.Local, baseUrl = "http://example.test:11434/v1/").effectiveBaseUrl)
-        assertEquals(AiProvider.Local.defaultBaseUrl, AiSettings(AiProvider.Local).effectiveBaseUrl)
+        assertEquals("https://api.mistral.ai/v1", AiConnection(AiProvider.Mistral).effectiveBaseUrl)
+        assertEquals("https://example.test/v1", AiConnection(AiProvider.Mistral, baseUrl = "https://example.test/v1").effectiveBaseUrl)
+        assertEquals("http://example.test:11434/v1", AiConnection(AiProvider.Local, baseUrl = "http://example.test:11434/v1/").effectiveBaseUrl)
+        assertEquals(AiProvider.Local.defaultBaseUrl, AiConnection(AiProvider.Local).effectiveBaseUrl)
         assertEquals("claude-opus-5-5", AiSettings(AiProvider.Anthropic).effectiveModel)
     }
+
+    private fun migrated() = AiPreferences(context, MemoryKeys()).configuration.value
 
     @Test
     fun firstBuildNamesAreMigrated() {
         context.getSharedPreferences("ai", Context.MODE_PRIVATE).edit()
             .putString("provider", "openAICompatible").putString("baseURL", "http://example.test:11434/v1").putString("model", "llava").commit()
-        val settings = AiPreferences(context).settings.value
-        assertEquals(AiProvider.Local, settings.provider)
-        assertEquals("llava", settings.model)
+        val configuration = migrated()
+        assertEquals(AiProvider.Local, configuration.connections.single().provider)
+        assertEquals(listOf("llava"), configuration.models.map { it.model })
     }
 
     @Test
     fun theFirstLocalOptionMovesToOllama() {
         context.getSharedPreferences("ai", Context.MODE_PRIVATE).edit()
-            .putString("provider", "local").putString("baseURL.local", "http://example.test:11434/v1").commit()
-        val settings = AiPreferences(context).settings.value
-        assertEquals(AiProvider.Ollama, settings.provider)
-        assertEquals("http://example.test:11434", settings.baseUrl)
+            .putString("provider", "local").putString("baseURL.local", "http://example.test:11434/v1").putString("model", "gemma3").commit()
+        val connection = migrated().connections.single()
+        assertEquals(AiProvider.Ollama, connection.provider)
+        assertEquals("http://example.test:11434", connection.baseUrl)
     }
 
     @Test
     fun anotherLocalServerStaysOpenAiCompatible() {
         context.getSharedPreferences("ai", Context.MODE_PRIVATE).edit()
             .putString("provider", "local").putString("baseURL.local", "http://example.test:8080/v1").commit()
-        assertEquals(AiProvider.Local, AiPreferences(context).settings.value.provider)
+        assertEquals(AiProvider.Local, migrated().connections.single().provider)
         assertTrue(AiProvider.Ollama.isLocal && !AiProvider.Ollama.requiresKey && AiProvider.Mistral.requiresKey)
     }
 
@@ -110,15 +112,7 @@ class AiSettingsTest {
     }
 
     @Test
-    fun eachProviderKeepsItsOwnModelAndAddress() {
-        val prefs = AiPreferences(context)
-        prefs.update(AiSettings(AiProvider.OpenAi, model = "gpt-x", baseUrl = "https://example.test/v1"))
-        prefs.select(AiProvider.Mistral)
-        assertEquals("", prefs.settings.value.model)
-        assertEquals("", prefs.settings.value.baseUrl)
-        prefs.select(AiProvider.OpenAi)
-        assertEquals("gpt-x", prefs.settings.value.model)
-        assertEquals("https://example.test/v1", prefs.settings.value.baseUrl)
+    fun everyProviderButAnOwnServerHasAKeyPage() {
         assertEquals(AiProvider.entries.filter { it != AiProvider.Off && it != AiProvider.Local }, AiProvider.entries.filter { it.keyPage != null })
     }
 

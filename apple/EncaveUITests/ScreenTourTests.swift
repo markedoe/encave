@@ -169,8 +169,9 @@ final class ScreenTourTests: XCTestCase {
         app = XCUIApplication()
         // --sample-data last: on the Mac, AppKit takes "--sample-data -AppleLanguages" for
         // a setting and opens the word after it as a document, without a window.
+        // --sample-ai: made-up AI connections and models in Settings, with no key.
         app.launchArguments = ["-AppleLanguages", "(\(language))",
-                               "-AppleLocale", language == "fr" ? "fr_FR" : "en_US", "--sample-data"]
+                               "-AppleLocale", language == "fr" ? "fr_FR" : "en_US", "--sample-ai", "--sample-data"]
         app.launch()
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 20))
         #if os(macOS)
@@ -289,6 +290,7 @@ final class ScreenTourTests: XCTestCase {
                 snapshot("help")
                 goBack()
             }
+            checkAI()
             checkDevices()
             checkPreviousVersions()
             closeSheet()
@@ -580,6 +582,21 @@ final class ScreenTourTests: XCTestCase {
     }
 
     // MARK: Devices
+
+    /// Settings › AI: the connections, and the models in order (made-up ones, no key).
+    private func checkAI() {
+        for (identifier, name) in [("settings.ai.connections", "ai-connections"), ("settings.ai.models", "ai-models")] {
+            let entry = element(identifier)
+            scrollIntoView(entry)
+            guard entry.exists, entry.isHittable else {
+                XCTFail("settings: no \(identifier) entry")
+                continue
+            }
+            entry.press()
+            snapshot(name)
+            goBack()
+        }
+    }
 
     /// Settings › Devices: inviting shows a code and a QR code; joining asks for the code.
     private func checkDevices() {

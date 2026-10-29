@@ -1,3 +1,4 @@
+import CaveKit
 import SwiftUI
 
 /// The in-app help: a list of topics, each a short article.

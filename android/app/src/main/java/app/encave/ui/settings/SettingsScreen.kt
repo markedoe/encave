@@ -199,7 +199,7 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             )
             RatingScaleSetting(viewModel)
 
-            AiSettingsSection(viewModel)
+            AiSettingsSection(viewModel, navigator)
 
             WebSearchSettingsSection()
 

@@ -59,7 +59,12 @@ import app.encave.data.DocumentStore
 import app.encave.data.PendingDocument
 import app.encave.data.PhotoStore
 import app.encave.data.Preferences
+import app.encave.data.ai.AiAllModelsFailed
+import app.encave.ui.components.resolve
+import app.encave.data.ai.AiConnection
 import app.encave.data.ai.AiError
+import app.encave.data.ai.AiModelChoice
+import app.encave.data.ai.AiReading
 import app.encave.data.ai.AiPreferences
 import app.encave.data.ai.AiService
 import app.encave.data.ai.LabelAnalysis
@@ -98,6 +103,10 @@ sealed interface UiText {
     /** A text built from resources when shown (a place name, which depends on the language). */
     class Built(val build: (android.content.res.Resources) -> String) : UiText
 }
+
+/** A connection's own name, or its provider's ("Other server" in the user's language). */
+fun AiConnection.title(resources: android.content.res.Resources): String =
+    name.trim().ifEmpty { provider.brand ?: resources.getString(R.string.ai_local) }
 
 /**
  * A snackbar message, with an optional undo; [persistent] ones stay until dismissed, [long]
@@ -140,7 +149,8 @@ class MessageSlot {
 /** The AI reading a label photo for a form, kept by the view model so it survives rotation. */
 sealed interface LabelReading {
     data object Reading : LabelReading
-    data class Done(val analysis: LabelAnalysis) : LabelReading
+    /** [model] of [connection] read the label (null when not known). */
+    data class Done(val analysis: LabelAnalysis, val model: AiModelChoice? = null, val connection: AiConnection? = null) : LabelReading
     data class Failed(val error: Throwable) : LabelReading
 }
 
@@ -764,19 +774,27 @@ class AppViewModel(
      * model: rotating or folding the device does not stop it, and if the bottles are added
      * meanwhile, the answer completes the saved wine (with Undo), as on Apple.
      */
-    fun startLabelAnalysis(formId: UUID, jpeg: ByteArray) {
+    fun startLabelAnalysis(formId: UUID, jpeg: ByteArray, only: String? = null) {
         readingJobs.remove(formId)?.cancel()
         readings.value = readings.value + (formId to LabelReading.Reading)
         readingJobs[formId] = viewModelScope.launch {
             // The photo's ID (its content's hash, as saved): the label frame is for it.
-            val result = analyzeLabel(jpeg).map { it.copy(photoId = PhotoId.make(jpeg)) }
+            val reading = analyzeLabel(jpeg, only)
+            val result = reading.map { it.analysis.copy(photoId = PhotoId.make(jpeg)) }
             readingJobs.remove(formId)
             val saved = savedWhileReading.remove(formId)
             if (saved != null) {
                 readings.value = readings.value - formId
                 result.onSuccess { completeWine(saved, it) }.onFailure { post(aiErrorText(it)) }
             } else {
-                readings.value = readings.value + (formId to result.fold({ LabelReading.Done(it) }, { LabelReading.Failed(it) }))
+                val done = result.fold(
+                    { analysis ->
+                        val read = reading.getOrNull()
+                        LabelReading.Done(analysis, read?.model, read?.connection)
+                    },
+                    { LabelReading.Failed(it) },
+                )
+                readings.value = readings.value + (formId to done)
             }
         }
     }
@@ -859,14 +877,13 @@ class AppViewModel(
     }
 
     /**
-     * Sends only the label photo to the provider set in Settings. With the studio look on,
-     * the same request also asks where the label is, to frame the studio picture on it.
+     * Sends only the label photo to the models set in Settings, one at a time until one reads
+     * it, or to [only]. With the studio look on, the same request also asks where the label
+     * is, to frame the studio picture on it.
      */
-    suspend fun analyzeLabel(jpeg: ByteArray): Result<LabelAnalysis> {
-        val settings = ai.settings.value
-        val key = withContext(Dispatchers.IO) { ai.apiKey(settings.provider) }
+    suspend fun analyzeLabel(jpeg: ByteArray, only: String? = null): Result<AiReading> {
         val findsLabel = preferences.studioLook.value
-        return runCatching { AiService.analyzeLabel(jpeg, settings, key, findsLabel) }
+        return runCatching { AiService.analyzeLabel(jpeg, ai.configuration.value, ai::apiKey, only, findsLabel) }
     }
 
     fun aiErrorText(error: Throwable): UiText = when (error) {
@@ -878,11 +895,29 @@ class AppViewModel(
         AiError.InsecureUrl -> UiText.Res(R.string.search_err_server_url)
         is LocalNetworkException -> UiText.Res(localNetworkErrorText(error))
         is AiError.Server -> if (error.status == 0) UiText.Res(R.string.ai_err_network) else UiText.Res(R.string.ai_err_server, listOf(error.status))
+        is AiAllModelsFailed -> {
+            val configuration = ai.configuration.value
+            val failed = error.failures.map { it.model to aiErrorText(it.error) }
+            UiText.Built { resources ->
+                fun name(model: AiModelChoice) = configuration.connection(model)?.let { "${model.model} (${it.title(resources)})" } ?: model.model
+                (listOf(resources.getString(R.string.ai_err_all_failed)) +
+                    failed.map { (model, reason) -> resources.getString(R.string.ai_err_model_line, name(model), reason.resolve(resources)) } +
+                    error.untried.map { resources.getString(R.string.ai_err_model_untried, name(it)) }).joinToString("\n")
+            }
+        }
         else -> UiText.Res(R.string.err_generic)
     }
 
-    /** Checks the key of the current provider and lists its chat models. */
-    suspend fun loadModels(key: String?): Result<List<String>> = runCatching { AiService.models(ai.settings.value, key) }
+    /** Checks a connection's key and lists its chat models (through OpenRouter, those that read images). */
+    suspend fun loadModels(connection: AiConnection, key: String?): Result<List<String>> = runCatching { AiService.models(connection, key) }
+
+    /** Checks a model with a made-up label bundled with the app (res/raw/ai_test_label.jpg), never a photo of the user. */
+    suspend fun testModel(model: AiModelChoice, resources: android.content.res.Resources): Result<Unit> = runCatching {
+        val connection = ai.configuration.value.connection(model) ?: throw AiError.NotConfigured
+        val image = withContext(Dispatchers.IO) { resources.openRawResource(R.raw.ai_test_label).use { it.readBytes() } }
+        val key = withContext(Dispatchers.IO) { ai.apiKey(connection) }
+        AiService.test(connection, model.model, key, image)
+    }
 
     fun showMessage(text: UiText) = post(text)
 

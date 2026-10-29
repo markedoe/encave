@@ -159,25 +159,83 @@ sealed class AiError : Exception() {
     data object InsecureUrl : AiError()
 }
 
+/** One model of one connection, ready to be asked: its key, and the time left for the reading. */
+data class AiEndpoint(
+    val connection: AiConnection,
+    val model: String,
+    val apiKey: String?,
+    val timeLimitMs: Long = Long.MAX_VALUE,
+) {
+    val provider: AiProvider get() = connection.provider
+    val baseUrl: String get() = connection.effectiveBaseUrl
+
+    /** Local models can take a while, especially the first time they load. */
+    val requestTimeout: Int get() = minOf(if (provider.isLocal) 300_000L else 120_000L, timeLimitMs).toInt()
+
+    override fun toString() = "AiEndpoint(${connection.id}, $model)"
+}
+
+/** A label read: what it says, and which model of which connection read it. */
+data class AiReading(val analysis: LabelAnalysis, val model: AiModelChoice, val connection: AiConnection)
+
+/** Sends a request (POST with a body, GET without) and reads its JSON answer; replaced in tests. */
+typealias AiTransport = suspend (url: URL, headers: Map<String, String>, body: JsonObject?, timeout: Int) -> JsonObject
+
 /** Sends the label photo (a resized JPEG), and nothing else, to the configured provider. */
 object AiService {
     private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
+    /** Every request goes through here; tests replace it. */
+    @androidx.annotation.VisibleForTesting
+    internal var transport: AiTransport = ::httpSend
+
     /**
-     * Sends the label photo to the provider set up, in one request. With [findsLabel] (the
-     * studio look on), the same request also asks where the label is in the photo.
+     * Sends the label photo to the first model of [configuration]; if it fails, to the next,
+     * one at a time, within [AiFallback.TOTAL_BUDGET_MS]. With [only], to that model. With
+     * [findsLabel] (the studio look on), the same request also asks where the label is.
      */
-    suspend fun analyzeLabel(jpeg: ByteArray, settings: AiSettings, apiKey: String?, findsLabel: Boolean = true): LabelAnalysis {
-        if (!settings.isEnabled) throw AiError.NotConfigured
-        if (settings.provider.requiresKey && apiKey.isNullOrEmpty()) throw AiError.MissingKey
-        if (settings.effectiveModel.isEmpty()) throw AiError.NoModel
+    suspend fun analyzeLabel(
+        jpeg: ByteArray,
+        configuration: AiConfiguration,
+        keys: (AiConnection) -> String?,
+        only: String? = null,
+        findsLabel: Boolean = true,
+    ): AiReading {
+        val order = configuration.readingOrder(only)
+        if (order.isEmpty()) throw AiError.NotConfigured
+        val (model, analysis) = try {
+            AiFallback.read(order) { model, left ->
+                val connection = configuration.connection(model) ?: throw AiError.NotConfigured
+                val key = withContext(Dispatchers.IO) { keys(connection) }
+                analyze(jpeg, AiEndpoint(connection, model.model, key, left), findsLabel)
+            }
+        } catch (error: AiAllModelsFailed) {
+            // One model: its own error, as before.
+            if (error.failures.size == 1 && error.untried.isEmpty()) throw error.failures.first().error
+            throw error
+        }
+        return AiReading(analysis, model, configuration.connection(model) ?: throw AiError.NotConfigured)
+    }
+
+    /** One model, one request (two or three for a service that does not take every format). */
+    suspend fun analyze(jpeg: ByteArray, endpoint: AiEndpoint, findsLabel: Boolean): LabelAnalysis {
+        if (endpoint.provider.requiresKey && endpoint.apiKey.isNullOrEmpty()) throw AiError.MissingKey
+        if (endpoint.model.isBlank()) throw AiError.NoModel
         val analysis = when {
-            settings.provider.usesAnthropicApi -> claude(jpeg, settings.effectiveModel, apiKey.orEmpty(), settings.effectiveBaseUrl, findsLabel)
-            settings.provider.usesOllamaApi -> ollama(jpeg, settings, findsLabel)
-            else -> openAiCompatible(jpeg, settings, apiKey, findsLabel)
+            endpoint.provider.usesAnthropicApi -> claude(jpeg, endpoint, findsLabel)
+            endpoint.provider.usesOllamaApi -> ollama(jpeg, endpoint, findsLabel)
+            else -> openAiCompatible(jpeg, endpoint, findsLabel)
         }
         // Not asked for: an answer that gives it anyway is not used.
         return if (findsLabel) analysis else analysis.copy(placement = null)
+    }
+
+    /**
+     * The "Test" of a model: its key works and it answers on a picture of a made-up label
+     * bundled with the app ([testImage]). No photo or data of the user is sent.
+     */
+    suspend fun test(connection: AiConnection, model: String, apiKey: String?, testImage: ByteArray) {
+        analyze(testImage, AiEndpoint(connection, model, apiKey), findsLabel = false)
     }
 
     /** Models that cannot chat: embeddings, speech, image generation, moderation. */
@@ -187,15 +245,15 @@ object AiService {
     )
 
     /** Checks the key by listing the models it can use; returns their identifiers. */
-    suspend fun models(settings: AiSettings, apiKey: String?): List<String> {
-        if (!settings.isEnabled) throw AiError.NotConfigured
-        if (settings.provider.requiresKey && apiKey.isNullOrEmpty()) throw AiError.MissingKey
-        if (settings.provider.usesOllamaApi) return ollamaModels(settings)
+    suspend fun models(connection: AiConnection, apiKey: String?): List<String> {
+        val provider = connection.provider
+        if (provider.requiresKey && apiKey.isNullOrEmpty()) throw AiError.MissingKey
+        if (provider.usesOllamaApi) return ollamaModels(connection.effectiveBaseUrl)
         val url = runCatching {
-            URL(settings.effectiveBaseUrl + "/models" + if (settings.provider.usesAnthropicApi) "?limit=100" else "")
+            URL(connection.effectiveBaseUrl + "/models" + if (provider.usesAnthropicApi) "?limit=100" else "")
         }.getOrElse { throw AiError.NotConfigured }
         val headers = buildMap {
-            if (settings.provider.usesAnthropicApi) {
+            if (provider.usesAnthropicApi) {
                 put("x-api-key", apiKey.orEmpty())
                 put("anthropic-version", "2023-06-01")
             } else if (!apiKey.isNullOrEmpty()) {
@@ -204,12 +262,17 @@ object AiService {
         }
         val json = send(url, headers, body = null, timeout = LIST_TIMEOUT)
         val items = (json["data"] as? JsonArray) ?: (json["models"] as? JsonArray) ?: JsonArray(emptyList())
+        val collator = java.text.Collator.getInstance().apply { strength = java.text.Collator.SECONDARY }
+        // Through OpenRouter, only the models that read images (a server at another address
+        // that does not describe its models: all of them).
+        if (provider == AiProvider.OpenRouter && AiRequestBody.hasArchitecture(items)) {
+            return AiRequestBody.openRouterVisionModels(items).distinct().sortedWith(collator)
+        }
         // Gemini lists "models/gemini-…"; chat requests take the bare name.
         val ids = items.mapNotNull { item ->
             val obj = item as? JsonObject ?: return@mapNotNull null
             ((obj["id"] ?: obj["name"]) as? JsonPrimitive)?.contentOrNull?.replace("models/", "")
         }
-        val collator = java.text.Collator.getInstance().apply { strength = java.text.Collator.SECONDARY }
         return ids.filter { id -> excludedModels.none { id.lowercase().contains(it) } }.distinct().sortedWith(collator).reversed()
     }
 
@@ -234,25 +297,19 @@ object AiService {
     }
 
     /** Claude (Anthropic Messages API). */
-    private suspend fun claude(jpeg: ByteArray, model: String, apiKey: String, baseUrl: String, findsLabel: Boolean): LabelAnalysis {
-        val options = claudeOptions(model)
+    private suspend fun claude(jpeg: ByteArray, endpoint: AiEndpoint, findsLabel: Boolean): LabelAnalysis {
+        val options = claudeOptions(endpoint.model)
         return try {
-            claude(jpeg, model, apiKey, baseUrl, findsLabel, options)
+            claude(jpeg, endpoint, findsLabel, options)
         } catch (error: AiError.Server) {
             // A model or service that does not take these options: once more without them.
             if (error.status != 400 || options == ClaudeOptions(effort = false, fallbacks = false)) throw error
-            claude(jpeg, model, apiKey, baseUrl, findsLabel, ClaudeOptions(effort = false, fallbacks = false))
+            claude(jpeg, endpoint, findsLabel, ClaudeOptions(effort = false, fallbacks = false))
         }
     }
 
-    private suspend fun claude(
-        jpeg: ByteArray,
-        model: String,
-        apiKey: String,
-        baseUrl: String,
-        findsLabel: Boolean,
-        options: ClaudeOptions,
-    ): LabelAnalysis {
+    private suspend fun claude(jpeg: ByteArray, endpoint: AiEndpoint, findsLabel: Boolean, options: ClaudeOptions): LabelAnalysis {
+        val model = endpoint.model
         val body = buildJsonObject {
             put("model", model)
             put("max_tokens", 8000)
@@ -285,13 +342,13 @@ object AiService {
             }
         }
         val headers = buildMap {
-            put("x-api-key", apiKey)
+            put("x-api-key", endpoint.apiKey.orEmpty())
             put("anthropic-version", "2023-06-01")
             // Re-runs a declined request on another model instead of returning a refusal.
             if (options.fallbacks) put("anthropic-beta", "server-side-fallback-2026-07-01")
             put("content-type", "application/json")
         }
-        val response = send(URL("$baseUrl/messages"), headers, body, timeout = REQUEST_TIMEOUT)
+        val response = send(URL("${endpoint.baseUrl}/messages"), headers, body, timeout = endpoint.requestTimeout)
         if (response["stop_reason"]?.jsonPrimitive?.contentOrNull == "refusal") throw AiError.Refused
         val text = (response["content"] as? JsonArray).orEmpty()
             .map { it.jsonObject }
@@ -301,7 +358,7 @@ object AiService {
     }
 
     /** OpenAI-compatible (Chat Completions). Not every service supports a JSON schema: falls back to plain JSON, then to no format. */
-    private suspend fun openAiCompatible(jpeg: ByteArray, settings: AiSettings, apiKey: String?, findsLabel: Boolean): LabelAnalysis {
+    private suspend fun openAiCompatible(jpeg: ByteArray, endpoint: AiEndpoint, findsLabel: Boolean): LabelAnalysis {
         val formats: List<JsonObject?> = listOf(
             buildJsonObject {
                 put("type", "json_schema")
@@ -317,7 +374,7 @@ object AiService {
         var lastError: AiError = AiError.InvalidResponse
         for (format in formats) {
             try {
-                return openAiCompatible(jpeg, settings, apiKey, findsLabel, format)
+                return openAiCompatible(jpeg, endpoint, findsLabel, format)
             } catch (error: AiError.Server) {
                 if (error.status != 400 && error.status != 422) throw error
                 lastError = error
@@ -326,11 +383,27 @@ object AiService {
         throw lastError
     }
 
-    private suspend fun openAiCompatible(jpeg: ByteArray, settings: AiSettings, apiKey: String?, findsLabel: Boolean, format: JsonObject?): LabelAnalysis {
-        val url = runCatching { URL(settings.effectiveBaseUrl + "/chat/completions") }.getOrElse { throw AiError.NotConfigured }
-        val body = buildJsonObject {
-            put("model", settings.effectiveModel)
+    private suspend fun openAiCompatible(jpeg: ByteArray, endpoint: AiEndpoint, findsLabel: Boolean, format: JsonObject?): LabelAnalysis {
+        val url = runCatching { URL(endpoint.baseUrl + "/chat/completions") }.getOrElse { throw AiError.NotConfigured }
+        val body = chatCompletionsBody(endpoint, findsLabel, base64(jpeg), format)
+        val headers = buildMap {
+            put("Content-Type", "application/json")
+            if (!endpoint.apiKey.isNullOrEmpty()) put("Authorization", "Bearer ${endpoint.apiKey}")
+        }
+        val response = send(url, headers, body, endpoint.requestTimeout)
+        val message = (response["choices"] as? JsonArray)?.firstOrNull()?.jsonObject?.get("message") as? JsonObject
+        val refusal = message?.get("refusal")?.let { (it as? JsonPrimitive)?.contentOrNull }
+        if (!refusal.isNullOrEmpty()) throw AiError.Refused
+        val text = (message?.get("content") as? JsonPrimitive)?.contentOrNull ?: throw AiError.InvalidResponse
+        return decode(text)
+    }
+
+    /** A Chat Completions request; through OpenRouter, with the provider preferences that refuse providers keeping data. */
+    internal fun chatCompletionsBody(endpoint: AiEndpoint, findsLabel: Boolean, jpegBase64: String, format: JsonObject?): JsonObject =
+        buildJsonObject {
+            put("model", endpoint.model)
             if (format != null) put("response_format", format)
+            AiRequestBody.openRouterProvider(endpoint.connection)?.let { put("provider", it) }
             putJsonArray("messages") {
                 add(buildJsonObject {
                     put("role", "user")
@@ -341,43 +414,27 @@ object AiService {
                         })
                         add(buildJsonObject {
                             put("type", "image_url")
-                            putJsonObject("image_url") { put("url", "data:image/jpeg;base64,${base64(jpeg)}") }
+                            putJsonObject("image_url") { put("url", "data:image/jpeg;base64,$jpegBase64") }
                         })
                     }
                 })
             }
         }
-        val headers = buildMap {
-            put("Content-Type", "application/json")
-            if (!apiKey.isNullOrEmpty()) put("Authorization", "Bearer $apiKey")
-        }
-        val response = send(url, headers, body, timeout(settings))
-        val message = (response["choices"] as? JsonArray)?.firstOrNull()?.jsonObject?.get("message") as? JsonObject
-        val refusal = message?.get("refusal")?.let { (it as? JsonPrimitive)?.contentOrNull }
-        if (!refusal.isNullOrEmpty()) throw AiError.Refused
-        val text = (message?.get("content") as? JsonPrimitive)?.contentOrNull ?: throw AiError.InvalidResponse
-        return decode(text)
-    }
 
-    private const val REQUEST_TIMEOUT = 120_000
-    private const val LOCAL_TIMEOUT = 300_000
     private const val LIST_TIMEOUT = 30_000
 
-    /** Local models can take a while, especially the first time they load. */
-    private fun timeout(settings: AiSettings) = if (settings.provider.isLocal) LOCAL_TIMEOUT else REQUEST_TIMEOUT
-
     /** "http://host:11434", whether the user typed it with "/v1" or "/api" or not. */
-    private fun ollamaBase(settings: AiSettings): String {
-        var base = settings.effectiveBaseUrl
+    private fun ollamaBase(baseUrl: String): String {
+        var base = baseUrl
         for (suffix in listOf("/v1", "/api")) base = base.removeSuffix(suffix)
         return base
     }
 
     /** Ollama's native API: structured output with the label schema, and the photo in "images". */
-    private suspend fun ollama(jpeg: ByteArray, settings: AiSettings, findsLabel: Boolean): LabelAnalysis {
-        val url = runCatching { URL(ollamaBase(settings) + "/api/chat") }.getOrElse { throw AiError.NotConfigured }
+    private suspend fun ollama(jpeg: ByteArray, endpoint: AiEndpoint, findsLabel: Boolean): LabelAnalysis {
+        val url = runCatching { URL(ollamaBase(endpoint.baseUrl) + "/api/chat") }.getOrElse { throw AiError.NotConfigured }
         val body = buildJsonObject {
-            put("model", settings.effectiveModel)
+            put("model", endpoint.model)
             put("stream", false)
             put("format", LabelAnalysis.schema(findsLabel))
             // A photo needs more room than Ollama's default context.
@@ -393,15 +450,15 @@ object AiService {
                 })
             }
         }
-        val response = send(url, mapOf("Content-Type" to "application/json"), body, timeout(settings))
+        val response = send(url, mapOf("Content-Type" to "application/json"), body, endpoint.requestTimeout)
         val text = ((response["message"] as? JsonObject)?.get("content") as? JsonPrimitive)?.contentOrNull
             ?: throw AiError.InvalidResponse
         return decode(text)
     }
 
     /** Installed models that read images (Ollama reports "vision"); all of them if none reports capabilities. */
-    private suspend fun ollamaModels(settings: AiSettings): List<String> = coroutineScope {
-        val base = ollamaBase(settings)
+    private suspend fun ollamaModels(baseUrl: String): List<String> = coroutineScope {
+        val base = ollamaBase(baseUrl)
         val tags = send(runCatching { URL("$base/api/tags") }.getOrElse { throw AiError.NotConfigured }, emptyMap(), null, LIST_TIMEOUT)
         val names = (tags["models"] as? JsonArray).orEmpty().mapNotNull { item ->
             val obj = item as? JsonObject ?: return@mapNotNull null
@@ -433,8 +490,15 @@ object AiService {
     internal fun isAllowed(url: URL): Boolean = url.host.isNotEmpty() &&
         (url.protocol == "https" || (url.protocol == "http" && LocalName.mayBeLocal(url.host)))
 
-    /** POST when [body] is set, GET otherwise. Every request goes through here. */
-    private suspend fun send(url: URL, headers: Map<String, String>, body: JsonObject?, timeout: Int): JsonObject = withContext(Dispatchers.IO) {
+    /** Every request goes through [transport]. */
+    private suspend fun send(url: URL, headers: Map<String, String>, body: JsonObject?, timeout: Int): JsonObject {
+        // Checked before any transport: a key or a photo never goes over plain HTTP to the internet.
+        if (!isAllowed(url)) throw AiError.InsecureUrl
+        return transport(url, headers, body, timeout)
+    }
+
+    /** POST when [body] is set, GET otherwise. */
+    private suspend fun httpSend(url: URL, headers: Map<String, String>, body: JsonObject?, timeout: Int): JsonObject = withContext(Dispatchers.IO) {
         if (!isAllowed(url)) throw AiError.InsecureUrl
         val connection = Http.openChecked(LocalName.resolve(url))
         try {

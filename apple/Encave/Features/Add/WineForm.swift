@@ -378,7 +378,12 @@ struct EditWineView: View {
     @State private var photoRemoved = false
     @State private var analyzing = false
     @State private var aiProblem: String?
-    private let aiEnabled = AISettings.load().isEnabled
+    /// The model that read the label last, and what its answer filled (a reading with
+    /// another model replaces it, never what was typed).
+    @State private var readBy: AIReading?
+    @State private var aiFilled = WineDraft()
+    private let aiConfiguration = AISettings.load()
+    private var aiEnabled: Bool { aiConfiguration.isEnabled }
 
     private var isDirty: Bool {
         guard let loadedDraft else { return false }
@@ -398,13 +403,16 @@ struct EditWineView: View {
                 PhotoSection(photoID: draft.photoID, newPhoto: $newPhoto, removed: $photoRemoved)
                 if aiEnabled, hasLabelPhoto {
                     Section {
-                        AICompletionButton(completedAt: draft.aiCompletedAt, isAnalyzing: analyzing, action: completeWithAI)
+                        AICompletionButton(completedAt: draft.aiCompletedAt, isAnalyzing: analyzing) { completeWithAI() }
+                        AIReadAgainRows(readBy: readBy, configuration: aiConfiguration, isAnalyzing: analyzing) {
+                            completeWithAI(model: $0)
+                        }
                         if let aiProblem {
                             Label(aiProblem, systemImage: "exclamationmark.triangle")
                                 .foregroundStyle(.secondary)
                         }
                     } footer: {
-                        Text("Sends the label photo again to the AI service set in Settings and fills the empty fields. The photo stays with the wine, so this can be done again at any time.")
+                        Text("Sends the label photo again to the AI models set in Settings, one after the other until one reads it, and fills the empty fields. The photo stays with the wine, so this can be done again at any time.")
                     }
                 }
             }
@@ -417,6 +425,9 @@ struct EditWineView: View {
             }
             }
             .webSearchSheet(isPresented: $searchingOnline, draft: $draft)
+            // A reading was about the photo it read.
+            .onChange(of: newPhoto) { _, _ in readBy = nil }
+            .onChange(of: photoRemoved) { _, _ in readBy = nil }
             .navigationTitle("Edit Wine")
             .inlineTitle()
             .toolbar {
@@ -440,7 +451,7 @@ struct EditWineView: View {
         .macSheetFrame()
     }
 
-    private func completeWithAI() {
+    private func completeWithAI(model: UUID? = nil) {
         guard !analyzing, let photo = newPhoto ?? (photoRemoved ? nil : PhotoStore.data(for: draft.photoID)) else { return }
         analyzing = true
         aiProblem = nil
@@ -449,7 +460,9 @@ struct EditWineView: View {
         Task {
             defer { analyzing = false }
             do {
-                let analysis = try await AIService.analyzeLabel(jpeg: photo)
+                let reading = try await AIService.analyzeLabel(jpeg: photo, only: model)
+                let analysis = reading.analysis
+                readBy = reading
                 // The ID the photo read has, or will have once saved: the label frame is for it.
                 var photoID = storedPhotoID
                 if isNewPhoto {
@@ -457,7 +470,9 @@ struct EditWineView: View {
                 }
                 if let frame = analysis.labelFrame(forPhoto: photoID) { draft.labelFrame = frame }
                 var value = draft
-                var filled = WineDraft()
+                // Another model's reading of the same photo replaces what the previous one filled.
+                var filled = model == nil ? WineDraft() : aiFilled
+                defer { aiFilled = filled }
                 guard analysis.apply(to: &value, replacing: &filled) else {
                     aiProblem = String(localized: "The AI found nothing to add")
                     return

@@ -10,7 +10,11 @@ final class LabelScan {
     var photo: Data?
     /// Values filled automatically, which a later scan or the AI may replace.
     var autoFilled = WineDraft()
-    let aiEnabled = AISettings.load().isEnabled
+    /// The models set up in Settings › AI, in order.
+    let aiConfiguration = AISettings.load()
+    var aiEnabled: Bool { aiConfiguration.isEnabled }
+    /// The model that read the current photo, and its connection's name.
+    var readBy: AIReading?
     var isAnalyzing = false
     /// The photo just taken is being resized: Add waits for it, so it is saved with the wine.
     var preparingPhoto = false
@@ -42,6 +46,7 @@ final class LabelScan {
         // A new photo: the answer for the previous one must not fill this wine.
         let token = photoToken.next()
         cancelAI()
+        readBy = nil
         guard let image else { return }
         preparingPhoto = true
         Task {
@@ -56,6 +61,7 @@ final class LabelScan {
     /// Remove Photo: forget it, and the AI answer about it.
     func removePhoto() {
         photoToken.next()
+        readBy = nil
         cancelAI()
         preparingPhoto = false
         photo = nil
@@ -122,8 +128,10 @@ final class LabelScan {
         draft.wrappedValue = value
     }
 
-    /// Sends the label photo to the AI service chosen in Settings and completes the form.
-    func completeWithAI(draft: Binding<WineDraft>) {
+    /// Sends the label photo to the models set in Settings, one after the other until one
+    /// reads it, or to `model` only ("Read Again with Another Model"), and completes the form.
+    /// What an earlier reading filled is replaced, what the user typed is kept.
+    func completeWithAI(draft: Binding<WineDraft>, model: UUID? = nil) {
         guard let photo, !isAnalyzing else { return }
         isAnalyzing = true
         aiError = nil
@@ -131,12 +139,14 @@ final class LabelScan {
         let token = photoToken.current
         aiTask = Task {
             do {
-                let analysis = try await AIService.analyzeLabel(jpeg: photo)
+                let reading = try await AIService.analyzeLabel(jpeg: photo, only: model)
+                let analysis = reading.analysis
                 // The ID the photo will have once saved with the wine: the label frame is for it.
                 let photoID = await Task.detached(priority: .userInitiated) { PhotoStore.id(for: photo) }.value
                 // Another photo was taken (or this one removed) meanwhile: not about this wine.
                 guard photoToken.isCurrent(token), !Task.isCancelled else { return }
                 defer { finishAI() }
+                readBy = reading
                 let frame = analysis.labelFrame(forPhoto: photoID)
                 if let saved = savedDraft, let model = savedIn {
                     savedDraft = nil
@@ -249,6 +259,9 @@ struct LabelScanSection: View {
                         AICompletionButton(completedAt: draft.aiCompletedAt, isAnalyzing: scan.isAnalyzing) {
                             scan.completeWithAI(draft: $draft)
                         }
+                        AIReadAgainRows(readBy: scan.readBy, configuration: scan.aiConfiguration, isAnalyzing: scan.isAnalyzing) {
+                            scan.completeWithAI(draft: $draft, model: $0)
+                        }
                     }
                 }
                 if let aiError = scan.aiError {
@@ -263,7 +276,7 @@ struct LabelScanSection: View {
                 }
             } footer: {
                 if scan.aiEnabled {
-                    Text("Reads the label on this device, then completes the details with the AI service set in Settings.")
+                    Text("Reads the label on this device, then completes the details with the AI models set in Settings.")
                 } else {
                     Text("Reads the label on this device to fill in the name, producer, vintage and appellation.")
                 }
@@ -460,6 +473,44 @@ struct AICompletionButton: View {
         }
         .disabled(isAnalyzing)
         .accessibilityIdentifier("label.completeWithAI")
+    }
+}
+
+/// Which model read the label, and "Read Again with Another Model": the same photo
+/// sent to the model picked, whose answer replaces what the previous one filled.
+struct AIReadAgainRows: View {
+    let readBy: AIReading?
+    let configuration: AIConfiguration
+    let isAnalyzing: Bool
+    let readAgain: @MainActor (UUID) -> Void
+
+    var body: some View {
+        if let readBy, !isAnalyzing {
+            let modelName = readBy.modelTitle
+            Label {
+                Text("Read by \(modelName)")
+            } icon: {
+                Image(systemName: "sparkles")
+            }
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .accessibilityIdentifier("label.readBy")
+            let others = configuration.usableModels.filter { $0.id != readBy.model.id }
+            if !others.isEmpty {
+                Menu {
+                    ForEach(others) { model in
+                        Button {
+                            readAgain(model.id)
+                        } label: {
+                            Text(verbatim: configuration.connection(for: model).map { "\(model.model) · \($0.title)" } ?? model.model)
+                        }
+                    }
+                } label: {
+                    Label("Read Again with Another Model", systemImage: "arrow.triangle.2.circlepath")
+                }
+                .accessibilityIdentifier("label.readAgain")
+            }
+        }
     }
 }
 

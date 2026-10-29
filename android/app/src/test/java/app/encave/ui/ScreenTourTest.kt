@@ -32,6 +32,9 @@ import androidx.compose.ui.test.longClick
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import app.encave.EncaveApplication
+import app.encave.data.ai.AiConfiguration
+import app.encave.data.ai.AiConnection
+import app.encave.data.ai.AiProvider
 import app.encave.MainActivity
 import app.encave.core.SampleData
 import app.encave.ui.components.sampleLabels
@@ -109,7 +112,7 @@ class ScreenTourTest(private val device: String, private val variant: String) {
             "rack-wizard",
             "tonight", "journal", "journal-tasted-elsewhere", "journal-add-tasting", "tasted-elsewhere-editor",
             "journal-which-bottle", "journal-open-a-bottle", "tasting-guided",
-            "settings", "help", "devices", "devices-invite", "devices-join", "settings-backup",
+            "settings", "ai-connections", "ai-models", "help", "devices", "devices-invite", "devices-join", "settings-backup",
             "previous-versions", "restore-preview", "restore-actions", "inventory-pdf",
             "cellar-font-200", "tonight-font-200",
             "store-cellar", "store-wine", "store-rack", "store-add", "store-tonight", "store-journal", "store-insights",
@@ -942,6 +945,31 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         compose.onNodeWithTag("restore.preview").performScrollToNode(hasTestTag("restore.replace"))
         compose.onNodeWithTag("restore.add").assertExists()
         capture("restore-actions")
+    }
+
+    /** Settings › AI: made-up connections and models, with no key. */
+    @Test
+    fun aiConnectionsAndModels() {
+        val app = ApplicationProvider.getApplicationContext<EncaveApplication>()
+        val openRouter = AiConnection(AiProvider.OpenRouter, name = "OpenRouter perso")
+        val anthropic = AiConnection(AiProvider.Anthropic)
+        val ollama = AiConnection(AiProvider.Ollama, name = "Mac mini")
+        app.ai.update {
+            AiConfiguration().upserting(openRouter).upserting(anthropic).upserting(ollama)
+                .addingModel("claude-opus-5-5", anthropic.id).addingModel("google/gemini-3-flash", openRouter.id)
+                .addingModel("gemma3:27b", ollama.id)
+        }
+        compose.waitForIdle()
+        tap("action.settings")
+        scrollTo("settings.ai.connections")
+        tap("settings.ai.connections")
+        capture("ai-connections")
+        scenario?.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        compose.waitForIdle()
+        scrollTo("settings.ai.models")
+        tap("settings.ai.models")
+        compose.onNodeWithTag("ai.model.0").assertExists()
+        capture("ai-models")
     }
 
     @Test

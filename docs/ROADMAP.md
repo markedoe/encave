@@ -207,6 +207,7 @@ kept within the privacy rules: everything is worked out on the device.
 | Wine fridges two deep with bottles in layers drawn as a front and a back band per shelf, back bottles head-to-tail (necks shown) | Done | Done |
 | Fridge shelves that differ (layers and bottles set per shelf, Apply to All Shelves), numbered from the top | Done | Done |
 | Complete with AI on a wine with a label photo, with the day it was completed ("Completed by AI", synced) | Done | Done |
+| AI connections (several per provider) and an ordered list of models, the next one tried when one fails, Read Again with Another Model; OpenRouter asked to skip providers that keep data | Done | Done |
 | Undo from the keyboard (⌘Z, Edit menu, shake) | Done | — |
 | Find Current Price, estimated value today (web search; only the search terms are sent) | Done | Done |
 | Search Online (Brave Search, Tavily, SearXNG; only the search terms are sent) | Done | Done |

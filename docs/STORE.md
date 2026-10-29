@@ -29,7 +29,11 @@
   ciphertext. Nobody but the user's devices has the
   keys, the developer included.
 - AI label recognition (off by default): only the label photo, sent from the
-  device straight to the provider the user set up with their own key.
+  device straight to the models the user set up with their own keys, one at a
+  time (the next only if the previous one fails or the user asks for another
+  reading). Through OpenRouter it reaches the chosen model's provider; requests
+  ask OpenRouter to skip providers that keep or train on data, unless the user
+  turns that off.
 - Web search (off by default): only the search terms (producer, name,
   appellation, vintage, and for a price the bottle size), shown and editable
   before sending, to the provider the user set up. For a price, the first five

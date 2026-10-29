@@ -8,7 +8,7 @@ with any change to what the apps send. -->
 
 ## English
 
-Effective date: October 25, 2026
+Effective date: October 29, 2026
 
 Encave is a wine cellar app for iPhone, iPad, Mac and Android. This policy
 covers those apps. In short: **the developer of Encave collects nothing.**
@@ -87,11 +87,17 @@ not encrypted either: it goes where you choose to save or share it.
    network may use plain http: the files stay encrypted, but the WebDAV
    username and password then travel unencrypted on that network, and Encave
    warns about it.
-2. **AI label recognition** (off by default). If you choose an AI service and
-   enter your own key (or a server of your own), Encave sends **only the label
-   photo**, directly from your device to that service, when you scan a label
-   or ask it to complete a wine. Your cellar and anything else are never sent.
-   The service's own privacy policy applies to the photo.
+2. **AI label recognition** (off by default). If you set up AI models with
+   your own keys (or a server of your own), Encave sends **only the label
+   photo**, directly from your device, when you scan a label or ask it to
+   complete a wine: to the first model of your list, and to the next one only
+   if the previous one fails or when you ask to read the label again with
+   another model; never to two at once. Your cellar and anything else are
+   never sent. Through OpenRouter, the photo reaches the provider of the model
+   you chose; by default Encave asks OpenRouter to use only providers that do
+   not keep or train on the data, unless you turn that off. Each service's own
+   privacy policy applies to the photo. Your keys stay on your device: they are
+   never synced, exported or backed up.
 3. **Web search** (off by default). If you choose a search service, Encave
    sends **only the search terms**: the producer, name, appellation and
    vintage of a wine, and for a price the bottle size. They are shown, and can
@@ -150,7 +156,7 @@ source: anyone can check what the apps do at
 
 ## Français
 
-Date d'effet : 25 octobre 2026
+Date d'effet : 29 octobre 2026
 
 Encave est une app de cave à vin pour iPhone, iPad, Mac et Android. Cette
 politique couvre ces apps. En bref : **le développeur d'Encave ne collecte
@@ -242,11 +248,18 @@ choisissez de l'enregistrer ou de le partager.
    fichiers restent chiffrés, mais le nom d'utilisateur et le mot de passe
    WebDAV circulent alors en clair sur ce réseau, et Encave le signale.
 2. **La reconnaissance des étiquettes par IA** (désactivée par défaut). Si
-   vous choisissez un service d'IA et saisissez votre propre clé (ou un serveur
-   à vous), Encave envoie **seulement la photo de l'étiquette**, directement de
-   votre appareil à ce service, quand vous scannez une étiquette ou lui
-   demandez de compléter un vin. Votre cave et tout le reste ne sont jamais
-   envoyés. La politique de confidentialité du service s'applique à la photo.
+   vous configurez des modèles d'IA avec vos propres clés (ou un serveur à
+   vous), Encave envoie **seulement la photo de l'étiquette**, directement de
+   votre appareil, quand vous scannez une étiquette ou lui demandez de
+   compléter un vin : au premier modèle de votre liste, et au suivant
+   seulement si le précédent échoue ou si vous demandez de relire l'étiquette
+   avec un autre modèle ; jamais à deux à la fois. Votre cave et tout le reste
+   ne sont jamais envoyés. Par OpenRouter, la photo parvient au fournisseur du
+   modèle choisi ; par défaut, Encave demande à OpenRouter de n'utiliser que
+   des fournisseurs qui ne gardent pas les données et ne s'en servent pas pour
+   l'entraînement, sauf si vous le désactivez. La politique de confidentialité
+   de chaque service s'applique à la photo. Vos clés restent sur votre
+   appareil : elles ne sont jamais synchronisées, exportées ni sauvegardées.
 3. **La recherche web** (désactivée par défaut). Si vous choisissez un service
    de recherche, Encave envoie **seulement les termes de recherche** : le
    producteur, le nom, l'appellation et le millésime d'un vin, et pour un prix

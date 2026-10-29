@@ -1,7 +1,6 @@
 package app.encave.data.ai
 
 import android.content.Context
-import androidx.core.content.edit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -62,7 +61,10 @@ enum class AiProvider(
     }
 }
 
-/** Optional AI features with a model and key the user chooses. Off by default. */
+/**
+ * The single provider, model and address of earlier versions, read once to move them into
+ * an [AiConfiguration] ([AiConfigurationStore.migrate]).
+ */
 data class AiSettings(
     val provider: AiProvider = AiProvider.Off,
     val model: String = "",
@@ -72,76 +74,38 @@ data class AiSettings(
     val isEnabled: Boolean get() = provider != AiProvider.Off
 
     val effectiveModel: String get() = model.trim().ifEmpty { provider.suggestedModel }
-
-    val effectiveBaseUrl: String
-        get() {
-            val trimmed = baseUrl.trim()
-            val base = trimmed.ifEmpty { provider.defaultBaseUrl }
-            return base.removeSuffix("/")
-        }
 }
 
 /**
- * AI settings in preferences: the provider, and a model and address saved per provider
- * ("model.<provider>", "baseURL.<provider>"), so switching never copies one provider's
- * model to another. Keys are in [SecretStore], one per provider.
+ * AI settings in preferences ("ai"): the connections and the ordered models
+ * ([AiConfigurationStore]). Keys are in [SecretStore], one per connection, never in them.
  */
-class AiPreferences(context: Context) {
+class AiPreferences(context: Context, private val keys: AiKeyStore = SecretKeys(SecretStore(context))) {
     private val prefs = context.getSharedPreferences("ai", Context.MODE_PRIVATE)
-    private val secrets = SecretStore(context)
-    private val state = MutableStateFlow(read())
+    private val state = MutableStateFlow(AiConfigurationStore.load(prefs, keys))
 
-    val settings: StateFlow<AiSettings> = state.asStateFlow()
+    val configuration: StateFlow<AiConfiguration> = state.asStateFlow()
 
-    private fun read(): AiSettings {
-        val raw = prefs.getString("provider", "off")
-        val legacyUrl = prefs.getString("baseURL", "").orEmpty()
-        val provider = when (raw) {
-            // Names used by the first test builds.
-            "claude" -> AiProvider.Anthropic
-            "openAICompatible" -> if (legacyUrl.isEmpty() || legacyUrl.contains("api.openai.com")) AiProvider.OpenAi else AiProvider.Local
-            else -> AiProvider.fromRaw(raw) ?: AiProvider.Off
-        }.let { chosen ->
-            // The first "local" option pointed at Ollama by default.
-            val localUrl = prefs.getString("baseURL.local", null) ?: legacyUrl
-            if (raw == "local" && (localUrl.isEmpty() || localUrl.contains(":11434"))) AiProvider.Ollama else chosen
-        }
-        val model = prefs.getString("model.${provider.raw}", null) ?: prefs.getString("model", "").orEmpty()
-        var baseUrl = prefs.getString("baseURL.${provider.raw}", null) ?: if (provider == AiProvider.Local) legacyUrl else ""
-        if (raw == "local" && provider == AiProvider.Ollama && baseUrl.isEmpty()) {
-            // Keep the address of a server set up with the first builds, without the "/v1".
-            val old = (prefs.getString("baseURL.local", null) ?: legacyUrl).removeSuffix("/v1")
-            baseUrl = if (old == AiProvider.Ollama.defaultBaseUrl) "" else old
-        }
-        return AiSettings(provider, model, baseUrl)
+    fun update(transform: (AiConfiguration) -> AiConfiguration) {
+        val next = transform(state.value)
+        if (next == state.value) return
+        state.value = next
+        AiConfigurationStore.save(prefs, next)
     }
 
-    fun update(settings: AiSettings) {
-        prefs.edit {
-            putString("provider", settings.provider.raw)
-            putString("model.${settings.provider.raw}", settings.model)
-            putString("baseURL.${settings.provider.raw}", settings.baseUrl)
-        }
-        state.value = settings
-    }
+    fun apiKey(connection: AiConnection): String? = keys.key(connection)
 
-    /** Switching back to a provider keeps the model chosen for it. */
-    fun select(provider: AiProvider) = update(
-        AiSettings(
-            provider = provider,
-            model = prefs.getString("model.${provider.raw}", "").orEmpty(),
-            baseUrl = prefs.getString("baseURL.${provider.raw}", "").orEmpty(),
-        ),
-    )
-
-    fun apiKey(provider: AiProvider): String? =
-        (secrets.get("ai.apiKey.${provider.raw}") ?: if (provider == AiProvider.Anthropic) secrets.get("ai.apiKey") else null)
-            ?.let(::cleanKey)
-
-    fun setApiKey(provider: AiProvider, key: String?) = secrets.set("ai.apiKey.${provider.raw}", key?.let(::cleanKey))
+    fun setApiKey(connection: AiConnection, key: String?) = keys.setKey(connection, key)
 
     /** Saves the key in the background, in the order keys are typed. */
-    fun saveApiKey(provider: AiProvider, key: String?) = SecretStore.writes.execute { runCatching { setApiKey(provider, key) } }
+    fun saveApiKey(connection: AiConnection, key: String?) = SecretStore.writes.execute { runCatching { setApiKey(connection, key) } }
+
+    /** Removes the connection, its models and its key. */
+    fun deleteConnection(id: String) {
+        val connection = state.value.connection(id) ?: return
+        update { it.removingConnection(id) }
+        saveApiKey(connection, null)
+    }
 
     companion object {
         /** Pasted keys often carry spaces, line breaks or quotes, which providers reject as invalid. */

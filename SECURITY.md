@@ -28,7 +28,9 @@ The protocol and its threat model are in [docs/SYNC.md](docs/SYNC.md).
 There are two exceptions, both off by default:
 
 - The optional AI label recognition: when you enable it with your own API key,
-  the label photo (and nothing else) is sent directly to the provider you chose.
+  the label photo (and nothing else) is sent directly to the models you set up,
+  one at a time (the next only if the previous one fails). Keys stay in the
+  Keychain or the Android Keystore of each device, never synced or exported.
 - The optional web search: when you choose a search service (Brave Search,
   Tavily or your own SearXNG server) and tap Search, only the search terms
   are sent to it: by default the producer, name, appellation and vintage (and

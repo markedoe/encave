@@ -7,6 +7,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -18,11 +19,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Autorenew
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -45,6 +49,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -55,6 +60,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
 import app.encave.data.PhotoStore
+import app.encave.data.ai.AiConfiguration
+import app.encave.data.ai.AiModelChoice
+import app.encave.ui.title
 import app.encave.ui.AppViewModel
 import app.encave.ui.LabelReading
 import app.encave.ui.components.rememberCameraCapture
@@ -104,15 +112,19 @@ fun PhotoSection(
     onScanBarcode: (() -> Unit)? = null,
 ) {
     val scope = rememberCoroutineScope()
-    val ai by viewModel.ai.settings.collectAsStateWithLifecycle()
+    val aiConfiguration by viewModel.ai.configuration.collectAsStateWithLifecycle()
+    val aiEnabled = aiConfiguration.isEnabled
     val readings by viewModel.labelReadings.collectAsStateWithLifecycle()
     val reading = readings[form.id]
     var filled by rememberSaveable { mutableStateOf(false) }
+    // The model that read the current photo, by its id in the list.
+    var readById by rememberSaveable { mutableStateOf<String?>(null) }
     // Leaving the form stops its reading, unless the wine was just added (the answer completes it).
     rememberRetained("photo.reading") { LabelReadingRelease { viewModel.releaseLabelReading(form.id) } }
     LaunchedEffect(reading) {
         when (reading) {
             is LabelReading.Done -> {
+                readById = reading.model?.id
                 if (form.apply(reading.analysis)) {
                     filled = true
                 } else {
@@ -128,9 +140,19 @@ fun PhotoSection(
         }
     }
 
-    fun analyze(jpeg: ByteArray) {
+    /** [only]: "Read again with another model"; its answer replaces what the previous reading filled. */
+    fun analyze(jpeg: ByteArray, only: String? = null) {
         filled = false
-        viewModel.startLabelAnalysis(form.id, jpeg)
+        viewModel.startLabelAnalysis(form.id, jpeg, only)
+    }
+
+    /** The photo of the form: the new one, or the one kept with the wine. */
+    fun withPhoto(block: (ByteArray) -> Unit) {
+        val jpeg = form.newPhoto
+        scope.launch {
+            val bytes = jpeg ?: form.storedPhotoId?.let { id -> withContext(Dispatchers.IO) { viewModel.photos.data(id) } }
+            bytes?.let(block)
+        }
     }
 
     suspend fun prepare(uri: Uri) {
@@ -141,7 +163,8 @@ fun PhotoSection(
         }
         form.newPhoto = jpeg
         form.photoRemoved = false
-        if (ai.isEnabled) analyze(jpeg)
+        readById = null
+        if (aiEnabled) analyze(jpeg)
     }
 
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> uri?.let { scope.launch { prepare(it) } } }
@@ -171,7 +194,7 @@ fun PhotoSection(
                 }
             }
             if (form.hasPhoto) {
-                TextButton(onClick = { form.newPhoto = null; form.photoRemoved = true; filled = false }) {
+                TextButton(onClick = { form.newPhoto = null; form.photoRemoved = true; filled = false; readById = null }) {
                     app.encave.ui.components.ActionContent(stringResource(R.string.photo_remove), Icons.Outlined.Delete)
                 }
             }
@@ -179,18 +202,10 @@ fun PhotoSection(
         // A full-width row of its own, so its title is never squeezed by the photo actions.
         // Once the AI has completed the wine, it reads "Complete again" and says when;
         // while it reads the label, it cannot be tapped twice.
-        if (ai.isEnabled && form.hasPhoto) {
-            val jpeg = form.newPhoto
+        if (aiEnabled && form.hasPhoto) {
             val completedAt = form.aiCompletedAt
             FilledTonalButton(
-                onClick = {
-                    scope.launch {
-                        val bytes = jpeg ?: form.storedPhotoId?.let { id ->
-                            withContext(Dispatchers.IO) { viewModel.photos.data(id) }
-                        }
-                        bytes?.let(::analyze)
-                    }
-                },
+                onClick = { withPhoto { analyze(it) } },
                 enabled = !isReading,
                 modifier = Modifier.fillMaxWidth().testTag("action.ai_complete"),
             ) {
@@ -210,6 +225,10 @@ fun PhotoSection(
             if (completedAt != null && !isReading) {
                 AiCompletedCaption(completedAt)
             }
+            val readBy = readById?.let { id -> aiConfiguration.models.firstOrNull { it.id == id } }
+            if (readBy != null && !isReading) {
+                AiReadAgain(readBy, aiConfiguration) { model -> withPhoto { analyze(it, only = model.id) } }
+            }
         }
         if (isReading) {
             LinearProgressIndicator(Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite })
@@ -218,10 +237,37 @@ fun PhotoSection(
                 stringResource(R.string.ai_filled), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             )
-        } else if (!ai.isEnabled) {
+        } else if (!aiEnabled) {
             // No reading of the label text on Android itself (no third-party OCR): say so, and what helps.
             // The barcode is mentioned only where it can be scanned.
             Text(stringResource(if (onScanBarcode != null) R.string.photo_hint_ai else R.string.photo_hint_ai_no_barcode), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+/**
+ * "Read by model · connection", and "Read again with another model": the same photo sent
+ * to the model picked, whose answer replaces what the previous reading filled.
+ */
+@Composable
+private fun AiReadAgain(readBy: AiModelChoice, configuration: AiConfiguration, readAgain: (AiModelChoice) -> Unit) {
+    val resources = LocalResources.current
+    fun title(model: AiModelChoice) = configuration.connection(model)?.let { "${model.model} · ${it.title(resources)}" } ?: model.model
+    Text(
+        stringResource(R.string.ai_read_by, title(readBy)), style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("label.read_by"),
+    )
+    val others = configuration.usableModels.filter { it.id != readBy.id }
+    if (others.isEmpty()) return
+    var open by remember { mutableStateOf(false) }
+    Box {
+        TextButton(onClick = { open = true }, modifier = Modifier.testTag("action.ai_read_again")) {
+            app.encave.ui.components.ActionContent(stringResource(R.string.ai_read_again), Icons.Outlined.Autorenew)
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            others.forEach { model ->
+                DropdownMenuItem(text = { Text(title(model)) }, onClick = { open = false; readAgain(model) })
+            }
         }
     }
 }

@@ -57,6 +57,11 @@ data class AddBottleRoute(
 @Serializable data class HelpRoute(val topic: String? = null)
 @Serializable data object DevicesRoute
 
+/** Settings › AI › Connections, one connection (null: a new one), and the ordered models. */
+@Serializable data object AiConnectionsRoute
+@Serializable data class AiConnectionRoute(val connectionId: String? = null)
+@Serializable data object AiModelsRoute
+
 /** Settings › About › Licences. */
 @Serializable data object LicencesRoute
 

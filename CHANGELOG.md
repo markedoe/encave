@@ -6,6 +6,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- AI label recognition with several models: Settings › AI now has Connections
+  (a provider, an optional name, a server address and a key; several per
+  provider, for example two OpenRouter accounts) and Models, in order of
+  preference (dragged to reorder, picked from the connection's list or typed;
+  through OpenRouter only the models that read images). The label photo goes to
+  the first model; if it fails (network, timeout, a server that cannot be
+  reached, key refused, no credit, too many requests, a server error, a refusal
+  or an answer that cannot be read), the next one is tried, one at a time,
+  within six minutes in all. The model that read the label is shown, and Read
+  Again with Another Model sends the same photo to the model picked; when every
+  model fails, the message lists what failed with each. Test checks a model with
+  a made-up label bundled with the app. Requests through OpenRouter ask it to
+  skip providers that keep or train on the data, unless turned off per
+  connection. The earlier provider, model, address and key become the first
+  connection and model by themselves; keys stay on the device, one per
+  connection, never synced, exported or backed up
 - Guided tasting sheet: under More details in a tasting, aromas as chips grouped
   in families (red fruit, citrus, oak and toast…; those that suit the wine's
   colour first, searchable), structure from 1 to 5 (sweetness, acidity, tannin
