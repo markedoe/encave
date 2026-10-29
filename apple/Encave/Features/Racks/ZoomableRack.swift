@@ -52,6 +52,9 @@ struct ZoomableRack: UIViewRepresentable {
         context.coordinator.scroll = scroll
 
         let pinch = UIPinchGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.pinched(_:)))
+        // Two fingers moving also start the scroll view's pan, often first (on iPhone above
+        // all): without this, the pan then blocks the pinch and the rack only moves.
+        pinch.delegate = context.coordinator
         scroll.addGestureRecognizer(pinch)
         context.coordinator.pinch = pinch
         context.coordinator.tracker = tracker
@@ -89,7 +92,7 @@ struct ZoomableRack: UIViewRepresentable {
     }
 
     @MainActor
-    final class Coordinator: NSObject, UIScrollViewDelegate {
+    final class Coordinator: NSObject, UIScrollViewDelegate, UIGestureRecognizerDelegate {
         var parent: ZoomableRack?
         var model: CellarModel?
         var host: UIHostingController<AnyView>?
@@ -159,6 +162,12 @@ struct ZoomableRack: UIViewRepresentable {
             default:
                 break
             }
+        }
+
+        /// The pinch may start while the pan already runs; it then turns the pan off itself.
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
+                               shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
+            gestureRecognizer === pinch && other === scroll?.panGestureRecognizer
         }
 
         /// Applies what SwiftUI last asked for: a new shape, a new space or a new drawing.
