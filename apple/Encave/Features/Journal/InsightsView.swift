@@ -444,7 +444,7 @@ private struct YearInWineFacts: View {
             }
             VStack(alignment: .leading, spacing: 8) {
                 if let favorite = recap.favorite {
-                    let starsLabel = ScoreText.spoken(rating: favorite.rating, score100: nil, on: RatingScaleSetting.shared.scale) ?? ""
+                    let starsLabel = ScoreText.spoken(rating: favorite.rating, score100: recap.favoriteScore100, on: RatingScaleSetting.shared.scale) ?? ""
                     fact("star.fill", Text("Favorite: \(favorite.name), \(starsLabel)"))
                 }
                 if let regionName = recap.topRegion {

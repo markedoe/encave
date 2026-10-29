@@ -147,6 +147,8 @@ data class YearInWine(
     val discoveries: Int,
     /** Month with the most bottles opened (1–12). */
     val busiestMonth: Int?,
+    /** The favourite's precise score out of 100, when it was rated out of 20 or 100. */
+    val favoriteScore100: Double? = null,
 ) {
     val isEmpty: Boolean get() = bottlesOpened == 0 && discoveries == 0
 }
@@ -161,9 +163,10 @@ fun Cellar.yearInWine(year: Int, zone: ZoneId = ZoneId.systemDefault()): YearInW
         values.groupBy { it }.entries.sortedWith(compareByDescending<Map.Entry<T, List<T>>> { it.value.size }.thenBy { text(it.key) })
             .firstOrNull()?.key
 
-    val favorite = opened.mapNotNull { bottle -> bottle.tasting?.rating?.let { bottle to it } }
-        .maxWithOrNull(compareBy<Pair<Bottle, Int>>({ it.second }, { it.first.tasting?.date ?: Instant.MIN }))
-        ?.let { (bottle, rating) -> wines[bottle.wineId]?.let { it.displayName to rating } }
+    // Highest rating, then the precise score (a score beats stars alone), then the latest, as in CaveKit.
+    val best = opened.mapNotNull { bottle -> bottle.tasting?.rating?.let { bottle to it } }
+        .maxWithOrNull(compareBy<Pair<Bottle, Int>>({ it.second }, { it.first.tasting?.score100 ?: 0.0 }, { it.first.tasting?.date ?: Instant.MIN }))
+    val favorite = best?.let { (bottle, rating) -> wines[bottle.wineId]?.let { it.displayName to rating } }
     val months = opened.mapNotNull { it.tasting?.date }.map { it.atZone(zone).monthValue }
     return YearInWine(
         year = year,
@@ -176,5 +179,6 @@ fun Cellar.yearInWine(year: Int, zone: ZoneId = ZoneId.systemDefault()): YearInW
         topOccasion = top(opened.mapNotNull { it.tasting?.occasion }.filter { it.isNotEmpty() }.map { Occasion.matching(it)?.english ?: it }),
         discoveries = discoveries.values.count { yearOf(it.date) == year },
         busiestMonth = top(months),
+        favoriteScore100 = if (favorite == null) null else best?.first?.tasting?.score100,
     )
 }

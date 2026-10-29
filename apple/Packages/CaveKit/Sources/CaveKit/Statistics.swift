@@ -138,6 +138,8 @@ public struct YearInWine: Sendable, Equatable {
     public var differentWines: Int
     /// Best rated bottle of the year (highest rating, then the latest).
     public var favorite: (name: String, rating: Int)?
+    /// The favourite's precise score out of 100, when it was rated out of 20 or 100.
+    public var favoriteScore100: Double? = nil
     public var topRegion: String?
     public var topColor: WineColor?
     public var topOccasion: String?
@@ -150,7 +152,7 @@ public struct YearInWine: Sendable, Equatable {
 
     public static func == (a: YearInWine, b: YearInWine) -> Bool {
         a.year == b.year && a.bottlesOpened == b.bottlesOpened && a.differentWines == b.differentWines
-            && a.favorite?.name == b.favorite?.name && a.favorite?.rating == b.favorite?.rating
+            && a.favorite?.name == b.favorite?.name && a.favorite?.rating == b.favorite?.rating && a.favoriteScore100 == b.favoriteScore100
             && a.topRegion == b.topRegion && a.topColor == b.topColor && a.topOccasion == b.topOccasion
             && a.discoveries == b.discoveries && a.busiestMonth == b.busiestMonth
     }
@@ -170,12 +172,16 @@ public extension Cellar {
             }?.key
         }
 
-        let favorite = opened
+        // Highest rating, then the precise score (a score beats stars alone), then the latest.
+        let best = opened
             .compactMap { bottle -> (Bottle, Int)? in bottle.tasting?.rating.map { (bottle, $0) } }
             .max { a, b in
-                a.1 != b.1 ? a.1 < b.1 : (a.0.tasting?.date ?? .distantPast) < (b.0.tasting?.date ?? .distantPast)
+                if a.1 != b.1 { return a.1 < b.1 }
+                let sa = a.0.tasting?.score100 ?? 0, sb = b.0.tasting?.score100 ?? 0
+                if sa != sb { return sa < sb }
+                return (a.0.tasting?.date ?? .distantPast) < (b.0.tasting?.date ?? .distantPast)
             }
-            .flatMap { pair in wines[pair.0.wineID].map { (name: $0.displayName, rating: pair.1) } }
+        let favorite = best.flatMap { pair in wines[pair.0.wineID].map { (name: $0.displayName, rating: pair.1) } }
         let months = opened.compactMap { $0.tasting?.date }.map { calendar.component(.month, from: $0) }
         let found = discoveries.values.filter { calendar.component(.year, from: $0.date) == year }
 
@@ -184,6 +190,7 @@ public extension Cellar {
             bottlesOpened: opened.count,
             differentWines: Set(opened.map(\.wineID)).count,
             favorite: favorite,
+            favoriteScore100: favorite == nil ? nil : best?.0.tasting?.score100,
             topRegion: top(openedWines.compactMap { $0.region ?? $0.country }),
             topColor: top(openedWines.compactMap(\.color)),
             // A chip counts the same in any language: its English label, shown translated.
