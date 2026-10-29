@@ -66,6 +66,12 @@ class DiamondEdgeVectorTest {
             assertEquals(vector["diamondColumns"].int(), layout?.columns, about)
             assertEquals(vector["columnsInRow"].ints(), (0 until rack.rows).map { rack.columnsInRow(it) }, about)
             assertEquals(vector["offsetRows"]!!.jsonArray.map { it.jsonPrimitive.boolean }, (0 until rack.rows).map { rack.isOffset(it) }, about)
+            val drawing = vector["drawing"] as? JsonArray
+            assertEquals(
+                drawing?.map { row -> row.jsonArray.let { it[0].jsonPrimitive.int to it[1].ints() } },
+                layout?.drawingRows?.map { it to layout.drawingColumns(it) },
+                about,
+            )
             if (layout != null) assertEquals(vector["triangleCapacity"].int(), rack.triangleCapacity, about)
             assertEquals(vector["capacity"].int(), rack.capacity, about)
             assertEquals(rack.capacity, rack.allSlots.size, about)

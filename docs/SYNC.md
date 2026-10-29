@@ -263,31 +263,38 @@ implementations:
     diamond bins, not crates): the half diamonds the lattice leaves along a side,
     each a bin of its own holding `rack.triangleCapacity` bottles (optional
     integer, brought into 1…100 and read as at most `binCapacity`; half a bin, at
-    least 1, when left out). The triangles are ordinary cells of the rack, so
-    places never change meaning: rows of diamonds alternate, every other one offset
-    half a diamond right; the top side adds a first row of `columns` triangles, the
-    bottom side a last row of `columns` triangles, the left side a first cell on
-    each offset row of diamonds (the 2nd, 4th… row of diamonds), the right side a
-    last cell on each other row of diamonds; `columns` is the widest row and
-    `rowColumns` gives each row when they differ. A reader applies the sides it
-    knows only when every row is exactly as wide as they make it; otherwise (a
-    version that does not know them added or removed rows, or a side of a newer
-    version adds cells this one does not know) every cell is a whole diamond.
+    least 1, when left out). The triangles are ordinary cells added after those of
+    the diamonds, so turning a side on or off never moves a bottle that is not in
+    one of its triangles, whatever another device edits meanwhile: rows 0 to
+    R − 1 stay the rows of diamonds (lettered and drawn as without triangles,
+    every other one offset half a diamond right), each with C diamonds; the top
+    and the bottom sides each add a row of C triangles after them, in the order
+    the two sides are listed (drawn above row A and below the last row); the left
+    side adds a last cell to each offset row of diamonds (the 2nd, 4th…), drawn
+    first; the right side a last cell to each other row of diamonds; `columns`
+    is the widest row and `rowColumns` gives each row when they differ. Writers
+    keep the order of the sides already on and add a side at the end. A reader
+    applies the sides it knows only when every row is exactly as wide as they
+    make it; otherwise (a version that does not know them added or removed rows,
+    or a side of a newer version adds cells this one does not know) every cell
+    is a whole diamond. Such an edit can also leave a shape the sides fit by
+    chance (a row added under a row of top triangles): bottles keep their
+    places, only the drawing and the counts differ until the rack is edited.
     Values it does not know are kept. Places stay judged against `binCapacity`
     whatever the triangles (`contains`, the merge's repair, imports), so a
     version that does not know them, which shows each triangle as a whole
     diamond and can fill it, and one that does keep the same bottles in place. The
     newer apps never offer more than `triangleCapacity` places in a triangle,
     show and count the bottles beyond it (like a bottle behind a single row,
-    above), name the diamonds from the first row of diamonds ("Bin A3") and the
-    triangles by side and number from the left or the top ("Top triangle 3";
-    technical labels in files stay `B3-1`, from the rack's rows, as older versions
-    write them), and draw the rows of diamonds offset as before the top was
-    turned on. Turning a side on or off, or resizing such a rack, moves each
-    bottle with its diamond or triangle (a row lower, a cell further), in the
-    same change as the rack; bottles whose triangle is gone are listed and taken
-    out once the person agrees, with Undo. Apps that do not know either key keep
-    it as an unknown field (below). Shared vectors:
+    above), name the diamonds as without triangles ("Bin B3") and the triangles
+    by side and number from the left or the top ("Top triangle 3"; technical
+    labels in files stay `D3-1`, from the rack's rows, as older versions write
+    them). Resizing such a rack moves the bottles of the triangles that follow
+    the change (a row of triangles after a row of diamonds added, a last cell
+    after a diamond added), in the same change as the rack; bottles whose
+    triangle is gone are listed and taken out once the person agrees, with Undo.
+    Editors keep the values of sides they do not know. Apps that do not know
+    either key keep it as an unknown field (below). Shared vectors:
     `fixtures/diamond-edge-vectors.json`;
   - a document's `name` is normalized the same way on every device, when read
     and when set: each control character (Unicode category Cc) becomes a

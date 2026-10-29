@@ -669,7 +669,7 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     /// in the gaps of the layer below; bins too.
     public func isOffset(row: Int) -> Bool {
         switch kind {
-        case .bins: return !(row - (diamondLayout?.topRows ?? 0)).isMultiple(of: 2)
+        case .bins: return diamondLayout?.isOffset(row: row) ?? !row.isMultiple(of: 2)
         case .staggered: return shelfPlace(ofRow: row).map { !$0.layer.isMultiple(of: 2) } ?? !row.isMultiple(of: 2)
         case .grid, .shelves: return false
         }

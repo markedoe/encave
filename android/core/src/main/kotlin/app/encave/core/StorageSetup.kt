@@ -143,7 +143,7 @@ data class StorageSettings(
                     columns = count(columns), depth = depth)
                 RackLayout.Diamond -> diamondRack(
                     id = id, name = name, rows = count(rows), columns = count(columns), binCapacity = count(bottlesPerBin),
-                    edges = diamondEdges, triangleCapacity = bottlesPerTriangle?.coerceIn(1, count(bottlesPerBin)),
+                    edges = DiamondEdge.entries.filter { it in diamondEdges }, triangleCapacity = bottlesPerTriangle?.coerceIn(1, count(bottlesPerBin)),
                 )
             }
             StorageType.WineFridge -> {

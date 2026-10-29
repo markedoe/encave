@@ -399,8 +399,10 @@ struct RackEditor: View {
             shape = Rack(id: rackID, name: name, kind: kind, rows: rows, columns: widest, depth: deepest, binCapacity: binCapacity,
                          rowColumns: sameWidths ? nil : widths, rowDepths: kind == .bins ? nil : depths)
         } else if offersEdges, !edges.isEmpty {
+            // The sides already on keep their order, so no row of triangles moves.
             shape = Rack.diamond(id: rackID, name: name, rows: rows, columns: columns, binCapacity: binCapacity,
-                                 edges: edges, triangleCapacity: min(binCapacity, triangleCapacity))
+                                 edges: Rack.orderedEdges(edges, keepingOrderOf: original),
+                                 triangleCapacity: min(binCapacity, triangleCapacity))
         } else {
             shape = Rack(id: rackID, name: name, kind: kind, rows: rows, columns: columns, depth: depth, binCapacity: binCapacity)
         }
@@ -409,8 +411,9 @@ struct RackEditor: View {
         if kind == .bins, let original {
             var rack = original.savingBins(name: name, binCapacity: binCapacity, chosen: chosenStyle, bins: bins, shape: shape)
             // Triangles are for diamond bins: saved as such, so their shape never reads as crates.
-            if rack.edgeTrianglesValue != nil { rack.binStyle = .diamond }
-            return rack
+            if offersEdges, !edges.isEmpty { rack.binStyle = .diamond }
+            // Sides of a newer version, and sides of a rack it reshaped, are kept.
+            return rack.keepingEdgeValues(from: original)
         }
         return shape
     }

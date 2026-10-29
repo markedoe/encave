@@ -512,7 +512,7 @@ data class Rack(
 
     /** Is this row drawn offset by half a bottle? Odd honeycomb rows, or upper layers resting in the gaps; bins too. */
     fun isOffset(row: Int): Boolean = when (kind) {
-        RackKind.Bins -> Math.floorMod(row - (diamondLayout?.topRows ?: 0), 2) == 1
+        RackKind.Bins -> diamondLayout?.isOffset(row) ?: (row % 2 == 1)
         RackKind.Staggered -> shelfPlace(row)?.let { it.layer % 2 == 1 } ?: (row % 2 == 1)
         RackKind.Grid, RackKind.Shelves -> false
     }

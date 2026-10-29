@@ -30,70 +30,84 @@ sealed interface DiamondPlace {
 }
 
 /**
- * How a diamond rack's triangles are laid out among its rows (docs/SYNC.md). Rows of diamonds
- * nest by half a diamond, every other one offset half a diamond right, as drawn. The triangles
- * are ordinary cells, so a version that does not know them shows them as whole diamonds:
- * top: a first row of [columns] triangles; bottom: a last row of [columns] triangles; left: a
- * first cell on each offset row of diamonds (B, D…); right: a last cell on each row not offset
- * (A, C…). The small corners (a quarter of a diamond) are not places. Mirrors CaveKit.
+ * How a diamond rack's triangles are laid out among its cells (docs/SYNC.md). The triangles are
+ * ordinary cells added after those of the diamonds, so turning a side on or off never moves a
+ * diamond, and a version that does not know them shows them as whole diamonds: the rows of
+ * diamonds stay rows 0 to [rows] − 1 with [columns] diamonds each; top and bottom add a row of
+ * [columns] triangles each after them, in the order the sides are listed ([appendedRows]), drawn
+ * above the first row and below the last; left adds a last cell on each offset row of diamonds
+ * (B, D…), drawn first; right adds a last cell on each other row. The small corners are not
+ * places. Mirrors CaveKit.
  */
-data class DiamondLayout(val rows: Int, val columns: Int, val edges: Set<DiamondEdge>) {
-    /** 1 when the top triangles are on: the first row of diamonds is then row 1 of the rack. */
-    val topRows: Int get() = if (DiamondEdge.Top in edges) 1 else 0
-    private val bottomRows: Int get() = if (DiamondEdge.Bottom in edges) 1 else 0
+class DiamondLayout(rows: Int, columns: Int, sides: List<DiamondEdge>) {
+    /** Rows of whole diamonds. */
+    val rows: Int = maxOf(1, rows)
+
+    /** Whole diamonds in each row. */
+    val columns: Int = maxOf(1, columns)
+
+    val edges: Set<DiamondEdge> = sides.toSet()
+
+    /** The rows of triangles after the rows of diamonds: top and bottom, in their listed order. */
+    val appendedRows: List<DiamondEdge> = sides.distinct().filter { it == DiamondEdge.Top || it == DiamondEdge.Bottom }
+
     private val leftCells: Int get() = if (DiamondEdge.Left in edges) 1 else 0
     private val rightCells: Int get() = if (DiamondEdge.Right in edges) 1 else 0
 
-    /** Rows of the rack: the diamonds' and the triangle rows. */
-    val rackRows: Int get() = rows + topRows + bottomRows
+    /** Rows of the rack: the diamonds', then the rows of triangles. */
+    val rackRows: Int get() = rows + appendedRows.size
 
-    /** Cells in each row of the rack, from the top. */
+    /** Cells in each row of the rack, by index. */
     val widths: List<Int>
-        get() = (0 until rackRows).map { row ->
-            if (row < topRows || row >= topRows + rows) {
-                columns
-            } else {
-                columns + if ((row - topRows) % 2 == 0) rightCells else leftCells
-            }
-        }
+        get() = (0 until rackRows).map { row -> if (row >= rows) columns else columns + if (row % 2 == 0) rightCells else leftCells }
 
     /** What a cell of the rack is. */
     fun place(row: Int, column: Int): DiamondPlace {
-        if (row < topRows) return DiamondPlace.Triangle(DiamondEdge.Top, column)
-        if (row >= topRows + rows) return DiamondPlace.Triangle(DiamondEdge.Bottom, column)
-        val diamondRow = row - topRows
-        if (diamondRow % 2 == 0) {
-            if (rightCells == 1 && column == columns) return DiamondPlace.Triangle(DiamondEdge.Right, diamondRow / 2)
-            return DiamondPlace.Diamond(diamondRow, column)
+        if (row >= rows) return DiamondPlace.Triangle(appendedRows[minOf(row - rows, appendedRows.size - 1)], column)
+        if (column == columns) {
+            if (row % 2 == 0 && rightCells == 1) return DiamondPlace.Triangle(DiamondEdge.Right, row / 2)
+            if (row % 2 == 1 && leftCells == 1) return DiamondPlace.Triangle(DiamondEdge.Left, row / 2)
         }
-        if (leftCells == 1) {
-            return if (column == 0) DiamondPlace.Triangle(DiamondEdge.Left, diamondRow / 2) else DiamondPlace.Diamond(diamondRow, column - 1)
-        }
-        return DiamondPlace.Diamond(diamondRow, column)
+        return DiamondPlace.Diamond(row, column)
     }
 
     /** The cell of a place, as (row, column), or null when this layout does not have it. */
     fun cellOf(place: DiamondPlace): Pair<Int, Int>? = when (place) {
-        is DiamondPlace.Diamond ->
-            if (place.row in 0 until rows && place.column in 0 until columns) {
-                place.row + topRows to place.column + if (place.row % 2 == 0) 0 else leftCells
-            } else {
-                null
-            }
+        is DiamondPlace.Diamond -> if (place.row in 0 until rows && place.column in 0 until columns) place.row to place.column else null
         is DiamondPlace.Triangle -> {
             val i = place.index
             if (place.edge !in edges || i < 0) {
                 null
             } else {
                 when (place.edge) {
-                    DiamondEdge.Top -> if (i < columns) 0 to i else null
-                    DiamondEdge.Bottom -> if (i < columns) rackRows - 1 to i else null
-                    DiamondEdge.Right -> if (2 * i < rows) 2 * i + topRows to columns else null
-                    DiamondEdge.Left -> if (2 * i + 1 < rows) 2 * i + 1 + topRows to 0 else null
+                    DiamondEdge.Top, DiamondEdge.Bottom -> {
+                        val at = appendedRows.indexOf(place.edge)
+                        if (i < columns && at >= 0) rows + at to i else null
+                    }
+                    DiamondEdge.Right -> if (2 * i < rows) 2 * i to columns else null
+                    DiamondEdge.Left -> if (2 * i + 1 < rows) 2 * i + 1 to columns else null
                 }
             }
         }
     }
+
+    /** Is this row drawn offset by half a place? Odd rows of diamonds; the top triangles, and the bottom ones below an even last row. */
+    fun isOffset(row: Int): Boolean {
+        if (row < rows) return row % 2 == 1
+        return appendedRows[minOf(row - rows, appendedRows.size - 1)] == DiamondEdge.Top || rows % 2 == 1
+    }
+
+    /** The rows of the rack from the top of the drawing: the top triangles, the rows of diamonds, the bottom triangles. */
+    val drawingRows: List<Int>
+        get() {
+            val top = appendedRows.indexOf(DiamondEdge.Top).takeIf { it >= 0 }?.let { listOf(rows + it) }.orEmpty()
+            val bottom = appendedRows.indexOf(DiamondEdge.Bottom).takeIf { it >= 0 }?.let { listOf(rows + it) }.orEmpty()
+            return top + (0 until rows) + bottom
+        }
+
+    /** The cells of a row from the left of the drawing: a left triangle first. */
+    fun drawingColumns(row: Int): List<Int> =
+        if (row < rows && row % 2 == 1 && leftCells == 1) listOf(columns) + (0 until columns) else (0 until (if (row < rows) widths[row] else columns)).toList()
 
     /** Triangles along a side. */
     fun triangles(edge: DiamondEdge): Int = if (edge !in edges) {
@@ -106,9 +120,12 @@ data class DiamondLayout(val rows: Int, val columns: Int, val edges: Set<Diamond
         }
     }
 
-    companion object {
-        fun of(rows: Int, columns: Int, edges: Set<DiamondEdge>) = DiamondLayout(maxOf(1, rows), maxOf(1, columns), edges)
-    }
+    override fun equals(other: Any?): Boolean =
+        other is DiamondLayout && rows == other.rows && columns == other.columns && edges == other.edges && appendedRows == other.appendedRows
+
+    override fun hashCode(): Int = listOf(rows, columns, edges, appendedRows).hashCode()
+
+    override fun toString(): String = "DiamondLayout(rows=$rows, columns=$columns, edges=$edges, appendedRows=$appendedRows)"
 }
 
 /**
@@ -121,15 +138,13 @@ val Rack.diamondLayout: DiamondLayout?
     get() {
         val raw = edgeTrianglesValue ?: return null
         if (kind != RackKind.Bins || storageType != StorageType.Rack) return null
-        val edges = raw.mapNotNull { DiamondEdge.of(it) }.toSet()
-        if (edges.isEmpty()) return null
-        val top = if (DiamondEdge.Top in edges) 1 else 0
-        val bottom = if (DiamondEdge.Bottom in edges) 1 else 0
-        val diamondRows = rows - top - bottom
+        val sides = raw.mapNotNull { DiamondEdge.of(it) }
+        if (sides.isEmpty()) return null
+        val diamondRows = rows - (if (DiamondEdge.Top in sides) 1 else 0) - (if (DiamondEdge.Bottom in sides) 1 else 0)
         if (diamondRows < 1) return null
-        val diamondColumns = columnsInRow(top) - if (DiamondEdge.Right in edges) 1 else 0
+        val diamondColumns = columnsInRow(0) - if (DiamondEdge.Right in sides) 1 else 0
         if (diamondColumns < 1) return null
-        val layout = DiamondLayout(diamondRows, diamondColumns, edges)
+        val layout = DiamondLayout(diamondRows, diamondColumns, sides)
         val widths = layout.widths
         if (widths != (0 until rows).map { columnsInRow(it) } || columns != widths.max()) return null
         return layout
@@ -152,8 +167,9 @@ fun Rack.diamondPlace(cell: RackCell): DiamondPlace? {
 fun Rack.triangleEdge(cell: RackCell): DiamondEdge? = (diamondPlace(cell) as? DiamondPlace.Triangle)?.edge
 
 /**
- * Diamond bins of [rows] rows of [columns] diamonds, with the triangles of [edges] holding
- * [triangleCapacity] bottles each (half a bin when null). Mirrors CaveKit's `Rack.diamond`.
+ * Diamond bins of [rows] rows of [columns] diamonds, with the triangles of [edges] (in this order:
+ * it decides which row of triangles comes first) holding [triangleCapacity] bottles each (half a
+ * bin when null). Mirrors CaveKit's `Rack.diamond`.
  */
 fun diamondRack(
     id: UUID = UUID.randomUUID(),
@@ -161,28 +177,57 @@ fun diamondRack(
     rows: Int,
     columns: Int,
     binCapacity: Int,
-    edges: Set<DiamondEdge> = emptySet(),
+    edges: List<DiamondEdge> = emptyList(),
     triangleCapacity: Int? = null,
 ): Rack {
-    val extraRows = (if (DiamondEdge.Top in edges) 1 else 0) + (if (DiamondEdge.Bottom in edges) 1 else 0)
-    val extraColumns = if (DiamondEdge.Left in edges || DiamondEdge.Right in edges) 1 else 0
-    val layout = DiamondLayout.of(
+    val sides = edges.distinct()
+    val extraRows = (if (DiamondEdge.Top in sides) 1 else 0) + (if (DiamondEdge.Bottom in sides) 1 else 0)
+    val extraColumns = if (DiamondEdge.Left in sides || DiamondEdge.Right in sides) 1 else 0
+    val layout = DiamondLayout(
         minOf(Rack.MAX_SIZE - extraRows, rows.coerceIn(1, Rack.MAX_SIZE)),
         minOf(Rack.MAX_SIZE - extraColumns, columns.coerceIn(1, Rack.MAX_SIZE)),
-        edges,
+        sides,
     )
     val widths = layout.widths
     val capacity = binCapacity.coerceIn(1, Rack.MAX_SIZE)
     return Rack(
         id = id, name = name, kind = RackKind.Bins, rows = widths.size, columns = widths.max(), binCapacity = capacity,
         rowColumns = if (widths.toSet().size > 1) widths else null, binStyleValue = BinStyle.Diamond.raw,
-        edgeTrianglesValue = if (edges.isEmpty()) null else DiamondEdge.entries.filter { it in edges }.map { it.raw },
-        triangleCapacityValue = if (edges.isEmpty()) {
+        edgeTrianglesValue = if (sides.isEmpty()) null else sides.map { it.raw },
+        triangleCapacityValue = if (sides.isEmpty()) {
             null
         } else {
             minOf(capacity, (triangleCapacity ?: defaultTriangleCapacity(capacity)).coerceIn(1, Rack.MAX_SIZE))
         },
     ).normalized()
+}
+
+/**
+ * The sides of a diamond rack as an editor saves them: those of [original] still [chosen], in
+ * their order (so no row of triangles moves), then those turned on, top, left, bottom, right.
+ */
+fun orderedEdges(chosen: Set<DiamondEdge>, original: Rack?): List<DiamondEdge> {
+    val kept = original?.edgeTrianglesValue.orEmpty().mapNotNull { DiamondEdge.of(it) }.filter { it in chosen }.distinct()
+    return kept + DiamondEdge.entries.filter { it in chosen && it !in kept }
+}
+
+/**
+ * This rack as edited from [original], keeping what a newer version wrote that this one does not
+ * apply: when neither applies triangles and the cells are the same, the sides as read; otherwise
+ * the values of sides this version does not know, after its own. Mirrors CaveKit.
+ */
+fun Rack.keepingEdgeValues(original: Rack): Rack {
+    val read = original.edgeTrianglesValue ?: return this
+    val sameCells = rows == original.rows && (0 until rows).all { columnsInRow(it) == original.columnsInRow(it) }
+    if (diamondLayout == null && original.diamondLayout == null && sameCells) {
+        return copy(edgeTrianglesValue = read, triangleCapacityValue = original.triangleCapacityValue)
+    }
+    val unknown = read.filter { DiamondEdge.of(it) == null }
+    if (unknown.isEmpty()) return this
+    return copy(
+        edgeTrianglesValue = edgeTrianglesValue.orEmpty() + unknown,
+        triangleCapacityValue = triangleCapacityValue ?: original.triangleCapacityValue,
+    )
 }
 
 /**

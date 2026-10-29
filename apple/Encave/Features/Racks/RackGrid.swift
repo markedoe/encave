@@ -91,7 +91,8 @@ struct RackGrid: View {
     /// How far right a row starts, in places: half a place on offset rows, unless a left
     /// triangle (half a place wide) fills that notch.
     private func leadingShift(ofRow row: Int, depth: Int?) -> CGFloat {
-        if let layout = diamondLayout, layout.edges.contains(.left), case .triangle(.left, _) = layout.place(row: row, column: 0) {
+        if let layout = diamondLayout, let first = layout.drawingColumns(row: row).first,
+           case .triangle(.left, _) = layout.place(row: row, column: first) {
             return 0
         }
         return (rack.isOffset(row: row) ? 0.5 : 0) + CGFloat(rack.bandShift(row: row, depth: depth))
@@ -112,7 +113,9 @@ struct RackGrid: View {
                         columnHeader
                             .padding(.bottom, rack.kind == .shelves ? -rowSpacing + spacing : 0)
                     }
-                    ForEach(0..<rack.rows, id: \.self) { row in
+                    // A diamond rack with edge triangles draws its rows of triangles above and below
+                    // the rows of diamonds, whatever their numbers.
+                    ForEach(diamondLayout?.drawingRows ?? Array(0..<rack.rows), id: \.self) { row in
                         HStack(spacing: 0) {
                             if showsHeaders { rowHeader(row) }
                             cells(ofRow: row, bottlesByCell, selectedByCell)
@@ -155,7 +158,7 @@ struct RackGrid: View {
     private func cells(ofRow row: Int, depth: Int? = nil, _ bottlesByCell: [RackCell: [Bottle]],
                        _ selectedByCell: [RackCell: [Slot]]) -> some View {
         HStack(spacing: spacing) {
-            ForEach(0..<rack.columns(inRow: row), id: \.self) { column in
+            ForEach(diamondLayout?.drawingColumns(row: row) ?? Array(0..<rack.columns(inRow: row)), id: \.self) { column in
                 let place = RackPlace(cell: RackCell(rackID: rack.id, row: row, column: column), depth: depth)
                 let bottles = (bottlesByCell[place.cell] ?? []).filter { $0.slot.map(place.contains) ?? false }
                 RackCellView(
@@ -316,9 +319,7 @@ struct RackGrid: View {
     /// diamonds only.
     private func rowHeaderText(_ row: Int) -> String {
         if rack.kind == .shelves { return "\(row + 1)" }
-        guard let layout = diamondLayout else { return Rack.rowLetters(row) }
-        if triangleRow(row) != nil { return "" }
-        return Rack.rowLetters(row - layout.topRows)
+        return triangleRow(row) == nil ? Rack.rowLetters(row) : ""
     }
 
     private var columnHeader: some View {

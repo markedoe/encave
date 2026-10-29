@@ -10,9 +10,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
   diamond rack, turn on the triangles at the top, left, bottom or right. Each
   triangle is a bin of its own holding half a bin (adjustable), drawn as a
   triangle, with its count and pile, and named by its side ("Top triangle 3")
-  for VoiceOver and TalkBack. Turning a side on or off moves each bottle with
-  its bin; bottles in triangles you remove are listed first. Older versions show
-  the triangles as whole bins and keep every bottle in place
+  for VoiceOver and TalkBack. Turning a side on moves no bottle; bottles in
+  triangles you turn off are listed first. Older versions show the triangles as
+  whole bins and keep every bottle in place
+- Diamond racks: each bin's count sits at the middle of its diamond
 - Guided tasting sheet: under More details in a tasting, aromas as chips grouped
   in families (red fruit, citrus, oak and toast…; those that suit the wine's
   colour first, searchable), structure from 1 to 5 (sweetness, acidity, tannin

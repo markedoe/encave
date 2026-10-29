@@ -66,6 +66,13 @@ import Testing
             #expect(layout?.columns == vector["diamondColumns"] as? Int, "\(about)")
             #expect((0..<rack.rows).map(rack.columns(inRow:)) == vector["columnsInRow"] as? [Int], "\(about)")
             #expect((0..<rack.rows).map(rack.isOffset(row:)) == vector["offsetRows"] as? [Bool], "\(about)")
+            let drawing = layout.map { layout in layout.drawingRows.map { [$0, layout.drawingColumns(row: $0)] as [Any] } }
+            if let expected = vector["drawing"] as? [[Any]] {
+                #expect(drawing?.map { $0[0] as? Int } == expected.map { $0[0] as? Int }, "\(about)")
+                #expect(drawing?.map { $0[1] as? [Int] } == expected.map { $0[1] as? [Int] }, "\(about)")
+            } else {
+                #expect(drawing == nil, "\(about)")
+            }
             if layout != nil { #expect(rack.triangleCapacity == vector["triangleCapacity"] as? Int, "\(about)") }
             #expect(rack.capacity == vector["capacity"] as? Int, "\(about)")
             #expect(rack.allSlots.count == rack.capacity, "\(about)")
@@ -162,6 +169,7 @@ import Testing
             wizard.columns = settings["columns"] as? Int ?? 1
             wizard.bottlesPerBin = settings["bottlesPerBin"] as? Int ?? 10
             wizard.diamondEdges = Set((settings["edges"] as? [String] ?? []).compactMap(DiamondEdge.init(rawValue:)))
+            // The wizard lists the sides top, left, bottom, right.
             wizard.bottlesPerTriangle = settings["bottlesPerTriangle"] as? Int
             let made = wizard.rack(name: "Rack")
             var keys = try Self.keys(made)

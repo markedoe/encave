@@ -33,7 +33,7 @@ struct RackBottleList: View {
                                            description: Text("Tap a free position to add a bottle there."))
                     #endif
                 }
-                ForEach(groups.keys.sorted(), id: \.self) { key in
+                ForEach(groups.keys.sorted { drawingRank(rack, $0) < drawingRank(rack, $1) }, id: \.self) { key in
                     Section {
                         ForEach(groups[key] ?? []) { bottle in
                             listRow(rack, bottle)
@@ -75,6 +75,11 @@ extension RackBottleList {
         return (slot.row, 0)
     }
 
+    /// Where a section comes, from the top of the drawing: a diamond rack's top triangles first.
+    private func drawingRank(_ rack: Rack, _ group: Int) -> Int {
+        rack.diamondLayout?.drawingRows.firstIndex(of: group) ?? group
+    }
+
     private func group(_ rack: Rack, of bottle: Bottle) -> Int {
         bottle.slot.map { order(rack, $0).group } ?? 0
     }
@@ -90,14 +95,11 @@ extension RackBottleList {
         }
         if rack.kind == .shelves { return String(localized: "Shelf \(number)") }
         if let layout = rack.diamondLayout {
-            // A diamond rack with edge triangles: its rows of triangles, then its rows of
-            // diamonds lettered from the first one.
+            // A diamond rack with edge triangles: its rows of triangles are named by their side.
             switch layout.place(row: group, column: 0) {
-            case .triangle(.top, _): return String(localized: "Top triangles")
-            case .triangle(.bottom, _): return String(localized: "Bottom triangles")
-            default:
-                let letters = Rack.rowLetters(group - layout.topRows)
-                return String(localized: "Row \(letters)")
+            case .triangle(.top, _) where group >= layout.rows: return String(localized: "Top triangles")
+            case .triangle(.bottom, _) where group >= layout.rows: return String(localized: "Bottom triangles")
+            default: break
             }
         }
         let letters = Rack.rowLetters(group)

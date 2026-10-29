@@ -227,7 +227,8 @@ public struct StorageSettings: Equatable, Sendable {
                 return Rack(id: id, name: name, kind: .staggered, rows: count(rows), columns: count(columns), depth: depth)
             case .diamond:
                 return Rack.diamond(id: id, name: name, rows: count(rows), columns: count(columns),
-                                    binCapacity: count(bottlesPerBin), edges: diamondEdges,
+                                    binCapacity: count(bottlesPerBin),
+                                    edges: DiamondEdge.allCases.filter(diamondEdges.contains),
                                     triangleCapacity: bottlesPerTriangle.map { min(count(bottlesPerBin), max(1, $0)) })
             }
         case .wineFridge:

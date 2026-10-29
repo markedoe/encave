@@ -14,12 +14,14 @@ public enum DiamondPlace: Hashable, Sendable {
     case triangle(DiamondEdge, index: Int)
 }
 
-/// How a diamond rack's triangles are laid out among its rows (docs/SYNC.md). Rows of diamonds
+/// How a diamond rack's triangles are laid out among its cells (docs/SYNC.md). Rows of diamonds
 /// nest by half a diamond, every other one offset half a diamond right, as drawn. The triangles
-/// are ordinary cells, so a version that does not know them shows them as whole diamonds:
-/// - top: a first row of `columns` triangles, in the notches above the first row of diamonds;
-/// - bottom: a last row of `columns` triangles, below the last row of diamonds;
-/// - left: a first cell on each offset row of diamonds (B, D…), in the notch at its left;
+/// are ordinary cells added after those of the diamonds, so turning a side on or off never moves
+/// a diamond, and a version that does not know them shows them as whole diamonds:
+/// - the rows of diamonds stay rows 0 to `rows` − 1, each with `columns` diamonds;
+/// - top and bottom: a row of `columns` triangles each, after the rows of diamonds, in the order
+///   the sides are listed (`appendedRows`); drawn above the first row and below the last one;
+/// - left: a last cell on each offset row of diamonds (B, D…), drawn first, in the notch at its left;
 /// - right: a last cell on each row not offset (A, C…), in the notch at its right.
 /// The small corners (a quarter of a diamond) hold no bottle and are not places.
 public struct DiamondLayout: Hashable, Sendable {
@@ -28,42 +30,40 @@ public struct DiamondLayout: Hashable, Sendable {
     /// Whole diamonds in each row.
     public var columns: Int
     public var edges: Set<DiamondEdge>
+    /// The rows of triangles after the rows of diamonds: top and bottom, in their listed order.
+    public var appendedRows: [DiamondEdge]
 
-    public init(rows: Int, columns: Int, edges: Set<DiamondEdge>) {
-        self.rows = max(1, rows); self.columns = max(1, columns); self.edges = edges
+    /// `sides` in their listed order (each once): it decides which row of triangles comes first.
+    public init(rows: Int, columns: Int, sides: [DiamondEdge]) {
+        self.rows = max(1, rows); self.columns = max(1, columns)
+        var seen = Set<DiamondEdge>(), ordered: [DiamondEdge] = []
+        for side in sides where seen.insert(side).inserted { ordered.append(side) }
+        edges = seen
+        appendedRows = ordered.filter { $0 == .top || $0 == .bottom }
     }
 
-    /// 1 when the top triangles are on: the first row of diamonds is then row 1 of the rack.
-    public var topRows: Int { edges.contains(.top) ? 1 : 0 }
-    var bottomRows: Int { edges.contains(.bottom) ? 1 : 0 }
     var leftCells: Int { edges.contains(.left) ? 1 : 0 }
     var rightCells: Int { edges.contains(.right) ? 1 : 0 }
 
-    /// Rows of the rack: the diamonds' and the triangle rows.
-    public var rackRows: Int { rows + topRows + bottomRows }
+    /// Rows of the rack: the diamonds', then the rows of triangles.
+    public var rackRows: Int { rows + appendedRows.count }
 
-    /// Cells in each row of the rack, from the top.
+    /// Cells in each row of the rack, by index.
     public var widths: [Int] {
         (0..<rackRows).map { row in
-            if row < topRows || row >= topRows + rows { return columns }
-            let diamondRow = row - topRows
-            return columns + (diamondRow.isMultiple(of: 2) ? rightCells : leftCells)
+            guard row < rows else { return columns }
+            return columns + (row.isMultiple(of: 2) ? rightCells : leftCells)
         }
     }
 
     /// What a cell of the rack is.
     public func place(row: Int, column: Int) -> DiamondPlace {
-        if row < topRows { return .triangle(.top, index: column) }
-        if row >= topRows + rows { return .triangle(.bottom, index: column) }
-        let diamondRow = row - topRows
-        if diamondRow.isMultiple(of: 2) {
-            if rightCells == 1, column == columns { return .triangle(.right, index: diamondRow / 2) }
-            return .diamond(row: diamondRow, column: column)
+        if row >= rows { return .triangle(appendedRows[min(row - rows, appendedRows.count - 1)], index: column) }
+        if column == columns {
+            if row.isMultiple(of: 2), rightCells == 1 { return .triangle(.right, index: row / 2) }
+            if !row.isMultiple(of: 2), leftCells == 1 { return .triangle(.left, index: row / 2) }
         }
-        if leftCells == 1 {
-            return column == 0 ? .triangle(.left, index: diamondRow / 2) : .diamond(row: diamondRow, column: column - 1)
-        }
-        return .diamond(row: diamondRow, column: column)
+        return .diamond(row: row, column: column)
     }
 
     /// The cell of a place (row, column), or nil when this layout does not have it.
@@ -71,16 +71,38 @@ public struct DiamondLayout: Hashable, Sendable {
         switch place {
         case let .diamond(row, column):
             guard (0..<rows).contains(row), (0..<columns).contains(column) else { return nil }
-            return (row + topRows, column + (row.isMultiple(of: 2) ? 0 : leftCells))
+            return (row, column)
         case let .triangle(edge, index):
             guard edges.contains(edge), index >= 0 else { return nil }
             switch edge {
-            case .top: return index < columns ? (0, index) : nil
-            case .bottom: return index < columns ? (rackRows - 1, index) : nil
-            case .right: return 2 * index < rows ? (2 * index + topRows, columns) : nil
-            case .left: return 2 * index + 1 < rows ? (2 * index + 1 + topRows, 0) : nil
+            case .top, .bottom:
+                guard index < columns, let at = appendedRows.firstIndex(of: edge) else { return nil }
+                return (rows + at, index)
+            case .right: return 2 * index < rows ? (2 * index, columns) : nil
+            case .left: return 2 * index + 1 < rows ? (2 * index + 1, columns) : nil
             }
         }
+    }
+
+    /// Is this row drawn offset by half a place? Odd rows of diamonds, as without triangles; the
+    /// top triangles (in the notches above row A), and the bottom ones below an even last row.
+    public func isOffset(row: Int) -> Bool {
+        guard row >= rows else { return !row.isMultiple(of: 2) }
+        return appendedRows[min(row - rows, appendedRows.count - 1)] == .top || !rows.isMultiple(of: 2)
+    }
+
+    /// The rows of the rack from the top of the drawing: the top triangles, the rows of
+    /// diamonds, the bottom triangles.
+    public var drawingRows: [Int] {
+        let top = appendedRows.firstIndex(of: .top).map { [rows + $0] } ?? []
+        let bottom = appendedRows.firstIndex(of: .bottom).map { [rows + $0] } ?? []
+        return top + Array(0..<rows) + bottom
+    }
+
+    /// The cells of a row from the left of the drawing: a left triangle first.
+    public func drawingColumns(row: Int) -> [Int] {
+        if row < rows, !row.isMultiple(of: 2), leftCells == 1 { return [columns] + Array(0..<columns) }
+        return Array(0..<(row < rows ? widths[row] : columns))
     }
 
     /// Triangles along a side.
@@ -102,14 +124,14 @@ extension Rack {
     /// never depend on it (`contains`), so every version keeps the same bottles in place.
     public var diamondLayout: DiamondLayout? {
         guard kind == .bins, let raw = edgeTrianglesValue, storageType == .rack else { return nil }
-        let edges = Set(raw.compactMap(DiamondEdge.init(rawValue:)))
-        guard !edges.isEmpty else { return nil }
-        let top = edges.contains(.top) ? 1 : 0, bottom = edges.contains(.bottom) ? 1 : 0
-        let diamondRows = rows - top - bottom
+        let sides = raw.compactMap(DiamondEdge.init(rawValue:))
+        guard !sides.isEmpty else { return nil }
+        let set = Set(sides)
+        let diamondRows = rows - (set.contains(.top) ? 1 : 0) - (set.contains(.bottom) ? 1 : 0)
         guard diamondRows >= 1 else { return nil }
-        let diamondColumns = columns(inRow: top) - (edges.contains(.right) ? 1 : 0)
+        let diamondColumns = columns(inRow: 0) - (set.contains(.right) ? 1 : 0)
         guard diamondColumns >= 1 else { return nil }
-        let layout = DiamondLayout(rows: diamondRows, columns: diamondColumns, edges: edges)
+        let layout = DiamondLayout(rows: diamondRows, columns: diamondColumns, sides: sides)
         let widths = layout.widths
         guard widths == (0..<rows).map(columns(inRow:)), columns == widths.max() else { return nil }
         return layout
@@ -135,25 +157,54 @@ extension Rack {
         return nil
     }
 
-    /// Diamond bins of `rows` rows of `columns` diamonds, with the triangles of `edges`
-    /// holding `triangleCapacity` bottles each (half a bin when nil). Rows are written one by
-    /// one (`rowColumns`) when they differ.
+    /// Diamond bins of `rows` rows of `columns` diamonds, with the triangles of `edges` (in this
+    /// order: it decides which row of triangles comes first) holding `triangleCapacity` bottles
+    /// each (half a bin when nil). Rows are written one by one (`rowColumns`) when they differ.
     public static func diamond(
         id: UUID = UUID(), name: String, rows: Int, columns: Int, binCapacity: Int,
-        edges: Set<DiamondEdge> = [], triangleCapacity: Int? = nil
+        edges: [DiamondEdge] = [], triangleCapacity: Int? = nil
     ) -> Rack {
         let extraRows = (edges.contains(.top) ? 1 : 0) + (edges.contains(.bottom) ? 1 : 0)
         let extraColumns = edges.contains(.left) || edges.contains(.right) ? 1 : 0
         let layout = DiamondLayout(rows: min(maxSize - extraRows, bounded(rows)),
-                                   columns: min(maxSize - extraColumns, bounded(columns)), edges: edges)
+                                   columns: min(maxSize - extraColumns, bounded(columns)), sides: edges)
         let widths = layout.widths
         var rack = Rack(id: id, name: name, kind: .bins, rows: widths.count, columns: widths.max() ?? 1,
                         binCapacity: binCapacity, rowColumns: Set(widths).count > 1 ? widths : nil, binStyle: .diamond)
-        if !edges.isEmpty {
-            rack.edgeTrianglesValue = DiamondEdge.allCases.filter(edges.contains).map(\.rawValue)
+        if !layout.edges.isEmpty {
+            var seen = Set<DiamondEdge>()
+            rack.edgeTrianglesValue = edges.filter { seen.insert($0).inserted }.map(\.rawValue)
             rack.triangleCapacityValue = min(rack.binCapacity,
                                              bounded(triangleCapacity ?? defaultTriangleCapacity(binCapacity: rack.binCapacity)))
         }
+        return rack
+    }
+
+    /// The sides of a diamond rack as an editor saves them: those of `original` still `chosen`,
+    /// in their order (so no row of triangles moves), then those turned on, top, left, bottom, right.
+    public static func orderedEdges(_ chosen: Set<DiamondEdge>, keepingOrderOf original: Rack?) -> [DiamondEdge] {
+        let kept = (original?.edgeTrianglesValue ?? []).compactMap(DiamondEdge.init(rawValue:)).filter(chosen.contains)
+        var seen = Set<DiamondEdge>()
+        let ordered = kept.filter { seen.insert($0).inserted }
+        return ordered + DiamondEdge.allCases.filter { chosen.contains($0) && !seen.contains($0) }
+    }
+
+    /// This rack as edited from `original`, keeping what a newer version wrote that this one does
+    /// not apply: when neither applies triangles and the cells are the same, the sides as read;
+    /// otherwise the values of sides this version does not know, after its own.
+    public func keepingEdgeValues(from original: Rack) -> Rack {
+        guard let read = original.edgeTrianglesValue else { return self }
+        var rack = self
+        let sameCells = rows == original.rows && (0..<rows).allSatisfy { columns(inRow: $0) == original.columns(inRow: $0) }
+        if diamondLayout == nil, original.diamondLayout == nil, sameCells {
+            rack.edgeTrianglesValue = read
+            rack.triangleCapacityValue = original.triangleCapacityValue
+            return rack
+        }
+        let unknown = read.filter { DiamondEdge(rawValue: $0) == nil }
+        guard !unknown.isEmpty else { return rack }
+        rack.edgeTrianglesValue = (rack.edgeTrianglesValue ?? []) + unknown
+        if rack.triangleCapacityValue == nil { rack.triangleCapacityValue = original.triangleCapacityValue }
         return rack
     }
 
