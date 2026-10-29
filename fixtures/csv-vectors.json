@@ -1,5 +1,5 @@
 {
-  "about": "CSV import and export, shared by CaveKit (CSVVectorTests.swift) and the Kotlin core (CsvVectorTest.kt). Dates are days in the device's time zone, which the tests use for both import and comparison; 'now' is the import's own date. Prices are compared as numbers. Omitted bottle and wine fields are empty. An import with a 'zone' imports and compares in that time zone; 'racks' exist in the cellar before the import (and before reading the export back); 'encoded' is the file's bytes (base64), which decode to the csv lines. 'prices' are read the same in Encave's own columns and in other files: from the first digit to the last, more than 0 and at most 100000. A rating 'x/y' is that share of 5 stars.",
+  "about": "CSV import and export, shared by CaveKit (CSVVectorTests.swift) and the Kotlin core (CsvVectorTest.kt). Dates are days in the device's time zone, which the tests use for both import and comparison; 'now' is the import's own date. Prices are compared as numbers. Omitted bottle and wine fields are empty. An import with a 'zone' imports and compares in that time zone; 'racks' exist in the cellar before the import (and before reading the export back); 'encoded' is the file's bytes (base64), which decode to the csv lines. 'prices' are read the same in Encave's own columns and in other files: from the first digit to the last, more than 0 and at most 100000. A rating column holds stars or a score: a bare number above 5 is out of 100 (kept as a score from 50 to 100), 'x/100' (50 to 100) and 'x/20' are scores by the shared conversion (fixtures/rating-scale-vectors.json), other 'x/y' are that share of 5 stars. 'scores' gives [rating, score out of 100 or null]; the 'score' column wins over 'rating'.",
   "headers": {
     "name": "name",
     "Wine Name": "name",
@@ -67,9 +67,9 @@
     "4.4": 4,
     "4.5": 5,
     "3,5": 4,
-    "92": 5,
+    "92": 4,
     "88": 4,
-    "50": 3,
+    "50": 1,
     "100": 5,
     "0": null,
     "-3": null,
@@ -331,11 +331,11 @@
       ],
       "roundTrip": true,
       "exportLines": [
-        "\"'=HYPERLINK(\"\"x\"\")\",'-Sec,,,,,,,,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
-        "Château Palmer,Château Palmer,2015,red,Bordeaux,France,Margaux,\"Merlot; Cabernet Sauvignon\",2025,2045,consumed,,,,,,,EUR,,,750,4,2026-05-01,\"Silky, long\",,\"Gift; Summer\",,150,EUR,2026-09-01",
-        "Château Palmer,Château Palmer,2015,red,Bordeaux,France,Margaux,\"Merlot; Cabernet Sauvignon\",2025,2045,inCellar,,,,Cave du bas,2024-03-10,120.5,EUR,Caviste,,750,,,,,\"Gift; Summer\",Wedding,150,EUR,2026-09-01",
-        "Muscadet,,,white,,,,,,,gone,,,,,,,EUR,,Paul,375,,,,,,,,,",
-        "Rully,Domaine Jacqueson,2020,white,Bourgogne,France,Rully,Chardonnay,,,ordered,,,,,,18,EUR,,,1500,,,,2026-11-15,,,,,"
+        "\"'=HYPERLINK(\"\"x\"\")\",'-Sec,,,,,,,,,inCellar,,,,,,,EUR,,,750,,,,,,,,,,,,,",
+        "Château Palmer,Château Palmer,2015,red,Bordeaux,France,Margaux,\"Merlot; Cabernet Sauvignon\",2025,2045,consumed,,,,,,,EUR,,,750,4,2026-05-01,\"Silky, long\",,\"Gift; Summer\",,150,EUR,2026-09-01,,,,",
+        "Château Palmer,Château Palmer,2015,red,Bordeaux,France,Margaux,\"Merlot; Cabernet Sauvignon\",2025,2045,inCellar,,,,Cave du bas,2024-03-10,120.5,EUR,Caviste,,750,,,,,\"Gift; Summer\",Wedding,150,EUR,2026-09-01,,,,",
+        "Muscadet,,,white,,,,,,,gone,,,,,,,EUR,,Paul,375,,,,,,,,,,,,,",
+        "Rully,Domaine Jacqueson,2020,white,Bourgogne,France,Rully,Chardonnay,,,ordered,,,,,,18,EUR,,,1500,,,,2026-11-15,,,,,,,,,"
       ]
     },
     {
@@ -379,8 +379,8 @@
       ],
       "roundTrip": true,
       "exportLines": [
-        "Chinon,,,,,,,,,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
-        "Sancerre,,,,,,,,,,inCellar,,,,Armoire · A6,,,EUR,,,750,,,,,,,,,"
+        "Chinon,,,,,,,,,,inCellar,,,,,,,EUR,,,750,,,,,,,,,,,,,",
+        "Sancerre,,,,,,,,,,inCellar,,,,Armoire · A6,,,EUR,,,750,,,,,,,,,,,,,"
       ]
     },
     {
@@ -477,16 +477,16 @@
       ],
       "roundTrip": true,
       "exportLines": [
-        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
-        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
-        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
-        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
-        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
-        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
-        "La Landonne,E. Guigal,2012,red,,France,,Syrah,2025,2040,inCellar,,,,Cave du bas · B3,,95,EUR,,,750,,,,,,,,,",
-        "La Landonne,E. Guigal,2012,red,,France,,Syrah,2025,2040,inCellar,,,,Cave du bas · B3,,95,EUR,,,750,,,,,,,,,",
-        "Rosé de Provence,,2023,rose,,,,,,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
-        "Sancerre,Domaine Vacheron,2022,white,,France,,Sauvignon Blanc,2024,2027,inCellar,,,,,,24.5,EUR,,,750,,,,,,,,,"
+        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,,EUR,,,750,,,,,,,,,,,,,",
+        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,,EUR,,,750,,,,,,,,,,,,,",
+        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,,EUR,,,750,,,,,,,,,,,,,",
+        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,,EUR,,,750,,,,,,,,,,,,,",
+        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,,EUR,,,750,,,,,,,,,,,,,",
+        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,,EUR,,,750,,,,,,,,,,,,,",
+        "La Landonne,E. Guigal,2012,red,,France,,Syrah,2025,2040,inCellar,,,,Cave du bas · B3,,95,EUR,,,750,,,,,,,,,,,,,",
+        "La Landonne,E. Guigal,2012,red,,France,,Syrah,2025,2040,inCellar,,,,Cave du bas · B3,,95,EUR,,,750,,,,,,,,,,,,,",
+        "Rosé de Provence,,2023,rose,,,,,,,inCellar,,,,,,,EUR,,,750,,,,,,,,,,,,,",
+        "Sancerre,Domaine Vacheron,2022,white,,France,,Sauvignon Blanc,2024,2027,inCellar,,,,,,24.5,EUR,,,750,,,,,,,,,,,,,"
       ]
     },
     {
@@ -572,10 +572,10 @@
       ],
       "roundTrip": false,
       "exportLines": [
-        "Barolo Cannubi,Brezza,2016,red,Piedmont,Italy,Barolo,Nebbiolo,2026,2040,inCellar,,,,Cellar · A3,,55,USD,,,750,,,,,,,,,",
-        "Château d'Yquem,Château d'Yquem,2009,dessert,Bordeaux,France,Sauternes,Sémillon-Sauvignon Blanc Blend,,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
-        "Krug Grande Cuvée,Krug,,sparkling,Champagne,France,Champagne,Champagne Blend,2024,2034,inCellar,,,,Fridge,,180,EUR,,,750,,,,,,,,,",
-        "Krug Grande Cuvée,Krug,,sparkling,Champagne,France,Champagne,Champagne Blend,2024,2034,inCellar,,,,Fridge,,180,EUR,,,750,,,,,,,,,"
+        "Barolo Cannubi,Brezza,2016,red,Piedmont,Italy,Barolo,Nebbiolo,2026,2040,inCellar,,,,Cellar · A3,,55,USD,,,750,,,,,,,,,,,,,",
+        "Château d'Yquem,Château d'Yquem,2009,dessert,Bordeaux,France,Sauternes,Sémillon-Sauvignon Blanc Blend,,,inCellar,,,,,,,EUR,,,750,,,,,,,,,,,,,",
+        "Krug Grande Cuvée,Krug,,sparkling,Champagne,France,Champagne,Champagne Blend,2024,2034,inCellar,,,,Fridge,,180,EUR,,,750,,,,,,,,,,,,,",
+        "Krug Grande Cuvée,Krug,,sparkling,Champagne,France,Champagne,Champagne Blend,2024,2034,inCellar,,,,Fridge,,180,EUR,,,750,,,,,,,,,,,,,"
       ]
     },
     {
@@ -729,7 +729,7 @@
       ],
       "roundTrip": true,
       "exportLines": [
-        "Saumur,,,,,,,,,,inCellar,,,,,,8.33,EUR,,,750,,,,,,,12.35,EUR,"
+        "Saumur,,,,,,,,,,inCellar,,,,,,8.33,EUR,,,750,,,,,,,12.35,EUR,,,,,"
       ]
     },
     {
@@ -904,13 +904,93 @@
       ],
       "roundTrip": true,
       "exportLines": [
-        "Graves,,,,,,,,,,inCellar,,,,Garage · A1,,,EUR,,,750,,,,,,,,,",
-        "Graves,,,,,,,,,,ordered,,,,,,,EUR,,,750,,,,,,,,,",
-        "Margaux,,,,,,,,,,inCellar,Cave,B3-1,\"Cave · B3, front\",,,,EUR,,,750,,,,,,,,,",
-        "Margaux,,,,,,,,,,inCellar,Cave,B3-2,\"Cave · B3, back\",,,,EUR,,,750,,,,,,,,,",
-        "Margaux,,,,,,,,,,inCellar,,,,Cave · B3,,,EUR,,,750,,,,,,,,,",
-        "Pauillac,,,,,,,,,,inCellar,Cave,A1-2,\"Cave · A1, back\",,,,EUR,,,750,,,,,,,,,",
-        "Pauillac,,,,,,,,,,inCellar,,,,Cave · Z9,,,EUR,,,750,,,,,,,,,"
+        "Graves,,,,,,,,,,inCellar,,,,Garage · A1,,,EUR,,,750,,,,,,,,,,,,,",
+        "Graves,,,,,,,,,,ordered,,,,,,,EUR,,,750,,,,,,,,,,,,,",
+        "Margaux,,,,,,,,,,inCellar,Cave,B3-1,\"Cave · B3, front\",,,,EUR,,,750,,,,,,,,,,,,,",
+        "Margaux,,,,,,,,,,inCellar,Cave,B3-2,\"Cave · B3, back\",,,,EUR,,,750,,,,,,,,,,,,,",
+        "Margaux,,,,,,,,,,inCellar,,,,Cave · B3,,,EUR,,,750,,,,,,,,,,,,,",
+        "Pauillac,,,,,,,,,,inCellar,Cave,A1-2,\"Cave · A1, back\",,,,EUR,,,750,,,,,,,,,,,,,",
+        "Pauillac,,,,,,,,,,inCellar,,,,Cave · Z9,,,EUR,,,750,,,,,,,,,,,,,"
+      ]
+    },
+    {
+      "about": "Scores, alcohol, classification and critics' scores in Encave's own columns: the score column wins over the rating; bare ratings above 5 are out of 100; critics' scores are read back as written.",
+      "csv": [
+        "name,status,rating,tasted_on,score,abv,classification,critic_scores",
+        "Clos A,consumed,4,2026-05-01,17.5/20,\"13,5 %\",Grand Cru,\"Guide A: 17.5/20 (2015); Fair C: Gold medal\"",
+        "Clos A,consumed,92,2026-05-02,,,,",
+        "Clos B,consumed,4/5,2026-05-03,,14,,",
+        "Clos C,inCellar,,,,,Cru Bourgeois,Review B: 94/100"
+      ],
+      "summary": {
+        "winesAdded": 3,
+        "bottlesAdded": 4,
+        "rowsSkipped": 0
+      },
+      "wines": [
+        {
+          "name": "Clos A",
+          "abv": "13.5",
+          "classification": "Grand Cru",
+          "criticScores": "Guide A: 17.5/20 (2015); Fair C: Gold medal",
+          "grapes": []
+        },
+        {
+          "name": "Clos B",
+          "abv": "14",
+          "grapes": []
+        },
+        {
+          "name": "Clos C",
+          "classification": "Cru Bourgeois",
+          "criticScores": "Review B: 94/100",
+          "grapes": []
+        }
+      ],
+      "bottles": [
+        {
+          "wine": "Clos A",
+          "status": "consumed",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR",
+          "rating": 4,
+          "score": "93.75",
+          "tastedOn": "2026-05-01"
+        },
+        {
+          "wine": "Clos A",
+          "status": "consumed",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR",
+          "rating": 4,
+          "score": "92",
+          "tastedOn": "2026-05-02"
+        },
+        {
+          "wine": "Clos B",
+          "status": "consumed",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR",
+          "rating": 4,
+          "tastedOn": "2026-05-03"
+        },
+        {
+          "wine": "Clos C",
+          "status": "inCellar",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR"
+        }
+      ],
+      "roundTrip": true,
+      "exportLines": [
+        "Clos A,,,,,,,,,,consumed,,,,,,,EUR,,,750,4,2026-05-01,,,,,,,,93.75,13.5,Grand Cru,\"Guide A: 17.5/20 (2015); Fair C: Gold medal\"",
+        "Clos A,,,,,,,,,,consumed,,,,,,,EUR,,,750,4,2026-05-02,,,,,,,,92,13.5,Grand Cru,\"Guide A: 17.5/20 (2015); Fair C: Gold medal\"",
+        "Clos B,,,,,,,,,,consumed,,,,,,,EUR,,,750,4,2026-05-03,,,,,,,,,14,,",
+        "Clos C,,,,,,,,,,inCellar,,,,,,,EUR,,,750,,,,,,,,,,,,Cru Bourgeois,Review B: 94/100"
       ]
     }
   ],
@@ -1039,5 +1119,119 @@
       "abc": null,
       "": null
     }
+  },
+  "scores": {
+    "92": [
+      4,
+      92
+    ],
+    "93,5": [
+      4,
+      93.5
+    ],
+    "17.5/20": [
+      4,
+      93.75
+    ],
+    "16/20": [
+      4,
+      90
+    ],
+    "18/20": [
+      5,
+      95
+    ],
+    "4/5": [
+      4,
+      null
+    ],
+    "8/10": [
+      4,
+      null
+    ],
+    "4.5": [
+      5,
+      null
+    ],
+    "50": [
+      1,
+      50
+    ],
+    "16": [
+      1,
+      null
+    ],
+    "93/100": [
+      4,
+      93
+    ],
+    "120/100": [
+      5,
+      null
+    ],
+    "25/20": [
+      5,
+      null
+    ],
+    "40/100": [
+      2,
+      null
+    ],
+    "0": null,
+    "abc": null
+  },
+  "abv": {
+    "13.5": "13.5",
+    "13,5 %": "13.5",
+    "12.5% vol": "12.5",
+    "14": "14",
+    "13.50": "13.5",
+    "0": null,
+    "120": null,
+    "abc": null
+  },
+  "criticScores": {
+    "Guide A: 17.5/20 (2015); Review B: 94/100; Fair C: Gold medal": [
+      {
+        "source": "Guide A",
+        "score": "17.5",
+        "scale": 20,
+        "note": "2015"
+      },
+      {
+        "source": "Review B",
+        "score": "94",
+        "scale": 100
+      },
+      {
+        "source": "Fair C",
+        "award": "Gold medal"
+      }
+    ],
+    " X : 8,5/10 ": [
+      {
+        "source": "X",
+        "score": "8.5",
+        "scale": 10
+      }
+    ],
+    "Only a source": [
+      {
+        "source": "Only a source"
+      }
+    ],
+    "Y: (barrel sample)": [
+      {
+        "source": "Y",
+        "note": "barrel sample"
+      }
+    ],
+    "Z: 17/twenty": [
+      {
+        "source": "Z",
+        "award": "17/twenty"
+      }
+    ],
+    ": 90/100; ;": null
   }
 }

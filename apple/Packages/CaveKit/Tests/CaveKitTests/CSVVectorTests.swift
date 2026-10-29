@@ -58,6 +58,10 @@ import Testing
         var headers: [String: String]
         var years: [String: Int?]
         var ratings: [String: Int?]
+        /// [rating, score out of 100 or null], or null.
+        var scores: [String: [Double?]?]
+        var abv: [String: String?]
+        var criticScores: [String: [CriticVector]?]
         var quantities: [String: Int]
         var sizes: [String: Int?]
         var colors: [String: String?]
@@ -71,6 +75,14 @@ import Testing
         var dates: Dates
         var parsed: [Parsed]
         var imports: [Import]
+    }
+
+    struct CriticVector: Decodable, Equatable {
+        var source: String
+        var score: String?
+        var scale: Int?
+        var award: String?
+        var note: String?
     }
 
     /// A string, a number or a list of strings, written the same way on both platforms.
@@ -118,11 +130,12 @@ import Testing
     }
 
     static let wineKeys = ["name", "producer", "vintage", "color", "region", "country", "appellation", "grapes",
-                           "drinkFrom", "drinkUntil", "tags", "currentPrice", "currentPriceCurrency", "currentPriceDate"]
+                           "drinkFrom", "drinkUntil", "tags", "currentPrice", "currentPriceCurrency", "currentPriceDate",
+                           "abv", "classification", "criticScores"]
     static let bottleKeys = ["wine", "status", "count", "sizeML", "currency", "price", "storage", "purchaseDate",
                              "purchasePlace", "receivedFrom", "reservedFor", "rating", "tastedOn", "note", "expectedOn",
-                             "place"]
-    static let discoveryKeys = ["wine", "date", "place", "rating", "note", "price", "currency"]
+                             "place", "score"]
+    static let discoveryKeys = ["wine", "date", "place", "rating", "note", "price", "currency", "score"]
 
     static func line(_ keys: [String], _ fields: [String: String]) -> String {
         keys.map { "\($0)=\(fields[$0] ?? "")" }.joined(separator: " | ")
@@ -151,6 +164,9 @@ import Testing
             fields["currentPrice"] = price(wine.currentPrice)
             fields["currentPriceCurrency"] = wine.currentPriceCurrency ?? ""
             fields["currentPriceDate"] = day(wine.currentPriceDate, zone)
+            fields["abv"] = price(wine.abv)
+            fields["classification"] = wine.classification ?? ""
+            fields["criticScores"] = wine.criticScores.map(CSVColumns.criticScoresText) ?? ""
             return line(wineKeys, fields)
         }.sorted()
     }
@@ -173,6 +189,7 @@ import Testing
             fields["tastedOn"] = day(bottle.tasting?.date, zone)
             fields["note"] = bottle.tasting?.note ?? ""
             fields["expectedOn"] = day(bottle.expectedAt, zone)
+            fields["score"] = bottle.tasting?.score100.map(CSVColumns.scoreText) ?? ""
             fields["place"] = bottle.slot.flatMap { slot in
                 cellar.rack(slot.rackID).map { "\($0.name) \($0.label(for: slot))" }
             } ?? ""
@@ -197,6 +214,7 @@ import Testing
             fields["note"] = item.note ?? ""
             fields["price"] = price(item.price)
             fields["currency"] = item.currency ?? ""
+            fields["score"] = item.score100.map(CSVColumns.scoreText) ?? ""
             return line(discoveryKeys, fields)
         }.sorted()
     }
@@ -216,6 +234,19 @@ import Testing
         #expect(!vectors.sizes.isEmpty && !vectors.colors.isEmpty && !vectors.cleaned.isEmpty && !vectors.escaped.isEmpty)
         for (text, year) in vectors.years { #expect(CSVColumns.year(text) == year, "year \(text)") }
         for (text, rating) in vectors.ratings { #expect(CSVColumns.rating(text) == rating, "rating \(text)") }
+        #expect(!vectors.scores.isEmpty && !vectors.abv.isEmpty && !vectors.criticScores.isEmpty)
+        for (text, expected) in vectors.scores {
+            let read = CSVColumns.score(text)
+            #expect(read?.rating == expected.map { Int($0[0]!) }, "score \(text)")
+            #expect(read?.score100 == expected?[1], "score \(text)")
+        }
+        for (text, expected) in vectors.abv { #expect(CSVColumns.abv(text).map { "\($0)" } == expected, "abv \(text)") }
+        for (text, expected) in vectors.criticScores {
+            let read = CSVColumns.criticScores(text)?.map {
+                CriticVector(source: $0.source, score: $0.score.map { "\($0)" }, scale: $0.scale, award: $0.award, note: $0.note)
+            }
+            #expect(read == expected, "critic scores \(text)")
+        }
         for (text, quantity) in vectors.quantities {
             #expect(CSVColumns.quantity(text.isEmpty ? nil : text) == quantity, "quantity \(text)")
             #expect(CSVColumns.quantity(text) == quantity, "quantity \(text)")

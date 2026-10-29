@@ -1,0 +1,559 @@
+{
+  "about": "The one conversion between stars, scores out of 20 and scores out of 100 (CaveKit Score, Kotlin core Score; docs/SYNC.md \u00a71), checked by RatingScaleVectorTests.swift and RatingScaleVectorTest.kt. score100 is 50 to 100 in quarter points; out of 20: score100 = 50 + 2.5 x score20; stars from a score: below 70 is 1, below 80 is 2, below 87 is 3, below 94 is 4, else 5; stars alone stand for 65, 75, 83, 90, 96. 'entered' gives [rating, score100 or null] for a value typed on a scale; 'shown' gives the value shown on each scale for a stored [rating, score100]; 'kept' gives the score kept with a rating (null: stale or absent).",
+  "normalized": [
+    [
+      50,
+      50.0
+    ],
+    [
+      49,
+      50.0
+    ],
+    [
+      0,
+      50.0
+    ],
+    [
+      -10,
+      50.0
+    ],
+    [
+      100,
+      100.0
+    ],
+    [
+      101,
+      100.0
+    ],
+    [
+      1000,
+      100.0
+    ],
+    [
+      93.75,
+      93.75
+    ],
+    [
+      93.8,
+      93.75
+    ],
+    [
+      93.87,
+      93.75
+    ],
+    [
+      93.875,
+      94.0
+    ],
+    [
+      93.6,
+      93.5
+    ],
+    [
+      87.125,
+      87.25
+    ],
+    [
+      88.1,
+      88.0
+    ],
+    [
+      70.12,
+      70.0
+    ]
+  ],
+  "stars": [
+    [
+      50,
+      1
+    ],
+    [
+      69.75,
+      1
+    ],
+    [
+      70,
+      2
+    ],
+    [
+      79.75,
+      2
+    ],
+    [
+      80,
+      3
+    ],
+    [
+      86.75,
+      3
+    ],
+    [
+      87,
+      4
+    ],
+    [
+      93.75,
+      4
+    ],
+    [
+      94,
+      5
+    ],
+    [
+      99.75,
+      5
+    ],
+    [
+      100,
+      5
+    ]
+  ],
+  "starScores": [
+    [
+      1,
+      65
+    ],
+    [
+      2,
+      75
+    ],
+    [
+      3,
+      83
+    ],
+    [
+      4,
+      90
+    ],
+    [
+      5,
+      96
+    ]
+  ],
+  "entered": [
+    {
+      "value": 4,
+      "scale": "stars",
+      "result": [
+        4,
+        null
+      ]
+    },
+    {
+      "value": 4.5,
+      "scale": "stars",
+      "result": [
+        5,
+        null
+      ]
+    },
+    {
+      "value": 0.2,
+      "scale": "stars",
+      "result": [
+        1,
+        null
+      ]
+    },
+    {
+      "value": 7,
+      "scale": "stars",
+      "result": [
+        5,
+        null
+      ]
+    },
+    {
+      "value": 16,
+      "scale": "twenty",
+      "result": [
+        4,
+        90.0
+      ]
+    },
+    {
+      "value": 17.5,
+      "scale": "twenty",
+      "result": [
+        4,
+        93.75
+      ]
+    },
+    {
+      "value": 18,
+      "scale": "twenty",
+      "result": [
+        5,
+        95.0
+      ]
+    },
+    {
+      "value": 14,
+      "scale": "twenty",
+      "result": [
+        3,
+        85.0
+      ]
+    },
+    {
+      "value": 12,
+      "scale": "twenty",
+      "result": [
+        3,
+        80.0
+      ]
+    },
+    {
+      "value": 10,
+      "scale": "twenty",
+      "result": [
+        2,
+        75.0
+      ]
+    },
+    {
+      "value": 0,
+      "scale": "twenty",
+      "result": [
+        1,
+        50.0
+      ]
+    },
+    {
+      "value": 20,
+      "scale": "twenty",
+      "result": [
+        5,
+        100.0
+      ]
+    },
+    {
+      "value": 15.5,
+      "scale": "twenty",
+      "result": [
+        4,
+        88.75
+      ]
+    },
+    {
+      "value": 13.3,
+      "scale": "twenty",
+      "result": [
+        3,
+        83.25
+      ]
+    },
+    {
+      "value": 25,
+      "scale": "twenty",
+      "result": [
+        5,
+        100.0
+      ]
+    },
+    {
+      "value": 90,
+      "scale": "hundred",
+      "result": [
+        4,
+        90.0
+      ]
+    },
+    {
+      "value": 93,
+      "scale": "hundred",
+      "result": [
+        4,
+        93.0
+      ]
+    },
+    {
+      "value": 94,
+      "scale": "hundred",
+      "result": [
+        5,
+        94.0
+      ]
+    },
+    {
+      "value": 86.5,
+      "scale": "hundred",
+      "result": [
+        3,
+        86.5
+      ]
+    },
+    {
+      "value": 100,
+      "scale": "hundred",
+      "result": [
+        5,
+        100.0
+      ]
+    },
+    {
+      "value": 50,
+      "scale": "hundred",
+      "result": [
+        1,
+        50.0
+      ]
+    },
+    {
+      "value": 40,
+      "scale": "hundred",
+      "result": [
+        1,
+        50.0
+      ]
+    },
+    {
+      "value": 87.3,
+      "scale": "hundred",
+      "result": [
+        4,
+        87.25
+      ]
+    }
+  ],
+  "shown": [
+    {
+      "rating": 5,
+      "score100": null,
+      "stars": 5,
+      "twenty": 18.5,
+      "hundred": 96,
+      "fromStars": true
+    },
+    {
+      "rating": 4,
+      "score100": null,
+      "stars": 4,
+      "twenty": 16.0,
+      "hundred": 90,
+      "fromStars": true
+    },
+    {
+      "rating": 1,
+      "score100": null,
+      "stars": 1,
+      "twenty": 6.0,
+      "hundred": 65,
+      "fromStars": true
+    },
+    {
+      "rating": 3,
+      "score100": null,
+      "stars": 3,
+      "twenty": 13.0,
+      "hundred": 83,
+      "fromStars": true
+    },
+    {
+      "rating": 2,
+      "score100": null,
+      "stars": 2,
+      "twenty": 10.0,
+      "hundred": 75,
+      "fromStars": true
+    },
+    {
+      "rating": 4,
+      "score100": 90,
+      "stars": 4,
+      "twenty": 16.0,
+      "hundred": 90,
+      "fromStars": false
+    },
+    {
+      "rating": 4,
+      "score100": 93.75,
+      "stars": 4,
+      "twenty": 17.5,
+      "hundred": 94,
+      "fromStars": false
+    },
+    {
+      "rating": 5,
+      "score100": 95,
+      "stars": 5,
+      "twenty": 18.0,
+      "hundred": 95,
+      "fromStars": false
+    },
+    {
+      "rating": 4,
+      "score100": 88,
+      "stars": 4,
+      "twenty": 15.0,
+      "hundred": 88,
+      "fromStars": false
+    },
+    {
+      "rating": 5,
+      "score100": 94,
+      "stars": 5,
+      "twenty": 17.5,
+      "hundred": 94,
+      "fromStars": false
+    },
+    {
+      "rating": 3,
+      "score100": 86.75,
+      "stars": 3,
+      "twenty": 14.5,
+      "hundred": 87,
+      "fromStars": false
+    },
+    {
+      "rating": 4,
+      "score100": 95,
+      "stars": 4,
+      "twenty": 16.0,
+      "hundred": 90,
+      "fromStars": true
+    },
+    {
+      "rating": null,
+      "score100": 90,
+      "stars": null,
+      "twenty": null,
+      "hundred": null,
+      "fromStars": false
+    },
+    {
+      "rating": null,
+      "score100": null,
+      "stars": null,
+      "twenty": null,
+      "hundred": null,
+      "fromStars": false
+    },
+    {
+      "rating": 5,
+      "score100": 100,
+      "stars": 5,
+      "twenty": 20.0,
+      "hundred": 100,
+      "fromStars": false
+    },
+    {
+      "rating": 1,
+      "score100": 50,
+      "stars": 1,
+      "twenty": 0.0,
+      "hundred": 50,
+      "fromStars": false
+    },
+    {
+      "rating": 2,
+      "score100": 79.75,
+      "stars": 2,
+      "twenty": 12.0,
+      "hundred": 80,
+      "fromStars": false
+    },
+    {
+      "rating": 4,
+      "score100": 87.5,
+      "stars": 4,
+      "twenty": 15.0,
+      "hundred": 88,
+      "fromStars": false
+    }
+  ],
+  "kept": [
+    {
+      "rating": 4,
+      "score100": 90,
+      "result": 90.0
+    },
+    {
+      "rating": 5,
+      "score100": 90,
+      "result": null
+    },
+    {
+      "rating": null,
+      "score100": 90,
+      "result": null
+    },
+    {
+      "rating": 4,
+      "score100": null,
+      "result": null
+    },
+    {
+      "rating": 4,
+      "score100": 93.8,
+      "result": 93.75
+    },
+    {
+      "rating": 1,
+      "score100": 10,
+      "result": 50.0
+    },
+    {
+      "rating": 5,
+      "score100": 1000,
+      "result": 100.0
+    },
+    {
+      "rating": 3,
+      "score100": 86.9,
+      "result": null
+    }
+  ],
+  "table": [
+    {
+      "twenty": 10,
+      "hundred": 75.0,
+      "stars": 2
+    },
+    {
+      "twenty": 12,
+      "hundred": 80.0,
+      "stars": 3
+    },
+    {
+      "twenty": 14,
+      "hundred": 85.0,
+      "stars": 3
+    },
+    {
+      "twenty": 15,
+      "hundred": 87.5,
+      "stars": 4
+    },
+    {
+      "twenty": 16,
+      "hundred": 90.0,
+      "stars": 4
+    },
+    {
+      "twenty": 17,
+      "hundred": 92.5,
+      "stars": 4
+    },
+    {
+      "twenty": 17.5,
+      "hundred": 93.75,
+      "stars": 4
+    },
+    {
+      "twenty": 18,
+      "hundred": 95.0,
+      "stars": 5
+    },
+    {
+      "twenty": 19,
+      "hundred": 97.5,
+      "stars": 5
+    },
+    {
+      "twenty": 20,
+      "hundred": 100.0,
+      "stars": 5
+    }
+  ]
+}

@@ -742,7 +742,7 @@ data class Tasting(
      * The precise score out of 100 (50…100 in quarter points), when the rating was entered
      * out of 20 or 100; kept only while [rating] is its stars ([Score.kept]). Set both with [withRating].
      */
-    val score100: Double? = null,
+    @Serializable(with = ScoreSerializer::class) val score100: Double? = null,
     /** Aromas of the guided tasting sheet, as vocabulary ids ("fruit.cherry"), each once, in the order chosen; null rather than empty. */
     val aromas: List<String>? = null,
     /** Structure, each 1 to 5 ([Vocabulary.structure]), optional. */

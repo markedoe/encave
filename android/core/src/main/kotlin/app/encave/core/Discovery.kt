@@ -38,7 +38,7 @@ data class Discovery(
     /** When a bottle of it was added to the cellar from the shopping list. */
     @Serializable(with = InstantSerializer::class) val boughtAt: Instant? = null,
     /** The precise score out of 100, when entered out of 20 or 100 (see [Tasting.score100]). */
-    val score100: Double? = null,
+    @Serializable(with = ScoreSerializer::class) val score100: Double? = null,
     /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
     @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {

@@ -57,12 +57,13 @@ class CsvVectorTest {
     private val wineKeys = listOf(
         "name", "producer", "vintage", "color", "region", "country", "appellation", "grapes",
         "drinkFrom", "drinkUntil", "tags", "currentPrice", "currentPriceCurrency", "currentPriceDate",
+        "abv", "classification", "criticScores",
     )
     private val bottleKeys = listOf(
         "wine", "status", "count", "sizeML", "currency", "price", "storage", "purchaseDate",
-        "purchasePlace", "receivedFrom", "reservedFor", "rating", "tastedOn", "note", "expectedOn", "place",
+        "purchasePlace", "receivedFrom", "reservedFor", "rating", "tastedOn", "note", "expectedOn", "place", "score",
     )
-    private val discoveryKeys = listOf("wine", "date", "place", "rating", "note", "price", "currency")
+    private val discoveryKeys = listOf("wine", "date", "place", "rating", "note", "price", "currency", "score")
 
     private fun line(keys: List<String>, fields: Map<String, String>): String =
         keys.joinToString(" | ") { "$it=${fields[it] ?: ""}" }
@@ -88,6 +89,8 @@ class CsvVectorTest {
                 "drinkFrom" to (wine.drinkFrom?.toString() ?: ""), "drinkUntil" to (wine.drinkUntil?.toString() ?: ""),
                 "tags" to wine.tags.orEmpty().joinToString("; "), "currentPrice" to price(wine.currentPrice),
                 "currentPriceCurrency" to (wine.currentPriceCurrency ?: ""), "currentPriceDate" to day(wine.currentPriceDate, zone),
+                "abv" to price(wine.abv), "classification" to (wine.classification ?: ""),
+                "criticScores" to (wine.criticScores?.let(CsvColumns::criticScoresText) ?: ""),
             ),
         )
     }.sorted()
@@ -103,6 +106,7 @@ class CsvVectorTest {
             "reservedFor" to (bottle.reservedFor ?: ""), "rating" to (bottle.tasting?.rating?.toString() ?: ""),
             "tastedOn" to day(bottle.tasting?.date, zone), "note" to (bottle.tasting?.note ?: ""),
             "expectedOn" to day(bottle.expectedAt, zone),
+            "score" to (bottle.tasting?.score100?.let(CsvColumns::scoreText) ?: ""),
             "place" to (bottle.slot?.let { slot -> rack?.let { "${it.name} ${it.label(slot)}" } } ?: ""),
         )
     }.groupingBy { it }.eachCount().map { (fields, count) -> line(bottleKeys, fields + ("count" to count.toString())) }.sorted()
@@ -113,7 +117,7 @@ class CsvVectorTest {
             mapOf(
                 "wine" to (cellar.wines[item.wineId]?.name ?: "?"), "date" to day(item.date, zone), "place" to (item.place ?: ""),
                 "rating" to (item.rating?.toString() ?: ""), "note" to (item.note ?: ""), "price" to price(item.price),
-                "currency" to (item.currency ?: ""),
+                "currency" to (item.currency ?: ""), "score" to (item.score100?.let(CsvColumns::scoreText) ?: ""),
             ),
         )
     }.sorted()
@@ -129,6 +133,25 @@ class CsvVectorTest {
     fun cellValues() {
         for ((text, year) in table("years")) assertEquals(year.jsonPrimitive.intOrNull, CsvColumns.year(text), "year $text")
         for ((text, rating) in table("ratings")) assertEquals(rating.jsonPrimitive.intOrNull, CsvColumns.rating(text), "rating $text")
+        for ((text, expected) in table("scores")) {
+            val read = CsvColumns.score(text)
+            val pair = expected as? JsonArray
+            assertEquals(pair?.get(0)?.jsonPrimitive?.intOrNull, read?.rating, "score $text")
+            assertEquals(pair?.get(1)?.textOrNull()?.toDouble(), read?.score100, "score $text")
+        }
+        for ((text, expected) in table("abv")) {
+            assertEquals(expected.textOrNull(), CsvColumns.abv(text)?.let(DecimalSerializer::plain), "abv $text")
+        }
+        for ((text, expected) in table("criticScores")) {
+            val read = CsvColumns.criticScores(text)?.map { item ->
+                listOf(item.source, item.score?.let(DecimalSerializer::plain), item.scale?.toString(), item.award, item.note)
+            }
+            val wanted = (expected as? JsonArray)?.map { entry ->
+                val o = entry.jsonObject
+                listOf("source", "score", "scale", "award", "note").map { o[it]?.textOrNull() }
+            }
+            assertEquals(wanted, read, "critic scores $text")
+        }
         for ((text, quantity) in table("quantities")) {
             assertEquals(quantity.jsonPrimitive.int, CsvColumns.quantity(text.ifEmpty { null }), "quantity $text")
             assertEquals(quantity.jsonPrimitive.int, CsvColumns.quantity(text), "quantity $text")

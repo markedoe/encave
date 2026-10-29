@@ -1,6 +1,18 @@
 package app.encave.core
 
+import java.math.BigDecimal
 import kotlin.math.floor
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonUnquotedLiteral
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.jsonPrimitive
 
 /** How ratings are shown and entered on this device: 5 stars, out of 20 or out of 100. A device preference, never synced. */
 enum class RatingScale(val raw: String) {
@@ -105,4 +117,25 @@ object Score {
     }
 
     fun step(scale: RatingScale): Double = if (scale == RatingScale.Twenty) 0.5 else 1.0
+}
+
+/** A score as a bare JSON number written like Swift writes a `Double`: "90", "93.75" (not "90.0"). */
+object ScoreSerializer : KSerializer<Double> {
+    override val descriptor = PrimitiveSerialDescriptor("app.encave.Score", PrimitiveKind.DOUBLE)
+
+    override fun serialize(encoder: Encoder, value: Double) {
+        if (encoder is JsonEncoder && value.isFinite()) {
+            encoder.encodeJsonElement(JsonUnquotedLiteral(BigDecimal(value.toString()).stripTrailingZeros().toPlainString()))
+        } else {
+            encoder.encodeDouble(value)
+        }
+    }
+
+    override fun deserialize(decoder: Decoder): Double {
+        if (decoder !is JsonDecoder) return decoder.decodeDouble()
+        val element = decoder.decodeJsonElement().jsonPrimitive
+        // A number, as Swift reads a `Double`; not a string.
+        if (element.isString) throw SerializationException("Invalid score: $element")
+        return element.doubleOrNull ?: throw SerializationException("Invalid score: $element")
+    }
 }

@@ -1,0 +1,655 @@
+{
+  "about": "How the guided tasting fields, the precise score and the wine details are read: every implementation normalizes them the same way when it reads a record (docs/SYNC.md §1). Each 'input' is read inside a cellar (CaveKit's decoder, the Kotlin core's Cellar) and written back; the record must then equal 'read' (numbers compared by value). 'oldVersion' holds records with every new key, read by a decoder that knows only the keys of the previous version (RatingScaleVectorTests / TastingSheetTests on both platforms): it must keep them, and an edit it makes ('edit') must read back as 'afterEdit' in the new version. Dates are seconds since 2001-01-01.",
+  "tastings": [
+    {
+      "about": "Every field, valid: read as written.",
+      "input": {
+        "date": 800000000,
+        "rating": 4,
+        "score100": 93.75,
+        "note": "Fine",
+        "aromas": [
+          "fruit.redCherry",
+          "floral.violet"
+        ],
+        "sweetness": 1,
+        "acidity": 4,
+        "tannin": 3,
+        "body": 3,
+        "alcohol": 3,
+        "length": 4,
+        "intensity": "medium",
+        "hue": "ruby"
+      },
+      "read": {
+        "date": 800000000,
+        "rating": 4,
+        "score100": 93.75,
+        "note": "Fine",
+        "aromas": [
+          "fruit.redCherry",
+          "floral.violet"
+        ],
+        "sweetness": 1,
+        "acidity": 4,
+        "tannin": 3,
+        "body": 3,
+        "alcohol": 3,
+        "length": 4,
+        "intensity": "medium",
+        "hue": "ruby"
+      }
+    },
+    {
+      "about": "A score that is not the stars of the rating is stale (an older version changed the rating): dropped.",
+      "input": {
+        "date": 800000000,
+        "rating": 3,
+        "score100": 95
+      },
+      "read": {
+        "date": 800000000,
+        "rating": 3
+      }
+    },
+    {
+      "about": "A score without a rating is dropped.",
+      "input": {
+        "date": 800000000,
+        "score100": 90,
+        "note": "x"
+      },
+      "read": {
+        "date": 800000000,
+        "note": "x"
+      }
+    },
+    {
+      "about": "Scores are brought into 50…100, to the nearest quarter point.",
+      "input": {
+        "date": 800000000,
+        "rating": 5,
+        "score100": 120
+      },
+      "read": {
+        "date": 800000000,
+        "rating": 5,
+        "score100": 100
+      }
+    },
+    {
+      "about": "Quarter points.",
+      "input": {
+        "date": 800000000,
+        "rating": 4,
+        "score100": 90.1
+      },
+      "read": {
+        "date": 800000000,
+        "rating": 4,
+        "score100": 90
+      }
+    },
+    {
+      "about": "Levels are brought into 1…5; aromas kept once, empty ones dropped, in order; an empty intensity is dropped; an unknown hue or aroma id is kept.",
+      "input": {
+        "date": 800000000,
+        "sweetness": 0,
+        "acidity": 9,
+        "tannin": -2,
+        "body": 5,
+        "aromas": [
+          "fruit.plum",
+          "",
+          "fruit.plum",
+          "future.aroma"
+        ],
+        "intensity": "",
+        "hue": "violetBlue"
+      },
+      "read": {
+        "date": 800000000,
+        "sweetness": 1,
+        "acidity": 5,
+        "tannin": 1,
+        "body": 5,
+        "aromas": [
+          "fruit.plum",
+          "future.aroma"
+        ],
+        "hue": "violetBlue"
+      }
+    },
+    {
+      "about": "No aroma left: the key is left out.",
+      "input": {
+        "date": 800000000,
+        "rating": 2,
+        "aromas": [
+          ""
+        ]
+      },
+      "read": {
+        "date": 800000000,
+        "rating": 2
+      }
+    }
+  ],
+  "wines": [
+    {
+      "about": "Every detail, valid: read as written.",
+      "input": {
+        "id": "00000000-0000-0000-0000-0000000000A1",
+        "name": "Clos Test",
+        "grapes": [
+          "Syrah",
+          "Grenache"
+        ],
+        "abv": 13.5,
+        "classification": "Grand Cru",
+        "lieuDit": "Les Clos",
+        "dosage": "brut",
+        "sweetness": "dry",
+        "grapeShares": {
+          "Syrah": 80,
+          "Grenache": 20
+        },
+        "ageing": [
+          "oakBarrel",
+          "amphora"
+        ],
+        "farming": "biodynamic",
+        "farmingCertified": true,
+        "closure": "screwCap",
+        "criticScores": [
+          {
+            "source": "Guide A",
+            "score": 17.5,
+            "scale": 20,
+            "note": "2015"
+          },
+          {
+            "source": "Review B",
+            "score": 94,
+            "scale": 100
+          },
+          {
+            "source": "Fair C",
+            "award": "Gold medal"
+          }
+        ]
+      },
+      "read": {
+        "id": "00000000-0000-0000-0000-0000000000A1",
+        "name": "Clos Test",
+        "grapes": [
+          "Syrah",
+          "Grenache"
+        ],
+        "abv": 13.5,
+        "classification": "Grand Cru",
+        "lieuDit": "Les Clos",
+        "dosage": "brut",
+        "sweetness": "dry",
+        "grapeShares": {
+          "Syrah": 80,
+          "Grenache": 20
+        },
+        "ageing": [
+          "oakBarrel",
+          "amphora"
+        ],
+        "farming": "biodynamic",
+        "farmingCertified": true,
+        "closure": "screwCap",
+        "criticScores": [
+          {
+            "source": "Guide A",
+            "score": 17.5,
+            "scale": 20,
+            "note": "2015"
+          },
+          {
+            "source": "Review B",
+            "score": 94,
+            "scale": 100
+          },
+          {
+            "source": "Fair C",
+            "award": "Gold medal"
+          }
+        ]
+      }
+    },
+    {
+      "about": "A share whose grape is no longer listed (an older version removed it) is dropped.",
+      "input": {
+        "id": "00000000-0000-0000-0000-0000000000A1",
+        "name": "Clos Test",
+        "grapes": [
+          "Syrah"
+        ],
+        "grapeShares": {
+          "Syrah": 80,
+          "Grenache": 20
+        }
+      },
+      "read": {
+        "id": "00000000-0000-0000-0000-0000000000A1",
+        "name": "Clos Test",
+        "grapes": [
+          "Syrah"
+        ],
+        "grapeShares": {
+          "Syrah": 80
+        }
+      }
+    },
+    {
+      "about": "Shares match grapes trimmed and ignoring case; a grape given twice keeps the key that sorts first by UTF-16 code units; shares are brought into 1…100, 0 and below dropped.",
+      "input": {
+        "id": "00000000-0000-0000-0000-0000000000A1",
+        "name": "Clos Test",
+        "grapes": [
+          " syrah ",
+          "Grenache",
+          "Cinsault"
+        ],
+        "grapeShares": {
+          "Syrah": 150,
+          "SYRAH": 10,
+          "Grenache": 0,
+          "Cinsault": -5
+        }
+      },
+      "read": {
+        "id": "00000000-0000-0000-0000-0000000000A1",
+        "name": "Clos Test",
+        "grapes": [
+          " syrah ",
+          "Grenache",
+          "Cinsault"
+        ],
+        "grapeShares": {
+          "SYRAH": 10
+        }
+      }
+    },
+    {
+      "about": "Empty ids and lists are left out, ageing ids kept once; certified only with a farming, and only true.",
+      "input": {
+        "id": "00000000-0000-0000-0000-0000000000A1",
+        "name": "Clos Test",
+        "grapes": [
+          "Syrah",
+          "Grenache"
+        ],
+        "dosage": "",
+        "sweetness": "",
+        "ageing": [
+          "oakBarrel",
+          "oakBarrel",
+          ""
+        ],
+        "farming": "",
+        "farmingCertified": true,
+        "closure": "",
+        "criticScores": []
+      },
+      "read": {
+        "id": "00000000-0000-0000-0000-0000000000A1",
+        "name": "Clos Test",
+        "grapes": [
+          "Syrah",
+          "Grenache"
+        ],
+        "ageing": [
+          "oakBarrel"
+        ]
+      }
+    },
+    {
+      "about": "A false certified flag is left out.",
+      "input": {
+        "id": "00000000-0000-0000-0000-0000000000A1",
+        "name": "Clos Test",
+        "grapes": [
+          "Syrah",
+          "Grenache"
+        ],
+        "farming": "organic",
+        "farmingCertified": false
+      },
+      "read": {
+        "id": "00000000-0000-0000-0000-0000000000A1",
+        "name": "Clos Test",
+        "grapes": [
+          "Syrah",
+          "Grenache"
+        ],
+        "farming": "organic"
+      }
+    },
+    {
+      "about": "Ids from a newer version are kept; a critic score's other scale and its unknown keys are kept.",
+      "input": {
+        "id": "00000000-0000-0000-0000-0000000000A1",
+        "name": "Clos Test",
+        "grapes": [
+          "Syrah",
+          "Grenache"
+        ],
+        "dosage": "zeroDosage",
+        "closure": "vinolok",
+        "farming": "regenerative",
+        "ageing": [
+          "sandstone"
+        ],
+        "criticScores": [
+          {
+            "source": "X",
+            "score": 8.5,
+            "scale": 10,
+            "futureKey": {
+              "a": 1
+            }
+          }
+        ]
+      },
+      "read": {
+        "id": "00000000-0000-0000-0000-0000000000A1",
+        "name": "Clos Test",
+        "grapes": [
+          "Syrah",
+          "Grenache"
+        ],
+        "dosage": "zeroDosage",
+        "closure": "vinolok",
+        "farming": "regenerative",
+        "ageing": [
+          "sandstone"
+        ],
+        "criticScores": [
+          {
+            "source": "X",
+            "score": 8.5,
+            "scale": 10,
+            "futureKey": {
+              "a": 1
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "discoveries": [
+    {
+      "about": "A score that matches the rating is kept.",
+      "input": {
+        "id": "00000000-0000-0000-0000-0000000000D1",
+        "wineID": "00000000-0000-0000-0000-0000000000A1",
+        "date": 800000000,
+        "tags": [],
+        "wantsToBuy": false,
+        "rating": 4,
+        "score100": 88
+      },
+      "read": {
+        "id": "00000000-0000-0000-0000-0000000000D1",
+        "wineID": "00000000-0000-0000-0000-0000000000A1",
+        "date": 800000000,
+        "tags": [],
+        "wantsToBuy": false,
+        "rating": 4,
+        "score100": 88
+      }
+    },
+    {
+      "about": "A stale score is dropped.",
+      "input": {
+        "id": "00000000-0000-0000-0000-0000000000D1",
+        "wineID": "00000000-0000-0000-0000-0000000000A1",
+        "date": 800000000,
+        "tags": [],
+        "wantsToBuy": false,
+        "rating": 2,
+        "score100": 88
+      },
+      "read": {
+        "id": "00000000-0000-0000-0000-0000000000D1",
+        "wineID": "00000000-0000-0000-0000-0000000000A1",
+        "date": 800000000,
+        "tags": [],
+        "wantsToBuy": false,
+        "rating": 2
+      }
+    },
+    {
+      "about": "The rating is brought into 1…5 first, then the score is checked against it.",
+      "input": {
+        "id": "00000000-0000-0000-0000-0000000000D1",
+        "wineID": "00000000-0000-0000-0000-0000000000A1",
+        "date": 800000000,
+        "tags": [],
+        "wantsToBuy": false,
+        "rating": 7,
+        "score100": 96
+      },
+      "read": {
+        "id": "00000000-0000-0000-0000-0000000000D1",
+        "wineID": "00000000-0000-0000-0000-0000000000A1",
+        "date": 800000000,
+        "tags": [],
+        "wantsToBuy": false,
+        "rating": 5,
+        "score100": 96
+      }
+    }
+  ],
+  "oldVersion": {
+    "tasting": {
+      "record": {
+        "date": 800000000,
+        "rating": 4,
+        "score100": 93.75,
+        "note": "Fine",
+        "aromas": [
+          "fruit.redCherry",
+          "floral.violet"
+        ],
+        "sweetness": 1,
+        "acidity": 4,
+        "tannin": 3,
+        "body": 3,
+        "alcohol": 3,
+        "length": 4,
+        "intensity": "medium",
+        "hue": "ruby"
+      },
+      "edit": {
+        "rating": 2
+      },
+      "afterEdit": {
+        "date": 800000000,
+        "rating": 2,
+        "note": "Fine",
+        "aromas": [
+          "fruit.redCherry",
+          "floral.violet"
+        ],
+        "sweetness": 1,
+        "acidity": 4,
+        "tannin": 3,
+        "body": 3,
+        "alcohol": 3,
+        "length": 4,
+        "intensity": "medium",
+        "hue": "ruby"
+      }
+    },
+    "wine": {
+      "record": {
+        "id": "00000000-0000-0000-0000-0000000000A1",
+        "name": "Clos Test",
+        "grapes": [
+          "Syrah",
+          "Grenache"
+        ],
+        "abv": 13.5,
+        "classification": "Grand Cru",
+        "lieuDit": "Les Clos",
+        "dosage": "brut",
+        "sweetness": "dry",
+        "grapeShares": {
+          "Syrah": 80,
+          "Grenache": 20
+        },
+        "ageing": [
+          "oakBarrel",
+          "amphora"
+        ],
+        "farming": "biodynamic",
+        "farmingCertified": true,
+        "closure": "screwCap",
+        "criticScores": [
+          {
+            "source": "Guide A",
+            "score": 17.5,
+            "scale": 20,
+            "note": "2015"
+          },
+          {
+            "source": "Review B",
+            "score": 94,
+            "scale": 100
+          },
+          {
+            "source": "Fair C",
+            "award": "Gold medal"
+          }
+        ]
+      },
+      "edit": {
+        "grapes": [
+          "Syrah"
+        ]
+      },
+      "afterEdit": {
+        "id": "00000000-0000-0000-0000-0000000000A1",
+        "name": "Clos Test",
+        "grapes": [
+          "Syrah"
+        ],
+        "abv": 13.5,
+        "classification": "Grand Cru",
+        "lieuDit": "Les Clos",
+        "dosage": "brut",
+        "sweetness": "dry",
+        "grapeShares": {
+          "Syrah": 80
+        },
+        "ageing": [
+          "oakBarrel",
+          "amphora"
+        ],
+        "farming": "biodynamic",
+        "farmingCertified": true,
+        "closure": "screwCap",
+        "criticScores": [
+          {
+            "source": "Guide A",
+            "score": 17.5,
+            "scale": 20,
+            "note": "2015"
+          },
+          {
+            "source": "Review B",
+            "score": 94,
+            "scale": 100
+          },
+          {
+            "source": "Fair C",
+            "award": "Gold medal"
+          }
+        ]
+      }
+    },
+    "discovery": {
+      "record": {
+        "id": "00000000-0000-0000-0000-0000000000D1",
+        "wineID": "00000000-0000-0000-0000-0000000000A1",
+        "date": 800000000,
+        "tags": [],
+        "wantsToBuy": false,
+        "rating": 4,
+        "score100": 88,
+        "note": "n"
+      },
+      "edit": {
+        "note": "changed"
+      },
+      "afterEdit": {
+        "id": "00000000-0000-0000-0000-0000000000D1",
+        "wineID": "00000000-0000-0000-0000-0000000000A1",
+        "date": 800000000,
+        "tags": [],
+        "wantsToBuy": false,
+        "rating": 4,
+        "score100": 88,
+        "note": "changed"
+      }
+    },
+    "keys": {
+      "tasting": [
+        "date",
+        "rating",
+        "note",
+        "occasion",
+        "appearance",
+        "nose",
+        "palate",
+        "finish",
+        "foodPairing"
+      ],
+      "wine": [
+        "id",
+        "name",
+        "producer",
+        "vintage",
+        "color",
+        "region",
+        "country",
+        "appellation",
+        "grapes",
+        "drinkFrom",
+        "drinkUntil",
+        "notes",
+        "photoID",
+        "barcodes",
+        "tags",
+        "extraPhotoIDs",
+        "currentPrice",
+        "currentPriceCurrency",
+        "currentPriceDate",
+        "coverPhotoID",
+        "attachments",
+        "aiCompletedAt",
+        "labelFrame"
+      ],
+      "discovery": [
+        "id",
+        "wineID",
+        "date",
+        "setting",
+        "place",
+        "rating",
+        "note",
+        "tags",
+        "price",
+        "currency",
+        "wantsToBuy",
+        "boughtAt"
+      ]
+    }
+  }
+}
