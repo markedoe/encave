@@ -5,7 +5,32 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added
+- Guided tasting sheet: under More details in a tasting, aromas as chips grouped
+  in families (red fruit, citrus, oak and toast…; those that suit the wine's
+  colour first, searchable), structure from 1 to 5 (sweetness, acidity, tannin
+  for reds, body, alcohol, length; read aloud by VoiceOver and TalkBack) and the
+  appearance (intensity and hue). Everything stays optional: stars alone still
+  take one tap, and the free-text notes stay. Aromas are found by search and
+  the most noted ones show in Insights
+- Ratings out of 5 stars, 20 or 100: a setting of each device. A score out of 20
+  or 100 is kept precisely and its stars are always saved too, so older versions
+  show stars. One conversion on every device: 16/20 is 90/100 and 4 stars,
+  17.5/20 is 93.75/100. The spreadsheet export adds a score column, and imports
+  read "17.5/20" and "93/100" as scores
+- Critics' and guides' scores on the wine page: the source, a score out of 100
+  or 20 or an award, and a note, typed by you (nothing is looked up); in backups
+  and the spreadsheet export
+- More wine details, under More details (closed, so scanning stays quick):
+  alcohol, classification (with suggestions such as Grand Cru or Cru Bourgeois),
+  lieu-dit, dosage for sparkling wines, sweetness for still wines, the share of
+  each grape, ageing, farming (with a certified mark) and closure. Search finds
+  them, Insights counts farming and closures, and the AI label recognition fills
+  in the alcohol and classification printed on the label
+
 ### Changed
+- A bare rating above 5 in an imported spreadsheet is a score out of 100 read
+  with the new conversion: 92 is now 4 stars (it was 5), 50 is 1 star (it was 3)
 - Storage: the rack now sits at the top of the screen, and empty places are quiet
   while browsing (no visible name, a lighter outline; VoiceOver and TalkBack still
   read "B1, empty"; names show when choosing a place). The key's chips no longer

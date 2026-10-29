@@ -97,6 +97,70 @@ implementations:
   wine's documents are for all its bottles; a bottle's are for that bottle.
   They are part of their wine or bottle object, so if two devices change the
   documents of the same object before syncing, the later change wins.
+- **Guided tasting, scores and wine details.** These keys are optional and
+  left out when empty; versions that do not know them keep them as unknown
+  fields (below), so they need no new protocol version. Ids are the stable ids
+  of `fixtures/tasting-vocabulary.json` (never labels, which each app gives in
+  English and French); readers keep an id they do not know, unchanged, and never
+  fail on one (unlike `wine.color`).
+  - `tasting.aromas`: array of aroma ids (`"fruit.redCherry"`), in the order
+    chosen; `tasting.sweetness`, `acidity`, `tannin`, `body`, `alcohol`,
+    `length`: integers 1 to 5; `tasting.intensity` (`pale`, `medium`, `deep`) and
+    `tasting.hue` (`ruby`, `gold`, `onionSkin`…): ids.
+  - `tasting.score100` and `discovery.score100`: the precise score out of 100, a
+    number from 50 to 100 in quarter points, when the rating was entered out of
+    20 or out of 100 (a device setting, not synced). `rating` is always written
+    with it, as the stars of that score, so older versions show stars. A score is
+    kept only while `rating` is its stars: an older version that changed or
+    removed the rating left the score behind, and it is read as left out.
+  - `wine.abv` (a number, percent), `wine.classification` and `wine.lieuDit`
+    (strings), `wine.dosage` (sparkling: `brutNature`, `extraBrut`, `brut`,
+    `extraDry`, `sec`, `demiSec`, `doux`), `wine.sweetness` (still wines: `dry`,
+    `offDry`, `mediumSweet`, `sweet`), `wine.ageing` (array of ids: `oakBarrel`,
+    `newOak`, `foudre`, `stainlessSteel`, `concrete`, `amphora`, `onLees`),
+    `wine.farming` (`organic`, `biodynamic`, `natural`, `sustainable`,
+    `conventional`) with `wine.farmingCertified` (only `true` is written, and
+    only with a farming), `wine.closure` (`naturalCork`, `technicalCork`,
+    `screwCap`, `glass`, `synthetic`, `crownCap`).
+  - `wine.grapeShares`: an object of percentages (integers) keyed by grape, the
+    grape written as in `wine.grapes`, which stays the list older versions read.
+  - `wine.criticScores`: array of `{source, score?, scale?, award?, note?}`, as
+    the user typed them (nothing is looked up): `score` a number with `scale`
+    100 or 20, or `award` a text (a medal) without a scale; `note` such as the
+    vintage it was given for. `source` is required. Each entry keeps its unknown
+    keys like any record, and another `scale` is kept and shown as
+    `score/scale`.
+
+  Read the same way on every device (vectors: `fixtures/tasting-sheet-vectors.json`,
+  which also checks that an older version's edits read back right): levels are
+  brought into 1…5; aroma and ageing ids are kept once, in order, empty ones
+  dropped; empty strings of id fields are left out; a score is brought into
+  50…100 and rounded to the nearest quarter point, then dropped unless `rating`
+  is its stars; a share is kept only for a grape listed in `wine.grapes`
+  (trimmed, ignoring case; a grape given twice keeps the key that sorts first by
+  UTF-16 code units), brought into 1…100, and dropped at 0 or below; empty
+  arrays and objects are left out.
+
+  **Ratings and scores** (vectors: `fixtures/rating-scale-vectors.json`, also
+  used by the CSV import and export). Out of 20: `score100 = 50 + 2.5 × score20`.
+  Stars from a score: below 70 is 1, below 80 is 2, below 87 is 3, below 94 is
+  4, else 5. A rating in stars alone is shown on the other scales as 65, 75, 83,
+  90 or 96 out of 100 (marked as approximate). Shown out of 20 to the nearest
+  half point, out of 100 to the nearest point:
+
+  | /20 | /100 | stars |
+  |---|---|---|
+  | 10 | 75 | 2 |
+  | 12 | 80 | 3 |
+  | 14 | 85 | 3 |
+  | 15 | 87.5 | 4 |
+  | 16 | 90 | 4 |
+  | 17 | 92.5 | 4 |
+  | 17.5 | 93.75 | 4 |
+  | 18 | 95 | 5 |
+  | 19 | 97.5 | 5 |
+  | 20 | 100 | 5 |
+
 - Readers are strict: an unknown value of `wine.color`, `bottle.status`,
   `rack.kind` or `discovery.setting` fails decoding; readers never replace it
   with a default. A device that does not know a new value refuses the sync
@@ -197,7 +261,7 @@ implementations:
     `..`: apps never use it as a path, only as the name shown or given to a
     copy they make.
 - Fields a reader does not know are kept and sent back unchanged. Every record
-  (wine, bottle and its `slot` and `tasting`, document, rack, discovery,
+  (wine and its critic scores, bottle and its `slot` and `tasting`, document, rack, discovery,
   settings, saved search, and device in a membership) keeps each key it does
   not know, with its value as raw JSON, and writes it back unchanged whenever it
   writes the record: after a local edit, in sync payloads, in the cellar file
