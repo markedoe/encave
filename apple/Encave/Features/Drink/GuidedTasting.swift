@@ -193,7 +193,7 @@ private struct LevelRow: View {
 
     var body: some View {
         let name = VocabularyLabels.text(.structure, attribute.id)
-        let word = value.flatMap { Vocabulary.level($0, of: attribute) }.map { VocabularyLabels.text(.level, $0) }
+        let word = value.flatMap { Vocabulary.level($0, of: attribute) }.map { VocabularyLabels.levelText($0, of: attribute.id) }
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline) {
                 Text(verbatim: name)

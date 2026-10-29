@@ -122,6 +122,21 @@ enum VocabularyLabels {
         }
     }
 
+    /// The word for a level of a structure attribute: acidity and length are feminine in
+    /// French ("Acidité : Moyenne+"), as on Android.
+    static func levelText(_ id: String, of attribute: String) -> String {
+        guard attribute == "acidity" || attribute == "length" else { return text(.level, id) }
+        switch id {
+        case "mediumMinus": return String(localized: "Medium− [feminine]")
+        case "medium": return String(localized: "Medium [feminine]")
+        case "mediumPlus": return String(localized: "Medium+ [feminine]")
+        case "high": return String(localized: "High [feminine]")
+        case "short": return String(localized: "Short [feminine]")
+        case "long": return String(localized: "Long [feminine]")
+        default: return text(.level, id)
+        }
+    }
+
     private static func level(_ id: String) -> String? {
         switch id {
         case "low": String(localized: "Low")

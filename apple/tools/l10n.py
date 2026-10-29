@@ -1903,6 +1903,13 @@ VARIANTS = {
     # Vocabulary (VocabularyLabels.swift): an intensity is "moyenne", a level "moyen"; a hue
     # is a color of the wine, not the fruit or a style.
     "Medium [intensity]": ("Medium", "Moyenne"),
+    # Level words of the structure attributes that are feminine in French (acidité, longueur).
+    "Medium− [feminine]": ("Medium−", "Moyenne−"),
+    "Medium [feminine]": ("Medium", "Moyenne"),
+    "Medium+ [feminine]": ("Medium+", "Moyenne+"),
+    "High [feminine]": ("High", "Élevée"),
+    "Short [feminine]": ("Short", "Courte"),
+    "Long [feminine]": ("Long", "Longue"),
     "Lemon [hue]": ("Lemon", "Jaune citron"),
     "Orange [hue]": ("Orange", "Orangé"),
 }

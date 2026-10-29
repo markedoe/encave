@@ -7697,6 +7697,22 @@
         }
       }
     },
+    "High [feminine]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "High"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Élevée"
+          }
+        }
+      }
+    },
     "Holds %lld bottles": {
       "localizations": {
         "fr": {
@@ -9133,6 +9149,22 @@
         }
       }
     },
+    "Long [feminine]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Long"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Longue"
+          }
+        }
+      }
+    },
     "Looking for the device showing %@…": {
       "localizations": {
         "fr": {
@@ -9313,6 +9345,22 @@
         }
       }
     },
+    "Medium [feminine]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medium"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moyenne"
+          }
+        }
+      }
+    },
     "Medium [intensity]": {
       "localizations": {
         "en": {
@@ -9339,6 +9387,22 @@
         }
       }
     },
+    "Medium+ [feminine]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medium+"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moyenne+"
+          }
+        }
+      }
+    },
     "Medium-sweet": {
       "localizations": {
         "fr": {
@@ -9355,6 +9419,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Moyen−"
+          }
+        }
+      }
+    },
+    "Medium− [feminine]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medium−"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moyenne−"
           }
         }
       }
@@ -14071,6 +14151,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Court"
+          }
+        }
+      }
+    },
+    "Short [feminine]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Short"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Courte"
           }
         }
       }
