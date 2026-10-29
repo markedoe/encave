@@ -271,13 +271,21 @@ final class ScreenTourTests: XCTestCase {
             add.press()
             if let next = require("wizard.next", "wizard: no Next button") {
                 next.press()
-                if let diamond = requireControl("wizard.layout.diamond", titles: ["Diamond bins", "Cases en losange"],
-                                                "wizard: no diamond layout") {
+                // The layout's option, the one that can be tapped: a rack card of the same name
+                // stays behind the sheet on iPad.
+                let titles = ["Diamond bins", "Cases en losange"]
+                let matches = app.descendants(matching: .any)
+                    .matching(NSPredicate(format: "identifier == %@ OR label IN %@", "wizard.layout.diamond", titles))
+                _ = matches.firstMatch.waitForExistence(timeout: 5)
+                let diamond = matches.allElementsBoundByIndex.first { $0.isHittable } ?? matches.firstMatch
+                if diamond.exists, diamond.isHittable {
                     diamond.press()
                     for edge in ["top", "left"] { turnOn(element("rack.edges.\(edge)"), "wizard: \(edge) triangles") }
                     snapshot("rack-wizard-diamond-switches")
                     scrollToTop()
                     snapshot("rack-wizard-diamond-triangles")
+                } else {
+                    XCTFail("wizard: no diamond layout")
                 }
             }
             #if !os(macOS)
