@@ -1232,6 +1232,20 @@
         "award": "17/twenty"
       }
     ],
-    ": 90/100; ;": null
+    ": 90/100; ;": null,
+    "Src: 94/100 (for the 2015 (barrel))": [
+      {
+        "source": "Src",
+        "score": "94",
+        "scale": 100,
+        "note": "for the 2015 (barrel)"
+      }
+    ],
+    "Src: 94": [
+      {
+        "source": "Src",
+        "score": "94"
+      }
+    ]
   }
 }

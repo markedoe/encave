@@ -355,9 +355,9 @@ fun WineDetailScreen(
             }
             item {
                 // Typed by the person; saved on the latest version of the wine (a sync may have changed it meanwhile).
-                CriticScoresSection(wine.criticScores.orEmpty()) { scores ->
+                CriticScoresSection(wine.criticScores.orEmpty()) { change ->
                     viewModel.cellar.value.wines[wine.id]?.let { latest ->
-                        viewModel.updateWine(latest.copy(criticScores = scores.ifEmpty { null }), quiet = true)
+                        viewModel.updateWine(latest.copy(criticScores = change(latest.criticScores.orEmpty()).ifEmpty { null }), quiet = true)
                     }
                 }
             }

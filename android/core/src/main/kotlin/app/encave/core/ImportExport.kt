@@ -485,7 +485,8 @@ internal object CsvColumns {
 
     /**
      * The critics' scores of an export: entries separated by ";", each "source: value", the
-     * value "score/scale" or an award, with an optional note in brackets at the end.
+     * value "score/scale", a bare score or an award, with an optional note in brackets at the end.
+     * A ";" in a source, award or note, or a ":" in a source, cannot be told apart from the separators.
      */
     fun criticScores(text: String): List<CriticScore>? = text.split(';').filter { it.isNotEmpty() }.mapNotNull { entry ->
         val colon = entry.indexOf(':')
@@ -493,7 +494,8 @@ internal object CsvColumns {
         if (source.isEmpty()) return@mapNotNull null
         var rest = if (colon < 0) "" else entry.substring(colon + 1).trim(' ')
         var note: String? = null
-        val open = rest.lastIndexOf(" (")
+        // The note starts at the first " (" (a note may hold brackets of its own).
+        val open = rest.indexOf(" (")
         if (rest.endsWith(")") && open >= 0) {
             note = rest.substring(open + 2, rest.length - 1)
             rest = rest.substring(0, open).trim(' ')
@@ -504,8 +506,13 @@ internal object CsvColumns {
         val fraction = rest.split('/')
         val scale = if (fraction.size == 2) fraction[1].trim(' ').let { if (it.all { c -> c in '0'..'9' }) it.toIntOrNull() else null } else null
         val score = if (fraction.size == 2) decimal(fraction[0]) else null
-        if (scale != null && score != null) CriticScore(source, score = score, scale = scale, note = note)
-        else CriticScore(source, award = rest.ifEmpty { null }, note = note)
+        val bare = decimal(rest)
+        when {
+            scale != null && score != null -> CriticScore(source, score = score, scale = scale, note = note)
+            // A bare number is a score without a scale, as the export writes it.
+            bare != null -> CriticScore(source, score = bare, note = note)
+            else -> CriticScore(source, award = rest.ifEmpty { null }, note = note)
+        }
     }.ifEmpty { null }
 
     private val decimalNumber = Regex("[0-9]+(\\.[0-9]+)?")

@@ -21,7 +21,7 @@ fun LabelAnalysis.completing(wine: Wine): Wine {
         region = fill(wine.region, region),
         country = fill(wine.country, country),
         grapes = wine.grapes.ifEmpty { grapes.map { it.trim() }.filter { it.isNotEmpty() } },
-        abv = wine.abv ?: abv?.let { java.math.BigDecimal(it.toString()) },
+        abv = wine.abv ?: abv?.let { java.math.BigDecimal(it.toString()).stripTrailingZeros() },
         classification = fill(wine.classification, classification),
         // Where the label is, when the photo read is the wine's label photo.
         labelFrame = labelFrame?.takeIf { it.photoId == wine.photoId } ?: wine.labelFrame,

@@ -89,7 +89,7 @@ object CriticScoreTexts {
  * to be edited or deleted, and "Add a score or award" adds one. Encave looks nothing up.
  */
 @Composable
-internal fun CriticScoresSection(scores: List<CriticScore>, onChange: (List<CriticScore>) -> Unit) {
+internal fun CriticScoresSection(scores: List<CriticScore>, onChange: ((List<CriticScore>) -> List<CriticScore>) -> Unit) {
     /** The score being edited: its index, -1 for a new one. */
     var editing by rememberSaveable { mutableStateOf<Int?>(null) }
     val resources = LocalResources.current
@@ -106,7 +106,7 @@ internal fun CriticScoresSection(scores: List<CriticScore>, onChange: (List<Crit
                     .clickable(onClickLabel = editLabel) { editing = index }
                     .clearAndSetSemantics {
                         contentDescription = description
-                        customActions = listOf(CustomAccessibilityAction(deleteLabel) { onChange(scores.filterIndexed { i, _ -> i != index }); true })
+                        customActions = listOf(CustomAccessibilityAction(deleteLabel) { onChange { latest -> latest - score }; true })
                     },
                 leadingContent = {
                     Icon(if (score.score == null) Icons.Outlined.EmojiEvents else Icons.Outlined.Grade, contentDescription = null)
@@ -130,11 +130,16 @@ internal fun CriticScoresSection(scores: List<CriticScore>, onChange: (List<Crit
         val initial = scores.getOrNull(index)
         CriticScoreDialog(
             initial = initial,
+            // Applied to the scores as they are when saved (a sync may have changed them meanwhile):
+            // the entry is found by value, and an edited entry no longer there is added rather than lost.
             onSave = { score ->
-                onChange(if (initial == null) scores + score else scores.mapIndexed { i, old -> if (i == index) score else old })
+                onChange { latest ->
+                    val at = if (initial == null) -1 else latest.indexOf(initial)
+                    if (at < 0) latest + score else latest.toMutableList().also { it[at] = score }
+                }
                 editing = null
             },
-            onDelete = if (initial != null) ({ onChange(scores.filterIndexed { i, _ -> i != index }); editing = null }) else null,
+            onDelete = if (initial != null) ({ onChange { latest -> latest - initial }; editing = null }) else null,
             onDismiss = { editing = null },
         )
     }

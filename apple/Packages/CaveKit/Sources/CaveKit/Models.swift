@@ -212,9 +212,9 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         return kept.isEmpty ? nil : kept
     }
 
-    /// A grape compared for its share: trimmed, ignoring case.
+    /// A grape compared for its share: trimmed, in Unicode NFC, ignoring case (as in Kotlin).
     static func grapeKey(_ grape: String) -> String {
-        grape.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        grape.trimmingCharacters(in: .whitespacesAndNewlines).precomposedStringWithCanonicalMapping.lowercased()
     }
 
     /// The share of a grape in percent, if given.

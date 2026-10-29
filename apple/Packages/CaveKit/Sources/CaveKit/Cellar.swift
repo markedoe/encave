@@ -729,8 +729,8 @@ public extension Cellar {
     }
 
     /// The same wine entered twice: the bottles and shopping-list entries of `source`
-    /// go to `target`, with its barcodes and documents, and its label photo when
-    /// `target` has none; then `source` is removed.
+    /// go to `target`, with its barcodes, documents and critics' scores (each once), and its
+    /// label photo and details when `target` has none; then `source` is removed.
     mutating func mergeWine(_ source: UUID, into target: UUID) throws {
         guard source != target, let from = wines[source], var into = wines[target] else { throw CellarError.unknownWine }
         for (id, bottle) in bottles where bottle.wineID == source { bottles[id]?.wineID = target }
@@ -738,6 +738,17 @@ public extension Cellar {
         from.barcodes?.forEach { into.addBarcode($0) }
         if let documents = from.attachments { into.attachments = (into.attachments ?? []) + documents }
         if into.photoID == nil { into.photoID = from.photoID }
+        let critics = into.criticScores ?? []
+        into.criticScores = critics + (from.criticScores ?? []).filter { !critics.contains($0) }
+        into.abv = into.abv ?? from.abv
+        into.classification = into.classification ?? from.classification
+        into.lieuDit = into.lieuDit ?? from.lieuDit
+        into.dosage = into.dosage ?? from.dosage
+        into.sweetness = into.sweetness ?? from.sweetness
+        into.grapeShares = into.grapeShares ?? from.grapeShares
+        into.ageing = into.ageing ?? from.ageing
+        if into.farming == nil { into.farming = from.farming; into.farmingCertified = from.farmingCertified }
+        into.closure = into.closure ?? from.closure
         wines[target] = into
         wines[source] = nil
     }

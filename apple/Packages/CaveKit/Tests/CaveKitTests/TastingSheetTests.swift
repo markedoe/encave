@@ -321,6 +321,24 @@ private func int(_ value: Any?) -> Int? { (value as? NSNumber)?.intValue }
         #expect(CriticScore(source: "A", score: 8, scale: 10).score100 == nil)
     }
 
+    @Test func mergingDuplicatesKeepsCriticsAndDetails() throws {
+        var cellar = Cellar()
+        var target = Wine(name: "A", grapes: ["Syrah"])
+        target.criticScores = [CriticScore(source: "X", score: 90, scale: 100)]
+        var source = Wine(name: "A", grapes: ["Syrah"])
+        source.criticScores = [CriticScore(source: "X", score: 90, scale: 100), CriticScore(source: "Y", award: "Gold")]
+        source.abv = 14
+        source.farming = "organic"
+        source.farmingCertified = true
+        source.grapeShares = ["Syrah": 100]
+        cellar.wines = [target.id: target, source.id: source]
+        try cellar.mergeWine(source.id, into: target.id)
+        let merged = try #require(cellar.wines[target.id])
+        #expect(merged.criticScores?.map(\.source) == ["X", "Y"])
+        #expect(merged.abv == 14 && merged.farming == "organic" && merged.farmingCertified == true)
+        #expect(merged.grapeShares == ["Syrah": 100])
+    }
+
     @Test func theAIRequestAsksForAlcoholAndClassification() {
         let request = LabelRequest(findsLabel: false)
         let required = request.schema["required"] as? [String] ?? []

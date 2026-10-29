@@ -121,6 +121,8 @@ data class Wine(
      * decodes them; ids this version does not know are kept as they are.
      */
     fun readNormalized(): Wine {
+        // Without trailing zeros, as DecimalSerializer reads it: BigDecimal equality counts the scale.
+        val cleanAbv = abv?.stripTrailingZeros()
         val cleanDosage = dosage?.ifEmpty { null }
         val cleanSweetness = sweetness?.ifEmpty { null }
         val cleanShares = keptShares(grapeShares, grapes)
@@ -129,11 +131,11 @@ data class Wine(
         val cleanCertified = if (cleanFarming != null && farmingCertified == true) true else null
         val cleanClosure = closure?.ifEmpty { null }
         val cleanCritics = criticScores?.ifEmpty { null }
-        if (cleanDosage == dosage && cleanSweetness == sweetness && cleanShares == grapeShares && cleanAgeing == ageing &&
+        if (cleanAbv == abv && cleanDosage == dosage && cleanSweetness == sweetness && cleanShares == grapeShares && cleanAgeing == ageing &&
             cleanFarming == farming && cleanCertified == farmingCertified && cleanClosure == closure && cleanCritics == criticScores
         ) return this
         return copy(
-            dosage = cleanDosage, sweetness = cleanSweetness, grapeShares = cleanShares, ageing = cleanAgeing,
+            abv = cleanAbv, dosage = cleanDosage, sweetness = cleanSweetness, grapeShares = cleanShares, ageing = cleanAgeing,
             farming = cleanFarming, farmingCertified = cleanCertified, closure = cleanClosure, criticScores = cleanCritics,
         )
     }
@@ -233,8 +235,8 @@ data class Wine(
     }
 
     companion object {
-        /** A grape compared for its share: trimmed, ignoring case. */
-        fun grapeKey(grape: String): String = grape.trim().lowercase(Locale.ROOT)
+        /** A grape compared for its share: trimmed, in Unicode NFC, ignoring case (as in CaveKit). */
+        fun grapeKey(grape: String): String = Normalizer.normalize(grape.trim(), Normalizer.Form.NFC).lowercase(Locale.ROOT)
 
         /**
          * Shares in percent kept for the grapes listed (trimmed, ignoring case), each brought

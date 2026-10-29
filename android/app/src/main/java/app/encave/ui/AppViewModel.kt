@@ -605,7 +605,7 @@ class AppViewModel(
     }
 
     /** [photo] replaces the wine's photo when set; [removePhoto] clears it. */
-    fun updateWine(wine: Wine, photo: ByteArray? = null, removePhoto: Boolean = false, quiet: Boolean = false) {
+    fun updateWine(wine: Wine, photo: ByteArray? = null, removePhoto: Boolean = false, quiet: Boolean = false, fromForm: Boolean = false) {
         viewModelScope.launch {
             val newId = photo?.let { withContext(Dispatchers.IO) { photos.save(it) } }
             val record = when {
@@ -613,9 +613,18 @@ class AppViewModel(
                 removePhoto -> wine.copy(photoId = null)
                 else -> wine
             }
-            // The form does not show documents: those of the wine as it is now are kept
-            // (added meanwhile on another device, for example).
-            repository.update { c -> c.updateWine(record.copy(attachments = c.wines[record.id]?.attachments ?: record.attachments)) }
+            // The form does not show documents (nor, for the wine form, critic scores, edited on
+            // the wine page): those of the wine as it is now are kept (added meanwhile on another
+            // device, for example), so saving the form never brings back an older list.
+            repository.update { c ->
+                val live = c.wines[record.id]
+                c.updateWine(
+                    record.copy(
+                        attachments = live?.attachments ?: record.attachments,
+                        criticScores = if (fromForm && live != null) live.criticScores else record.criticScores,
+                    ),
+                )
+            }
                 .onSuccess { if (!quiet) post(UiText.Res(R.string.msg_saved)) }
                 .onFailure { fail(it) }
         }
@@ -699,7 +708,9 @@ class AppViewModel(
                 else -> wine
             }
             repository.update {
-                it.updateWine(record)
+                // Critic scores are edited on the wine page: the live ones are kept, as for the wine form.
+                val live = it.wines[record.id]
+                it.updateWine(if (live != null) record.copy(attachments = live.attachments, criticScores = live.criticScores) else record)
                 it.updateDiscovery(discovery)
             }.onSuccess { post(UiText.Res(R.string.msg_saved)) }
                 .onFailure { fail(it) }

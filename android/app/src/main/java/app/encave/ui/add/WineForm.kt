@@ -163,7 +163,7 @@ class WineFormState(
 
     /** The alcohol typed ("13,5" or "13.5"), between 0 and 100; null when empty or not a number. */
     val abv: java.math.BigDecimal?
-        get() = abvText.trim().replace(',', '.').toBigDecimalOrNull()?.takeIf { it > java.math.BigDecimal.ZERO && it <= java.math.BigDecimal(100) }
+        get() = abvText.trim().replace(',', '.').toBigDecimalOrNull()?.stripTrailingZeros()?.takeIf { it > java.math.BigDecimal.ZERO && it <= java.math.BigDecimal(100) }
     val abvInvalid: Boolean get() = abvText.isNotBlank() && abv == null
     val vintageInvalid: Boolean get() = vintageText.isNotBlank() && vintage == null
     val nameMissing: Boolean get() = name.isBlank()

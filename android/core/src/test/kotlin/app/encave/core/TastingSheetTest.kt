@@ -302,6 +302,32 @@ class TastingSheetTest {
     }
 
     @Test
+    fun mergingDuplicatesKeepsCriticsAndDetails() {
+        val target = Wine(name = "A", grapes = listOf("Syrah"), criticScores = listOf(CriticScore("X", score = BigDecimal(90), scale = 100)))
+        val source = Wine(
+            name = "A", grapes = listOf("Syrah"), abv = BigDecimal(14), farming = "organic", farmingCertified = true,
+            grapeShares = mapOf("Syrah" to 100),
+            criticScores = listOf(CriticScore("X", score = BigDecimal(90), scale = 100), CriticScore("Y", award = "Gold")),
+        )
+        val cellar = Cellar(listOf(target, source))
+        cellar.mergeWine(source.id, target.id)
+        val merged = cellar.wines.getValue(target.id)
+        assertEquals(listOf("X", "Y"), merged.criticScores?.map { it.source })
+        assertEquals(BigDecimal(14), merged.abv)
+        assertEquals("organic", merged.farming)
+        assertEquals(true, merged.farmingCertified)
+        assertEquals(mapOf("Syrah" to 100), merged.grapeShares)
+    }
+
+    @Test
+    fun alcoholIsStoredWithoutTrailingZeros() {
+        // As DecimalSerializer reads it, so a form saving "20" equals the stored value.
+        val wine = Wine(name = "Port", abv = BigDecimal("20.0")).normalized()
+        assertEquals(BigDecimal("20").stripTrailingZeros(), wine.abv)
+        assertEquals(wine, CellarJson.decode(CellarJson.encode(Cellar(listOf(wine)))).wines.getValue(wine.id))
+    }
+
+    @Test
     fun wineDetailsHelpers() {
         val wine = Wine(name = "X", grapes = listOf("Syrah", "Grenache"))
         assertFalse(wine.hasMoreDetails)

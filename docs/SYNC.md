@@ -137,9 +137,14 @@ implementations:
   dropped; empty strings of id fields are left out; a score is brought into
   50…100 and rounded to the nearest quarter point, then dropped unless `rating`
   is its stars; a share is kept only for a grape listed in `wine.grapes`
-  (trimmed, ignoring case; a grape given twice keeps the key that sorts first by
+  (trimmed, in Unicode NFC, ignoring case; a grape given twice keeps the key that sorts first by
   UTF-16 code units), brought into 1…100, and dropped at 0 or below; empty
   arrays and objects are left out.
+
+  An older version keeps `score100` and `grapeShares` as they were. So a rating
+  changed there and later set back to the stars of the old score brings the old
+  score back, and a grape removed there and added again brings its old share
+  back. Nothing else is lost; the newer apps show what they read.
 
   **Ratings and scores** (vectors: `fixtures/rating-scale-vectors.json`, also
   used by the CSV import and export). Out of 20: `score100 = 50 + 2.5 × score20`.

@@ -240,6 +240,8 @@ struct CriticScoreEditor: View {
         guard let original else { return }
         source = original.source
         if original.score != nil {
+            // A score without a scale (from a spreadsheet) is edited as /100 but saved without
+            // one unless the kind is changed (see `edited`).
             kind = .scale(original.scale ?? 100)
             score = original.score
         } else {
@@ -260,7 +262,8 @@ struct CriticScoreEditor: View {
         switch kind {
         case .scale(let maximum):
             critic.score = score
-            critic.scale = maximum
+            let keepsNoScale = original?.score != nil && original?.scale == nil && maximum == 100
+            critic.scale = keepsNoScale ? nil : maximum
             critic.award = nil
         case .award:
             critic.score = nil

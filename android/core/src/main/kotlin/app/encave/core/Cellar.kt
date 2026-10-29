@@ -541,9 +541,18 @@ class Cellar(
         bottleMap.replaceAll { _, bottle -> if (bottle.wineId == source) bottle.copy(wineId = target) else bottle }
         discoveryMap.replaceAll { _, discovery -> if (discovery.wineId == source) discovery.copy(wineId = target) else discovery }
         val merged = from.barcodes.orEmpty().fold(into) { wine, code -> wine.addingBarcode(code) }
+        // Critics' scores each once, and the details the target lacks, as in CaveKit.
+        val critics = merged.criticScores.orEmpty()
         wineMap[target] = merged.copy(
             attachments = if (from.attachments == null) merged.attachments else merged.attachments.orEmpty() + from.attachments,
             photoId = merged.photoId ?: from.photoId,
+            criticScores = (critics + from.criticScores.orEmpty().filter { it !in critics }).ifEmpty { null },
+            abv = merged.abv ?: from.abv, classification = merged.classification ?: from.classification,
+            lieuDit = merged.lieuDit ?: from.lieuDit, dosage = merged.dosage ?: from.dosage,
+            sweetness = merged.sweetness ?: from.sweetness, grapeShares = merged.grapeShares ?: from.grapeShares,
+            ageing = merged.ageing ?: from.ageing, farming = merged.farming ?: from.farming,
+            farmingCertified = if (merged.farming == null) from.farmingCertified else merged.farmingCertified,
+            closure = merged.closure ?: from.closure,
         ).normalized()
         wineMap.remove(source)
     }

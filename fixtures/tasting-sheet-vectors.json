@@ -380,6 +380,29 @@
           }
         ]
       }
+    },
+    {
+      "about": "Grapes are compared in Unicode NFC: a share keyed by the same grape in another normalization (here decomposed) is kept, under its own key.",
+      "input": {
+        "id": "00000000-0000-0000-0000-0000000000A1",
+        "name": "Clos Test",
+        "grapes": [
+          "Mourvèdre"
+        ],
+        "grapeShares": {
+          "Mourvèdre": 100
+        }
+      },
+      "read": {
+        "id": "00000000-0000-0000-0000-0000000000A1",
+        "name": "Clos Test",
+        "grapes": [
+          "Mourvèdre"
+        ],
+        "grapeShares": {
+          "Mourvèdre": 100
+        }
+      }
     }
   ],
   "discoveries": [

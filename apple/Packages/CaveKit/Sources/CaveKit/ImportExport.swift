@@ -494,7 +494,9 @@ enum CSVColumns {
     }
 
     /// The critics' scores of an export: entries separated by ";", each "source: value",
-    /// the value "score/scale" or an award, with an optional note in brackets at the end.
+    /// the value "score/scale", a bare score or an award, with an optional note in brackets
+    /// at the end. A ";" in a source, award or note, or a ":" in a source, cannot be told
+    /// apart from the separators: such entries are split differently when read back.
     static func criticScores(_ text: String) -> [CriticScore]? {
         func trimmed(_ text: Substring) -> String { String(text).trimmingCharacters(in: CharacterSet(charactersIn: " ")) }
         let items = text.split(separator: ";").compactMap { entry -> CriticScore? in
@@ -503,7 +505,8 @@ enum CSVColumns {
             guard !source.isEmpty else { return nil }
             var rest = colon.map { trimmed(entry[entry.index(after: $0)...]) } ?? ""
             var note: String?
-            if rest.hasSuffix(")"), let open = rest.range(of: " (", options: .backwards) {
+            // The note starts at the first " (" (a note may hold brackets of its own).
+            if rest.hasSuffix(")"), let open = rest.range(of: " (") {
                 note = String(rest[open.upperBound..<rest.index(before: rest.endIndex)])
                 rest = trimmed(rest[..<open.lowerBound])
             } else if rest.hasPrefix("("), rest.hasSuffix(")") {
@@ -518,6 +521,8 @@ enum CSVColumns {
                     return CriticScore(source: source, score: score, scale: scale, note: note)
                 }
             }
+            // A bare number is a score without a scale, as the export writes it.
+            if let score = decimal(rest) { return CriticScore(source: source, score: score, note: note) }
             return CriticScore(source: source, award: rest.isEmpty ? nil : rest, note: note)
         }
         return items.isEmpty ? nil : items
