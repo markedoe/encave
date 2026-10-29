@@ -410,7 +410,7 @@ public extension Cellar {
     func freeSlot(in cell: RackCell) -> Slot? {
         guard let rack = rack(cell.rackID), rack.contains(cell) else { return nil }
         let taken = Set(bottles(in: cell).compactMap { $0.slot?.depth })
-        return (0..<rack.positions(inRow: cell.row)).first { !taken.contains($0) }
+        return (0..<rack.positions(of: cell)).first { !taken.contains($0) }
             .map { Slot(rackID: cell.rackID, row: cell.row, column: cell.column, depth: $0) }
     }
 
@@ -687,15 +687,20 @@ public extension Cellar {
     /// did not have loses its place. The bottles taken out (`takenOut`, as they were before)
     /// go back to their place only if they still have none and it is free. Bottles moved to
     /// another storage or opened since keep what they have now.
-    mutating func undoRackUpdate(back old: Rack, rowMap: [Int: Int?], takenOut: [Bottle]) {
+    mutating func undoRackUpdate(back old: Rack, rowMap: [Int: Int?], cellMap: [RackCell: RackCell?] = [:],
+                                 takenOut: [Bottle]) {
         guard let index = racks.firstIndex(where: { $0.id == old.id }) else { return }
         var inverse: [Int: Int?] = [:]
         // A row the edit moved away from and nothing moved into is a new row: no old place.
         for from in rowMap.keys { inverse[from] = .some(nil) }
         for (from, to) in rowMap { if let to { inverse[to] = .some(from) } }
+        // The same for cells (a diamond rack whose triangles changed).
+        var inverseCells: [RackCell: RackCell?] = [:]
+        for from in cellMap.keys { inverseCells[from] = .some(nil) }
+        for (from, to) in cellMap { if let to { inverseCells[to] = .some(from) } }
         for bottle in bottlesInCellar {
             guard let slot = bottle.slot, slot.rackID == old.id else { continue }
-            let back = Rack.moved(slot, rowMap: inverse)
+            let back = Rack.moved(slot, rowMap: inverse, cellMap: inverseCells)
             bottles[bottle.id]?.slot = back.flatMap { old.contains($0) ? $0 : nil }
         }
         var rack = old
@@ -764,15 +769,18 @@ public extension Cellar {
 
     /// Updates name, layout or size. `rowMap` moves the bottles of a row to another row
     /// (nil: the row is gone), keeping their column and depth; rows it leaves out stay as
-    /// they are. A bottle whose new place is not in the rack is displaced: with `takingOut`
-    /// it stays in the cellar without a place, otherwise the update is refused.
-    mutating func updateRack(_ rack: Rack, rowMap: [Int: Int?] = [:], takingOut: Bool = false) throws {
+    /// they are. `cellMap` moves the bottles of a cell to another cell (a diamond rack whose
+    /// triangles changed, `Rack.diamondCellMap`), before `rowMap`. A bottle whose new place is
+    /// not in the rack is displaced: with `takingOut` it stays in the cellar without a place,
+    /// otherwise the update is refused.
+    mutating func updateRack(_ rack: Rack, rowMap: [Int: Int?] = [:], cellMap: [RackCell: RackCell?] = [:],
+                             takingOut: Bool = false) throws {
         guard let index = racks.firstIndex(where: { $0.id == rack.id }) else { throw CellarError.unknownRack }
-        let displaced = Set(displacedBottles(by: rack, rowMap: rowMap).map(\.id))
+        let displaced = Set(displacedBottles(by: rack, rowMap: rowMap, cellMap: cellMap).map(\.id))
         if !displaced.isEmpty, !takingOut { throw CellarError.rackNotEmpty }
         for bottle in bottlesInCellar {
             guard let slot = bottle.slot, slot.rackID == rack.id else { continue }
-            bottles[bottle.id]?.slot = displaced.contains(bottle.id) ? nil : Rack.moved(slot, rowMap: rowMap)
+            bottles[bottle.id]?.slot = displaced.contains(bottle.id) ? nil : Rack.moved(slot, rowMap: rowMap, cellMap: cellMap)
         }
         var rack = rack
         rack.unknownFields = rack.unknownFields.orKept(racks[index].unknownFields)
@@ -781,11 +789,11 @@ public extension Cellar {
 
     /// Bottles of this rack that an update with `rowMap` would leave without a place,
     /// in the order of their places.
-    func displacedBottles(by rack: Rack, rowMap: [Int: Int?] = [:]) -> [Bottle] {
+    func displacedBottles(by rack: Rack, rowMap: [Int: Int?] = [:], cellMap: [RackCell: RackCell?] = [:]) -> [Bottle] {
         let old = self.rack(rack.id)
         return bottlesInCellar.filter { bottle in
             guard let slot = bottle.slot, slot.rackID == rack.id else { return false }
-            guard let moved = Rack.moved(slot, rowMap: rowMap) else { return true }
+            guard let moved = Rack.moved(slot, rowMap: rowMap, cellMap: cellMap) else { return true }
             if !rack.contains(moved) { return true }
             // A position the edit removes; a bottle already behind its row's depth (put there
             // by an older version) stays where it is while the edit keeps that place.

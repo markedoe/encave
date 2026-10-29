@@ -78,6 +78,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.encave.R
 import app.encave.core.Bottle
+import app.encave.core.DiamondEdge
+import app.encave.core.DiamondLayout
+import app.encave.core.DiamondPlace
+import app.encave.core.diamondLayout
 import app.encave.core.Cellar
 import app.encave.core.Rack
 import app.encave.core.RackCell
@@ -131,10 +135,13 @@ fun rackGridSize(rack: Rack, cell: Dp, showHeaders: Boolean, labelHeight: Dp): P
     val pad = if (rack.isFramed) cell * 0.12f else 0.dp
     val header = if (showHeaders) maxOf(18.dp, cell * 0.42f) else 0.dp
     // Head-to-tail, the back band is drawn half a place right of the front one.
+    val layout = rack.diamondLayout
     val width = (0 until rack.rows).maxOf { row ->
         val n = rack.columnsInRow(row)
-        val offset = (size + spacing) * ((if (rack.isOffset(row)) 0.5f else 0f) + rack.bandShift(row, 1))
-        header + offset + size * n + spacing * (n - 1)
+        val offset = (size + spacing) * (rack.rowLead(row, layout) + rack.bandShift(row, 1))
+        // A left or right edge triangle is half a place wide.
+        val halves = (0 until n).count { rack.triangleAt(row, it, layout).let { edge -> edge == DiamondEdge.Left || edge == DiamondEdge.Right } }
+        header + offset + size * n - size * (halves * 0.5f) + spacing * (n - 1)
     } + pad * 2
     val overlap = when (rack.kind) {
         RackKind.Staggered -> (size + spacing) * 0.134f
@@ -167,7 +174,10 @@ fun rackGridSize(rack: Rack, cell: Dp, showHeaders: Boolean, labelHeight: Dp): P
     }
     val shelf = if (rack.kind == RackKind.Shelves) shelfBar(cell) else 0.dp
     val headerRow = if (showHeaders && (rack.kind == RackKind.Grid || rack.kind == RackKind.Shelves)) labelHeight + gap else 0.dp
-    val height = headerRow + (cellHeight + shelf) * rack.rows - overlap * (rack.rows - 1) + gap * (rack.rows - 1) + pad * 2
+    // A row of edge triangles takes only its half next to the diamonds.
+    val triangleRows = (0 until rack.rows).count { rack.triangleRow(it, layout) != null }
+    val height = headerRow + (cellHeight + shelf) * rack.rows - overlap * (rack.rows - 1) + gap * (rack.rows - 1) + pad * 2 -
+        size / 2 * triangleRows
     return width to height
 }
 
@@ -221,6 +231,56 @@ val DiamondShape: Shape = GenericShape { size, _ ->
     close()
 }
 
+/** An edge triangle of a diamond rack in this cell, or null. */
+internal fun Rack.triangleAt(row: Int, column: Int, layout: DiamondLayout? = diamondLayout): DiamondEdge? =
+    (layout?.place(row, column) as? DiamondPlace.Triangle)?.edge
+
+/** The side of a row of edge triangles (top or bottom), null for a row of diamonds or another rack. */
+internal fun Rack.triangleRow(row: Int, layout: DiamondLayout? = diamondLayout): DiamondEdge? =
+    triangleAt(row, 0, layout)?.takeIf { it == DiamondEdge.Top || it == DiamondEdge.Bottom }
+
+/** The rows from the top of the drawing: a diamond rack draws its top triangles first and its bottom ones last. */
+internal fun Rack.drawingRows(layout: DiamondLayout? = diamondLayout): List<Int> = layout?.drawingRows ?: (0 until rows).toList()
+
+/** The cells of a row from the left of the drawing: a diamond rack draws a left triangle first. */
+internal fun Rack.drawingColumns(row: Int, layout: DiamondLayout? = diamondLayout): List<Int> =
+    layout?.drawingColumns(row) ?: (0 until columnsInRow(row)).toList()
+
+/** How far right a row starts, in places: half a place on offset rows, unless a left triangle (half a place wide) fills that notch. */
+internal fun Rack.rowLead(row: Int, layout: DiamondLayout? = diamondLayout): Float = when {
+    drawingColumns(row, layout).firstOrNull()?.let { triangleAt(row, it, layout) } == DiamondEdge.Left -> 0f
+    isOffset(row) -> 0.5f
+    else -> 0f
+}
+
+/**
+ * An edge triangle of a diamond rack, as drawn in its place: the lower half of a diamond along the top
+ * (its frame a whole place), the upper half along the bottom, the right half along the left (its frame
+ * half a place wide), the left half along the right. Mirrors the Apple app's EdgeTriangle.
+ */
+fun edgeTriangleShape(edge: DiamondEdge, inset: Float = 0f): Shape = GenericShape { size, _ ->
+    val l = inset
+    val t = inset
+    val r = size.width - inset
+    val b = size.height - inset
+    val midX = size.width / 2f
+    val midY = size.height / 2f
+    when (edge) {
+        DiamondEdge.Top -> { moveTo(l, midY); lineTo(r, midY); lineTo(midX, b) }
+        DiamondEdge.Bottom -> { moveTo(midX, t); lineTo(r, midY); lineTo(l, midY) }
+        DiamondEdge.Left -> { moveTo(l, t); lineTo(r, midY); lineTo(l, b) }
+        DiamondEdge.Right -> { moveTo(r, t); lineTo(l, midY); lineTo(r, b) }
+    }
+    close()
+}
+
+/** Keeps only the lower ([top] true) or upper half of a row's height for layout: a row of edge triangles. */
+private fun Modifier.halfHeight(top: Boolean) = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    val half = placeable.height / 2
+    layout(placeable.width, placeable.height - half) { placeable.place(0, if (top) -half else 0) }
+}
+
 /** Pulls a row up by [overlap] so honeycomb and diamond rows nest into each other. */
 private fun Modifier.overlapUp(overlap: Dp) = layout { measurable, constraints ->
     val placeable = measurable.measure(constraints)
@@ -247,7 +307,7 @@ data class RackPlace(val cell: RackCell, val depth: Int? = null) {
 
     /** Holds one bottle at most: a place of a fridge drawn front and back, or a cell of a row one bottle deep (with [cellar], unless an older version put a bottle behind it). */
     fun holdsOne(rack: Rack, cellar: Cellar? = null): Boolean =
-        depth != null || rack.shownPositions(cell.row, cellar?.bottlesIn(cell)?.mapNotNull { it.slot?.depth }?.maxOrNull()) == 1
+        depth != null || rack.shownPositions(cell, cellar?.bottlesIn(cell)?.mapNotNull { it.slot?.depth }?.maxOrNull()) == 1
 
     operator fun contains(slot: Slot): Boolean = slot.cell == cell && (depth == null || slot.depth == depth)
 
@@ -364,13 +424,16 @@ fun RackGrid(
     val scheme = MaterialTheme.colorScheme
     // Places reach the touch-target minimum through the cell size (see ZoomableRack).
     val cellWidth = size
+    // A diamond rack with edge triangles: where they are.
+    val diamondLayout = remember(rack) { rack.diamondLayout }
 
     /** One place: a whole cell, or a front or back place of a fridge drawn in bands. */
     @Composable
     fun Place(place: RackPlace, height: Dp) {
         val bottles = byCell[place.cell].orEmpty().filter { bottle -> bottle.slot?.let { it in place } ?: false }
+        val triangle = rack.triangleAt(place.cell.row, place.cell.column, diamondLayout)
         RackCellView(
-            rack = rack, place = place, bottles = bottles, cellar = cellar, size = size, height = height,
+            rack = rack, place = place, bottles = bottles, cellar = cellar, size = size, height = height, triangle = triangle,
             selectedCount = selectedByCell[place.cell]?.count { it in place } ?: 0,
             isHighlighted = (highlighted?.let { it in place } ?: false) || selectedPlace == place || dropTarget == place,
             focusWine = focusWine,
@@ -522,7 +585,7 @@ fun RackGrid(
                     ShelfUnder(shelf)
                 }
             } else {
-                for (row in 0 until rack.rows) {
+                for ((drawn, row) in rack.drawingRows(diamondLayout).withIndex()) {
                     // On a fridge with layers, a shelf's top layer starts below the previous shelf.
                     val place = rack.shelfPlace(row)
                     val startsShelf = place != null && place.layer == place.layers - 1
@@ -533,13 +596,21 @@ fun RackGrid(
                         ZoneDivider(rack, rack.zoneOfShelf(place.shelf), cellSize, if (showHeaders) headerWidth else 0.dp)
                         Spacer(Modifier.height(cellSize * SHELF_GAP))
                     }
-                    Column(if (row > 0 && overlap > 0.dp && !startsShelf) Modifier.overlapUp(overlap) else Modifier) {
+                    val triangleRow = rack.triangleRow(row, diamondLayout)
+                    Column(
+                        (if (drawn > 0 && overlap > 0.dp && !startsShelf) Modifier.overlapUp(overlap) else Modifier)
+                            // A row of edge triangles fills the notches along the first or last row of diamonds:
+                            // only its half next to the diamonds takes room.
+                            .then(if (triangleRow != null) Modifier.halfHeight(top = triangleRow == DiamondEdge.Top) else Modifier),
+                    ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             if (showHeaders) {
                                 Box(Modifier.width(headerWidth).clearAndSetSemantics { }, contentAlignment = Alignment.Center) {
                                     // Shelves are numbered (layered ones beside their bottom layer); other racks letter their rows.
                                     val header = when {
                                         place == null && rack.kind == RackKind.Shelves -> "${row + 1}"
+                                        // A diamond rack with triangles letters its rows of diamonds only.
+                                        place == null && diamondLayout != null -> if (triangleRow != null) "" else Rack.rowLetters(row)
                                         place == null -> Rack.rowLetters(row)
                                         place.layer == 0 -> "${place.shelf + 1}"
                                         else -> ""
@@ -547,9 +618,10 @@ fun RackGrid(
                                     Text(header, style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
                                 }
                             }
-                            if (rack.isOffset(row)) Spacer(Modifier.width((cellWidth + spacing) / 2))
+                            val lead = rack.rowLead(row, diamondLayout)
+                            if (lead > 0f) Spacer(Modifier.width((cellWidth + spacing) * lead))
                             Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
-                                for (column in 0 until rack.columnsInRow(row)) Place(RackPlace(RackCell(rack.id, row, column)), cellHeight)
+                                for (column in rack.drawingColumns(row, diamondLayout)) Place(RackPlace(RackCell(rack.id, row, column)), cellHeight)
                             }
                         }
                         if (rack.kind == RackKind.Shelves) {
@@ -643,6 +715,8 @@ private fun RackCellView(
     cellar: Cellar,
     size: Dp,
     height: Dp,
+    /** An edge triangle of a diamond rack: its side (left and right ones are half a place wide). */
+    triangle: DiamondEdge?,
     selectedCount: Int,
     isHighlighted: Boolean,
     focusWine: UUID?,
@@ -671,7 +745,7 @@ private fun RackCellView(
     val checkState = cellCheckState(bottles, if (countsFound) selectedCount else null, resources)
     Box(
         Modifier
-            .size(size, height)
+            .size(if (triangle == DiamondEdge.Left || triangle == DiamondEdge.Right) size / 2 else size, height)
             .testTag("cell.${cell.row}.${cell.column}" + if (place.depth == 1) ".back" else "")
             .then(if (onPositioned != null) Modifier.onGloballyPositioned { onPositioned(it.boundsInRoot()) } else Modifier)
             .clearAndSetSemantics {
@@ -689,7 +763,12 @@ private fun RackCellView(
         contentAlignment = Alignment.Center,
     ) {
         when {
-            rack.kind == RackKind.Bins -> Bin(rack, bottles, cellar, size, selectedCount, isHighlighted || isFocused, countsFound)
+            rack.kind == RackKind.Bins && triangle != null ->
+                TriangleBin(triangle, rack.shownPositions(cell, bottles.mapNotNull { it.slot?.depth }.maxOrNull()), bottles, cellar, size,
+                    selectedCount, isHighlighted || isFocused, countsFound)
+            rack.kind == RackKind.Bins ->
+                Bin(rack.shownPositions(cell, bottles.mapNotNull { it.slot?.depth }.maxOrNull()), bottles, cellar, size, selectedCount,
+                    isHighlighted || isFocused, countsFound)
             place.depth != null -> BandPlace(
                 rack, cell, bottles.firstOrNull(), cellar, size, height, back = place.depth > 0,
                 selectedCount, isHighlighted, isFocused, showsNumber = !isPicture && !quiet, quiet = quiet,
@@ -700,7 +779,7 @@ private fun RackCellView(
             // Touches reach the drawn shape only: honeycomb and fridge holes, diamond bins (their
             // rows nest into each other), else the whole cell.
             Box(
-                Modifier.matchParentSize().clip(rack.hitShape).combinedClickable(
+                Modifier.matchParentSize().clip(triangle?.let { edgeTriangleShape(it) } ?: rack.hitShape).combinedClickable(
                     onClick = onClick, onLongClick = onLongClick, onDoubleClick = onDoubleClick, onClickLabel = clickLabel,
                     onLongClickLabel = longClickLabel,
                 ),
@@ -909,8 +988,8 @@ internal fun cellDescription(
         val maturity = Maturity.of(wine, year).takeIf { it != Maturity.Unknown }?.let { resources.getString(it.shortLabelRes) }
         listOfNotNull(wine.displayName, wine.color?.let { resources.getString(it.labelRes) }, maturity).joinToString(", ")
     }
-    // Rows can differ in depth: this row's positions, and as deep as its bottles go.
-    val positions = rack.shownPositions(cell.row, bottles.mapNotNull { it.slot?.depth }.maxOrNull())
+    // Rows can differ in depth, edge triangles hold fewer: this cell's positions, and as deep as its bottles go.
+    val positions = rack.shownPositions(cell, bottles.mapNotNull { it.slot?.depth }.maxOrNull())
     val base = when {
         rack.kind == RackKind.Bins -> {
             val count = resources.getString(R.string.cell_bin, place, bottles.size, positions)
@@ -1007,56 +1086,152 @@ private fun SelectionBadge(capacity: Int, count: Int, total: Int?, size: Dp) {
     }
 }
 
+/** An edge triangle of a diamond rack: the half diamond along its side, with its count and a small pile in its widest part. */
+@Composable
+private fun TriangleBin(
+    edge: DiamondEdge, capacity: Int, bottles: List<Bottle>, cellar: Cellar, size: Dp, selectedCount: Int, isHighlighted: Boolean,
+    countsFound: Boolean,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val half = edge == DiamondEdge.Left || edge == DiamondEdge.Right
+    val width = if (half) size / 2 else size
+    val density = LocalDensity.current
+    val inset = with(density) { (size * 0.03f).toPx() }
+    Box(Modifier.size(width, size)) {
+        Box(
+            Modifier.matchParentSize().background(scheme.surfaceContainerHigh, edgeTriangleShape(edge, inset))
+                .border(if (isHighlighted) 3.dp else 1.5.dp, if (isHighlighted) scheme.primary else scheme.outline, edgeTriangleShape(edge, inset)),
+        )
+        // The count at the triangle's centroid, the pile above it (below it in a bottom triangle, toward its wide edge).
+        val textWidth = if (half) size * 0.28f else size * 0.4f
+        CountAt(
+            center = { w, h ->
+                when (edge) {
+                    DiamondEdge.Top -> Offset(w / 2f, h * 0.667f)
+                    DiamondEdge.Bottom -> Offset(w / 2f, h * 0.333f)
+                    DiamondEdge.Left -> Offset(h / 6f, h / 2f)
+                    DiamondEdge.Right -> Offset(w - h / 6f, h / 2f)
+                }
+            },
+            pileBelow = edge == DiamondEdge.Bottom,
+            modifier = Modifier.matchParentSize(),
+            count = { BinCount(bottles.size, capacity, size, textWidth, size * 0.1f, MaterialTheme.typography.labelSmall) },
+            pile = { Pile(bottles.map { cellar.wines[it.wineId]?.color }, size * 0.05f, widest = 3) },
+            badge = { if (selectedCount > 0) SelectionCount(selectedCount, bottles.size, countsFound, textWidth, size * 0.09f) },
+        )
+    }
+}
+
 /** A diamond bin with a small pile of bottles (up to ten, as a pyramid) and "7/10". */
 @Composable
-private fun Bin(rack: Rack, bottles: List<Bottle>, cellar: Cellar, size: Dp, selectedCount: Int, isHighlighted: Boolean, countsFound: Boolean) {
+private fun Bin(capacity: Int, bottles: List<Bottle>, cellar: Cellar, size: Dp, selectedCount: Int, isHighlighted: Boolean, countsFound: Boolean) {
     val scheme = MaterialTheme.colorScheme
-    val capacity = rack.binCapacity
     Box(Modifier.size(size), contentAlignment = Alignment.Center) {
         Box(
             Modifier.size(size * 0.98f).background(scheme.surfaceContainerHigh, DiamondShape)
                 .border(if (isHighlighted) 3.dp else 1.5.dp, if (isHighlighted) scheme.primary else scheme.outline, DiamondShape),
         )
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.offset(y = size * 0.04f)) {
-            Pile(bottles.map { cellar.wines[it.wineId]?.color }, size * 0.11f)
-            // Sized to the bin, so large fonts stay inside the diamond.
-            val label = MaterialTheme.typography.labelMedium
-            val font = with(LocalDensity.current) { maxOf(8.dp, size * 0.13f).toSp() }
-            val max = if (font < label.fontSize) font else label.fontSize
-            Text(
-                "${bottles.size}/$capacity", style = label.copy(lineHeight = max * 1.15f),
-                modifier = Modifier.widthIn(max = size * 0.5f),
-                color = if (bottles.size >= capacity) scheme.onSurface else scheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                autoSize = TextAutoSize.StepBased(minFontSize = max * 0.6f, maxFontSize = max, stepSize = 0.5.sp),
-            )
-            if (selectedCount > 0 && countsFound) {
-                // Checking: how many of its bottles were found.
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.Check, contentDescription = null, tint = scheme.primary, modifier = Modifier.size(14.dp))
-                    Text("$selectedCount/${bottles.size}", style = MaterialTheme.typography.labelMedium, color = scheme.primary)
-                }
-            } else if (selectedCount > 0) {
-                Text("+$selectedCount", style = MaterialTheme.typography.labelMedium, color = scheme.primary)
+        // The count at the diamond's centre, the pile above it, what was chosen or found below it.
+        CountAt(
+            center = { w, h -> Offset(w / 2f, h / 2f) },
+            pileBelow = false,
+            modifier = Modifier.matchParentSize(),
+            count = { BinCount(bottles.size, capacity, size, size * 0.5f, size * 0.13f, MaterialTheme.typography.labelMedium) },
+            pile = { Pile(bottles.map { cellar.wines[it.wineId]?.color }, size * 0.11f) },
+            badge = { if (selectedCount > 0) SelectionCount(selectedCount, bottles.size, countsFound, size * 0.5f, size * 0.12f) },
+        )
+    }
+}
+
+/** "7/10", sized to its bin so large fonts stay inside it: scaled down, never overflowing. */
+@Composable
+private fun BinCount(count: Int, capacity: Int, size: Dp, maxWidth: Dp, fontSize: Dp, label: TextStyle) {
+    val scheme = MaterialTheme.colorScheme
+    val font = with(LocalDensity.current) { maxOf(8.dp, fontSize).toSp() }
+    val max = if (font < label.fontSize) font else label.fontSize
+    Text(
+        "$count/$capacity", style = label.copy(lineHeight = max * 1.15f),
+        modifier = Modifier.widthIn(max = maxWidth),
+        color = if (count >= capacity) scheme.onSurface else scheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        maxLines = 1,
+        autoSize = TextAutoSize.StepBased(minFontSize = max * 0.5f, maxFontSize = max, stepSize = 0.5.sp),
+    )
+}
+
+/** While checking, "✓ 3/5" found; while choosing places, "+2". */
+@Composable
+private fun SelectionCount(selectedCount: Int, total: Int, countsFound: Boolean, maxWidth: Dp, fontSize: Dp) {
+    val scheme = MaterialTheme.colorScheme
+    val label = MaterialTheme.typography.labelMedium
+    val font = with(LocalDensity.current) { maxOf(8.dp, fontSize).toSp() }
+    val max = if (font < label.fontSize) font else label.fontSize
+    Row(Modifier.widthIn(max = maxWidth), verticalAlignment = Alignment.CenterVertically) {
+        if (countsFound) Icon(Icons.Filled.Check, contentDescription = null, tint = scheme.primary, modifier = Modifier.size(with(LocalDensity.current) { max.toDp() }))
+        Text(
+            if (countsFound) "$selectedCount/$total" else "+$selectedCount", style = label.copy(lineHeight = max * 1.15f),
+            color = scheme.primary, maxLines = 1,
+            autoSize = TextAutoSize.StepBased(minFontSize = max * 0.5f, maxFontSize = max, stepSize = 0.5.sp),
+        )
+    }
+}
+
+/**
+ * Places [count] with its centre exactly at [center] (in pixels, from the box's size), [pile] right above
+ * it (below it with [pileBelow], toward a bottom triangle's wide edge) and [badge] on the other side, all
+ * kept inside the box.
+ */
+@Composable
+private fun CountAt(
+    center: (Float, Float) -> Offset,
+    pileBelow: Boolean,
+    modifier: Modifier,
+    count: @Composable () -> Unit,
+    pile: @Composable () -> Unit,
+    badge: @Composable () -> Unit,
+) {
+    androidx.compose.ui.layout.Layout(
+        contents = listOf(count, pile, badge),
+        modifier = modifier,
+    ) { (countM, pileM, badgeM), constraints ->
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val c = countM.firstOrNull()?.measure(loose)
+        val p = pileM.firstOrNull()?.measure(loose)
+        val b = badgeM.firstOrNull()?.measure(loose)
+        val width = constraints.maxWidth
+        val height = constraints.maxHeight
+        layout(width, height) {
+            val at = center(width.toFloat(), height.toFloat())
+            val ch = c?.height ?: 0
+            val top = (at.y - ch / 2f).roundToInt()
+            fun x(w: Int) = (at.x - w / 2f).roundToInt().coerceIn(0, maxOf(0, width - w))
+            c?.place(x(c.width), top.coerceIn(0, maxOf(0, height - ch)))
+            if (pileBelow) {
+                p?.place(x(p.width), (top + ch).coerceAtMost(maxOf(0, height - p.height)))
+                b?.place(x(b.width), (top - b.height).coerceAtLeast(0))
+            } else {
+                p?.place(x(p.width), (top - p.height).coerceAtLeast(0))
+                b?.place(x(b.width), (top + ch).coerceAtMost(maxOf(0, height - b.height)))
             }
         }
     }
 }
 
+/** Bottles stacked in a bin: [widest] in the bottom row (4 in a bin, 3 in a triangle), one fewer in each row above. */
 @Composable
-private fun Pile(colors: List<app.encave.core.WineColor?>, bottle: Dp) {
-    val shown = colors.take(10)
+private fun Pile(colors: List<app.encave.core.WineColor?>, bottle: Dp, widest: Int = 4) {
+    val widths = (widest downTo 1).toList()
+    val shown = colors.take(widths.sum())
     val rows = mutableListOf<List<app.encave.core.WineColor?>>()
     var index = 0
-    for (width in listOf(4, 3, 2, 1)) {
+    for (width in widths) {
         if (index >= shown.size) break
         val end = minOf(shown.size, index + width)
         rows += shown.subList(index, end)
         index = end
     }
     Column(
-        Modifier.height(bottle * 3.2f).clearAndSetSemantics { },
+        Modifier.height(bottle * (widest - 0.8f)).clearAndSetSemantics { },
         verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

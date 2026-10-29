@@ -1,0 +1,2728 @@
+{
+ "about": "Diamond racks with edge triangles (rack.edgeTriangles, rack.triangleCapacity, docs/SYNC.md), shared by CaveKit (DiamondEdgeVectorTests.swift) and the Kotlin core (DiamondEdgeVectorTest.kt). 'wire': racks as read, the sides in effect, the rows and columns of diamonds, cells per row, which rows are drawn offset, what each cell is ('B3' a diamond named from the first row of diamonds, 'top 2' a triangle by side and number), its positions, its technical label (unchanged, as files and older versions write it) and its names in English ('en', placeName) and French ('fr', the apps' wording). 'moves': where each cell's bottles go when the rack is edited (null: no place, asked first). 'kept': places every version keeps whatever the triangles. 'wizard': the rack the storage wizard makes. Rows and columns count from 0.",
+ "wire": [
+  {
+   "about": "Top and left triangles, as the owner asked: a first row of three triangles, and a first cell on row B of diamonds; a triangle holds half a bin",
+   "rack": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 4,
+    "columns": 4,
+    "depth": 1,
+    "binCapacity": 10,
+    "rowColumns": [
+     3,
+     4,
+     3,
+     3
+    ],
+    "binStyle": "diamond",
+    "edgeTriangles": [
+     "top",
+     "left"
+    ],
+    "triangleCapacity": 5
+   },
+   "edges": [
+    "top",
+    "left"
+   ],
+   "diamondRows": 3,
+   "diamondColumns": 3,
+   "columnsInRow": [
+    3,
+    4,
+    3,
+    3
+   ],
+   "offsetRows": [
+    false,
+    true,
+    false,
+    true
+   ],
+   "drawing": [
+    [
+     3,
+     [
+      0,
+      1,
+      2
+     ]
+    ],
+    [
+     0,
+     [
+      0,
+      1,
+      2
+     ]
+    ],
+    [
+     1,
+     [
+      3,
+      0,
+      1,
+      2
+     ]
+    ],
+    [
+     2,
+     [
+      0,
+      1,
+      2
+     ]
+    ]
+   ],
+   "triangleCapacity": 5,
+   "capacity": 110,
+   "fillOrderStart": [
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     1
+    ],
+    [
+     0,
+     0,
+     2
+    ],
+    [
+     0,
+     0,
+     3
+    ],
+    [
+     0,
+     0,
+     4
+    ],
+    [
+     0,
+     0,
+     5
+    ]
+   ],
+   "places": [
+    {
+     "row": 0,
+     "column": 0,
+     "place": "A1",
+     "positions": 10,
+     "label": "A1-1",
+     "en": "Bin A1",
+     "fr": "Case A1"
+    },
+    {
+     "row": 0,
+     "column": 1,
+     "place": "A2",
+     "positions": 10,
+     "label": "A2-1",
+     "en": "Bin A2",
+     "fr": "Case A2"
+    },
+    {
+     "row": 0,
+     "column": 2,
+     "place": "A3",
+     "positions": 10,
+     "label": "A3-1",
+     "en": "Bin A3",
+     "fr": "Case A3"
+    },
+    {
+     "row": 1,
+     "column": 0,
+     "place": "B1",
+     "positions": 10,
+     "label": "B1-1",
+     "en": "Bin B1",
+     "fr": "Case B1"
+    },
+    {
+     "row": 1,
+     "column": 1,
+     "place": "B2",
+     "positions": 10,
+     "label": "B2-1",
+     "en": "Bin B2",
+     "fr": "Case B2"
+    },
+    {
+     "row": 1,
+     "column": 2,
+     "place": "B3",
+     "positions": 10,
+     "label": "B3-1",
+     "en": "Bin B3",
+     "fr": "Case B3"
+    },
+    {
+     "row": 1,
+     "column": 3,
+     "place": "left 1",
+     "positions": 5,
+     "label": "B4-1",
+     "en": "Left triangle 1",
+     "fr": "Triangle de gauche 1"
+    },
+    {
+     "row": 2,
+     "column": 0,
+     "place": "C1",
+     "positions": 10,
+     "label": "C1-1",
+     "en": "Bin C1",
+     "fr": "Case C1"
+    },
+    {
+     "row": 2,
+     "column": 1,
+     "place": "C2",
+     "positions": 10,
+     "label": "C2-1",
+     "en": "Bin C2",
+     "fr": "Case C2"
+    },
+    {
+     "row": 2,
+     "column": 2,
+     "place": "C3",
+     "positions": 10,
+     "label": "C3-1",
+     "en": "Bin C3",
+     "fr": "Case C3"
+    },
+    {
+     "row": 3,
+     "column": 0,
+     "place": "top 1",
+     "positions": 5,
+     "label": "D1-1",
+     "en": "Top triangle 1",
+     "fr": "Triangle du haut 1"
+    },
+    {
+     "row": 3,
+     "column": 1,
+     "place": "top 2",
+     "positions": 5,
+     "label": "D2-1",
+     "en": "Top triangle 2",
+     "fr": "Triangle du haut 2"
+    },
+    {
+     "row": 3,
+     "column": 2,
+     "place": "top 3",
+     "positions": 5,
+     "label": "D3-1",
+     "en": "Top triangle 3",
+     "fr": "Triangle du haut 3"
+    }
+   ]
+  },
+  {
+   "about": "Triangles on every side, five bottles each: right triangles end rows A and C of diamonds, left ones start B and D",
+   "rack": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 6,
+    "columns": 4,
+    "depth": 1,
+    "binCapacity": 12,
+    "rowColumns": [
+     4,
+     4,
+     4,
+     4,
+     3,
+     3
+    ],
+    "binStyle": "diamond",
+    "edgeTriangles": [
+     "top",
+     "left",
+     "bottom",
+     "right"
+    ],
+    "triangleCapacity": 5
+   },
+   "edges": [
+    "top",
+    "left",
+    "bottom",
+    "right"
+   ],
+   "diamondRows": 4,
+   "diamondColumns": 3,
+   "columnsInRow": [
+    4,
+    4,
+    4,
+    4,
+    3,
+    3
+   ],
+   "offsetRows": [
+    false,
+    true,
+    false,
+    true,
+    true,
+    false
+   ],
+   "drawing": [
+    [
+     4,
+     [
+      0,
+      1,
+      2
+     ]
+    ],
+    [
+     0,
+     [
+      0,
+      1,
+      2,
+      3
+     ]
+    ],
+    [
+     1,
+     [
+      3,
+      0,
+      1,
+      2
+     ]
+    ],
+    [
+     2,
+     [
+      0,
+      1,
+      2,
+      3
+     ]
+    ],
+    [
+     3,
+     [
+      3,
+      0,
+      1,
+      2
+     ]
+    ],
+    [
+     5,
+     [
+      0,
+      1,
+      2
+     ]
+    ]
+   ],
+   "triangleCapacity": 5,
+   "capacity": 194,
+   "fillOrderStart": [
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     1
+    ],
+    [
+     0,
+     0,
+     2
+    ],
+    [
+     0,
+     0,
+     3
+    ],
+    [
+     0,
+     0,
+     4
+    ],
+    [
+     0,
+     0,
+     5
+    ]
+   ],
+   "places": [
+    {
+     "row": 0,
+     "column": 0,
+     "place": "A1",
+     "positions": 12,
+     "label": "A1-1",
+     "en": "Bin A1",
+     "fr": "Case A1"
+    },
+    {
+     "row": 0,
+     "column": 1,
+     "place": "A2",
+     "positions": 12,
+     "label": "A2-1",
+     "en": "Bin A2",
+     "fr": "Case A2"
+    },
+    {
+     "row": 0,
+     "column": 2,
+     "place": "A3",
+     "positions": 12,
+     "label": "A3-1",
+     "en": "Bin A3",
+     "fr": "Case A3"
+    },
+    {
+     "row": 0,
+     "column": 3,
+     "place": "right 1",
+     "positions": 5,
+     "label": "A4-1",
+     "en": "Right triangle 1",
+     "fr": "Triangle de droite 1"
+    },
+    {
+     "row": 1,
+     "column": 0,
+     "place": "B1",
+     "positions": 12,
+     "label": "B1-1",
+     "en": "Bin B1",
+     "fr": "Case B1"
+    },
+    {
+     "row": 1,
+     "column": 1,
+     "place": "B2",
+     "positions": 12,
+     "label": "B2-1",
+     "en": "Bin B2",
+     "fr": "Case B2"
+    },
+    {
+     "row": 1,
+     "column": 2,
+     "place": "B3",
+     "positions": 12,
+     "label": "B3-1",
+     "en": "Bin B3",
+     "fr": "Case B3"
+    },
+    {
+     "row": 1,
+     "column": 3,
+     "place": "left 1",
+     "positions": 5,
+     "label": "B4-1",
+     "en": "Left triangle 1",
+     "fr": "Triangle de gauche 1"
+    },
+    {
+     "row": 2,
+     "column": 0,
+     "place": "C1",
+     "positions": 12,
+     "label": "C1-1",
+     "en": "Bin C1",
+     "fr": "Case C1"
+    },
+    {
+     "row": 2,
+     "column": 1,
+     "place": "C2",
+     "positions": 12,
+     "label": "C2-1",
+     "en": "Bin C2",
+     "fr": "Case C2"
+    },
+    {
+     "row": 2,
+     "column": 2,
+     "place": "C3",
+     "positions": 12,
+     "label": "C3-1",
+     "en": "Bin C3",
+     "fr": "Case C3"
+    },
+    {
+     "row": 2,
+     "column": 3,
+     "place": "right 2",
+     "positions": 5,
+     "label": "C4-1",
+     "en": "Right triangle 2",
+     "fr": "Triangle de droite 2"
+    },
+    {
+     "row": 3,
+     "column": 0,
+     "place": "D1",
+     "positions": 12,
+     "label": "D1-1",
+     "en": "Bin D1",
+     "fr": "Case D1"
+    },
+    {
+     "row": 3,
+     "column": 1,
+     "place": "D2",
+     "positions": 12,
+     "label": "D2-1",
+     "en": "Bin D2",
+     "fr": "Case D2"
+    },
+    {
+     "row": 3,
+     "column": 2,
+     "place": "D3",
+     "positions": 12,
+     "label": "D3-1",
+     "en": "Bin D3",
+     "fr": "Case D3"
+    },
+    {
+     "row": 3,
+     "column": 3,
+     "place": "left 2",
+     "positions": 5,
+     "label": "D4-1",
+     "en": "Left triangle 2",
+     "fr": "Triangle de gauche 2"
+    },
+    {
+     "row": 4,
+     "column": 0,
+     "place": "top 1",
+     "positions": 5,
+     "label": "E1-1",
+     "en": "Top triangle 1",
+     "fr": "Triangle du haut 1"
+    },
+    {
+     "row": 4,
+     "column": 1,
+     "place": "top 2",
+     "positions": 5,
+     "label": "E2-1",
+     "en": "Top triangle 2",
+     "fr": "Triangle du haut 2"
+    },
+    {
+     "row": 4,
+     "column": 2,
+     "place": "top 3",
+     "positions": 5,
+     "label": "E3-1",
+     "en": "Top triangle 3",
+     "fr": "Triangle du haut 3"
+    },
+    {
+     "row": 5,
+     "column": 0,
+     "place": "bottom 1",
+     "positions": 5,
+     "label": "F1-1",
+     "en": "Bottom triangle 1",
+     "fr": "Triangle du bas 1"
+    },
+    {
+     "row": 5,
+     "column": 1,
+     "place": "bottom 2",
+     "positions": 5,
+     "label": "F2-1",
+     "en": "Bottom triangle 2",
+     "fr": "Triangle du bas 2"
+    },
+    {
+     "row": 5,
+     "column": 2,
+     "place": "bottom 3",
+     "positions": 5,
+     "label": "F3-1",
+     "en": "Bottom triangle 3",
+     "fr": "Triangle du bas 3"
+    }
+   ]
+  },
+  {
+   "about": "Bottom triangles only: a last row of triangles, the rows of diamonds keep their names",
+   "rack": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 3,
+    "columns": 2,
+    "depth": 1,
+    "binCapacity": 6,
+    "binStyle": "diamond",
+    "edgeTriangles": [
+     "bottom"
+    ],
+    "triangleCapacity": 3
+   },
+   "edges": [
+    "bottom"
+   ],
+   "diamondRows": 2,
+   "diamondColumns": 2,
+   "columnsInRow": [
+    2,
+    2,
+    2
+   ],
+   "offsetRows": [
+    false,
+    true,
+    false
+   ],
+   "drawing": [
+    [
+     0,
+     [
+      0,
+      1
+     ]
+    ],
+    [
+     1,
+     [
+      0,
+      1
+     ]
+    ],
+    [
+     2,
+     [
+      0,
+      1
+     ]
+    ]
+   ],
+   "triangleCapacity": 3,
+   "capacity": 30,
+   "fillOrderStart": [
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     1
+    ],
+    [
+     0,
+     0,
+     2
+    ],
+    [
+     0,
+     0,
+     3
+    ],
+    [
+     0,
+     0,
+     4
+    ],
+    [
+     0,
+     0,
+     5
+    ]
+   ],
+   "places": [
+    {
+     "row": 0,
+     "column": 0,
+     "place": "A1",
+     "positions": 6,
+     "label": "A1-1",
+     "en": "Bin A1",
+     "fr": "Case A1"
+    },
+    {
+     "row": 0,
+     "column": 1,
+     "place": "A2",
+     "positions": 6,
+     "label": "A2-1",
+     "en": "Bin A2",
+     "fr": "Case A2"
+    },
+    {
+     "row": 1,
+     "column": 0,
+     "place": "B1",
+     "positions": 6,
+     "label": "B1-1",
+     "en": "Bin B1",
+     "fr": "Case B1"
+    },
+    {
+     "row": 1,
+     "column": 1,
+     "place": "B2",
+     "positions": 6,
+     "label": "B2-1",
+     "en": "Bin B2",
+     "fr": "Case B2"
+    },
+    {
+     "row": 2,
+     "column": 0,
+     "place": "bottom 1",
+     "positions": 3,
+     "label": "C1-1",
+     "en": "Bottom triangle 1",
+     "fr": "Triangle du bas 1"
+    },
+    {
+     "row": 2,
+     "column": 1,
+     "place": "bottom 2",
+     "positions": 3,
+     "label": "C2-1",
+     "en": "Bottom triangle 2",
+     "fr": "Triangle du bas 2"
+    }
+   ]
+  },
+  {
+   "about": "Bottom turned on before top: the bottom row of triangles comes first among the rows after the diamonds, drawn last",
+   "rack": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 5,
+    "columns": 3,
+    "depth": 1,
+    "binCapacity": 10,
+    "rowColumns": [
+     3,
+     2,
+     3,
+     2,
+     2
+    ],
+    "binStyle": "diamond",
+    "edgeTriangles": [
+     "bottom",
+     "right",
+     "top"
+    ],
+    "triangleCapacity": 5
+   },
+   "edges": [
+    "top",
+    "bottom",
+    "right"
+   ],
+   "diamondRows": 3,
+   "diamondColumns": 2,
+   "columnsInRow": [
+    3,
+    2,
+    3,
+    2,
+    2
+   ],
+   "offsetRows": [
+    false,
+    true,
+    false,
+    true,
+    true
+   ],
+   "drawing": [
+    [
+     4,
+     [
+      0,
+      1
+     ]
+    ],
+    [
+     0,
+     [
+      0,
+      1,
+      2
+     ]
+    ],
+    [
+     1,
+     [
+      0,
+      1
+     ]
+    ],
+    [
+     2,
+     [
+      0,
+      1,
+      2
+     ]
+    ],
+    [
+     3,
+     [
+      0,
+      1
+     ]
+    ]
+   ],
+   "triangleCapacity": 5,
+   "capacity": 90,
+   "fillOrderStart": [
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     1
+    ],
+    [
+     0,
+     0,
+     2
+    ],
+    [
+     0,
+     0,
+     3
+    ],
+    [
+     0,
+     0,
+     4
+    ],
+    [
+     0,
+     0,
+     5
+    ]
+   ],
+   "places": [
+    {
+     "row": 0,
+     "column": 0,
+     "place": "A1",
+     "positions": 10,
+     "label": "A1-1",
+     "en": "Bin A1",
+     "fr": "Case A1"
+    },
+    {
+     "row": 0,
+     "column": 1,
+     "place": "A2",
+     "positions": 10,
+     "label": "A2-1",
+     "en": "Bin A2",
+     "fr": "Case A2"
+    },
+    {
+     "row": 0,
+     "column": 2,
+     "place": "right 1",
+     "positions": 5,
+     "label": "A3-1",
+     "en": "Right triangle 1",
+     "fr": "Triangle de droite 1"
+    },
+    {
+     "row": 1,
+     "column": 0,
+     "place": "B1",
+     "positions": 10,
+     "label": "B1-1",
+     "en": "Bin B1",
+     "fr": "Case B1"
+    },
+    {
+     "row": 1,
+     "column": 1,
+     "place": "B2",
+     "positions": 10,
+     "label": "B2-1",
+     "en": "Bin B2",
+     "fr": "Case B2"
+    },
+    {
+     "row": 2,
+     "column": 0,
+     "place": "C1",
+     "positions": 10,
+     "label": "C1-1",
+     "en": "Bin C1",
+     "fr": "Case C1"
+    },
+    {
+     "row": 2,
+     "column": 1,
+     "place": "C2",
+     "positions": 10,
+     "label": "C2-1",
+     "en": "Bin C2",
+     "fr": "Case C2"
+    },
+    {
+     "row": 2,
+     "column": 2,
+     "place": "right 2",
+     "positions": 5,
+     "label": "C3-1",
+     "en": "Right triangle 2",
+     "fr": "Triangle de droite 2"
+    },
+    {
+     "row": 3,
+     "column": 0,
+     "place": "bottom 1",
+     "positions": 5,
+     "label": "D1-1",
+     "en": "Bottom triangle 1",
+     "fr": "Triangle du bas 1"
+    },
+    {
+     "row": 3,
+     "column": 1,
+     "place": "bottom 2",
+     "positions": 5,
+     "label": "D2-1",
+     "en": "Bottom triangle 2",
+     "fr": "Triangle du bas 2"
+    },
+    {
+     "row": 4,
+     "column": 0,
+     "place": "top 1",
+     "positions": 5,
+     "label": "E1-1",
+     "en": "Top triangle 1",
+     "fr": "Triangle du haut 1"
+    },
+    {
+     "row": 4,
+     "column": 1,
+     "place": "top 2",
+     "positions": 5,
+     "label": "E2-1",
+     "en": "Top triangle 2",
+     "fr": "Triangle du haut 2"
+    }
+   ]
+  },
+  {
+   "about": "Left triangles on a single row of diamonds: none, as no row is offset",
+   "rack": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 1,
+    "columns": 2,
+    "depth": 1,
+    "binCapacity": 10,
+    "binStyle": "diamond",
+    "edgeTriangles": [
+     "left"
+    ],
+    "triangleCapacity": 5
+   },
+   "edges": [
+    "left"
+   ],
+   "diamondRows": 1,
+   "diamondColumns": 2,
+   "columnsInRow": [
+    2
+   ],
+   "offsetRows": [
+    false
+   ],
+   "drawing": [
+    [
+     0,
+     [
+      0,
+      1
+     ]
+    ]
+   ],
+   "triangleCapacity": 5,
+   "capacity": 20,
+   "fillOrderStart": [
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     1
+    ],
+    [
+     0,
+     0,
+     2
+    ],
+    [
+     0,
+     0,
+     3
+    ],
+    [
+     0,
+     0,
+     4
+    ],
+    [
+     0,
+     0,
+     5
+    ]
+   ],
+   "places": [
+    {
+     "row": 0,
+     "column": 0,
+     "place": "A1",
+     "positions": 10,
+     "label": "A1-1",
+     "en": "Bin A1",
+     "fr": "Case A1"
+    },
+    {
+     "row": 0,
+     "column": 1,
+     "place": "A2",
+     "positions": 10,
+     "label": "A2-1",
+     "en": "Bin A2",
+     "fr": "Case A2"
+    }
+   ]
+  },
+  {
+   "about": "A bin of three: a triangle holds one bottle",
+   "rack": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 3,
+    "columns": 2,
+    "depth": 1,
+    "binCapacity": 3,
+    "binStyle": "diamond",
+    "edgeTriangles": [
+     "top"
+    ],
+    "triangleCapacity": 1
+   },
+   "edges": [
+    "top"
+   ],
+   "diamondRows": 2,
+   "diamondColumns": 2,
+   "columnsInRow": [
+    2,
+    2,
+    2
+   ],
+   "offsetRows": [
+    false,
+    true,
+    true
+   ],
+   "drawing": [
+    [
+     2,
+     [
+      0,
+      1
+     ]
+    ],
+    [
+     0,
+     [
+      0,
+      1
+     ]
+    ],
+    [
+     1,
+     [
+      0,
+      1
+     ]
+    ]
+   ],
+   "triangleCapacity": 1,
+   "capacity": 14,
+   "fillOrderStart": [
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     1
+    ],
+    [
+     0,
+     0,
+     2
+    ],
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     0,
+     1,
+     1
+    ],
+    [
+     0,
+     1,
+     2
+    ]
+   ],
+   "places": [
+    {
+     "row": 0,
+     "column": 0,
+     "place": "A1",
+     "positions": 3,
+     "label": "A1-1",
+     "en": "Bin A1",
+     "fr": "Case A1"
+    },
+    {
+     "row": 0,
+     "column": 1,
+     "place": "A2",
+     "positions": 3,
+     "label": "A2-1",
+     "en": "Bin A2",
+     "fr": "Case A2"
+    },
+    {
+     "row": 1,
+     "column": 0,
+     "place": "B1",
+     "positions": 3,
+     "label": "B1-1",
+     "en": "Bin B1",
+     "fr": "Case B1"
+    },
+    {
+     "row": 1,
+     "column": 1,
+     "place": "B2",
+     "positions": 3,
+     "label": "B2-1",
+     "en": "Bin B2",
+     "fr": "Case B2"
+    },
+    {
+     "row": 2,
+     "column": 0,
+     "place": "top 1",
+     "positions": 1,
+     "label": "C1-1",
+     "en": "Top triangle 1",
+     "fr": "Triangle du haut 1"
+    },
+    {
+     "row": 2,
+     "column": 1,
+     "place": "top 2",
+     "positions": 1,
+     "label": "C2-1",
+     "en": "Top triangle 2",
+     "fr": "Triangle du haut 2"
+    }
+   ]
+  },
+  {
+   "about": "Reshaped by a version that does not know the triangles (a row added): every cell a whole diamond, nothing moved",
+   "rack": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 5,
+    "columns": 4,
+    "depth": 1,
+    "binCapacity": 10,
+    "rowColumns": [
+     3,
+     4,
+     3,
+     3,
+     3
+    ],
+    "binStyle": "diamond",
+    "edgeTriangles": [
+     "top",
+     "left"
+    ],
+    "triangleCapacity": 5
+   },
+   "edges": [],
+   "diamondRows": null,
+   "diamondColumns": null,
+   "columnsInRow": [
+    3,
+    4,
+    3,
+    3,
+    3
+   ],
+   "offsetRows": [
+    false,
+    true,
+    false,
+    true,
+    false
+   ],
+   "drawing": null,
+   "triangleCapacity": null,
+   "capacity": 160,
+   "fillOrderStart": [
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     1
+    ],
+    [
+     0,
+     0,
+     2
+    ],
+    [
+     0,
+     0,
+     3
+    ],
+    [
+     0,
+     0,
+     4
+    ],
+    [
+     0,
+     0,
+     5
+    ]
+   ],
+   "places": [
+    {
+     "row": 0,
+     "column": 0,
+     "place": "A1",
+     "positions": 10,
+     "label": "A1-1",
+     "en": "Bin A1",
+     "fr": "Case A1"
+    },
+    {
+     "row": 0,
+     "column": 1,
+     "place": "A2",
+     "positions": 10,
+     "label": "A2-1",
+     "en": "Bin A2",
+     "fr": "Case A2"
+    },
+    {
+     "row": 0,
+     "column": 2,
+     "place": "A3",
+     "positions": 10,
+     "label": "A3-1",
+     "en": "Bin A3",
+     "fr": "Case A3"
+    },
+    {
+     "row": 1,
+     "column": 0,
+     "place": "B1",
+     "positions": 10,
+     "label": "B1-1",
+     "en": "Bin B1",
+     "fr": "Case B1"
+    },
+    {
+     "row": 1,
+     "column": 1,
+     "place": "B2",
+     "positions": 10,
+     "label": "B2-1",
+     "en": "Bin B2",
+     "fr": "Case B2"
+    },
+    {
+     "row": 1,
+     "column": 2,
+     "place": "B3",
+     "positions": 10,
+     "label": "B3-1",
+     "en": "Bin B3",
+     "fr": "Case B3"
+    },
+    {
+     "row": 1,
+     "column": 3,
+     "place": "B4",
+     "positions": 10,
+     "label": "B4-1",
+     "en": "Bin B4",
+     "fr": "Case B4"
+    },
+    {
+     "row": 2,
+     "column": 0,
+     "place": "C1",
+     "positions": 10,
+     "label": "C1-1",
+     "en": "Bin C1",
+     "fr": "Case C1"
+    },
+    {
+     "row": 2,
+     "column": 1,
+     "place": "C2",
+     "positions": 10,
+     "label": "C2-1",
+     "en": "Bin C2",
+     "fr": "Case C2"
+    },
+    {
+     "row": 2,
+     "column": 2,
+     "place": "C3",
+     "positions": 10,
+     "label": "C3-1",
+     "en": "Bin C3",
+     "fr": "Case C3"
+    },
+    {
+     "row": 3,
+     "column": 0,
+     "place": "D1",
+     "positions": 10,
+     "label": "D1-1",
+     "en": "Bin D1",
+     "fr": "Case D1"
+    },
+    {
+     "row": 3,
+     "column": 1,
+     "place": "D2",
+     "positions": 10,
+     "label": "D2-1",
+     "en": "Bin D2",
+     "fr": "Case D2"
+    },
+    {
+     "row": 3,
+     "column": 2,
+     "place": "D3",
+     "positions": 10,
+     "label": "D3-1",
+     "en": "Bin D3",
+     "fr": "Case D3"
+    },
+    {
+     "row": 4,
+     "column": 0,
+     "place": "E1",
+     "positions": 10,
+     "label": "E1-1",
+     "en": "Bin E1",
+     "fr": "Case E1"
+    },
+    {
+     "row": 4,
+     "column": 1,
+     "place": "E2",
+     "positions": 10,
+     "label": "E2-1",
+     "en": "Bin E2",
+     "fr": "Case E2"
+    },
+    {
+     "row": 4,
+     "column": 2,
+     "place": "E3",
+     "positions": 10,
+     "label": "E3-1",
+     "en": "Bin E3",
+     "fr": "Case E3"
+    }
+   ]
+  },
+  {
+   "about": "A side this version does not know is kept and ignored; the known ones still apply",
+   "rack": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 4,
+    "columns": 3,
+    "depth": 1,
+    "binCapacity": 10,
+    "binStyle": "diamond",
+    "edgeTriangles": [
+     "top",
+     "corners"
+    ],
+    "triangleCapacity": 5
+   },
+   "edges": [
+    "top"
+   ],
+   "diamondRows": 3,
+   "diamondColumns": 3,
+   "columnsInRow": [
+    3,
+    3,
+    3,
+    3
+   ],
+   "offsetRows": [
+    false,
+    true,
+    false,
+    true
+   ],
+   "drawing": [
+    [
+     3,
+     [
+      0,
+      1,
+      2
+     ]
+    ],
+    [
+     0,
+     [
+      0,
+      1,
+      2
+     ]
+    ],
+    [
+     1,
+     [
+      0,
+      1,
+      2
+     ]
+    ],
+    [
+     2,
+     [
+      0,
+      1,
+      2
+     ]
+    ]
+   ],
+   "triangleCapacity": 5,
+   "capacity": 105,
+   "fillOrderStart": [
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     1
+    ],
+    [
+     0,
+     0,
+     2
+    ],
+    [
+     0,
+     0,
+     3
+    ],
+    [
+     0,
+     0,
+     4
+    ],
+    [
+     0,
+     0,
+     5
+    ]
+   ],
+   "places": [
+    {
+     "row": 0,
+     "column": 0,
+     "place": "A1",
+     "positions": 10,
+     "label": "A1-1",
+     "en": "Bin A1",
+     "fr": "Case A1"
+    },
+    {
+     "row": 0,
+     "column": 1,
+     "place": "A2",
+     "positions": 10,
+     "label": "A2-1",
+     "en": "Bin A2",
+     "fr": "Case A2"
+    },
+    {
+     "row": 0,
+     "column": 2,
+     "place": "A3",
+     "positions": 10,
+     "label": "A3-1",
+     "en": "Bin A3",
+     "fr": "Case A3"
+    },
+    {
+     "row": 1,
+     "column": 0,
+     "place": "B1",
+     "positions": 10,
+     "label": "B1-1",
+     "en": "Bin B1",
+     "fr": "Case B1"
+    },
+    {
+     "row": 1,
+     "column": 1,
+     "place": "B2",
+     "positions": 10,
+     "label": "B2-1",
+     "en": "Bin B2",
+     "fr": "Case B2"
+    },
+    {
+     "row": 1,
+     "column": 2,
+     "place": "B3",
+     "positions": 10,
+     "label": "B3-1",
+     "en": "Bin B3",
+     "fr": "Case B3"
+    },
+    {
+     "row": 2,
+     "column": 0,
+     "place": "C1",
+     "positions": 10,
+     "label": "C1-1",
+     "en": "Bin C1",
+     "fr": "Case C1"
+    },
+    {
+     "row": 2,
+     "column": 1,
+     "place": "C2",
+     "positions": 10,
+     "label": "C2-1",
+     "en": "Bin C2",
+     "fr": "Case C2"
+    },
+    {
+     "row": 2,
+     "column": 2,
+     "place": "C3",
+     "positions": 10,
+     "label": "C3-1",
+     "en": "Bin C3",
+     "fr": "Case C3"
+    },
+    {
+     "row": 3,
+     "column": 0,
+     "place": "top 1",
+     "positions": 5,
+     "label": "D1-1",
+     "en": "Top triangle 1",
+     "fr": "Triangle du haut 1"
+    },
+    {
+     "row": 3,
+     "column": 1,
+     "place": "top 2",
+     "positions": 5,
+     "label": "D2-1",
+     "en": "Top triangle 2",
+     "fr": "Triangle du haut 2"
+    },
+    {
+     "row": 3,
+     "column": 2,
+     "place": "top 3",
+     "positions": 5,
+     "label": "D3-1",
+     "en": "Top triangle 3",
+     "fr": "Triangle du haut 3"
+    }
+   ]
+  },
+  {
+   "about": "Crates ignore edge triangles",
+   "rack": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 3,
+    "columns": 3,
+    "depth": 1,
+    "binCapacity": 10,
+    "binStyle": "crates",
+    "edgeTriangles": [
+     "top"
+    ],
+    "triangleCapacity": 5
+   },
+   "edges": [],
+   "diamondRows": null,
+   "diamondColumns": null,
+   "columnsInRow": [
+    3,
+    3,
+    3
+   ],
+   "offsetRows": [
+    false,
+    true,
+    false
+   ],
+   "drawing": null,
+   "triangleCapacity": null,
+   "capacity": 90,
+   "fillOrderStart": [
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     1
+    ],
+    [
+     0,
+     0,
+     2
+    ],
+    [
+     0,
+     0,
+     3
+    ],
+    [
+     0,
+     0,
+     4
+    ],
+    [
+     0,
+     0,
+     5
+    ]
+   ],
+   "places": [
+    {
+     "row": 0,
+     "column": 0,
+     "place": "A1",
+     "positions": 10,
+     "label": "A1-1",
+     "en": "Bin A1",
+     "fr": "Case A1"
+    },
+    {
+     "row": 0,
+     "column": 1,
+     "place": "A2",
+     "positions": 10,
+     "label": "A2-1",
+     "en": "Bin A2",
+     "fr": "Case A2"
+    },
+    {
+     "row": 0,
+     "column": 2,
+     "place": "A3",
+     "positions": 10,
+     "label": "A3-1",
+     "en": "Bin A3",
+     "fr": "Case A3"
+    },
+    {
+     "row": 1,
+     "column": 0,
+     "place": "B1",
+     "positions": 10,
+     "label": "B1-1",
+     "en": "Bin B1",
+     "fr": "Case B1"
+    },
+    {
+     "row": 1,
+     "column": 1,
+     "place": "B2",
+     "positions": 10,
+     "label": "B2-1",
+     "en": "Bin B2",
+     "fr": "Case B2"
+    },
+    {
+     "row": 1,
+     "column": 2,
+     "place": "B3",
+     "positions": 10,
+     "label": "B3-1",
+     "en": "Bin B3",
+     "fr": "Case B3"
+    },
+    {
+     "row": 2,
+     "column": 0,
+     "place": "C1",
+     "positions": 10,
+     "label": "C1-1",
+     "en": "Bin C1",
+     "fr": "Case C1"
+    },
+    {
+     "row": 2,
+     "column": 1,
+     "place": "C2",
+     "positions": 10,
+     "label": "C2-1",
+     "en": "Bin C2",
+     "fr": "Case C2"
+    },
+    {
+     "row": 2,
+     "column": 2,
+     "place": "C3",
+     "positions": 10,
+     "label": "C3-1",
+     "en": "Bin C3",
+     "fr": "Case C3"
+    }
+   ]
+  }
+ ],
+ "moves": [
+  {
+   "about": "The first of two rows of triangles turned off: the top triangles' bottles follow their row",
+   "before": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 5,
+    "columns": 3,
+    "depth": 1,
+    "binCapacity": 10,
+    "binStyle": "diamond",
+    "edgeTriangles": [
+     "bottom",
+     "top"
+    ],
+    "triangleCapacity": 5
+   },
+   "after": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 4,
+    "columns": 3,
+    "depth": 1,
+    "binCapacity": 10,
+    "binStyle": "diamond",
+    "edgeTriangles": [
+     "top"
+    ],
+    "triangleCapacity": 5
+   },
+   "cells": [
+    {
+     "from": [
+      0,
+      0
+     ],
+     "to": [
+      0,
+      0
+     ]
+    },
+    {
+     "from": [
+      0,
+      1
+     ],
+     "to": [
+      0,
+      1
+     ]
+    },
+    {
+     "from": [
+      0,
+      2
+     ],
+     "to": [
+      0,
+      2
+     ]
+    },
+    {
+     "from": [
+      1,
+      0
+     ],
+     "to": [
+      1,
+      0
+     ]
+    },
+    {
+     "from": [
+      1,
+      1
+     ],
+     "to": [
+      1,
+      1
+     ]
+    },
+    {
+     "from": [
+      1,
+      2
+     ],
+     "to": [
+      1,
+      2
+     ]
+    },
+    {
+     "from": [
+      2,
+      0
+     ],
+     "to": [
+      2,
+      0
+     ]
+    },
+    {
+     "from": [
+      2,
+      1
+     ],
+     "to": [
+      2,
+      1
+     ]
+    },
+    {
+     "from": [
+      2,
+      2
+     ],
+     "to": [
+      2,
+      2
+     ]
+    },
+    {
+     "from": [
+      3,
+      0
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      3,
+      1
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      3,
+      2
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      4,
+      0
+     ],
+     "to": [
+      3,
+      0
+     ]
+    },
+    {
+     "from": [
+      4,
+      1
+     ],
+     "to": [
+      3,
+      1
+     ]
+    },
+    {
+     "from": [
+      4,
+      2
+     ],
+     "to": [
+      3,
+      2
+     ]
+    }
+   ]
+  },
+  {
+   "about": "Rows set one by one (no triangles): the diamonds keep their names, the triangles' bottles have no place",
+   "before": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 4,
+    "columns": 4,
+    "depth": 1,
+    "binCapacity": 10,
+    "rowColumns": [
+     3,
+     4,
+     3,
+     3
+    ],
+    "binStyle": "diamond",
+    "edgeTriangles": [
+     "top",
+     "left"
+    ],
+    "triangleCapacity": 5
+   },
+   "after": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 3,
+    "columns": 3,
+    "depth": 1,
+    "binCapacity": 10,
+    "rowColumns": [
+     3,
+     2,
+     3
+    ],
+    "binStyle": "diamond"
+   },
+   "cells": [
+    {
+     "from": [
+      0,
+      0
+     ],
+     "to": [
+      0,
+      0
+     ]
+    },
+    {
+     "from": [
+      0,
+      1
+     ],
+     "to": [
+      0,
+      1
+     ]
+    },
+    {
+     "from": [
+      0,
+      2
+     ],
+     "to": [
+      0,
+      2
+     ]
+    },
+    {
+     "from": [
+      1,
+      0
+     ],
+     "to": [
+      1,
+      0
+     ]
+    },
+    {
+     "from": [
+      1,
+      1
+     ],
+     "to": [
+      1,
+      1
+     ]
+    },
+    {
+     "from": [
+      1,
+      2
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      1,
+      3
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      2,
+      0
+     ],
+     "to": [
+      2,
+      0
+     ]
+    },
+    {
+     "from": [
+      2,
+      1
+     ],
+     "to": [
+      2,
+      1
+     ]
+    },
+    {
+     "from": [
+      2,
+      2
+     ],
+     "to": [
+      2,
+      2
+     ]
+    },
+    {
+     "from": [
+      3,
+      0
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      3,
+      1
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      3,
+      2
+     ],
+     "to": null
+    }
+   ]
+  },
+  {
+   "about": "Top and left turned on: no bottle moves, the triangles are new cells after those of the diamonds",
+   "before": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 3,
+    "columns": 3,
+    "depth": 1,
+    "binCapacity": 10,
+    "binStyle": "diamond"
+   },
+   "after": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 4,
+    "columns": 4,
+    "depth": 1,
+    "binCapacity": 10,
+    "rowColumns": [
+     3,
+     4,
+     3,
+     3
+    ],
+    "binStyle": "diamond",
+    "edgeTriangles": [
+     "top",
+     "left"
+    ],
+    "triangleCapacity": 5
+   },
+   "cells": [
+    {
+     "from": [
+      0,
+      0
+     ],
+     "to": [
+      0,
+      0
+     ]
+    },
+    {
+     "from": [
+      0,
+      1
+     ],
+     "to": [
+      0,
+      1
+     ]
+    },
+    {
+     "from": [
+      0,
+      2
+     ],
+     "to": [
+      0,
+      2
+     ]
+    },
+    {
+     "from": [
+      1,
+      0
+     ],
+     "to": [
+      1,
+      0
+     ]
+    },
+    {
+     "from": [
+      1,
+      1
+     ],
+     "to": [
+      1,
+      1
+     ]
+    },
+    {
+     "from": [
+      1,
+      2
+     ],
+     "to": [
+      1,
+      2
+     ]
+    },
+    {
+     "from": [
+      2,
+      0
+     ],
+     "to": [
+      2,
+      0
+     ]
+    },
+    {
+     "from": [
+      2,
+      1
+     ],
+     "to": [
+      2,
+      1
+     ]
+    },
+    {
+     "from": [
+      2,
+      2
+     ],
+     "to": [
+      2,
+      2
+     ]
+    }
+   ]
+  },
+  {
+   "about": "Top and left turned off: the triangles' bottles have no place (asked first), the diamonds stay",
+   "before": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 4,
+    "columns": 4,
+    "depth": 1,
+    "binCapacity": 10,
+    "rowColumns": [
+     3,
+     4,
+     3,
+     3
+    ],
+    "binStyle": "diamond",
+    "edgeTriangles": [
+     "top",
+     "left"
+    ],
+    "triangleCapacity": 5
+   },
+   "after": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 3,
+    "columns": 3,
+    "depth": 1,
+    "binCapacity": 10,
+    "binStyle": "diamond"
+   },
+   "cells": [
+    {
+     "from": [
+      0,
+      0
+     ],
+     "to": [
+      0,
+      0
+     ]
+    },
+    {
+     "from": [
+      0,
+      1
+     ],
+     "to": [
+      0,
+      1
+     ]
+    },
+    {
+     "from": [
+      0,
+      2
+     ],
+     "to": [
+      0,
+      2
+     ]
+    },
+    {
+     "from": [
+      1,
+      0
+     ],
+     "to": [
+      1,
+      0
+     ]
+    },
+    {
+     "from": [
+      1,
+      1
+     ],
+     "to": [
+      1,
+      1
+     ]
+    },
+    {
+     "from": [
+      1,
+      2
+     ],
+     "to": [
+      1,
+      2
+     ]
+    },
+    {
+     "from": [
+      1,
+      3
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      2,
+      0
+     ],
+     "to": [
+      2,
+      0
+     ]
+    },
+    {
+     "from": [
+      2,
+      1
+     ],
+     "to": [
+      2,
+      1
+     ]
+    },
+    {
+     "from": [
+      2,
+      2
+     ],
+     "to": [
+      2,
+      2
+     ]
+    },
+    {
+     "from": [
+      3,
+      0
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      3,
+      1
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      3,
+      2
+     ],
+     "to": null
+    }
+   ]
+  },
+  {
+   "about": "Smaller, fewer sides: what is gone has no place, the rest keeps its name (the right triangles end the narrower rows)",
+   "before": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 5,
+    "columns": 4,
+    "depth": 1,
+    "binCapacity": 10,
+    "rowColumns": [
+     4,
+     4,
+     4,
+     3,
+     3
+    ],
+    "binStyle": "diamond",
+    "edgeTriangles": [
+     "top",
+     "left",
+     "bottom",
+     "right"
+    ],
+    "triangleCapacity": 5
+   },
+   "after": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 3,
+    "columns": 3,
+    "depth": 1,
+    "binCapacity": 10,
+    "rowColumns": [
+     3,
+     2,
+     2
+    ],
+    "binStyle": "diamond",
+    "edgeTriangles": [
+     "top",
+     "right"
+    ],
+    "triangleCapacity": 5
+   },
+   "cells": [
+    {
+     "from": [
+      0,
+      0
+     ],
+     "to": [
+      0,
+      0
+     ]
+    },
+    {
+     "from": [
+      0,
+      1
+     ],
+     "to": [
+      0,
+      1
+     ]
+    },
+    {
+     "from": [
+      0,
+      2
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      0,
+      3
+     ],
+     "to": [
+      0,
+      2
+     ]
+    },
+    {
+     "from": [
+      1,
+      0
+     ],
+     "to": [
+      1,
+      0
+     ]
+    },
+    {
+     "from": [
+      1,
+      1
+     ],
+     "to": [
+      1,
+      1
+     ]
+    },
+    {
+     "from": [
+      1,
+      2
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      1,
+      3
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      2,
+      0
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      2,
+      1
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      2,
+      2
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      2,
+      3
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      3,
+      0
+     ],
+     "to": [
+      2,
+      0
+     ]
+    },
+    {
+     "from": [
+      3,
+      1
+     ],
+     "to": [
+      2,
+      1
+     ]
+    },
+    {
+     "from": [
+      3,
+      2
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      4,
+      0
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      4,
+      1
+     ],
+     "to": null
+    },
+    {
+     "from": [
+      4,
+      2
+     ],
+     "to": null
+    }
+   ]
+  }
+ ],
+ "kept": [
+  {
+   "about": "An older version filled a top triangle like a whole bin: every version keeps the bottle (contains), the apps do not offer the place (hasPosition) and count it among the positions",
+   "rack": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 4,
+    "columns": 4,
+    "depth": 1,
+    "binCapacity": 10,
+    "rowColumns": [
+     3,
+     4,
+     3,
+     3
+    ],
+    "binStyle": "diamond",
+    "edgeTriangles": [
+     "top",
+     "left"
+    ],
+    "triangleCapacity": 5
+   },
+   "slot": [
+    3,
+    1,
+    7
+   ],
+   "contains": true,
+   "hasPosition": false,
+   "label": "D2-8",
+   "en": "Top triangle 2"
+  },
+  {
+   "about": "Beyond a bin, no version keeps a place",
+   "rack": {
+    "id": "5d1a2b3c-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "name": "Diamonds",
+    "kind": "bins",
+    "rows": 4,
+    "columns": 4,
+    "depth": 1,
+    "binCapacity": 10,
+    "rowColumns": [
+     3,
+     4,
+     3,
+     3
+    ],
+    "binStyle": "diamond",
+    "edgeTriangles": [
+     "top",
+     "left"
+    ],
+    "triangleCapacity": 5
+   },
+   "slot": [
+    1,
+    0,
+    10
+   ],
+   "contains": false,
+   "hasPosition": false,
+   "label": "B1-11",
+   "en": "Bin B1"
+  }
+ ],
+ "wizard": [
+  {
+   "about": "Diamond bins with top and left triangles",
+   "settings": {
+    "rows": 3,
+    "columns": 4,
+    "bottlesPerBin": 10,
+    "edges": [
+     "left",
+     "top"
+    ]
+   },
+   "rack": {
+    "kind": "bins",
+    "rows": 4,
+    "columns": 5,
+    "depth": 1,
+    "binCapacity": 10,
+    "rowColumns": [
+     4,
+     5,
+     4,
+     4
+    ],
+    "binStyle": "diamond",
+    "edgeTriangles": [
+     "top",
+     "left"
+    ],
+    "triangleCapacity": 5
+   }
+  },
+  {
+   "about": "Triangles holding four bottles",
+   "settings": {
+    "rows": 2,
+    "columns": 3,
+    "bottlesPerBin": 12,
+    "edges": [
+     "bottom",
+     "right"
+    ],
+    "bottlesPerTriangle": 4
+   },
+   "rack": {
+    "kind": "bins",
+    "rows": 3,
+    "columns": 4,
+    "depth": 1,
+    "binCapacity": 12,
+    "rowColumns": [
+     4,
+     3,
+     3
+    ],
+    "binStyle": "diamond",
+    "edgeTriangles": [
+     "bottom",
+     "right"
+    ],
+    "triangleCapacity": 4
+   }
+  },
+  {
+   "about": "No triangles: as before",
+   "settings": {
+    "rows": 2,
+    "columns": 3,
+    "bottlesPerBin": 10,
+    "edges": []
+   },
+   "rack": {
+    "kind": "bins",
+    "rows": 2,
+    "columns": 3,
+    "depth": 1,
+    "binCapacity": 10,
+    "binStyle": "diamond"
+   }
+  }
+ ]
+}

@@ -92,7 +92,7 @@ extension Rack {
     var systemImage: String { storageType == .rack ? kind.systemImage : storageType.systemImage }
 
     /// "B3", "B3, back", "Shelf 2, back, position 3", "Shelf 1, top layer, position 3",
-    /// "Shelf 3, back, bottom layer, position 2" or "Bin B3", for people (not for files), in
+    /// "Shelf 3, back, bottom layer, position 2", "Bin B3" or "Top triangle 3", for people (not for files), in
     /// the person's language. Always in the order shelf, side, layer, position, leaving out
     /// what does not apply, as `placeName(for:)` does in English.
     func displayLabel(for slot: Slot) -> String {
@@ -139,7 +139,26 @@ extension Rack {
             // Shelves are numbered from the top, as in layered fridges.
             return shelfLabel(shelf: cell.row + 1, sideName: nil, layer: 0, layers: 1, number: cell.column + 1)
         case .bins:
+            if let place = diamondPlace(of: cell) { return Self.diamondPlaceLabel(place) }
             return String(localized: "Bin \(label(for: cell))")
+        }
+    }
+
+    /// "Bin A3", named from the first row of diamonds, or "Top triangle 3", in the person's
+    /// language (`placeName(for:)` in English).
+    static func diamondPlaceLabel(_ place: DiamondPlace) -> String {
+        switch place {
+        case let .diamond(row, column):
+            let binLabel = "\(Rack.rowLetters(row))\(column + 1)"
+            return String(localized: "Bin \(binLabel)")
+        case let .triangle(edge, index):
+            let number = index + 1
+            return switch edge {
+            case .top: String(localized: "Top triangle \(number)")
+            case .left: String(localized: "Left triangle \(number)")
+            case .bottom: String(localized: "Bottom triangle \(number)")
+            case .right: String(localized: "Right triangle \(number)")
+            }
         }
     }
 
@@ -189,7 +208,7 @@ struct RackPlace: Hashable {
     /// one bottle deep (with `cellar`, unless an older version put a bottle behind it).
     func holdsOne(in rack: Rack, cellar: Cellar? = nil) -> Bool {
         let deepest = cellar?.bottles(in: cell).compactMap(\.slot?.depth).max()
-        return depth != nil || rack.shownPositions(inRow: cell.row, deepest: deepest) == 1
+        return depth != nil || rack.shownPositions(of: cell, deepest: deepest) == 1
     }
 
     /// The place's own slot, or the front of the cell.

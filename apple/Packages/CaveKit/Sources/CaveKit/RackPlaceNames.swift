@@ -13,7 +13,8 @@ public extension Rack {
     /// A position for people, in English (reports for other apps), always in the order shelf,
     /// side, layer, position, leaving out what does not apply: "B3", "B3, back",
     /// "Shelf 2, back, position 3", "Shelf 1, top layer, position 3",
-    /// "Shelf 3, back, bottom layer, position 2", "Bin B3". The side is left out on a row one
+    /// "Shelf 3, back, bottom layer, position 2", "Bin B3", "Top triangle 3" (a diamond rack with
+    /// edge triangles names its diamonds from the first row of diamonds, `diamondPlace(of:)`). The side is left out on a row one
     /// bottle deep, even when other rows are deeper. Grids and honeycombs keep the code
     /// of the cell ("B3"). The app shows the same words in the person's language.
     func placeName(for slot: Slot) -> String {
@@ -29,7 +30,9 @@ public extension Rack {
         switch kind {
         case .grid, .staggered: return [label(row: slot.row, column: slot.column), side].compactMap { $0 }.joined(separator: ", ")
         case .shelves: return ["Shelf \(slot.row + 1)", side, position].compactMap { $0 }.joined(separator: ", ")
-        case .bins: return "Bin \(label(row: slot.row, column: slot.column))"
+        case .bins:
+            if let place = diamondPlace(of: slot.cell) { return diamondPlaceName(place) }
+            return "Bin \(label(row: slot.row, column: slot.column))"
         }
     }
 }

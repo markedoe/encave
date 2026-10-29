@@ -404,6 +404,14 @@ data class Rack(
      * two deep. Null when every shelf two deep follows [backReversed]. See [isBackReversedRow].
      */
     val rowBackReversed: List<Boolean>? = null,
+    /**
+     * Diamond bins: the sides whose edge triangles hold bottles ("edgeTriangles"), as read or
+     * set, values of a newer version kept. They apply only while the rows are shaped for them
+     * ([diamondLayout]); otherwise every cell is a whole diamond, as older versions show it.
+     */
+    @SerialName("edgeTriangles") val edgeTrianglesValue: List<String>? = null,
+    /** Bottles an edge triangle holds ("triangleCapacity"), as read or set. See [triangleCapacity]. */
+    @SerialName("triangleCapacity") val triangleCapacityValue: Int? = null,
     /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
     @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {
@@ -504,7 +512,7 @@ data class Rack(
 
     /** Is this row drawn offset by half a bottle? Odd honeycomb rows, or upper layers resting in the gaps; bins too. */
     fun isOffset(row: Int): Boolean = when (kind) {
-        RackKind.Bins -> row % 2 == 1
+        RackKind.Bins -> diamondLayout?.isOffset(row) ?: (row % 2 == 1)
         RackKind.Staggered -> shelfPlace(row)?.let { it.layer % 2 == 1 } ?: (row % 2 == 1)
         RackKind.Grid, RackKind.Shelves -> false
     }
@@ -521,7 +529,19 @@ data class Rack(
 
     val cellCount: Int get() = (0 until rows).sumOf { columnsInRow(it) }
 
-    val capacity: Int get() = (0 until rows).sumOf { columnsInRow(it) * positionsInRow(it) }
+    val capacity: Int
+        get() {
+            val layout = diamondLayout
+            return (0 until rows).sumOf { row -> (0 until columnsInRow(row)).sumOf { positions(row, it, layout) } }
+        }
+
+    /** Bottles that fit in this cell: a bin's capacity, fewer in an edge triangle ([triangleCapacity]), elsewhere its row's depth. */
+    fun positions(row: Int, column: Int): Int = positions(row, column, diamondLayout)
+
+    fun positions(cell: RackCell): Int = positions(cell.row, cell.column)
+
+    internal fun positions(row: Int, column: Int, layout: DiamondLayout?): Int =
+        if (layout != null && layout.place(row, column) is DiamondPlace.Triangle) triangleCapacity else positionsInRow(row)
 
     /**
      * A place of this rack as every version reads it: within the rack's [depth] (or a bin's
@@ -534,13 +554,19 @@ data class Rack(
         slot.column in 0 until columnsInRow(slot.row) && slot.depth in 0 until positionsPerCell
 
     /** A position the row really has, within its own depth: what the apps offer, and what an edit keeps. */
-    fun hasPosition(slot: Slot): Boolean = contains(slot) && slot.depth < positionsInRow(slot.row)
+    fun hasPosition(slot: Slot): Boolean = contains(slot) && slot.depth < positions(slot.row, slot.column)
 
     /**
      * The places drawn and named for a cell of this row: its own depth, and as deep as the
      * bottles there go (a bottle an older version put behind a single row stays in view).
      */
     fun shownPositions(row: Int, deepest: Int?): Int = maxOf(positionsInRow(row), (deepest ?: -1) + 1)
+
+    /**
+     * The places drawn and counted for this cell: its own (fewer in an edge triangle), and as
+     * many as its bottles go (an older version may fill a triangle like a whole diamond).
+     */
+    fun shownPositions(cell: RackCell, deepest: Int?): Int = maxOf(positions(cell), (deepest ?: -1) + 1)
 
     fun contains(cell: RackCell): Boolean =
         cell.rackId == id && cell.row in 0 until rows && cell.column in 0 until columnsInRow(cell.row)
@@ -555,13 +581,16 @@ data class Rack(
      * up (an upper layer rests on the one below).
      */
     val allSlots: List<Slot>
-        get() = (if (hasShelfLayers) shelfRows.flatMap { it.reversed() } else (0 until rows).toList()).flatMap { row ->
+        get() {
+            val layout = diamondLayout
+            return (if (hasShelfLayers) shelfRows.flatMap { it.reversed() } else (0 until rows).toList()).flatMap { row ->
             val width = columnsInRow(row)
             val positions = positionsInRow(row)
             if (kind == RackKind.Bins) {
-                (0 until width).flatMap { column -> (0 until positions).map { Slot(id, row, column, it) } }
+                (0 until width).flatMap { column -> (0 until positions(row, column, layout)).map { Slot(id, row, column, it) } }
             } else {
                 (0 until positions).flatMap { depth -> (0 until width).map { Slot(id, row, it, depth) } }
+            }
             }
         }
 
@@ -626,6 +655,8 @@ data class Rack(
             depth = depth.coerceIn(1, if (kind == RackKind.Staggered) MAX_STAGGERED_DEPTH else MAX_DEPTH),
             binCapacity = binCapacity.coerceIn(1, MAX_SIZE),
             rowColumns = rowColumns?.take(MAX_SIZE)?.map { it.coerceIn(1, MAX_SIZE) },
+            edgeTrianglesValue = edgeTrianglesValue?.take(8),
+            triangleCapacityValue = triangleCapacityValue?.coerceIn(1, MAX_SIZE),
             shelfLayers = layers,
             zoneBreaks = breaks,
         )
@@ -708,8 +739,12 @@ data class Rack(
             return map
         }
 
-        /** A slot moved by a row map (see [Cellar.updateRack]); null when its row is gone. */
-        internal fun moved(slot: Slot, rowMap: Map<Int, Int?>): Slot? {
+        /**
+         * A slot moved by a cell map, else by a row map (see [Cellar.updateRack]); null when its
+         * cell or row is gone. Depth is kept.
+         */
+        internal fun moved(slot: Slot, rowMap: Map<Int, Int?>, cellMap: Map<RackCell, RackCell?> = emptyMap()): Slot? {
+            if (cellMap.containsKey(slot.cell)) return cellMap[slot.cell]?.let { slot.copy(row = it.row, column = it.column) }
             if (!rowMap.containsKey(slot.row)) return slot
             return rowMap[slot.row]?.let { slot.copy(row = it) }
         }

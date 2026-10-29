@@ -69,6 +69,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
+import app.encave.core.DiamondEdge
+import app.encave.core.defaultTriangleCapacity
 import app.encave.core.Cellar
 import app.encave.core.Rack
 import app.encave.core.RackLayout
@@ -94,13 +96,17 @@ internal val SettingsSaver = listSaver<StorageSettings, Any>(
         listOf(
             it.type.name, it.layout.name, it.rows, it.columns, it.depth, it.bottlesPerBin, it.shelves, it.bottlesPerShelf,
             it.layersPerShelf, it.headToTail, it.bins, encodeRows(it.rowSettings),
+            it.diamondEdges.joinToString(",") { edge -> edge.raw }, it.bottlesPerTriangle ?: 0,
         )
     },
     restore = {
         StorageSettings(
-            StorageType.valueOf(it[0] as String), RackLayout.valueOf(it[1] as String), it[2] as Int, it[3] as Int, it[4] as Int,
-            it[5] as Int, it[6] as Int, it[7] as Int, it[8] as Int, it[9] as Boolean, it[10] as Int,
+            type = StorageType.valueOf(it[0] as String), layout = RackLayout.valueOf(it[1] as String), rows = it[2] as Int,
+            columns = it[3] as Int, depth = it[4] as Int, bottlesPerBin = it[5] as Int, shelves = it[6] as Int,
+            bottlesPerShelf = it[7] as Int, layersPerShelf = it[8] as Int, headToTail = it[9] as Boolean, bins = it[10] as Int,
             rowSettings = decodeRows(it.getOrNull(11) as? String),
+            diamondEdges = (it.getOrNull(12) as? String).orEmpty().split(",").mapNotNull { raw -> DiamondEdge.of(raw) }.toSet(),
+            bottlesPerTriangle = (it.getOrNull(13) as? Int)?.takeIf { count -> count > 0 },
         )
     },
 )
@@ -319,6 +325,18 @@ private fun SettingsStep(settings: StorageSettings, onChange: (StorageSettings) 
             if (settings.layout == RackLayout.Diamond) {
                 Count(R.string.wizard_bottles_per_bin, settings.bottlesPerBin, 2..max, R.string.help_field_bin) {
                     onChange(settings.copy(bottlesPerBin = it))
+                }
+                if (settings.offersDiamondEdges) {
+                    DiamondEdgesSection(
+                        edges = settings.diamondEdges,
+                        // Half a bin until set, never more than a bin.
+                        triangleCapacity = minOf(
+                            settings.bottlesPerBin, settings.bottlesPerTriangle ?: defaultTriangleCapacity(settings.bottlesPerBin),
+                        ),
+                        binCapacity = settings.bottlesPerBin,
+                        onEdges = { onChange(settings.copy(diamondEdges = it)) },
+                        onTriangleCapacity = { onChange(settings.copy(bottlesPerTriangle = it)) },
+                    )
                 }
             } else if (!rowsDiffer) {
                 Depth(settings.depth, R.string.help_field_staggered_depth) { onChange(settings.copy(depth = it)) }

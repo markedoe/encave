@@ -35,6 +35,9 @@ struct RackEditor: View {
     @State private var confirmingDiscard = false
     /// Saving would leave bottles without a place: asked first.
     @State private var confirmingTakeOut = false
+    /// Diamond bins: the sides whose edge triangles hold bottles, and how many each holds.
+    @State private var edges: Set<DiamondEdge> = []
+    @State private var triangleCapacity = 5
 
     var body: some View {
         NavigationStack {
@@ -142,6 +145,10 @@ struct RackEditor: View {
                             }
                         }
                     }
+                }
+
+                if offersEdges {
+                    DiamondEdgesSection(edges: $edges, triangleCapacity: triangleCapacityBinding, binCapacity: binCapacity)
                 }
 
                 if layered {
@@ -255,6 +262,8 @@ struct RackEditor: View {
             // offset honeycomb rows, and its depth). Loading an irregular rack sets its rows
             // first, so they are kept.
             .onChange(of: customRows) { _, on in
+                // Rows set one by one have no edge triangles.
+                if on { edges = [] }
                 if !on {
                     rowColumns = []
                     rowDepths = []
@@ -292,6 +301,17 @@ struct RackEditor: View {
     /// bins, a fridge and crates keep theirs.
     private var kinds: [RackKind] { storageType == .rack && initial?.kind != .bins ? [.grid, .staggered] : [] }
 
+    /// Diamond bins whose rows are all the same can hold bottles in their edge triangles.
+    private var offersEdges: Bool { kind == .bins && !isCrates && storageTypeOfBins == .rack && !customRows }
+
+    /// Bins saved as diamond bins, or picked as such in the editor.
+    private var storageTypeOfBins: StorageType { binType.wrappedValue }
+
+    /// Bottles per triangle, never more than a bin.
+    private var triangleCapacityBinding: Binding<Int> {
+        Binding(get: { min(binCapacity, triangleCapacity) }, set: { triangleCapacity = $0 })
+    }
+
     /// Rows set one by one fit every storage but crates; a fridge in layers sets its shelves
     /// one by one already.
     private var offersCustomRows: Bool { !layered && !isCrates }
@@ -315,7 +335,7 @@ struct RackEditor: View {
     private var current: EditorState {
         EditorState(name: name, kind: kind, rows: rows, columns: columns, depth: depth, binCapacity: binCapacity,
                     bins: bins, chosenStyle: chosenStyle, customRows: customRows, rowColumns: rowColumns, rowDepths: rowDepths,
-                    onShelves: onShelves, shelves: shelves)
+                    onShelves: onShelves, shelves: shelves, edges: edges, triangleCapacity: triangleCapacity)
     }
 
     /// Something was changed since the editor opened.
@@ -328,8 +348,15 @@ struct RackEditor: View {
         return Rack.shelfRowMap(from: old, to: preview, origins: shelves.map(\.originalShelf))
     }
 
+    /// Where the bottles of a diamond rack go when its triangles change: each keeps its
+    /// diamond or triangle.
+    private var cellMap: [RackCell: RackCell?] {
+        guard let old = model.cellar.rack(rackID) else { return [:] }
+        return Rack.diamondCellMap(from: old, to: preview)
+    }
+
     /// Bottles whose place this edit removes.
-    private var outsideCount: Int { model.cellar.displacedBottles(by: preview, rowMap: rowMap).count }
+    private var outsideCount: Int { model.cellar.displacedBottles(by: preview, rowMap: rowMap, cellMap: cellMap).count }
 
     /// Said under the size while bottles are in places removed.
     @ViewBuilder
@@ -371,13 +398,22 @@ struct RackEditor: View {
             let sameWidths = (0..<rows).map(plain.columns(inRow:)) == widths
             shape = Rack(id: rackID, name: name, kind: kind, rows: rows, columns: widest, depth: deepest, binCapacity: binCapacity,
                          rowColumns: sameWidths ? nil : widths, rowDepths: kind == .bins ? nil : depths)
+        } else if offersEdges, !edges.isEmpty {
+            // The sides already on keep their order, so no row of triangles moves.
+            shape = Rack.diamond(id: rackID, name: name, rows: rows, columns: columns, binCapacity: binCapacity,
+                                 edges: Rack.orderedEdges(edges, keepingOrderOf: original),
+                                 triangleCapacity: min(binCapacity, triangleCapacity))
         } else {
             shape = Rack(id: rackID, name: name, kind: kind, rows: rows, columns: columns, depth: depth, binCapacity: binCapacity)
         }
         // Bins keep their saved type unless one is picked; crates keep their shape unless
         // their count changes.
         if kind == .bins, let original {
-            return original.savingBins(name: name, binCapacity: binCapacity, chosen: chosenStyle, bins: bins, shape: shape)
+            var rack = original.savingBins(name: name, binCapacity: binCapacity, chosen: chosenStyle, bins: bins, shape: shape)
+            // Triangles are for diamond bins: saved as such, so their shape never reads as crates.
+            if offersEdges, !edges.isEmpty { rack.binStyle = .diamond }
+            // Sides of a newer version, and sides of a rack it reshaped, are kept.
+            return rack.keepingEdgeValues(from: original)
         }
         return shape
     }
@@ -495,7 +531,13 @@ struct RackEditor: View {
             name = rack.name; kind = rack.kind; rows = rack.rows; columns = rack.columns
             depth = rack.depth; binCapacity = rack.binCapacity
             bins = rack.cellCount
-            if rack.hasShelfLayers {
+            triangleCapacity = rack.triangleCapacity
+            if let layout = rack.diamondLayout {
+                // The rows and cells of diamonds; the triangles are switched on below them.
+                rows = layout.rows
+                columns = layout.columns
+                edges = layout.edges
+            } else if rack.hasShelfLayers {
                 onShelves = true
                 shelves = ShelfDraft.shelves(of: rack, keepingOrigins: true)
             } else if rack.rowColumns != nil || rack.rowsDiffer {
@@ -514,7 +556,7 @@ struct RackEditor: View {
     /// Saves the edited rack, its bottles moved with their shelves; those whose place is
     /// gone are taken out (the person agreed), with Undo.
     private func commit() {
-        if model.updateRack(named(preview), rowMap: rowMap, takingOut: outsideCount) { dismiss() }
+        if model.updateRack(named(preview), rowMap: rowMap, cellMap: cellMap, takingOut: outsideCount) { dismiss() }
     }
 
     private func named(_ rack: Rack) -> Rack {
@@ -539,6 +581,8 @@ private struct EditorState: Equatable {
     var rowDepths: [Int]
     var onShelves: Bool
     var shelves: [ShelfDraft]
+    var edges: Set<DiamondEdge>
+    var triangleCapacity: Int
 }
 
 /// One shelf of a fridge with bottles in layers, while editing.

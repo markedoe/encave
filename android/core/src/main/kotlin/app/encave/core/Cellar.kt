@@ -195,7 +195,7 @@ class Cellar(
         val rack = rack(cell.rackId) ?: return null
         if (!rack.contains(cell)) return null
         val taken = bottlesIn(cell).mapNotNull { it.slot?.depth }.toSet()
-        return (0 until rack.positionsInRow(cell.row)).firstOrNull { it !in taken }?.let { Slot(cell.rackId, cell.row, cell.column, it) }
+        return (0 until rack.positions(cell)).firstOrNull { it !in taken }?.let { Slot(cell.rackId, cell.row, cell.column, it) }
     }
 
     fun occupancy(rack: Rack): Int = bottlesInCellar.count { it.slot?.rackId == rack.id }
@@ -488,7 +488,7 @@ class Cellar(
      * if they still have none and it is free. Bottles moved elsewhere or opened since keep what
      * they have now.
      */
-    fun undoRackUpdate(old: Rack, rowMap: Map<Int, Int?>, takenOut: List<Bottle>) {
+    fun undoRackUpdate(old: Rack, rowMap: Map<Int, Int?>, takenOut: List<Bottle>, cellMap: Map<RackCell, RackCell?> = emptyMap()) {
         val index = rackList.indexOfFirst { it.id == old.id }
         if (index < 0) return
         val restored = old.normalized().let { it.copy(unknownKeys = it.unknownKeys.orKept(rackList[index].unknownKeys)) }
@@ -496,10 +496,14 @@ class Cellar(
         val inverse = HashMap<Int, Int?>()
         rowMap.keys.forEach { inverse[it] = null }
         rowMap.forEach { (from, to) -> if (to != null) inverse[to] = from }
+        // The same for cells (a diamond rack whose triangles changed).
+        val inverseCells = HashMap<RackCell, RackCell?>()
+        cellMap.keys.forEach { inverseCells[it] = null }
+        cellMap.forEach { (from, to) -> if (to != null) inverseCells[to] = from }
         bottlesInCellar.forEach { bottle ->
             val slot = bottle.slot ?: return@forEach
             if (slot.rackId != restored.id) return@forEach
-            bottleMap[bottle.id] = bottle.copy(slot = Rack.moved(slot, inverse)?.takeIf { restored.contains(it) })
+            bottleMap[bottle.id] = bottle.copy(slot = Rack.moved(slot, inverse, inverseCells)?.takeIf { restored.contains(it) })
         }
         rackList[index] = restored
         takenOut.forEach { bottle ->
@@ -582,31 +586,38 @@ class Cellar(
     /**
      * Updates name, layout or size. [rowMap] moves the bottles of a row to another row (null:
      * the row is gone), keeping their column and depth; rows it leaves out stay as they are.
-     * A bottle whose new place is not in the rack is displaced: with [takingOut] it stays in
-     * the cellar without a place, otherwise the update is refused.
+     * [cellMap] moves the bottles of a cell to another cell (a diamond rack whose triangles
+     * changed, [Rack.diamondCellMap]), before [rowMap]. A bottle whose new place is not in the
+     * rack is displaced: with [takingOut] it stays in the cellar without a place, otherwise the
+     * update is refused.
      */
-    fun updateRack(rack: Rack, rowMap: Map<Int, Int?> = emptyMap(), takingOut: Boolean = false) {
+    fun updateRack(
+        rack: Rack,
+        rowMap: Map<Int, Int?> = emptyMap(),
+        takingOut: Boolean = false,
+        cellMap: Map<RackCell, RackCell?> = emptyMap(),
+    ) {
         val index = rackList.indexOfFirst { it.id == rack.id }
         if (index < 0) throw CellarException(CellarError.UnknownRack)
         val updated = rack.normalized().let { it.copy(unknownKeys = it.unknownKeys.orKept(rackList[index].unknownKeys)) }
-        val displaced = displacedBottles(updated, rowMap).map { it.id }.toSet()
+        val displaced = displacedBottles(updated, rowMap, cellMap).map { it.id }.toSet()
         if (displaced.isNotEmpty() && !takingOut) throw CellarException(CellarError.RackNotEmpty)
         bottlesInCellar.forEach { bottle ->
             val slot = bottle.slot ?: return@forEach
             if (slot.rackId != updated.id) return@forEach
-            bottleMap[bottle.id] = bottle.copy(slot = if (bottle.id in displaced) null else Rack.moved(slot, rowMap))
+            bottleMap[bottle.id] = bottle.copy(slot = if (bottle.id in displaced) null else Rack.moved(slot, rowMap, cellMap))
         }
         rackList[index] = updated
     }
 
     /** Bottles of this rack that an update with [rowMap] would leave without a place, in the order of their places. */
-    fun displacedBottles(rack: Rack, rowMap: Map<Int, Int?> = emptyMap()): List<Bottle> {
+    fun displacedBottles(rack: Rack, rowMap: Map<Int, Int?> = emptyMap(), cellMap: Map<RackCell, RackCell?> = emptyMap()): List<Bottle> {
         val updated = rack.normalized()
         val old = this.rack(updated.id)
         return bottlesInCellar.filter { bottle ->
             val slot = bottle.slot
             if (slot == null || slot.rackId != updated.id) return@filter false
-            val moved = Rack.moved(slot, rowMap) ?: return@filter true
+            val moved = Rack.moved(slot, rowMap, cellMap) ?: return@filter true
             if (!updated.contains(moved)) return@filter true
             // A position the edit removes; a bottle already behind its row's depth (put there by
             // an older version) stays where it is while the edit keeps that place.

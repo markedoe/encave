@@ -409,6 +409,12 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     /// "binStyle" as read or set: kept even when this version does not know the value, so
     /// writing the rack back does not lose it (docs/SYNC.md). See `binStyle`.
     public var binStyleValue: String?
+    /// Diamond bins: the sides whose edge triangles hold bottles ("edgeTriangles"), as read or
+    /// set, values of a newer version kept. They apply only while the rows are shaped for
+    /// them (`diamondLayout`); otherwise every cell is a whole diamond, as older versions show it.
+    public var edgeTrianglesValue: [String]?
+    /// Bottles an edge triangle holds ("triangleCapacity"), as read or set. See `triangleCapacity`.
+    public var triangleCapacityValue: Int?
     /// Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1).
     /// Part of equality, so a merge that only brings them in is still saved.
     public var unknownFields = UnknownFields()
@@ -449,7 +455,7 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
 
     private enum CodingKeys: String, CodingKey, CaseIterable {
         case id, name, kind, rows, columns, depth, binCapacity, rowColumns, shelfLayers, zoneBreaks, backReversed, binStyle
-        case rowDepths, rowBackReversed
+        case rowDepths, rowBackReversed, edgeTriangles, triangleCapacity
         /// Version 0.1 and 0.2 had "grid" and a decorative "diamond" layout, both one bottle per cell.
         case layout
     }
@@ -474,6 +480,9 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
                          headToTail: try c.decodeIfPresent([Bool].self, forKey: .rowBackReversed))
         // Absent from older racks; any string is kept, even one this version does not know.
         binStyleValue = try c.decodeIfPresent(String.self, forKey: .binStyle)
+        // Absent from older racks; kept as read, even for a shape they no longer fit.
+        edgeTrianglesValue = try c.decodeIfPresent([String].self, forKey: .edgeTriangles).map { Array($0.prefix(8)) }
+        triangleCapacityValue = try c.decodeIfPresent(Int.self, forKey: .triangleCapacity).map(Rack.bounded)
         // "layout" is a known key (read as a grid), so it is not kept.
         unknownFields = try UnknownFields(from: decoder, known: CodingKeys.self)
     }
@@ -561,6 +570,8 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         try c.encodeIfPresent(binStyleValue, forKey: .binStyle)
         try c.encodeIfPresent(rowDepths, forKey: .rowDepths)
         try c.encodeIfPresent(rowBackReversed, forKey: .rowBackReversed)
+        try c.encodeIfPresent(edgeTrianglesValue, forKey: .edgeTriangles)
+        try c.encodeIfPresent(triangleCapacityValue, forKey: .triangleCapacity)
         try unknownFields.encode(to: encoder, known: CodingKeys.self)
     }
 
@@ -658,7 +669,7 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     /// in the gaps of the layer below; bins too.
     public func isOffset(row: Int) -> Bool {
         switch kind {
-        case .bins: return !row.isMultiple(of: 2)
+        case .bins: return diamondLayout?.isOffset(row: row) ?? !row.isMultiple(of: 2)
         case .staggered: return shelfPlace(ofRow: row).map { !$0.layer.isMultiple(of: 2) } ?? !row.isMultiple(of: 2)
         case .grid, .shelves: return false
         }
@@ -673,7 +684,23 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
 
     public var cellCount: Int { (0..<rows).reduce(0) { $0 + columns(inRow: $1) } }
 
-    public var capacity: Int { (0..<rows).reduce(0) { $0 + columns(inRow: $1) * positions(inRow: $1) } }
+    public var capacity: Int {
+        let layout = diamondLayout
+        return (0..<rows).reduce(0) { total, row in
+            total + (0..<columns(inRow: row)).reduce(0) { $0 + positions(row: row, column: $1, layout: layout) }
+        }
+    }
+
+    /// Bottles that fit in this cell: a bin's capacity, fewer in an edge triangle
+    /// (`triangleCapacity`), elsewhere its row's depth.
+    public func positions(row: Int, column: Int) -> Int { positions(row: row, column: column, layout: diamondLayout) }
+
+    public func positions(of cell: RackCell) -> Int { positions(row: cell.row, column: cell.column) }
+
+    func positions(row: Int, column: Int, layout: DiamondLayout?) -> Int {
+        if let layout, case .triangle = layout.place(row: row, column: column) { return triangleCapacity }
+        return positions(inRow: row)
+    }
 
     /// A place of this rack as every version reads it: within the rack's `depth` (or a bin's
     /// capacity), whatever its row's own depth. Sync repair and imports judge places with
@@ -689,13 +716,19 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     /// A position the row really has, within its own depth: what the apps offer to put a
     /// bottle in, and what an edit keeps (`Cellar.displacedBottles`).
     public func hasPosition(_ slot: Slot) -> Bool {
-        contains(slot) && slot.depth < positions(inRow: slot.row)
+        contains(slot) && slot.depth < positions(row: slot.row, column: slot.column)
     }
 
     /// The places drawn and named for a cell of this row: its own depth, and as deep as the
     /// bottles there go (a bottle an older version put behind a single row stays in view).
     public func shownPositions(inRow row: Int, deepest: Int?) -> Int {
         max(positions(inRow: row), (deepest ?? -1) + 1)
+    }
+
+    /// The places drawn and counted for this cell: its own (fewer in an edge triangle), and as
+    /// many as its bottles go (an older version may fill a triangle like a whole diamond).
+    public func shownPositions(of cell: RackCell, deepest: Int?) -> Int {
+        max(positions(of: cell), (deepest ?? -1) + 1)
     }
 
     public func contains(_ cell: RackCell) -> Bool {
@@ -712,11 +745,13 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     /// up (an upper layer rests on the one below).
     public var allSlots: [Slot] {
         let order: [Int] = hasShelfLayers ? shelfRows.flatMap { $0.reversed() } : Array(0..<rows)
+        let layout = diamondLayout
         return order.flatMap { row -> [Slot] in
             let width = columns(inRow: row), positions = positions(inRow: row)
             if kind == .bins {
                 return (0..<width).flatMap { column in
-                    (0..<positions).map { Slot(rackID: id, row: row, column: column, depth: $0) }
+                    (0..<self.positions(row: row, column: column, layout: layout))
+                        .map { Slot(rackID: id, row: row, column: column, depth: $0) }
                 }
             }
             return (0..<positions).flatMap { depth in
@@ -745,8 +780,13 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         return map
     }
 
-    /// A slot moved by a row map (see `Cellar.updateRack`); nil when its row is gone.
-    static func moved(_ slot: Slot, rowMap: [Int: Int?]) -> Slot? {
+    /// A slot moved by a cell map, else by a row map (see `Cellar.updateRack`); nil when its
+    /// cell or row is gone. Depth is kept.
+    static func moved(_ slot: Slot, rowMap: [Int: Int?], cellMap: [RackCell: RackCell?] = [:]) -> Slot? {
+        if let entry = cellMap[slot.cell] {
+            guard let cell = entry else { return nil }
+            return Slot(rackID: slot.rackID, row: cell.row, column: cell.column, depth: slot.depth)
+        }
         guard let mapped = rowMap[slot.row] else { return slot }
         guard let row = mapped else { return nil }
         var moved = slot

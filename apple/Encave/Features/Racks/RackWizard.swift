@@ -114,6 +114,7 @@ struct RackWizard: View {
                 Text("Grid").tag(RackLayout.grid)
                 Text("Honeycomb").tag(RackLayout.honeycomb)
                 Text("Diamond bins").tag(RackLayout.diamond)
+                    .accessibilityIdentifier("wizard.layout.diamond")
             }
             .pickerStyle(.inline)
             .labelsHidden()
@@ -134,6 +135,10 @@ struct RackWizard: View {
         if settings.layout == .diamond {
             countSection("Bottles per bin", value: $settings.bottlesPerBin, range: 2...StorageSettings.maxCount,
                          footer: "A diamond bin of about 30 cm holds around 10 standard bottles.")
+            if settings.offersDiamondEdges {
+                DiamondEdgesSection(edges: $settings.diamondEdges, triangleCapacity: triangleCapacity,
+                                    binCapacity: settings.bottlesPerBin)
+            }
         } else if !rowsDiffer {
             depthSection(footer: "How many bottles fit one behind the other in each position.")
         }
@@ -226,6 +231,14 @@ struct RackWizard: View {
                 }
             }
         }
+    }
+
+    /// Bottles per triangle: half a bin until set, never more than a bin.
+    private var triangleCapacity: Binding<Int> {
+        Binding(
+            get: { min(settings.bottlesPerBin, settings.bottlesPerTriangle ?? Rack.defaultTriangleCapacity(binCapacity: settings.bottlesPerBin)) },
+            set: { settings.bottlesPerTriangle = $0 }
+        )
     }
 
     private func rowBinding(_ index: Int) -> Binding<StorageRowSettings> {

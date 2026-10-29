@@ -267,6 +267,42 @@ final class ScreenTourTests: XCTestCase {
             #endif
             closeSheet()
         }
+        if let add = requireControl("racks.add", titles: ["Add Storage", "Ajouter un rangement"], "storage: no Add button") {
+            // A diamond rack whose top and left edge triangles hold bottles, drawn by the wizard.
+            add.press()
+            if let next = require("wizard.next", "wizard: no Next button") {
+                next.press()
+                // The layout's option, the one that can be tapped: a rack card of the same name
+                // stays behind the sheet on iPad.
+                let titles = ["Diamond bins", "Cases en losange"]
+                let matches = app.descendants(matching: .any)
+                    .matching(NSPredicate(format: "identifier == %@ OR label IN %@", "wizard.layout.diamond", titles))
+                _ = matches.firstMatch.waitForExistence(timeout: 5)
+                // Below the preview, out of view in the iPad sheet: scrolled to first.
+                var diamond = matches.allElementsBoundByIndex.first { $0.isHittable }
+                for _ in 0..<8 where diamond == nil {
+                    #if os(iOS)
+                    swipeContentUp()
+                    #else
+                    app.scroll(byDeltaX: 0, deltaY: -300)
+                    #endif
+                    diamond = matches.allElementsBoundByIndex.first { $0.isHittable }
+                }
+                if let diamond {
+                    diamond.press()
+                    for edge in ["top", "left"] { turnOn(element("rack.edges.\(edge)"), "wizard: \(edge) triangles") }
+                    snapshot("rack-wizard-diamond-switches")
+                    scrollToTop()
+                    snapshot("rack-wizard-diamond-triangles")
+                } else {
+                    XCTFail("wizard: no diamond layout")
+                }
+            }
+            #if !os(macOS)
+            for _ in 0..<2 where !element("sheet.cancel").exists { goBack() }
+            #endif
+            closeSheet()
+        }
 
         // Tonight.
         openSection(2, "tonight")
@@ -929,8 +965,13 @@ final class ScreenTourTests: XCTestCase {
         launchSample(["--drink-out-wine"])
         openSection(3, "journal")
         if drunkTasting.waitForExistence(timeout: 10) {
+            // The menu sometimes does not open on a slow simulator (the long press lands
+            // while the list still settles): press once more before failing.
             drunkTasting.press(forDuration: 1.2)
-            if let show = require("journal.menu.showWine", "journal: no Show Wine in the entry's menu") {
+            if !element("journal.menu.showWine").waitForExistence(timeout: 8) {
+                drunkTasting.press(forDuration: 2)
+            }
+            if let show = require("journal.menu.showWine", "journal: no Show Wine in the entry's menu", timeout: 10) {
                 show.press()
                 checkWinePage("the entry's Show Wine")
             }
@@ -1206,6 +1247,36 @@ final class ScreenTourTests: XCTestCase {
                     withVelocity: .fast, thenHoldForDuration: 0)
     }
     #endif
+
+    /// Turns a switch on (scrolled to first); fails the tour when it stays off.
+    private func turnOn(_ toggle: XCUIElement, _ message: String) {
+        scrollIntoView(toggle)
+        guard toggle.exists else { return XCTFail("\(message): no switch") }
+        if toggle.value as? String == "1" { return }
+        #if os(iOS)
+        // The switch sits at the trailing end of its row.
+        toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
+        if toggle.value as? String != "1" { toggle.switches.firstMatch.tap() }
+        #else
+        toggle.click()
+        #endif
+        sleep(1)
+        XCTAssertEqual(toggle.value as? String, "1", "\(message): the switch stays off")
+    }
+
+    /// Back to the top of the screen's content.
+    private func scrollToTop() {
+        for _ in 0..<6 {
+            #if os(iOS)
+            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35))
+            start.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.65)),
+                        withVelocity: .fast, thenHoldForDuration: 0)
+            #else
+            app.scroll(byDeltaX: 0, deltaY: 300)
+            #endif
+        }
+        sleep(1)
+    }
 
     private func scrollIntoView(_ element: XCUIElement) {
         var tries = 0

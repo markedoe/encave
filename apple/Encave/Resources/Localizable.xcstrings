@@ -2777,6 +2777,26 @@
         }
       }
     },
+    "Along the sides of a diamond rack, the frame leaves half bins that hold bottles too. When adding a diamond rack, or in its editor, turn on **Top triangles**, **Left triangles**, **Bottom triangles** or **Right triangles**. Each triangle holds about half a bin; change it with **Bottles per triangle**. Triangles are drawn as triangles and named by their side, like **Top triangle 3**; the bins keep their names, like **Bin A3**. When you turn a side off, the bottles in its triangles are counted first; saving asks, they stay in your cellar without a position, and **Undo** puts them back. Older versions of the app show the triangles as whole bins and keep every bottle where it is.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le long des bords d’un casier en losange, le cadre laisse des demi-cases qui accueillent aussi des bouteilles. En ajoutant un casier en losange, ou dans son éditeur, activez **Triangles du haut**, **Triangles de gauche**, **Triangles du bas** ou **Triangles de droite**. Chaque triangle contient environ une demi-case ; modifiez-le avec **Bouteilles par triangle**. Les triangles sont dessinés en triangles et nommés par leur bord, comme **Triangle du haut 3** ; les cases gardent leur nom, comme **Case A3**. Quand vous désactivez un bord, les bouteilles de ses triangles sont d’abord comptées ; l’enregistrement le demande, elles restent dans votre cave sans position, et **Annuler** les remet en place. Les versions plus anciennes de l’app montrent les triangles comme des cases entières et laissent chaque bouteille à sa place."
+          }
+        }
+      }
+    },
+    "Along the sides of a diamond rack, the frame leaves half bins: triangles that hold bottles too, about half a bin each. They are named by their side, like “Top triangle 3”.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le long des bords d’un casier en losange, le cadre laisse des demi-cases : des triangles qui accueillent aussi des bouteilles, environ une demi-case chacun. Ils sont nommés par leur bord, comme « Triangle du haut 3 »."
+          }
+        }
+      }
+    },
     "Already in your cellar": {
       "localizations": {
         "fr": {
@@ -3907,6 +3927,16 @@
         }
       }
     },
+    "Bottles per triangle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles par triangle"
+          }
+        }
+      }
+    },
     "Bottles placed: %lld": {
       "localizations": {
         "fr": {
@@ -4043,6 +4073,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Couche du bas"
+          }
+        }
+      }
+    },
+    "Bottom triangle %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triangle du bas %lld"
+          }
+        }
+      }
+    },
+    "Bottom triangles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triangles du bas"
           }
         }
       }
@@ -6353,6 +6403,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Terre et minéral"
+          }
+        }
+      }
+    },
+    "Edge triangles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triangles des bords"
           }
         }
       }
@@ -9079,6 +9139,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Laissez l’adresse du serveur vide pour utiliser l’adresse habituelle du fournisseur."
+          }
+        }
+      }
+    },
+    "Left triangle %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triangle de gauche %lld"
+          }
+        }
+      }
+    },
+    "Left triangles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triangles de gauche"
           }
         }
       }
@@ -13455,6 +13535,26 @@
         }
       }
     },
+    "Right triangle %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triangle de droite %lld"
+          }
+        }
+      }
+    },
+    "Right triangles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triangles de droite"
+          }
+        }
+      }
+    },
     "Roast duck": {
       "localizations": {
         "fr": {
@@ -17347,6 +17447,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Couche du haut"
+          }
+        }
+      }
+    },
+    "Top triangle %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triangle du haut %lld"
+          }
+        }
+      }
+    },
+    "Top triangles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triangles du haut"
           }
         }
       }

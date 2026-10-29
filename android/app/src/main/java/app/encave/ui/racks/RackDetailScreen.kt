@@ -766,7 +766,9 @@ private fun BottleListSheet(rack: Rack, cellar: Cellar, onDismiss: () -> Unit, o
                     )
                 }
             }
-            rows.keys.sorted().forEach { row ->
+            // A diamond rack lists its top triangles first and its bottom ones last, as drawn.
+            val drawn = rack.drawingRows()
+            rows.keys.sortedBy { row -> drawn.indexOf(row).takeIf { it >= 0 } ?: row }.forEach { row ->
                 item(key = "row-$row") {
                     val header = when {
                         rack.hasShelfLayers -> {
@@ -778,6 +780,7 @@ private fun BottleListSheet(rack: Rack, cellar: Cellar, onDismiss: () -> Unit, o
                             }
                         }
                         rack.kind == RackKind.Shelves -> rack.displayLabel(RackCell(rack.id, row, 0), resources).substringBefore(",")
+                        rack.triangleRow(row) != null -> stringResource(rack.triangleRow(row)!!.togglesRes)
                         else -> stringResource(R.string.rack_row, Rack.rowLetters(row))
                     }
                     Text(

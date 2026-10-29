@@ -76,7 +76,15 @@ import app.encave.ui.components.readableWidth
 import app.encave.core.Cellar
 import app.encave.core.BinStyle
 import app.encave.core.Rack
+import app.encave.core.RackCell
 import app.encave.core.RackKind
+import app.encave.core.DiamondEdge
+import app.encave.core.diamondCellMap
+import app.encave.core.diamondLayout
+import app.encave.core.diamondRack
+import app.encave.core.keepingEdgeValues
+import app.encave.core.orderedEdges
+import app.encave.core.triangleCapacity
 import app.encave.core.editsAsCrates
 import app.encave.core.maxEditableBins
 import app.encave.core.savingBins
@@ -223,16 +231,24 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
         androidx.compose.runtime.LaunchedEffect(Unit) { navigator.back() }
         return
     }
+    // A diamond rack with edge triangles: edited as its rows and cells of diamonds, the triangles switched on below.
+    val layout = remember(rackId) { existing.diamondLayout }
     var name by rememberSaveable { mutableStateOf(existing.name) }
     var kind by rememberSaveable { mutableStateOf(existing.kind) }
-    var rows by rememberSaveable { mutableIntStateOf(existing.rows) }
-    var columns by rememberSaveable { mutableIntStateOf(existing.columns) }
+    var rows by rememberSaveable { mutableIntStateOf(layout?.rows ?: existing.rows) }
+    var columns by rememberSaveable { mutableIntStateOf(layout?.columns ?: existing.columns) }
+    // Diamond bins: the sides whose edge triangles hold bottles ("top,left"), and how many each holds.
+    var edgesText by rememberSaveable { mutableStateOf(layout?.edges.orEmpty().joinToString(",") { it.raw }) }
+    val edges = edgesText.split(",").mapNotNull { DiamondEdge.of(it) }.toSet()
+    var triangleCapacity by rememberSaveable { mutableIntStateOf(existing.triangleCapacity) }
     var depth by rememberSaveable { mutableIntStateOf(existing.depth) }
     var binCapacity by rememberSaveable { mutableIntStateOf(existing.binCapacity) }
     // A fridge with bottles in layers (a honeycomb on shelves), edited shelf by shelf.
     val onShelves = existing.hasShelfLayers
     // Rows set one by one: their positions and, but for bins, their depth.
-    var customRows by rememberSaveable { mutableStateOf(!onShelves && (existing.rowColumns != null || existing.rowsDiffer)) }
+    var customRows by rememberSaveable {
+        mutableStateOf(!onShelves && layout == null && (existing.rowColumns != null || existing.rowsDiffer))
+    }
     val rowColumns = rememberRetained("rack.rowColumns") {
         mutableStateListOf<Int>().apply { if (customRows) addAll((0 until existing.rows).map { existing.columnsInRow(it) }) }
     }
@@ -268,6 +284,9 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
     }
     val rowDepthRange = 1..maxRowDepth
     val perRowDepth = custom && kind != RackKind.Bins
+    // Diamond bins whose rows are all the same can hold bottles in their edge triangles.
+    val pickedType = chosenStyle?.let { if (it == BinStyle.Crates) StorageType.Crates else StorageType.Rack } ?: storageType
+    val offersEdges = kind == RackKind.Bins && !isCrates && pickedType == StorageType.Rack && !custom
     var showErrors by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     var confirmDisplaced by remember { mutableStateOf(false) }
@@ -284,11 +303,23 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
         if (layered) return ShelfDraft.rack(id, name.trim(), shelves)
         val shape = if (custom) {
             customShape(id, name.trim(), kind, rowColumns.toList(), if (kind == RackKind.Bins) null else rowDepths.toList(), depth, binCapacity)
+        } else if (offersEdges && edges.isNotEmpty()) {
+            diamondRack(
+                id = id, name = name.trim(), rows = rows, columns = columns, binCapacity = binCapacity,
+                // The sides already there keep their order, so no row of triangles moves; new ones follow.
+                edges = orderedEdges(edges, existing),
+                triangleCapacity = triangleCapacity.coerceAtMost(binCapacity),
+            )
         } else {
             Rack(id = id, name = name.trim(), kind = kind, rows = rows, columns = columns, depth = depth, binCapacity = binCapacity).normalized()
         }
         // Bins keep their saved type unless one is picked; crates keep their shape unless their count changes.
-        return if (kind == RackKind.Bins) existing.savingBins(name.trim(), binCapacity, chosenStyle, bins, shape) else shape
+        if (kind != RackKind.Bins) return shape
+        val saved = existing.savingBins(name.trim(), binCapacity, chosenStyle, bins, shape)
+        // Triangles are for diamond bins: saved as such, so their shape never reads as crates.
+        val styled = if (offersEdges && edges.isNotEmpty()) saved.copy(binStyleValue = BinStyle.Diamond.raw) else saved
+        // Last: what a newer version wrote that this one does not apply is kept.
+        return styled.keepingEdgeValues(existing)
     }
 
     fun layerCount() = shelves.sumOf { it.layers }
@@ -297,8 +328,12 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
     fun rowMap(rack: Rack): Map<Int, Int?> =
         if (layered) Rack.shelfRowMap(existing, rack, shelves.map { it.originalShelf }) else emptyMap()
 
-    // What a save would change: the name, the shape, and which shelf is which.
-    fun signature() = "${name.trim()}|$chosenStyle|${preview().shape}|${preview().isBackReversed}|${if (layered) shelves.map { it.originalShelf } else ""}"
+    // Where the bottles of a diamond rack go when its triangles change: each keeps its diamond or triangle.
+    fun cellMap(rack: Rack): Map<RackCell, RackCell?> = Rack.diamondCellMap(existing, rack)
+
+    // What a save would change: the name, the shape, the triangles, and which shelf is which.
+    fun signature() = "${name.trim()}|$chosenStyle|${preview().shape}|${preview().isBackReversed}|" +
+        "${preview().diamondLayout}|${preview().triangleCapacityValue}|${if (layered) shelves.map { it.originalShelf } else ""}"
     val initialSignature = rememberSaveable { signature() }
     val isDirty = signature() != initialSignature
 
@@ -307,11 +342,12 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
         if (name.isBlank()) return
         val rack = preview()
         val map = rowMap(rack)
-        if (!takingOut && cellar.displacedBottles(rack, map).isNotEmpty()) {
+        val cells = cellMap(rack)
+        if (!takingOut && cellar.displacedBottles(rack, map, cells).isNotEmpty()) {
             confirmDisplaced = true
             return
         }
-        viewModel.updateRack(rack, map, takingOut) { navigator.back() }
+        viewModel.updateRack(rack, map, takingOut, cells) { navigator.back() }
     }
 
     // Back and Close ask before unsaved changes are lost.
@@ -334,7 +370,7 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
         snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
     ) { padding ->
         val rack = preview()
-        val displaced = cellar.displacedBottles(rack, rowMap(rack)).size
+        val displaced = cellar.displacedBottles(rack, rowMap(rack), cellMap(rack)).size
         Column(
             Modifier.padding(padding).fillMaxSize().imePadding().verticalScroll(rememberScrollState()).readableWidth().padding(Dimens.l),
             verticalArrangement = Arrangement.spacedBy(Dimens.l),
@@ -444,6 +480,14 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                 }
             }
 
+            if (offersEdges) {
+                DiamondEdgesSection(
+                    edges = edges, triangleCapacity = triangleCapacity.coerceAtMost(binCapacity), binCapacity = binCapacity,
+                    onEdges = { picked -> edgesText = DiamondEdge.entries.filter { it in picked }.joinToString(",") { it.raw } },
+                    onTriangleCapacity = { triangleCapacity = it },
+                )
+            }
+
             if (layered) {
                 Header(R.string.rack_shelves_title)
                 shelves.forEachIndexed { index, shelf ->
@@ -480,7 +524,8 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                 Row(
                     Modifier.fillMaxWidth().heightIn(min = 48.dp).toggleable(customRows, role = Role.Switch) { on ->
                         if (on) {
-                            // Each row starts as the rack makes it now.
+                            // Rows set one by one have no edge triangles; each row starts as the rack makes it now.
+                            edgesText = ""
                             val uniform = preview()
                             rowColumns.clear()
                             rowDepths.clear()
@@ -558,7 +603,7 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
         }
     }
     if (confirmDisplaced) {
-        val count = cellar.displacedBottles(preview(), rowMap(preview())).size
+        val count = cellar.displacedBottles(preview(), rowMap(preview()), cellMap(preview())).size
         ConfirmDialog(
             title = pluralStringResource(R.plurals.rack_displaced, count, count),
             body = stringResource(R.string.rack_displaced_body),
