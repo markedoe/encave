@@ -50,10 +50,6 @@ data class StorageSettings(
     val depth: Int = if (type == StorageType.WineFridge) 2 else 1,
     /** Diamond bins and crates. */
     val bottlesPerBin: Int = if (type == StorageType.Crates) 12 else 10,
-    /** Diamond bins: the sides whose edge triangles hold bottles ([Rack.diamondLayout]). */
-    val diamondEdges: Set<DiamondEdge> = emptySet(),
-    /** Diamond bins with triangles: bottles per triangle; null for half a bin. */
-    val bottlesPerTriangle: Int? = null,
     // Wine fridge.
     val shelves: Int = 5,
     val bottlesPerShelf: Int = 6,
@@ -68,6 +64,10 @@ data class StorageSettings(
      * are (the usual case). Not for crates. See [withRowsDiffer].
      */
     val rowSettings: List<StorageRowSettings>? = null,
+    /** Diamond bins: the sides whose edge triangles hold bottles ([Rack.diamondLayout]). */
+    val diamondEdges: Set<DiamondEdge> = emptySet(),
+    /** Diamond bins with triangles: bottles per triangle; null for half a bin. */
+    val bottlesPerTriangle: Int? = null,
 ) {
     /** Edge triangles apply to diamond bins whose rows are all the same. */
     val offersDiamondEdges: Boolean get() = type == StorageType.Rack && layout == RackLayout.Diamond && rowSettings == null
