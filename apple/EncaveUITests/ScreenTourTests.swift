@@ -266,6 +266,25 @@ final class ScreenTourTests: XCTestCase {
             #endif
             closeSheet()
         }
+        if let add = requireControl("racks.add", titles: ["Add Storage", "Ajouter un rangement"], "storage: no Add button") {
+            // A diamond rack whose top and left edge triangles hold bottles, drawn by the wizard.
+            add.press()
+            if let next = require("wizard.next", "wizard: no Next button") {
+                next.press()
+                if let diamond = requireControl("wizard.layout.diamond", titles: ["Diamond bins", "Cases en losange"],
+                                                "wizard: no diamond layout") {
+                    diamond.press()
+                    for edge in ["top", "left"] { turnOn(element("rack.edges.\(edge)"), "wizard: \(edge) triangles") }
+                    snapshot("rack-wizard-diamond-switches")
+                    scrollToTop()
+                    snapshot("rack-wizard-diamond-triangles")
+                }
+            }
+            #if !os(macOS)
+            for _ in 0..<2 where !element("sheet.cancel").exists { goBack() }
+            #endif
+            closeSheet()
+        }
 
         // Tonight.
         openSection(2, "tonight")
@@ -1182,6 +1201,36 @@ final class ScreenTourTests: XCTestCase {
                     withVelocity: .fast, thenHoldForDuration: 0)
     }
     #endif
+
+    /// Turns a switch on (scrolled to first); fails the tour when it stays off.
+    private func turnOn(_ toggle: XCUIElement, _ message: String) {
+        scrollIntoView(toggle)
+        guard toggle.exists else { return XCTFail("\(message): no switch") }
+        if toggle.value as? String == "1" { return }
+        #if os(iOS)
+        // The switch sits at the trailing end of its row.
+        toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
+        if toggle.value as? String != "1" { toggle.switches.firstMatch.tap() }
+        #else
+        toggle.click()
+        #endif
+        sleep(1)
+        XCTAssertEqual(toggle.value as? String, "1", "\(message): the switch stays off")
+    }
+
+    /// Back to the top of the screen's content.
+    private func scrollToTop() {
+        for _ in 0..<6 {
+            #if os(iOS)
+            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35))
+            start.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.65)),
+                        withVelocity: .fast, thenHoldForDuration: 0)
+            #else
+            app.scroll(byDeltaX: 0, deltaY: 300)
+            #endif
+        }
+        sleep(1)
+    }
 
     private func scrollIntoView(_ element: XCUIElement) {
         var tries = 0

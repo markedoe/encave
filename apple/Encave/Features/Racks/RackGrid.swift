@@ -78,6 +78,25 @@ struct RackGrid: View {
         }
     }
 
+    /// A diamond rack with edge triangles: where they are.
+    private var diamondLayout: DiamondLayout? { rack.diamondLayout }
+
+    /// The side of a row of triangles (top or bottom), nil for a row of diamonds.
+    private func triangleRow(_ row: Int) -> DiamondEdge? {
+        guard let layout = diamondLayout, case let .triangle(edge, _) = layout.place(row: row, column: 0),
+              edge == .top || edge == .bottom else { return nil }
+        return edge
+    }
+
+    /// How far right a row starts, in places: half a place on offset rows, unless a left
+    /// triangle (half a place wide) fills that notch.
+    private func leadingShift(ofRow row: Int, depth: Int?) -> CGFloat {
+        if let layout = diamondLayout, layout.edges.contains(.left), case .triangle(.left, _) = layout.place(row: row, column: 0) {
+            return 0
+        }
+        return (rack.isOffset(row: row) ? 0.5 : 0) + CGFloat(rack.bandShift(row: row, depth: depth))
+    }
+
     /// A continuous honeycomb, drawn inside its frame.
     private var isHoneycombFrame: Bool { rack.kind == .staggered && !rack.hasShelfLayers }
 
@@ -101,6 +120,10 @@ struct RackGrid: View {
                                     if rack.kind == .shelves { ShelfBar(height: max(4, cellSize * 0.09)).offset(y: cellSize * 0.2) }
                                 }
                         }
+                        // A row of edge triangles fills the notches along the first or last row of
+                        // diamonds: only its half next to the diamonds takes room.
+                        .padding(.top, triangleRow(row) == .top ? -size / 2 : 0)
+                        .padding(.bottom, triangleRow(row) == .bottom ? -size / 2 : 0)
                     }
                 }
             }
@@ -144,7 +167,7 @@ struct RackGrid: View {
                 )
             }
         }
-        .padding(.leading, ((rack.isOffset(row: row) ? 0.5 : 0) + CGFloat(rack.bandShift(row: row, depth: depth))) * (size + spacing))
+        .padding(.leading, leadingShift(ofRow: row, depth: depth) * (size + spacing))
     }
 
     /// A fridge with bottles in layers: each shelf's layers nest into each other in
@@ -280,13 +303,22 @@ struct RackGrid: View {
 
     /// Shelves are numbered from the top; other racks letter their rows.
     private func rowHeader(_ row: Int) -> some View {
-        Text(verbatim: rack.kind == .shelves ? "\(row + 1)" : Rack.rowLetters(row))
+        Text(verbatim: rowHeaderText(row))
             .font(.system(size: max(headerFloor, cellSize * 0.24), weight: .semibold).monospacedDigit())
             .foregroundStyle(.secondary)
             .lineLimit(1)
             .minimumScaleFactor(0.6)
             .frame(width: headerWidth)
             .accessibilityHidden(true)
+    }
+
+    /// "3" for a shelf, "B" for a row; a diamond rack with triangles letters its rows of
+    /// diamonds only.
+    private func rowHeaderText(_ row: Int) -> String {
+        if rack.kind == .shelves { return "\(row + 1)" }
+        guard let layout = diamondLayout else { return Rack.rowLetters(row) }
+        if triangleRow(row) != nil { return "" }
+        return Rack.rowLetters(row - layout.topRows)
     }
 
     private var columnHeader: some View {
@@ -645,13 +677,17 @@ struct RackCellView: View {
     private func color(_ bottle: Bottle) -> WineColor? { model.cellar.wines[bottle.wineID]?.color }
 
     private var cell: RackCell { place.cell }
+    /// An edge triangle of a diamond rack: its side.
+    private var triangle: DiamondEdge? { rack.kind == .bins ? rack.triangleEdge(of: cell) : nil }
     /// A back place of a fridge drawn front and back.
     private var isBack: Bool { (place.depth ?? 0) > 0 }
     /// Bottles this place holds at most.
     /// A cell's places: its row's depth, and as deep as its bottles go (one an older version
     /// put behind a single row stays in view).
     private var capacity: Int {
-        place.depth == nil ? rack.shownPositions(inRow: cell.row, deepest: bottles.compactMap(\.slot?.depth).max()) : 1
+        guard place.depth == nil else { return 1 }
+        // Per cell: an edge triangle holds fewer bottles than a whole bin.
+        return rack.shownPositions(of: cell, deepest: bottles.compactMap(\.slot?.depth).max())
     }
 
     /// Browsing a rack: empty places stay quiet (no name, a light outline), so the bottles
@@ -675,9 +711,10 @@ struct RackCellView: View {
 
     private var drawing: some View {
         Group {
-            if rack.kind == .bins { bin } else if place.depth != nil { bandPlace } else { position }
+            if let triangle { triangleBin(triangle) } else if rack.kind == .bins { bin } else if place.depth != nil { bandPlace } else { position }
         }
-        .frame(width: size, height: cellHeight)
+        // A left or right triangle fills half a place.
+        .frame(width: triangle == .left || triangle == .right ? size / 2 : size, height: cellHeight)
         .contentShape(hitShape)
         .opacity(isDimmed ? 0.25 : 1)
     }
@@ -724,7 +761,7 @@ struct RackCellView: View {
     private var hitShape: AnyShape {
         switch rack.kind {
         case .staggered: AnyShape(Circle())
-        case .bins: AnyShape(Diamond())
+        case .bins: triangle.map { AnyShape(EdgeTriangle(edge: $0)) } ?? AnyShape(Diamond())
         case .grid, .shelves: AnyShape(Rectangle())
         }
     }
@@ -935,6 +972,53 @@ struct RackCellView: View {
         }
     }
 
+    /// An edge triangle of a diamond rack: the half diamond along its side, with its pile and
+    /// count placed in its widest part.
+    private func triangleBin(_ edge: DiamondEdge) -> some View {
+        let capacity = self.capacity
+        let isFull = bottles.count >= capacity
+        let width = edge == .left || edge == .right ? size / 2 : size
+        let center: CGPoint = switch edge {
+        case .top: CGPoint(x: width / 2, y: size * 0.67)
+        case .bottom: CGPoint(x: width / 2, y: size * 0.33)
+        case .left: CGPoint(x: size * 0.18, y: size / 2)
+        case .right: CGPoint(x: width - size * 0.18, y: size / 2)
+        }
+        return ZStack(alignment: .topLeading) {
+            EdgeTriangle(edge: edge, inset: size * 0.03)
+                .fill(Color.secondary.opacity(0.08))
+                .overlay(
+                    EdgeTriangle(edge: edge, inset: size * 0.03)
+                        .stroke(isHighlighted || isFocused ? Color.accentColor : Color.secondary.opacity(0.3),
+                                style: StrokeStyle(lineWidth: isHighlighted || isFocused ? 3 : 1.5, lineJoin: .round))
+                )
+            VStack(spacing: size * 0.02) {
+                let count = Text(verbatim: "\(bottles.count)/\(capacity)")
+                    .font(.system(size: max(9, size * 0.1), weight: .semibold).monospacedDigit())
+                    .foregroundStyle(isFull ? Color.primary : Color.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                if edge == .bottom {
+                    Pile(colors: bottles.map(color), size: size * 0.065, widest: 3)
+                    count
+                } else {
+                    count
+                    Pile(colors: bottles.map(color), size: size * 0.065, widest: 3)
+                }
+                if selectedCount > 0 {
+                    Text(verbatim: interaction.mode == .auditing ? "✓ \(selectedCount)/\(bottles.count)" : "+\(selectedCount)")
+                        .font(.system(size: max(9, size * 0.09), weight: .bold).monospacedDigit())
+                        .foregroundStyle(Color.accentColor)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                }
+            }
+            .frame(maxWidth: edge == .left || edge == .right ? size * 0.3 : size * 0.5)
+            .position(center)
+        }
+        .frame(width: width, height: size)
+    }
+
     /// A chosen or found place: a ring around the bottle and, in its top corner, a white
     /// tick on the accent color ringed with the background, readable on any wine's color and
     /// clear of the vintage. Choosing several bottles of a cell shows "+2" instead.
@@ -1063,6 +1147,29 @@ private struct Diamond: Shape {
     }
 }
 
+/// An edge triangle of a diamond rack, as drawn in its place: the lower half of a diamond along
+/// the top (its frame a whole place, the upper half outside the rack), the upper half along the
+/// bottom, the right half along the left (its frame half a place wide), the left half along the
+/// right.
+struct EdgeTriangle: Shape {
+    let edge: DiamondEdge
+    var inset: CGFloat = 0
+
+    func path(in rect: CGRect) -> Path {
+        let r = rect.insetBy(dx: inset, dy: inset)
+        let points: [CGPoint] = switch edge {
+        case .top: [CGPoint(x: r.minX, y: rect.midY), CGPoint(x: r.maxX, y: rect.midY), CGPoint(x: r.midX, y: r.maxY)]
+        case .bottom: [CGPoint(x: r.midX, y: r.minY), CGPoint(x: r.maxX, y: rect.midY), CGPoint(x: r.minX, y: rect.midY)]
+        case .left: [CGPoint(x: r.minX, y: r.minY), CGPoint(x: r.maxX, y: r.midY), CGPoint(x: r.minX, y: r.maxY)]
+        case .right: [CGPoint(x: r.maxX, y: r.minY), CGPoint(x: r.minX, y: r.midY), CGPoint(x: r.maxX, y: r.maxY)]
+        }
+        return Path { path in
+            path.addLines(points)
+            path.closeSubpath()
+        }
+    }
+}
+
 /// A context menu to check a place's bottles one by one, only while it applies.
 private struct CheckMenu: ViewModifier {
     let isOn: Bool
@@ -1118,11 +1225,13 @@ private struct Draggable: ViewModifier {
 private struct Pile: View {
     let colors: [WineColor?]
     let size: CGFloat
+    /// Bottles in the bottom row: 4 in a bin, 3 in a triangle.
+    var widest = 4
 
     var body: some View {
-        let shown = Array(colors.prefix(10))
-        // Rows from the bottom: 4, 3, 2, 1.
-        let widths = [4, 3, 2, 1]
+        // Rows from the bottom: 4, 3, 2, 1 (3, 2, 1 in a triangle).
+        let widths = Array((1...widest).reversed())
+        let shown = Array(colors.prefix(widths.reduce(0, +)))
         var rows: [[WineColor?]] = []
         var index = 0
         for width in widths where index < shown.count {
@@ -1139,7 +1248,7 @@ private struct Pile: View {
                 }
             }
         }
-        .frame(minHeight: size * 3.2, alignment: .bottom)
+        .frame(minHeight: size * (CGFloat(widest) - 0.8), alignment: .bottom)
         .accessibilityHidden(true)
     }
 }

@@ -332,10 +332,10 @@ final class CenteringScrollView: UIScrollView {
 
 private extension Rack {
     /// What changes the drawing's size: kind, depth, columns and depth per row, layers per
-    /// shelf, zones and head-to-tail backs (drawn half a place wider).
+    /// shelf, zones, head-to-tail backs (drawn half a place wider) and edge triangles.
     var shape: String {
         "\(kind) \(positionsPerCell) " + (0..<rows).map { "\(columns(inRow: $0))x\(positions(inRow: $0))" }.joined(separator: ",")
-            + " \(shelfLayers ?? []) \(zoneBreaks ?? []) \(rowBackReversed ?? []) \(isBackReversed)"
+            + " \(shelfLayers ?? []) \(zoneBreaks ?? []) \(rowBackReversed ?? []) \(isBackReversed) \(edgeTrianglesValue ?? [])"
     }
 }
 #endif

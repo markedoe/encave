@@ -89,6 +89,17 @@ extension RackBottleList {
             return "\(shelf) · \(rack.zoneName(rack.zone(ofShelf: group)))"
         }
         if rack.kind == .shelves { return String(localized: "Shelf \(number)") }
+        if let layout = rack.diamondLayout {
+            // A diamond rack with edge triangles: its rows of triangles, then its rows of
+            // diamonds lettered from the first one.
+            switch layout.place(row: group, column: 0) {
+            case .triangle(.top, _): return String(localized: "Top triangles")
+            case .triangle(.bottom, _): return String(localized: "Bottom triangles")
+            default:
+                let letters = Rack.rowLetters(group - layout.topRows)
+                return String(localized: "Row \(letters)")
+            }
+        }
         let letters = Rack.rowLetters(group)
         return String(localized: "Row \(letters)")
     }

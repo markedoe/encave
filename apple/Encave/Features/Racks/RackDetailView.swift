@@ -625,7 +625,7 @@ private struct CellSheet: View {
                         BottleInCellRow(rack: rack, bottle: bottle, onAction: onAction)
                     }
                 } header: {
-                    let positions = rack.shownPositions(inRow: cell.row, deepest: bottles.compactMap(\.slot?.depth).max())
+                    let positions = rack.shownPositions(of: cell, deepest: bottles.compactMap(\.slot?.depth).max())
                     if positions > 1 {
                         Text("\(bottles.count) of \(positions) bottles")
                     }

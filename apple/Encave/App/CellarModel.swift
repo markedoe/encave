@@ -855,19 +855,20 @@ final class CellarModel {
         }
     }
 
-    /// Saves an edited rack, moving its bottles by `rowMap`. Bottles whose place is gone
-    /// are taken out (the person agreed first), with a longer Undo.
+    /// Saves an edited rack, moving its bottles by `cellMap` (a diamond rack whose triangles
+    /// changed) and `rowMap`. Bottles whose place is gone are taken out (the person agreed
+    /// first), with a longer Undo.
     @discardableResult
-    func updateRack(_ rack: Rack, rowMap: [Int: Int?], takingOut count: Int) -> Bool {
+    func updateRack(_ rack: Rack, rowMap: [Int: Int?], cellMap: [RackCell: RackCell?] = [:], takingOut count: Int) -> Bool {
         let old = cellar.rack(rack.id)
         let inRack = bottlesInCellar.filter { $0.slot?.rackID == rack.id }
-        guard update({ try $0.updateRack(rack, rowMap: rowMap, takingOut: count > 0) }) else { return false }
+        guard update({ try $0.updateRack(rack, rowMap: rowMap, cellMap: cellMap, takingOut: count > 0) }) else { return false }
         if count > 0, let old {
             // Only this rack and its bottles come back, so the Undo can stay after other changes.
             showToast(String(localized: "Bottles taken out of their positions: \(count)"), lasting: .long) { [weak self] in
                 // The bottles in the rack now go back with their rows, those taken out to their
                 // place if still free: what was placed, moved or opened since stays.
-                self?.update { $0.undoRackUpdate(back: old, rowMap: rowMap, takenOut: inRack) }
+                self?.update { $0.undoRackUpdate(back: old, rowMap: rowMap, cellMap: cellMap, takenOut: inRack) }
             }
         }
         return true
