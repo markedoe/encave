@@ -37,6 +37,8 @@ public enum SampleData {
         public var italy = "Italy"
         public var switzerland = "Switzerland"
         public var georgia = "Georgia"
+        public var goldMedal = "Gold medal"
+        public var criticNote = "Tasted from barrel"
         public init() {}
     }
 
@@ -67,10 +69,25 @@ public enum SampleData {
                                zoneBreaks: [4])
         for rack in [main, small, bins, deep, honeycomb, stairs, largeFridge] { cellar.addRack(rack) }
 
+        // The first wine has every detail and critics' scores (typed by the user; the sources are invented).
+        var flagship = Wine(id: ids.next(.wine), name: "Clos des Tilleuls", producer: "Domaine Arnaud", vintage: year - 9, color: .red,
+                            region: "Bordeaux", country: "France", appellation: "Pauillac", grapes: ["Cabernet Sauvignon", "Merlot"],
+                            drinkFrom: year - 2, drinkUntil: year + 8)
+        flagship.abv = Decimal(string: "13.5")
+        flagship.classification = "Cru Bourgeois"
+        flagship.lieuDit = "Les Tilleuls"
+        flagship.grapeShares = ["Cabernet Sauvignon": 70, "Merlot": 30]
+        flagship.ageing = ["oakBarrel", "newOak"]
+        flagship.farming = "organic"
+        flagship.farmingCertified = true
+        flagship.closure = "naturalCork"
+        flagship.criticScores = [
+            CriticScore(source: "Guide des Terroirs", score: 17, scale: 20),
+            CriticScore(source: "Cellar Review", score: 93, scale: 100, note: labels.criticNote),
+            CriticScore(source: "Concours de Pauillac", award: labels.goldMedal),
+        ]
         let entries: [(Wine, Int, Rack?)] = [
-            (Wine(id: ids.next(.wine), name: "Clos des Tilleuls", producer: "Domaine Arnaud", vintage: year - 9, color: .red,
-                  region: "Bordeaux", country: "France", appellation: "Pauillac", grapes: ["Cabernet Sauvignon", "Merlot"],
-                  drinkFrom: year - 2, drinkUntil: year + 8), 3, main),
+            (flagship, 3, main),
             (Wine(id: ids.next(.wine), name: "Les Pierres Blanches", producer: "Maison Clément", vintage: year - 4, color: .white,
                   region: "Bourgogne", country: "France", appellation: "Meursault", grapes: ["Chardonnay"],
                   drinkFrom: year - 1, drinkUntil: year), 2, main),
@@ -138,9 +155,12 @@ public enum SampleData {
                           drinkFrom: year - 3, drinkUntil: year + 4)
         if let added = try? cellar.addBottles(of: tasted, quantity: 2, addedAt: now) {
             let bottles = ids.rekey(added, in: &cellar)
+            // A full guided tasting, scored out of 100.
             try? cellar.drink(bottles[0].id, tasting: Tasting(date: now - 12 * day, rating: 5,
                 note: labels.tastingNote, occasion: labels.occasion, nose: labels.nose,
-                palate: labels.palate, foodPairing: labels.pairing))
+                palate: labels.palate, foodPairing: labels.pairing, score100: 95,
+                aromas: ["fruit.redCherry", "fruit.raspberry", "floral.violet", "earth.forestFloor", "spice.clove"],
+                sweetness: 1, acidity: 4, tannin: 3, body: 3, alcohol: 3, length: 4, intensity: "medium", hue: "ruby"))
             try? cellar.drink(bottles[1].id, tasting: Tasting(date: now - 40 * day, rating: 4))
         }
 

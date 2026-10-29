@@ -46,6 +46,8 @@ object SampleData {
         val italy: String = "Italy",
         val switzerland: String = "Switzerland",
         val georgia: String = "Georgia",
+        val goldMedal: String = "Gold medal",
+        val criticNote: String = "Tasted from barrel",
     )
 
     /** A wine fridge with two zones: layers of each shelf from the top, bottles of each row from the top. Also the editor's preset. */
@@ -72,9 +74,17 @@ object SampleData {
 
         val entries: List<Triple<Wine, Int, Rack?>> = listOf(
             Triple(
+                // Every detail and critics' scores (typed by the user; the sources are invented), as in CaveKit.
                 Wine(id = ids.next(Kind.Wine), name = "Clos des Tilleuls", producer = "Domaine Arnaud", vintage = year - 9, color = WineColor.Red,
                     region = "Bordeaux", country = "France", appellation = "Pauillac", grapes = listOf("Cabernet Sauvignon", "Merlot"),
-                    drinkFrom = year - 2, drinkUntil = year + 8),
+                    drinkFrom = year - 2, drinkUntil = year + 8, abv = BigDecimal("13.5"), classification = "Cru Bourgeois",
+                    lieuDit = "Les Tilleuls", grapeShares = mapOf("Cabernet Sauvignon" to 70, "Merlot" to 30),
+                    ageing = listOf("oakBarrel", "newOak"), farming = "organic", farmingCertified = true, closure = "naturalCork",
+                    criticScores = listOf(
+                        CriticScore("Guide des Terroirs", score = BigDecimal(17), scale = 20),
+                        CriticScore("Cellar Review", score = BigDecimal(93), scale = 100, note = labels.criticNote),
+                        CriticScore("Concours de Pauillac", award = labels.goldMedal),
+                    )),
                 3, main,
             ),
             Triple(
@@ -175,9 +185,12 @@ object SampleData {
             region = "Bourgogne", country = "France", appellation = "Gevrey-Chambertin", grapes = listOf("Pinot Noir"),
             drinkFrom = year - 3, drinkUntil = year + 4)
         val bottles = ids.rekey(cellar.addBottles(tasted, quantity = 2, addedAt = now), cellar)
+        // A full guided tasting, scored out of 100.
         cellar.drink(bottles[0].id, Tasting(date = now - Duration.ofDays(12), rating = 5,
             note = labels.tastingNote, occasion = labels.occasion, nose = labels.nose,
-            palate = labels.palate, foodPairing = labels.pairing))
+            palate = labels.palate, foodPairing = labels.pairing, score100 = 95.0,
+            aromas = listOf("fruit.redCherry", "fruit.raspberry", "floral.violet", "earth.forestFloor", "spice.clove"),
+            sweetness = 1, acidity = 4, tannin = 3, body = 3, alcohol = 3, length = 4, intensity = "medium", hue = "ruby"))
         cellar.drink(bottles[1].id, Tasting(date = now - Duration.ofDays(40), rating = 4))
 
         // Wines found elsewhere, one of them on the shopping list.
