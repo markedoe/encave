@@ -49,6 +49,8 @@ class SmokeTest {
     fun cellarListAndWineDetail() {
         compose.onAllNodesWithText("Clos des Tilleuls", substring = true).onFirst().performClick()
         compose.waitForIdle()
+        // The first match is now a bottle in the cellar (the order comes after): the window may be below the fold.
+        compose.onNodeWithTag("wine.detail").performScrollToNode(hasText("Drinking window"))
         compose.onAllNodesWithText("Drinking window").onFirst().assertExists()
         compose.onNodeWithContentDescription("Back").performClick()
     }
