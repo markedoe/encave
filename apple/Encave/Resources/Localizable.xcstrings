@@ -7177,6 +7177,16 @@
         }
       }
     },
+    "In the cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En cave"
+          }
+        }
+      }
+    },
     "In this backup": {
       "localizations": {
         "fr": {

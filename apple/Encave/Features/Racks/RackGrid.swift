@@ -429,7 +429,7 @@ struct FittedRackGrid: View {
         #if os(iOS)
         ZoomableRack(rack: rack, baseCellSize: base, selected: selected, highlighted: highlighted,
                      selectedPlace: selectedPlace, focusWine: focusWine, onTap: onTap, onDrop: onDrop,
-                     zoomStep: zoomStep, interaction: interaction, tracker: tracker, alignsTop: scrolls)
+                     zoomStep: zoomStep, interaction: interaction, tracker: tracker, alignsTop: true)
         #else
         let minimum = RackViewport.minimumCellSize(for: rack)
         let cellSize = RackZoom.cellSize(base: base, minimum: minimum, zoom: zoom)
@@ -439,13 +439,14 @@ struct FittedRackGrid: View {
                 // trackpad) would take room and make the fitted rack scroll.
                 grid(cellSize)
                     .padding(Self.padding)
-                    .frame(width: proxy.size.width, height: proxy.size.height)
+                    // Right under the navigation bar, not centered in the space.
+                    .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
             } else {
                 ScrollView([.horizontal, .vertical]) {
                     grid(cellSize)
                         .padding(Self.padding)
-                        // A rack that scrolls sits right under its overview, not centered below it.
-                        .frame(minWidth: proxy.size.width, minHeight: proxy.size.height, alignment: scrolls ? .top : .center)
+                        // Right under the navigation bar (under the overview of a rack that scrolls).
+                        .frame(minWidth: proxy.size.width, minHeight: proxy.size.height, alignment: .top)
                 }
                 .scrollPosition($position)
                 .defaultScrollAnchor(scrolls ? .topLeading : .center)
@@ -653,6 +654,10 @@ struct RackCellView: View {
         place.depth == nil ? rack.shownPositions(inRow: cell.row, deepest: bottles.compactMap(\.slot?.depth).max()) : 1
     }
 
+    /// Browsing a rack: empty places stay quiet (no name, a light outline), so the bottles
+    /// stand out. Choosing a place (moving, checking, pickers) still names them.
+    private var isQuiet: Bool { interaction.mode == .browsing }
+
     private var showsName: Bool { size >= Self.nameSize && (rack.kind == .grid || rack.kind == .shelves) }
     private var showsVintage: Bool { size >= Self.vintageSize && rack.kind != .bins }
     private var cellHeight: CGFloat {
@@ -785,10 +790,10 @@ struct RackCellView: View {
         .background {
             if rack.kind == .grid {
                 RoundedRectangle(cornerRadius: size * 0.16, style: .continuous)
-                    .fill(Color.secondary.opacity(0.08))
+                    .fill(Color.secondary.opacity(isQuiet && bottles.isEmpty ? 0.04 : 0.08))
                     .overlay(
                         RoundedRectangle(cornerRadius: size * 0.16, style: .continuous)
-                            .strokeBorder(isFocused ? Color.accentColor : Color.secondary.opacity(0.18),
+                            .strokeBorder(isFocused ? Color.accentColor : Color.secondary.opacity(isQuiet && bottles.isEmpty ? 0.1 : 0.18),
                                           lineWidth: isFocused ? 2 : 1)
                     )
             }
@@ -811,9 +816,9 @@ struct RackCellView: View {
                 BottleEnd(color: color(back), size: size * 0.52, isHighlighted: isHighlighted, showsStyle: true)
                     .opacity(0.55)
             } else {
-                BottleEnd(color: nil, size: size * 0.72, isEmpty: true, isHighlighted: isHighlighted)
+                BottleEnd(color: nil, size: size * 0.72, isEmpty: true, isQuiet: isQuiet, isHighlighted: isHighlighted)
                 // A picture (preview, overview) shows the shape only: numbers would crowd it.
-                if selectedCount == 0, !isPicture {
+                if selectedCount == 0, !isPicture, !isQuiet {
                     Text(verbatim: rack.emptyCaption(for: cell))
                         .font(.system(size: max(9, size * 0.18), weight: .medium).monospacedDigit())
                         .foregroundStyle(.secondary)
@@ -849,8 +854,8 @@ struct RackCellView: View {
                     if showsVintage, !isBack { vintageLabel(bottle, diameter: diameter) }
                 }
             } else {
-                BottleEnd(color: nil, size: diameter, isEmpty: true, isHighlighted: isHighlighted)
-                if selectedCount == 0, !isPicture {
+                BottleEnd(color: nil, size: diameter, isEmpty: true, isQuiet: isQuiet, isHighlighted: isHighlighted)
+                if selectedCount == 0, !isPicture, !isQuiet {
                     // The place number: the shelf is on the side, the band in its caption.
                     Text(verbatim: rack.emptyCaption(for: cell))
                         .font(.system(size: max(9, diameter * 0.25), weight: .medium).monospacedDigit())

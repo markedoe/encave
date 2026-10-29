@@ -447,7 +447,7 @@ class ScreenTourTest(private val device: String, private val variant: String) {
 
     @Test
     fun bottlesOnOrder() {
-        // The orders' header at the top: the first screen already shows the row.
+        // The orders come after the bottles in the cellar: scrolled so their header sits at the top.
         scrollToTop("cellar.list", "order.row", header = 56.dp)
         capture("cellar-on-order")
         tap("order.row")

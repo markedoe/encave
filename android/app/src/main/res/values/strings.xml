@@ -975,6 +975,7 @@
     <string name="sample_nose">Cherry, violet, a touch of undergrowth</string>
     <string name="sample_palate">Fine tannins, fresh acidity</string>
     <string name="sample_pairing">Roast duck</string>
+    <string name="section_in_cellar">In the cellar</string>
     <string name="section_on_order">On order</string>
     <string name="action_received">Received</string>
     <string name="action_mark_received">Mark received</string>

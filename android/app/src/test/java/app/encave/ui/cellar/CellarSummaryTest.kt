@@ -57,6 +57,18 @@ class CellarSummaryTest {
     }
 
     @Test
+    fun allThreeTilesShowTheSameChevron() {
+        show(1f)
+        compose.onAllNodesWithTag("cellar.stat.chevron", useUnmergedTree = true).assertCountEquals(3)
+    }
+
+    @Test
+    fun allThreeLinesShowTheSameChevronAtLargeFontScale() {
+        show(2f)
+        compose.onAllNodesWithTag("cellar.stat.chevron", useUnmergedTree = true).assertCountEquals(3)
+    }
+
+    @Test
     fun keepTileOnShowsEverythingAgain() {
         var picked: CellarFilter? = null
         show(1f, CellarFilter(maturities = setOf(Maturity.Young))) { picked = it }

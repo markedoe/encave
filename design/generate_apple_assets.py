@@ -37,6 +37,8 @@ NAMES = {
     "ink-on-light": "InkOnLight",
     "ink-on-dark": "InkOnDark",
     "mac-sidebar-selection": "MacSidebarSelection",
+    "tile-background": "TileBackground",
+    "tile-text": "TileText",
     "studio-base": "StudioBase",
     "studio-candle": "StudioCandle",
     "studio-red": "StudioRed",

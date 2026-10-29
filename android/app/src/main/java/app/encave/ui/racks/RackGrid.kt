@@ -319,6 +319,11 @@ fun RackGrid(
     onDrop: ((Bottle, RackPlace) -> Unit)? = null,
     /** A picture of the shape only (the wizard's preview): no place numbers on empty places. */
     isPicture: Boolean = false,
+    /**
+     * Browsing: empty places stay quiet (no visible name, a light outline) so the bottles stand out;
+     * TalkBack still reads their name. Choosing a place (moving, checking, pickers) names them.
+     */
+    quietEmpty: Boolean = false,
     /** The width a fridge's band captions may take, when wider than the shelves (a small preview). */
     captionWidth: Dp? = null,
 ) {
@@ -376,6 +381,7 @@ fun RackGrid(
             customActions = customActions(place, bottles),
             countsFound = countsFound,
             isPicture = isPicture,
+            quiet = quietEmpty,
             onDoubleClick = onCellDoubleClick?.let { { it(place) } },
             onPositioned = if (onDrop != null) ({ bounds -> placeBounds[place] = bounds }) else null,
         )
@@ -647,6 +653,7 @@ private fun RackCellView(
     customActions: List<CustomAccessibilityAction>,
     countsFound: Boolean,
     isPicture: Boolean,
+    quiet: Boolean,
     onDoubleClick: (() -> Unit)?,
     onPositioned: ((Rect) -> Unit)? = null,
 ) {
@@ -685,9 +692,9 @@ private fun RackCellView(
             rack.kind == RackKind.Bins -> Bin(rack, bottles, cellar, size, selectedCount, isHighlighted || isFocused, countsFound)
             place.depth != null -> BandPlace(
                 rack, cell, bottles.firstOrNull(), cellar, size, height, back = place.depth > 0,
-                selectedCount, isHighlighted, isFocused, showsNumber = !isPicture,
+                selectedCount, isHighlighted, isFocused, showsNumber = !isPicture && !quiet, quiet = quiet,
             )
-            else -> Position(rack, cell, bottles, cellar, size, height, selectedCount, isHighlighted, isFocused, countsFound, showsNumber = !isPicture)
+            else -> Position(rack, cell, bottles, cellar, size, height, selectedCount, isHighlighted, isFocused, countsFound, showsNumber = !isPicture && !quiet, quiet = quiet)
         }
         if (onClick != null) {
             // Touches reach the drawn shape only: honeycomb and fridge holes, diamond bins (their
@@ -736,6 +743,7 @@ private fun BandPlace(
     isHighlighted: Boolean,
     isFocused: Boolean,
     showsNumber: Boolean,
+    quiet: Boolean,
 ) {
     val scheme = MaterialTheme.colorScheme
     val density = LocalDensity.current
@@ -765,7 +773,7 @@ private fun BandPlace(
                 if (vintage) VintageLabel(wine, diameter)
             }
         } else {
-            Box(Modifier.size(diameter).border(1.dp, scheme.outline.copy(alpha = 0.5f), CircleShape))
+            Box(Modifier.size(diameter).border(1.dp, if (quiet) scheme.outlineVariant.copy(alpha = 0.6f) else scheme.outline.copy(alpha = 0.5f), CircleShape))
             if (selectedCount == 0 && showsNumber) {
                 // The place number: the shelf is on the side, the band in its caption.
                 Text(
@@ -797,6 +805,7 @@ private fun Position(
     isFocused: Boolean,
     countsFound: Boolean,
     showsNumber: Boolean,
+    quiet: Boolean,
 ) {
     val scheme = MaterialTheme.colorScheme
     val density = LocalDensity.current
@@ -810,8 +819,13 @@ private fun Position(
             .size(size, height)
             .then(
                 if (rack.kind == RackKind.Grid) {
-                    Modifier.background(scheme.surfaceContainerHighest, shape)
-                        .border(if (isFocused) 2.dp else 1.dp, if (isFocused) scheme.primary else scheme.outlineVariant, shape)
+                    val calm = quiet && bottles.isEmpty()
+                    Modifier.background(if (calm) scheme.surfaceContainerLow else scheme.surfaceContainerHighest, shape)
+                        .border(
+                            if (isFocused) 2.dp else 1.dp,
+                            if (isFocused) scheme.primary else if (calm) scheme.outlineVariant.copy(alpha = 0.5f) else scheme.outlineVariant,
+                            shape,
+                        )
                 } else {
                     Modifier
                 },
@@ -831,7 +845,7 @@ private fun Position(
                 }
                 behind != null -> BottleEnd(cellar.wines[behind.wineId]?.color, Modifier.alpha(0.55f), size = size * 0.52f, showsStyle = true)
                 else -> {
-                    Box(Modifier.size(bottle).border(1.dp, scheme.outline.copy(alpha = 0.5f), CircleShape))
+                    Box(Modifier.size(bottle).border(1.dp, if (quiet) scheme.outlineVariant.copy(alpha = 0.6f) else scheme.outline.copy(alpha = 0.5f), CircleShape))
                     if (selectedCount == 0 && showsNumber) {
                         // In dp, like the place itself: a caption scaled with the font would overflow small places.
                         Text(

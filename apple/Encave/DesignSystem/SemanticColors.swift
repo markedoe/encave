@@ -21,6 +21,10 @@ extension Color {
     /// Text on a light wine color ("ink-on-light"), and on a dark one ("ink-on-dark").
     static let inkOnLight = Color("InkOnLight")
     static let inkOnDark = Color("InkOnDark")
+    /// Background of the cellar's summary tiles, and the secondary text on them ("tile-background",
+    /// "tile-text"): 4.5:1 or more in light and dark mode.
+    static let tileBackground = Color("TileBackground")
+    static let tileText = Color("TileText")
     /// Mac only: the selected sidebar row, under white text ("mac-sidebar-selection"): the
     /// accent in light mode, a darker rose in dark mode (5.4:1 with white).
     static let macSidebarSelection = Color("MacSidebarSelection")

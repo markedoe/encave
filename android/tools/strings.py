@@ -1026,6 +1026,7 @@ S = [
  ("sample_palate", "Fine tannins, fresh acidity", "Tanins fins, acidité fraîche"),
  ("sample_pairing", "Roast duck", "Canard rôti"),
  # Bottles on order
+ ("section_in_cellar", "In the cellar", "En cave"),
  ("section_on_order", "On order", "En commande"),
  ("action_received", "Received", "Reçues"),
  ("action_mark_received", "Mark received", "Marquer comme reçu"),

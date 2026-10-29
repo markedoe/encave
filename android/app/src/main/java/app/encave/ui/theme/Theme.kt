@@ -55,6 +55,12 @@ private fun studioPalette(dark: Boolean) = StudioPalette(
 
 val LocalStudioPalette = staticCompositionLocalOf { studioPalette(dark = false) }
 
+/** The summary tiles' background and secondary text for the current theme (design/tokens.json). */
+@Immutable
+data class TilePalette(val background: Color, val text: Color)
+
+val LocalTilePalette = staticCompositionLocalOf { TilePalette(Color(DesignTokens.tileBackground.light), Color(DesignTokens.tileText.light)) }
+
 private fun DesignTokens.ThemedColor.resolve(dark: Boolean) = Color(if (dark) this.dark else light)
 
 private fun winePalette(dark: Boolean, unknown: Color) = WinePalette(
@@ -181,6 +187,7 @@ fun EncaveTheme(
         LocalWinePalette provides winePalette(darkTheme, scheme.outlineVariant),
         LocalMaturityPalette provides maturityPalette(darkTheme),
         LocalStudioPalette provides studioPalette(darkTheme),
+        LocalTilePalette provides TilePalette(DesignTokens.tileBackground.resolve(darkTheme), DesignTokens.tileText.resolve(darkTheme)),
     ) {
         MaterialTheme(colorScheme = scheme, typography = baseTypography, content = content)
     }

@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Changed
+- Storage: the rack now sits at the top of the screen, and empty places are quiet
+  while browsing (no visible name, a lighter outline; VoiceOver and TalkBack still
+  read "B1, empty"; names show when choosing a place). The key's chips no longer
+  repeat the style in words, so wine names are not cut
+- Cellar: the bottles come first under "In the cellar", then "On order". The three
+  summary tiles all show a chevron and the figures' secondary text is easier to
+  read in light and dark mode
 - Encave is now under the Functional Source License 1.1 (FSL-1.1-ALv2) instead
   of the AGPL-3.0: each version becomes Apache-2.0 two years after its release.
   The relay stays under the AGPL-3.0. Settings › About › Licences shows the new

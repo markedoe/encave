@@ -95,7 +95,7 @@ class RackZoomState(level: Float = 1f, center: Offset = StartCenter) {
     var viewSize by mutableStateOf(Size.Zero)
         internal set
 
-    /** A rack that scrolls sits right under its overview, not centered in the height left. */
+    /** A rack sits right under the top bar (or its overview), not centered in the height left. */
     internal var alignsTop = false
 
     /** The zoom as seen. */
@@ -287,7 +287,8 @@ fun ZoomableRack(
         val nearFit = RackViewport.minimumCellSize(rack, RackViewport.NEAR_FIT_TARGET)
         val scrolls = RackViewport.scrolls(fitted.value.toDouble(), minimum, nearFit)
         val base = RackViewport.cellSize(fitted.value.toDouble(), minimum, nearFit).toFloat().dp
-        state.alignsTop = scrolls
+        // Right under the top bar, also when the whole rack fits.
+        state.alignsTop = true
         // A tall fridge, scaled to the strip's height, is a sliver that shows nothing: no overview.
         val overviewReadable = remember(rack, base, labelHeight) {
             val (width, height) = rackGridSize(rack, base, true, labelHeight)

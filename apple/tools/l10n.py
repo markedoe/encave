@@ -28,6 +28,7 @@ def widget_sources():
     return glob.glob(str(ROOT / "EncaveWidgets" / "**" / "*.swift"), recursive=True) + [str(p) for p in WIDGET_SHARED]
 
 FR = {
+    'In the cellar': 'En cave',
     'Share an Evening Request': 'Partager une demande de soirée',
     'Your bottles, for the app you choose, such as Claude': 'Vos bouteilles, pour l’app que vous choisissez, comme Claude',
     'Opens a form, then the share sheet.': 'Ouvre un formulaire, puis la feuille de partage.',

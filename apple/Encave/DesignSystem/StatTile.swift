@@ -54,7 +54,7 @@ struct StatTile: View {
                 .lineLimit(1)
             Text(caption)
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.tileText)
                 // At the accessibility sizes the tiles are stacked: the caption takes the lines it needs.
                 .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
                 .fixedSize(horizontal: false, vertical: true)
@@ -65,12 +65,12 @@ struct StatTile: View {
             if opens {
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(Color.tileText)
                     .accessibilityHidden(true)
             }
         }
         .padding(14)
-        .background(isSelected ? Color.accentColor.opacity(0.15) : Color.secondary.opacity(0.08),
+        .background(isSelected ? Color.accentColor.opacity(0.15) : Color.tileBackground,
                     in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay {
             if isSelected {
@@ -118,7 +118,7 @@ struct CompactStatRow: View {
                     .accessibilityHidden(true)
             } else if opens {
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(Color.tileText)
                     .accessibilityHidden(true)
             }
         }

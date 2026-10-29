@@ -603,6 +603,17 @@ final class ScreenTourTests: XCTestCase {
         soon.press()
         XCTAssertTrue(waitUntil { rows.count == all }, "cellar: tapping \"to drink soon\" again did not show all wines")
 
+        // "To keep" filters as well, and a second tap shows all again.
+        let keep = element("cellar.stat.keep")
+        if keep.isHittable {
+            keep.press()
+            XCTAssertTrue(waitUntil { rows.count < all }, "cellar: \"to keep\" did not filter the list")
+            keep.press()
+            XCTAssertTrue(waitUntil { rows.count == all }, "cellar: tapping \"to keep\" again did not show all wines")
+        } else {
+            XCTFail("cellar: no \"to keep\" figure")
+        }
+
         let bottles = element("cellar.stat.bottles")
         if bottles.isHittable {
             bottles.press()
@@ -622,6 +633,7 @@ final class ScreenTourTests: XCTestCase {
             XCTFail("main rack: no first place")
             return
         }
+        checkEmptyPlacesAreQuiet()
         cell.press()
         XCTAssertTrue(element("rack.selection").waitForExistence(timeout: 3), "main rack: no card for the tapped bottle")
         snapshot("rack-bottle-card")
@@ -1205,6 +1217,25 @@ final class ScreenTourTests: XCTestCase {
         return (Int(rgba[0]), Int(rgba[1]), Int(rgba[2]))
     }
     #endif
+
+    /// Browsing a rack, an empty place shows no name ("B1"), but VoiceOver still reads
+    /// "B1, empty" and the place stays a touch target of at least 44 pt.
+    private func checkEmptyPlacesAreQuiet() {
+        let empty = app.descendants(matching: .any).matching(NSPredicate(
+            format: "identifier BEGINSWITH %@ AND (label ENDSWITH %@ OR label ENDSWITH %@)", "rack.cell.", ", empty", ", vide"))
+        guard empty.count > 0 else {
+            XCTFail("main rack: no empty place with an accessibility label \"…, empty\"")
+            return
+        }
+        let place = empty.element(boundBy: 0)
+        let name = place.label.components(separatedBy: ", ").first ?? ""
+        XCTAssertFalse(name.isEmpty, "main rack: an empty place has no name in its label")
+        XCTAssertEqual(place.staticTexts.matching(NSPredicate(format: "label == %@", name)).count, 0,
+                       "main rack: the empty place \(name) shows its name while browsing")
+        XCTAssertFalse(app.staticTexts[name].exists, "main rack: the empty place \(name) shows its name while browsing")
+        XCTAssertTrue(place.frame.width >= 44 - 0.5 && place.frame.height >= 44 - 0.5,
+                      "main rack: the empty place \(name) is under 44 pt")
+    }
 
     /// At the default zoom, either the whole rack is in view (no place cut off by the screen
     /// edges), or it scrolls: then it opens at its top-leading place and every place is at

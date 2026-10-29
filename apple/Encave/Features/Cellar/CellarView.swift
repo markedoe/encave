@@ -201,9 +201,6 @@ struct CellarList: View {
                 }
                 .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                 .listRowBackground(Color.clear)
-                if !searching, !filter.isActive {
-                    OrdersSection()
-                }
                 Section {
                     if groups.isEmpty, filter.isActive {
                         ContentUnavailableView {
@@ -250,7 +247,13 @@ struct CellarList: View {
                 } header: {
                     if filter.isActive || searching {
                         Text("\(groups.reduce(0) { $0 + $1.count }) bottles")
+                    } else {
+                        Text("In the cellar")
                     }
+                }
+                // After the bottles in the cellar: an order is waiting, not drunk or kept.
+                if !searching, !filter.isActive {
+                    OrdersSection()
                 }
             }
             // Rows slide into place when sorting or filtering, not at each letter typed.
@@ -491,20 +494,20 @@ private struct CellarStats: View {
                 Divider()
                 Button { toggle(.young, on: keepOnly) } label: {
                     CompactStatRow(count: counts.bottlesToKeep, caption: .count("bottles to keep", counts.bottlesToKeep),
-                                   systemImage: Maturity.young.systemImage, isSelected: keepOnly)
+                                   systemImage: Maturity.young.systemImage, isSelected: keepOnly, opens: true)
                 }
                 .accessibilityHint(Text("Shows only the bottles to keep."))
                 .accessibilityIdentifier("cellar.stat.keep")
                 Divider()
                 Button { toggle(.drinkSoon, on: soonOnly) } label: {
                     CompactStatRow(count: counts.bottlesToDrinkSoon, caption: .count("bottles to drink soon", counts.bottlesToDrinkSoon),
-                                   systemImage: "hourglass", isSelected: soonOnly)
+                                   systemImage: "hourglass", isSelected: soonOnly, opens: true)
                 }
                 .accessibilityHint(Text("Shows only the wines to drink soon."))
                 .accessibilityIdentifier("cellar.stat.soon")
             }
             .buttonStyle(.plain)
-            .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .background(Color.tileBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             // No identifier on this container: SwiftUI would give it to each figure, hiding theirs.
         } else {
@@ -516,13 +519,13 @@ private struct CellarStats: View {
                 .accessibilityIdentifier("cellar.stat.bottles")
                 Button { toggle(.young, on: keepOnly) } label: {
                     StatTile(count: counts.bottlesToKeep, caption: .count("bottles to keep", counts.bottlesToKeep),
-                             systemImage: Maturity.young.systemImage, isSelected: keepOnly)
+                             systemImage: Maturity.young.systemImage, isSelected: keepOnly, opens: true)
                 }
                 .accessibilityHint(Text("Shows only the bottles to keep."))
                 .accessibilityIdentifier("cellar.stat.keep")
                 Button { toggle(.drinkSoon, on: soonOnly) } label: {
                     StatTile(value: counts.bottlesToDrinkSoon.formatted(), caption: "to drink soon",
-                             systemImage: "hourglass", isSelected: soonOnly)
+                             systemImage: "hourglass", isSelected: soonOnly, opens: true)
                 }
                 .accessibilityHint(Text("Shows only the wines to drink soon."))
                 .accessibilityIdentifier("cellar.stat.soon")

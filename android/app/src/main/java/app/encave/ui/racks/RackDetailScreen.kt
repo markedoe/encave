@@ -297,6 +297,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                     selectedPlace = selectedPlace.takeIf { moving == null && !auditing },
                     focusWine = focusWine.takeIf { moving == null && !auditing },
                     countsFound = auditing,
+                    quietEmpty = moving == null && !auditing,
                     clickLabel = { bottles ->
                         when {
                             auditing -> foundLabel
@@ -692,7 +693,8 @@ private fun RackKey(rack: Rack, cellar: Cellar, focusWine: UUID?, onFocus: (UUID
             )
             entries.forEach { (wine, count) ->
                 val isOn = focusWine == wine.id
-                // The style in words too, not only the bottle's color.
+                // The style by its symbol, not only the bottle's color; its name is for TalkBack only,
+                // so the wine's name has the room.
                 val style = wine.color?.let { stringResource(it.labelRes) }
                 val named = style?.let { stringResource(R.string.cell_wine_style, wine.displayName, it) } ?: wine.displayName
                 val description = pluralStringResource(R.plurals.rack_key_wine, count, named, count)
@@ -700,18 +702,16 @@ private fun RackKey(rack: Rack, cellar: Cellar, focusWine: UUID?, onFocus: (UUID
                     selected = isOn,
                     onClick = { onFocus(if (isOn) null else wine.id) },
                     label = {
-                        // A long name ends with an ellipsis; the style and the count always show.
+                        // A long name ends with an ellipsis; the style's symbol and the count always show.
                         Row(Modifier.widthIn(max = 300.dp * maxOf(1f, LocalDensity.current.fontScale)).clearAndSetSemantics { }, verticalAlignment = Alignment.CenterVertically) {
                             Text(wine.displayName, Modifier.weight(1f, fill = false), maxLines = 1, overflow = TextOverflow.Ellipsis)
                             val color = wine.color
                             if (style != null && color != null) {
-                                // The style in words and by its symbol, as on the bottles.
-                                Text(" · ", color = scheme.onSurfaceVariant, maxLines = 1, softWrap = false)
+                                Spacer(Modifier.width(6.dp))
                                 Icon(
                                     color.styleMark.icon, contentDescription = null, tint = scheme.onSurfaceVariant,
                                     modifier = Modifier.size(14.dp).testTag("rack.key.style"),
                                 )
-                                Text(" $style", color = scheme.onSurfaceVariant, maxLines = 1, softWrap = false)
                             }
                             Text(" ×$count", color = if (isOn) scheme.onSurface else scheme.onSurfaceVariant, maxLines = 1, softWrap = false)
                         }

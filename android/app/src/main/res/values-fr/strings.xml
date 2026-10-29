@@ -974,6 +974,7 @@
     <string name="sample_nose">Cerise, violette, une touche de sous-bois</string>
     <string name="sample_palate">Tanins fins, acidité fraîche</string>
     <string name="sample_pairing">Canard rôti</string>
+    <string name="section_in_cellar">En cave</string>
     <string name="section_on_order">En commande</string>
     <string name="action_received">Reçues</string>
     <string name="action_mark_received">Marquer comme reçu</string>

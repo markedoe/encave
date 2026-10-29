@@ -159,6 +159,7 @@ import app.encave.ui.navigation.EditWineRoute
 import app.encave.ui.navigation.RackDetailRoute
 import app.encave.ui.navigation.SettingsRoute
 import app.encave.ui.theme.Dimens
+import app.encave.ui.theme.LocalTilePalette
 import kotlinx.coroutines.launch
 
 /** Cellar list and wine detail: one pane on phones, side by side on tablets and foldables. */
@@ -426,20 +427,9 @@ private fun CellarList(
                                     )
                                 }
                             }
-                            if (showOrders && !selecting) {
-                                item(key = "orders.header") { app.encave.ui.components.SectionHeader(stringResource(R.string.section_on_order)) }
-                                items(orders, key = { "order." + it.id }) { group ->
-                                    OrderRow(
-                                        group = group, cellar = cellar, year = viewModel.year,
-                                        selected = group.id.toString() == selectedId,
-                                        onOpen = { onOpen(group.id.toString()) },
-                                        onReceive = { viewModel.receive(group.bottles.map { it.id }) },
-                                        modifier = Modifier.animateItem().testTag("order.row"),
-                                    )
-                                    HorizontalDivider(Modifier.padding(start = 56.dp))
-                                }
-                                if (groups.isNotEmpty()) {
-                                    item(key = "cellar.header") { app.encave.ui.components.SectionHeader(stringResource(R.string.nav_cellar)) }
+                            if (!selecting && groups.isNotEmpty()) {
+                                item(key = "cellar.header") {
+                                    app.encave.ui.components.SectionHeader(stringResource(R.string.section_in_cellar))
                                 }
                             }
                             if (selecting) {
@@ -470,6 +460,20 @@ private fun CellarList(
                                     modifier = Modifier.animateItem().testTag("wine.row"),
                                 )
                                 HorizontalDivider(Modifier.padding(start = 56.dp))
+                            }
+                            // After the bottles in the cellar: an order is waiting, not drunk or kept.
+                            if (showOrders && !selecting) {
+                                item(key = "orders.header") { app.encave.ui.components.SectionHeader(stringResource(R.string.section_on_order)) }
+                                items(orders, key = { "order." + it.id }) { group ->
+                                    OrderRow(
+                                        group = group, cellar = cellar, year = viewModel.year,
+                                        selected = group.id.toString() == selectedId,
+                                        onOpen = { onOpen(group.id.toString()) },
+                                        onReceive = { viewModel.receive(group.bottles.map { it.id }) },
+                                        modifier = Modifier.animateItem().testTag("order.row"),
+                                    )
+                                    HorizontalDivider(Modifier.padding(start = 56.dp))
+                                }
                             }
                         }
                     }
@@ -1051,18 +1055,18 @@ internal fun CellarSummary(
         ),
         SummaryFigure(
             "cellar.stat.keep", counts.bottlesToKeep, pluralStringResource(R.plurals.stat_bottles_to_keep, counts.bottlesToKeep),
-            Maturity.Young.icon, stringResource(R.string.cellar_stat_keep_hint), isSelected = keepOnly,
+            Maturity.Young.icon, stringResource(R.string.cellar_stat_keep_hint), isSelected = keepOnly, opens = true,
             onClick = { toggle(Maturity.Young, keepOnly) },
         ),
         SummaryFigure(
             "cellar.stat.soon", counts.bottlesToDrinkSoon, stringResource(R.string.cellar_stat_soon), Maturity.DrinkSoon.icon,
-            stringResource(R.string.cellar_stat_soon_hint), isSelected = soonOnly, onClick = { toggle(Maturity.DrinkSoon, soonOnly) },
+            stringResource(R.string.cellar_stat_soon_hint), isSelected = soonOnly, opens = true, onClick = { toggle(Maturity.DrinkSoon, soonOnly) },
         ),
     )
     if (StatTileLayout.of(LocalDensity.current.fontScale) == StatTileLayout.Compact) {
         Surface(
             shape = RoundedCornerShape(Dimens.radiusCard),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            color = LocalTilePalette.current.background,
             modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.s).testTag("cellar.stats.compact"),
         ) {
             Column {
@@ -1134,7 +1138,10 @@ private fun CompactStatRow(figure: SummaryFigure) {
         )
         when {
             figure.isSelected -> Icon(Icons.Filled.Check, contentDescription = null, tint = scheme.primary)
-            figure.opens -> Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = scheme.outline)
+            figure.opens -> Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = LocalTilePalette.current.text,
+                modifier = Modifier.testTag("cellar.stat.chevron"),
+            )
         }
     }
 }
@@ -1154,6 +1161,7 @@ internal fun StatTile(
     stacked: Boolean = false,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val tiles = LocalTilePalette.current
     val shape = RoundedCornerShape(Dimens.radiusCard)
     Surface(
         onClick = onClick,
@@ -1165,7 +1173,7 @@ internal fun StatTile(
             this.onClick(label = hint) { onClick(); true }
         },
         shape = shape,
-        color = if (isSelected) scheme.primaryContainer else scheme.surfaceContainerHigh,
+        color = if (isSelected) scheme.primaryContainer else tiles.background,
         border = if (isSelected) BorderStroke(1.5.dp, scheme.primary) else null,
     ) {
         Box(Modifier.padding(Dimens.m)) {
@@ -1177,14 +1185,14 @@ internal fun StatTile(
                     maxLines = 1,
                 )
                 Text(
-                    caption, style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant,
+                    caption, style = MaterialTheme.typography.bodySmall, color = if (isSelected) scheme.onPrimaryContainer else tiles.text,
                     maxLines = if (stacked) Int.MAX_VALUE else 2,
                 )
             }
             if (opens) {
                 Icon(
-                    Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = scheme.outline,
-                    modifier = Modifier.align(Alignment.TopEnd).size(18.dp),
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = tiles.text,
+                    modifier = Modifier.align(Alignment.TopEnd).size(18.dp).testTag("cellar.stat.chevron"),
                 )
             }
         }

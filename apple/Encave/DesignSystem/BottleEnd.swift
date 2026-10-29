@@ -8,6 +8,8 @@ struct BottleEnd: View {
     var color: WineColor?
     var size: CGFloat = 28
     var isEmpty = false
+    /// An empty place that stays in the background: a lighter outline (browsing a rack).
+    var isQuiet = false
     var isHighlighted = false
     /// The style's symbol on the glass (in racks), so the style never relies on color alone.
     var showsStyle = false
@@ -16,7 +18,8 @@ struct BottleEnd: View {
         ZStack {
             if isEmpty {
                 Circle()
-                    .strokeBorder(Color.secondary.opacity(0.35), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                    .strokeBorder(Color.secondary.opacity(isQuiet ? 0.18 : 0.35),
+                                  style: StrokeStyle(lineWidth: 1, dash: isQuiet ? [] : [3, 3]))
             } else {
                 Circle()
                     .fill(fill.gradient)

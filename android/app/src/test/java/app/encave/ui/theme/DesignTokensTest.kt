@@ -7,6 +7,7 @@ import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** DesignTokens.kt must mirror design/tokens.json exactly. */
@@ -39,6 +40,33 @@ class DesignTokensTest {
     @Test
     fun errorMatches() {
         assertEquals(themed("error"), DesignTokens.error)
+    }
+
+    @Test
+    fun tileColorsMatch() {
+        assertEquals(themed("tile-background"), DesignTokens.tileBackground)
+        assertEquals(themed("tile-text"), DesignTokens.tileText)
+    }
+
+    private fun luminance(argb: Long): Double {
+        fun channel(shift: Int): Double {
+            val c = ((argb shr shift) and 0xFF) / 255.0
+            return if (c <= 0.03928) c / 12.92 else Math.pow((c + 0.055) / 1.055, 2.4)
+        }
+        return 0.2126 * channel(16) + 0.7152 * channel(8) + 0.0722 * channel(0)
+    }
+
+    private fun contrast(a: Long, b: Long): Double {
+        val (hi, lo) = luminance(a).let { x -> luminance(b).let { y -> maxOf(x, y) to minOf(x, y) } }
+        return (hi + 0.05) / (lo + 0.05)
+    }
+
+    @Test
+    fun tileTextReadsOnTheTileInLightAndDark() {
+        val background = DesignTokens.tileBackground
+        val text = DesignTokens.tileText
+        assertTrue(contrast(text.light, background.light) >= 4.5)
+        assertTrue(contrast(text.dark, background.dark) >= 4.5)
     }
 
     @Test

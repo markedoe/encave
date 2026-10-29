@@ -17,6 +17,10 @@ object DesignTokens {
     /** Errors and destructive actions, always with words. */
     val error = ThemedColor(light = 0xFFB3261E, dark = 0xFFFF6B60)
 
+    /** Background of the cellar's summary tiles, and the secondary text on them (4.5:1 or more on it). */
+    val tileBackground = ThemedColor(light = 0xFFF3EDEE, dark = 0xFF2A2425)
+    val tileText = ThemedColor(light = 0xFF5C5456, dark = 0xFFCFC7C9)
+
     /** Studio backdrop behind label photos and covers: warm cream, or warm near-black in dark theme. */
     val studioBase = ThemedColor(light = 0xFFE8DED2, dark = 0xFF141010)
     /** Warm candle light of the out-of-focus discs on the studio backdrop. */
