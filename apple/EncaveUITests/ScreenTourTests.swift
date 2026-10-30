@@ -741,54 +741,37 @@ final class ScreenTourTests: XCTestCase {
             XCTFail("what to expect: the wine page did not open")
             return
         }
-        // Below the bottles, the window, serving and price: a long page.
-        let section = anyElement(["expected.source", "expected.aromas", "action.wine.aromaGame", "expected.header"])
-        for _ in 0..<3 where !(section.exists && section.isHittable) { scrollIntoView(section) }
-        guard section.exists else {
+        // Below the bottles, the window and serving: scrolled until Guess the Aromas shows,
+        // so the section is on screen and Drink, at the top, is off it.
+        guard let play = reach("action.wine.aromaGame") else {
             snapshot("wine-expected-missing")
-            print(app.debugDescription)
-            XCTFail("wine: no What to expect section")
+            XCTFail("wine: no Guess the Aromas button")
             goBack()
             return
         }
         snapshot("wine-expected")
-        if let play = require("action.wine.aromaGame", "wine: no Guess the Aromas button") {
-            play.press()
-            for aroma in ["fruit.redCherry", "fruit.lemon", "oak.vanilla"] {
-                let chip = element("game.aroma.\(aroma)")
-                scrollIntoView(chip)
-                if chip.exists, chip.isHittable { chip.press() }
-            }
-            let reveal = element("game.reveal")
-            scrollIntoView(reveal)
-            if reveal.exists, reveal.isHittable {
-                reveal.press()
-                XCTAssertTrue(element("game.points").waitForExistence(timeout: 5), "game: no score after Reveal")
-                snapshot("game-result")
-            } else {
-                XCTFail("game: no Reveal button")
-            }
-            if let done = require("game.done", "game: no Done button") { done.press() }
+        play.press()
+        for aroma in ["fruit.greenApple", "fruit.lemon", "pastry.brioche"] {
+            reach("game.aroma.\(aroma)")?.press()
         }
+        if let reveal = reach("game.reveal") {
+            reveal.press()
+            XCTAssertTrue(element("game.points").waitForExistence(timeout: 5), "game: no score after Reveal")
+            snapshot("game-result")
+        } else {
+            XCTFail("game: no Reveal button")
+        }
+        if let done = require("game.done", "game: no Done button") { done.press() }
+        sleep(1)
         // The tasting sheet: More details, then Show What to Expect.
-        let drink = element("action.wine.drink")
-        scrollIntoView(drink)
-        #if os(iOS)
-        // Back up to the top, where Drink is.
-        for _ in 0..<40 where !(drink.exists && drink.isHittable) { app.swipeDown() }
-        #endif
-        guard drink.exists, drink.isHittable else {
+        guard let drink = reach("action.wine.drink", down: true) else {
             XCTFail("wine: no Drink button to reach the tasting sheet")
             goBack()
             return
         }
         drink.press()
-        let more = element("tasting.more")
-        scrollIntoView(more)
-        if more.exists { more.press() }
-        let show = element("tasting.showExpected")
-        scrollIntoView(show)
-        if show.exists, show.isHittable {
+        reach("tasting.more")?.press()
+        if let show = reach("tasting.showExpected") {
             show.press()
             snapshot("tasting-expected")
         } else {
@@ -809,20 +792,33 @@ final class ScreenTourTests: XCTestCase {
         }
         sleep(1)
         goBack()
-        // My palate, in Insights (made-up games of the sample cellar).
+        // My palate, in Insights (made-up games of the sample cellar, or the one just played).
         openSection(0, "cellar")
         let bottles = element("cellar.stat.bottles")
         if bottles.waitForExistence(timeout: 5), bottles.isHittable {
             bottles.press()
-            let card = element("palate.card")
-            scrollIntoView(card)
-            if card.exists {
+            if reach("palate.card") != nil {
                 snapshot("my-palate")
             } else {
                 XCTFail("insights: no My palate card")
             }
             closeSheet()
         }
+    }
+
+    /// Scrolls (down the content, or back up with `down`) until the element can be tapped.
+    @discardableResult
+    private func reach(_ identifier: String, down: Bool = false) -> XCUIElement? {
+        let item = element(identifier)
+        _ = item.waitForExistence(timeout: 2)
+        for _ in 0..<30 where !(item.exists && item.isHittable) {
+            #if os(iOS)
+            if down { app.swipeDown() } else { swipeContentUp() }
+            #else
+            app.scroll(byDeltaX: 0, deltaY: down ? 300 : -300)
+            #endif
+        }
+        return item.exists && item.isHittable ? item : nil
     }
 
     /// The figures at the top of the cellar: "to drink soon" filters, "bottles" opens insights.
