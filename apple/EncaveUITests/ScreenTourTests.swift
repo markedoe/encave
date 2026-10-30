@@ -737,12 +737,18 @@ final class ScreenTourTests: XCTestCase {
         openSection(0, "cellar")
         guard let row = require("wine.row", "what to expect: no wine", timeout: 10) else { return }
         row.press()
+        guard wineAnchor.waitForExistence(timeout: 5) else {
+            XCTFail("what to expect: the wine page did not open")
+            return
+        }
         // Below the bottles, the window, serving and price: a long page.
-        let source = element("expected.source")
-        for _ in 0..<3 where !(source.exists && source.isHittable) { scrollIntoView(source) }
-        guard source.exists else {
+        let section = anyElement(["expected.source", "expected.aromas", "action.wine.aromaGame", "expected.header"])
+        for _ in 0..<3 where !(section.exists && section.isHittable) { scrollIntoView(section) }
+        guard section.exists else {
+            snapshot("wine-expected-missing")
             print(app.debugDescription)
             XCTFail("wine: no What to expect section")
+            goBack()
             return
         }
         snapshot("wine-expected")

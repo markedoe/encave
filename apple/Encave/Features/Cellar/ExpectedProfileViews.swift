@@ -56,6 +56,7 @@ struct ExpectedProfileSection: View {
                 }
             } header: {
                 Text("What to expect")
+                    .accessibilityIdentifier("expected.header")
             } footer: {
                 if aiConfiguration.isEnabled {
                     Text("What to Expect sends only the producer, name, appellation, vintage, colour and grapes to the AI models set in Settings, never the photo, notes, prices or places.")
