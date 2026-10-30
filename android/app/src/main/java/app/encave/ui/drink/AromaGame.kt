@@ -247,7 +247,21 @@ fun MyPalateCard(cellar: Cellar, sample: List<AromaGameRecord> = emptyList()) {
     val store = rememberAromaGameStore()
     var records by remember { mutableStateOf(store.load().ifEmpty { sample }) }
     var confirmingReset by remember { mutableStateOf(false) }
-    if (records.isEmpty()) return
+    if (records.isEmpty()) {
+        // No game played on this device yet: what the card will show, and how to start.
+        Card(
+            Modifier.fillMaxWidth().testTag("palate.card"),
+            shape = RoundedCornerShape(Dimens.radiusCard),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        ) {
+            Column(Modifier.padding(Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
+                Text(stringResource(R.string.palate_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+                Text(stringResource(R.string.palate_empty_title), style = MaterialTheme.typography.titleLarge)
+                Hint(stringResource(R.string.palate_empty_body))
+            }
+        }
+        return
+    }
     val palate = Palate.of(records, Instant.now())
     Card(
         Modifier.fillMaxWidth().testTag("palate.card"),

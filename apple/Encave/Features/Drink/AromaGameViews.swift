@@ -259,7 +259,7 @@ struct MyPalateCard: View {
 
     var body: some View {
         Group {
-            if !records.isEmpty { card(Palate(records: records, today: Date())) }
+            if records.isEmpty { emptyCard } else { card(Palate(records: records, today: Date())) }
         }
         .onAppear(perform: load)
     }
@@ -268,6 +268,23 @@ struct MyPalateCard: View {
         records = AromaGameStore().load()
         // The screen tour shows made-up games, never saved.
         if records.isEmpty, ProcessInfo.processInfo.arguments.contains("--sample-data") { records = sampleGames() }
+    }
+
+    /// No game played on this device yet: what the card will show, and how to start.
+    private var emptyCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("My palate").font(.headline)
+            Label("Play your first game", systemImage: "nose")
+                .font(.title3.weight(.semibold))
+            Text("When you open a bottle, tap Guess the Aromas in the Drink sheet or on the wine's page. Your points, level, accuracy and streak show here, kept on this device.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(Color.secondary.opacity(0.07), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("palate.card")
     }
 
     private func card(_ palate: Palate) -> some View {

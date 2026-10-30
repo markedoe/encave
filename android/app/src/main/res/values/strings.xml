@@ -1659,6 +1659,8 @@
     <string name="level_feminine_short">Short</string>
     <string name="level_feminine_long">Long</string>
     <string name="ai_estimated">Estimated by AI</string>
+    <string name="palate_empty_title">Play your first game</string>
+    <string name="palate_empty_body">When you open a bottle, tap Guess the aromas in the Drink sheet or on the wine’s page. Your points, level, accuracy and streak show here, kept on this device.</string>
     <string name="game_found">%1$d of %2$d aromas found</string>
     <string name="help_ai_estimated_title">Estimated by AI</string>
     <string name="help_ai_estimated">Each answer says, detail by detail, whether the model read it on the label or gave it from what it knows. Details it gave from its knowledge, such as the grapes of an appellation or the drinking window, are marked **Estimated by AI** in the form until you change them. The model is asked to leave a detail empty rather than guess.</string>

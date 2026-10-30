@@ -1884,6 +1884,8 @@ S += [("level_feminine_" + ident, en, fr) for ident, en, fr in LEVEL_FEMININE]
 # AI estimates, expected profiles, web completion and the aroma game.
 S += [
  ("ai_estimated", "Estimated by AI", "Estimé par l’IA"),
+ ('palate_empty_title', 'Play your first game', 'Jouez votre première partie'),
+ ('palate_empty_body', 'When you open a bottle, tap Guess the aromas in the Drink sheet or on the wine’s page. Your points, level, accuracy and streak show here, kept on this device.', 'Quand vous ouvrez une bouteille, touchez Devinez les arômes dans la fiche Boire ou sur la fiche du vin. Vos points, niveau, précision et série s’affichent ici, gardés sur cet appareil.'),
  ('game_found', '%1$d of %2$d aromas found', 'Arômes trouvés : %1$d sur %2$d'),
  ('help_ai_estimated_title', 'Estimated by AI', 'Estimé par l’IA'),
  ('help_ai_estimated', 'Each answer says, detail by detail, whether the model read it on the label or gave it from what it knows. Details it gave from its knowledge, such as the grapes of an appellation or the drinking window, are marked **Estimated by AI** in the form until you change them. The model is asked to leave a detail empty rather than guess.', 'Chaque réponse indique, détail par détail, si le modèle l’a lu sur l’étiquette ou l’a donné d’après ce qu’il sait. Les détails donnés d’après ses connaissances, comme les cépages d’une appellation ou la fenêtre de consommation, sont marqués **Estimé par l’IA** dans le formulaire jusqu’à ce que vous les changiez. Le modèle doit laisser un détail vide plutôt que de deviner.'),

@@ -13025,6 +13025,16 @@
         }
       }
     },
+    "Play your first game": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jouez votre première partie"
+          }
+        }
+      }
+    },
     "Plum": {
       "localizations": {
         "fr": {
@@ -19217,6 +19227,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Quand boire"
+          }
+        }
+      }
+    },
+    "When you open a bottle, tap Guess the Aromas in the Drink sheet or on the wine's page. Your points, level, accuracy and streak show here, kept on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quand vous ouvrez une bouteille, touchez Devinez les arômes dans la fiche Boire ou sur la fiche du vin. Vos points, niveau, précision et série s’affichent ici, gardés sur cet appareil."
           }
         }
       }
