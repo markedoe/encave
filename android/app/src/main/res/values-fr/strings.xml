@@ -21,6 +21,7 @@
     <string name="action_add_bottle">Ajouter une bouteille</string>
     <string name="action_add_bottles">Ajouter des bouteilles</string>
     <string name="action_show_in_rack">Voir dans le rangement</string>
+    <string name="action_put_away">Ranger</string>
     <string name="action_move">Déplacer</string>
     <string name="action_mark_gone">Plus en cave</string>
     <string name="action_open_wine">Ouvrir</string>

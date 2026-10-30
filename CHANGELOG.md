@@ -131,6 +131,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
   scale, "16/20" is 4 stars
 
 ### Fixed
+- On a wine's page, a bottle's place opens its storage at that bottle, and
+  "Not in storage" puts the bottle away: tap it to pick a storage and a position
 - Settings › AI: the model lists offer only models that read images, from each
   service's own description when it gives one (OpenRouter, Mistral, xAI) and
   otherwise from its documented model names; a name can still be typed

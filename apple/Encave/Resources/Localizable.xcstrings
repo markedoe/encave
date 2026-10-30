@@ -13365,6 +13365,36 @@
         }
       }
     },
+    "Put Away": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ranger"
+          }
+        }
+      }
+    },
+    "Put Away Bottle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ranger la bouteille"
+          }
+        }
+      }
+    },
+    "Put Away…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ranger…"
+          }
+        }
+      }
+    },
     "Put Back in the Cellar": {
       "localizations": {
         "fr": {
@@ -13391,6 +13421,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Met la bouteille ici"
+          }
+        }
+      }
+    },
+    "Puts this bottle away in a storage.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Range cette bouteille dans un rangement."
           }
         }
       }
@@ -15717,6 +15757,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Affiche cette bouteille"
+          }
+        }
+      }
+    },
+    "Shows this bottle in its storage.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Montre cette bouteille dans son rangement."
           }
         }
       }

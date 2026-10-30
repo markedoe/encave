@@ -28,6 +28,11 @@ def widget_sources():
     return glob.glob(str(ROOT / "EncaveWidgets" / "**" / "*.swift"), recursive=True) + [str(p) for p in WIDGET_SHARED]
 
 FR = {
+    'Put Away': 'Ranger',
+    'Put Away…': 'Ranger…',
+    'Put Away Bottle': 'Ranger la bouteille',
+    'Puts this bottle away in a storage.': 'Range cette bouteille dans un rangement.',
+    'Shows this bottle in its storage.': 'Montre cette bouteille dans son rangement.',
     'Add a Model': 'Ajouter un modèle',
     'Added to your models with this connection. You can add others in Models.': 'Ajouté à vos modèles avec cette connexion. Vous pouvez en ajouter d’autres dans Modèles.',
     'No model of this connection is used yet.': 'Aucun modèle de cette connexion n’est encore utilisé.',

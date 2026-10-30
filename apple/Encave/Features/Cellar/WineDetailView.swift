@@ -547,14 +547,34 @@ struct BottleRow: View {
     @State private var reserving = false
     @State private var occasion = ""
 
+    /// A bottle in a storage: shown there. One in none: put away (with no storage yet,
+    /// the storage section, to make one).
+    private func openPlace() {
+        if bottle.slot != nil {
+            router?.showInRack(bottle)
+        } else if model.cellar.racks.isEmpty {
+            router?.selectedTab = .racks
+        } else {
+            router?.sheet = .moveBottle(bottleID: bottle.id)
+        }
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: bottle.slot == nil ? "shippingbox" : model.locationIcon(for: bottle))
                 .foregroundStyle(.secondary)
                 .frame(width: 24)
             VStack(alignment: .leading, spacing: 2) {
-                Text(model.locationLabel(for: bottle) ?? String(localized: "Not in storage"))
-                    .font(.body)
+                // The place opens the storage at this bottle; "Not in storage", the
+                // storages to put it away in one.
+                Button(action: openPlace) {
+                    Text(model.locationLabel(for: bottle) ?? String(localized: "Not in storage"))
+                        .font(.body)
+                        .multilineTextAlignment(.leading)
+                }
+                .buttonStyle(.borderless)
+                .accessibilityHint(bottle.slot == nil ? Text("Puts this bottle away in a storage.") : Text("Shows this bottle in its storage."))
+                .accessibilityIdentifier(bottle.slot == nil ? "bottle.putAway" : "bottle.place")
                 Text(details)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -583,6 +603,12 @@ struct BottleRow: View {
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel(Text("Show in Storage"))
+            } else if !model.cellar.racks.isEmpty {
+                Button(action: openPlace) {
+                    Image(systemName: "tray.and.arrow.down")
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel(Text("Put Away"))
             }
         }
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
@@ -627,6 +653,8 @@ struct BottleRow: View {
             }
             if bottle.slot != nil {
                 Button("Show in Storage", systemImage: "scope") { router?.showInRack(bottle) }
+            } else if !model.cellar.racks.isEmpty {
+                Button("Put Away…", systemImage: "tray.and.arrow.down") { openPlace() }
             }
             BottleDocumentButtons(bottle: bottle) { router?.sheet = $0 }
             Divider()

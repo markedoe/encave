@@ -917,7 +917,7 @@ struct MoveBottleView: View {
                     ContentUnavailableView("Bottle not found", systemImage: "questionmark")
                 }
             }
-            .navigationTitle("Move Bottle")
+            .navigationTitle(model.cellar.bottles[bottleID]?.slot == nil ? Text("Put Away Bottle") : Text("Move Bottle"))
             .inlineTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

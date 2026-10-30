@@ -22,6 +22,7 @@
     <string name="action_add_bottle">Add bottle</string>
     <string name="action_add_bottles">Add bottles</string>
     <string name="action_show_in_rack">Show in storage</string>
+    <string name="action_put_away">Put away</string>
     <string name="action_move">Move</string>
     <string name="action_mark_gone">No longer in cellar</string>
     <string name="action_open_wine">Open</string>

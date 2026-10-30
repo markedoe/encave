@@ -2,6 +2,7 @@ package app.encave.ui.cellar
 
 import app.encave.ui.components.ActionButtonPair
 import app.encave.ui.components.ActionContent
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
@@ -713,7 +714,19 @@ private fun BottleRow(
     }
     ListItem(
         modifier = if (bottle.reservedFor != null) Modifier.testTag("bottle.reserved") else Modifier,
-        headlineContent = { Text(cellar.displayLocation(bottle) ?: stringResource(R.string.location_none)) },
+        // The place opens the storage at this bottle; "Not in storage" puts it away in one.
+        headlineContent = {
+            val stored = bottle.slot != null
+            Text(
+                cellar.displayLocation(bottle) ?: stringResource(R.string.location_none),
+                color = if (stored) Color.Unspecified else MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .clickable(onClickLabel = stringResource(if (stored) R.string.action_show_in_rack else R.string.action_put_away)) {
+                        (onShowInRack ?: onMove)()
+                    }
+                    .testTag(if (stored) "bottle.place" else "bottle.put_away"),
+            )
+        },
         supportingContent = {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(details.joinToString(" · "))

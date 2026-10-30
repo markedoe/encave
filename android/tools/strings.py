@@ -31,6 +31,7 @@ S = [
  ("action_add_bottle", "Add bottle", "Ajouter une bouteille"),
  ("action_add_bottles", "Add bottles", "Ajouter des bouteilles"),
  ("action_show_in_rack", "Show in storage", "Voir dans le rangement"),
+ ("action_put_away", "Put away", "Ranger"),
  ("action_move", "Move", "Déplacer"),
  ("action_mark_gone", "No longer in cellar", "Plus en cave"),
  ("action_open_wine", "Open", "Ouvrir"),
