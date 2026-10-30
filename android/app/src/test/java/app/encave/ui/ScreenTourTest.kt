@@ -972,10 +972,10 @@ class ScreenTourTest(private val device: String, private val variant: String) {
     /** My palate in Insights, with three games played on this device. */
     @Test
     fun myPalate() {
-        val app = ApplicationProvider.getApplicationContext<EncaveApplication>()
-        val store = app.encave.core.AromaGameStore(app.encave.ui.drink.aromaGameFile(app))
+        val application = ApplicationProvider.getApplicationContext<EncaveApplication>()
+        val store = app.encave.core.AromaGameStore(app.encave.ui.drink.aromaGameFile(application))
         store.removeAll()
-        val wines = app.repository.cellar.value.wines.values.sortedBy { it.name }
+        val wines = application.repository.cellar.value.wines.values.sortedBy { it.name }
             .mapNotNull { wine -> app.encave.core.ExpectedProfiles.profile(wine)?.let { wine to it } }.take(3)
         wines.forEachIndexed { index, (wine, profile) ->
             val aromas = profile.aromas.orEmpty()
