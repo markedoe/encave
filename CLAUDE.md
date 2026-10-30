@@ -36,7 +36,13 @@ sync between devices and users (see `docs/ROADMAP.md`):
   asks to read the label again with another model. Through OpenRouter the
   photo reaches the chosen model's provider; requests ask OpenRouter to skip
   providers that keep or train on the data, unless the user turns that off.
-  Never send the cellar or anything else to them.
+  When the user asks what to expect from a wine, its identity (producer, name,
+  appellation, vintage, colour, grapes) may be sent instead of the photo. When
+  the user turns on web search for a connection, that provider may search the
+  web with what it read, and shows its sources. Never send the cellar, notes,
+  prices, places or anything else to them.
+- Aroma game guesses and scores stay on the device that played: never synced,
+  not even between people sharing a cellar.
 - Exception: the optional web search, off by default, which sends only the
   search terms (producer, name, appellation, vintage, and for a price the
   bottle size; shown and editable before sending) to the search provider the
