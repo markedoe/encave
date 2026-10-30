@@ -67,7 +67,8 @@ import Testing
         let defaults = try #require(UserDefaults(suiteName: "aroma-game-tests-\(UUID().uuidString)"))
         let store = AromaGameStore(defaults: defaults)
         let wine = Wine(name: "Clos", color: .red)
-        let record = AromaGameRecord(wineID: wine.id, date: Date(), guesses: ["fruit.redCherry"], structure: [:],
+        // Whole seconds: games are kept with ISO 8601 dates.
+        let record = AromaGameRecord(wineID: wine.id, date: Date(timeIntervalSinceReferenceDate: 800_000_000), guesses: ["fruit.redCherry"], structure: [:],
                                      expected: ["fruit.redCherry"], expectedStructure: [:])
         store.add(record)
         #expect(store.load() == [record])
