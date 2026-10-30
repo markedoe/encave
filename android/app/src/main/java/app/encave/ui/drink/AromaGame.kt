@@ -96,6 +96,7 @@ fun AromaGameSheet(wine: Wine, bottleId: UUID?, onDismiss: () -> Unit, onCopy: (
     var guessesStructure by rememberSaveable { mutableStateOf(false) }
     val structure = remember { TastingFormState(Tasting()) }
     var result by remember { mutableStateOf<AromaGameRecord?>(null) }
+    var level by remember { mutableStateOf<Palate.Level?>(null) }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(
             Modifier.testTag("game.sheet").verticalScroll(rememberScrollState()).padding(horizontal = Dimens.xl).padding(bottom = Dimens.l)
@@ -109,7 +110,7 @@ fun AromaGameSheet(wine: Wine, bottleId: UUID?, onDismiss: () -> Unit, onCopy: (
             Text(wine.displayName, style = MaterialTheme.typography.headlineSmall.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Serif))
             val shown = result
             if (shown != null) {
-                AromaGameResult(shown)
+                AromaGameResult(shown, level)
                 if (onCopy != null) {
                     OutlinedButton(onClick = { onCopy(shown.guesses, shown.structure); onDismiss() }, modifier = Modifier.fillMaxWidth().testTag("game.copy")) {
                         Text(stringResource(R.string.game_copy))
@@ -159,6 +160,7 @@ fun AromaGameSheet(wine: Wine, bottleId: UUID?, onDismiss: () -> Unit, onCopy: (
                         expected = profile.aromas.orEmpty(), expectedStructure = profile.structure.orEmpty(),
                     )
                     store.add(record)
+                    level = Palate.of(store.load(), Instant.now()).level
                     result = record
                 },
                 enabled = picks.isNotEmpty(),
@@ -174,15 +176,25 @@ fun AromaGameSheet(wine: Wine, bottleId: UUID?, onDismiss: () -> Unit, onCopy: (
 
 /** The score of a game: points, accuracy, and each aroma and level. */
 @Composable
-fun AromaGameResult(record: AromaGameRecord) {
+fun AromaGameResult(record: AromaGameRecord, level: Palate.Level? = null) {
     val score = record.score
     val resources = LocalResources.current
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
-        Text(
-            pluralStringResource(R.plurals.game_points, score.points, score.points),
-            style = MaterialTheme.typography.displaySmall, modifier = Modifier.testTag("game.points"),
-        )
-        Text(stringResource(R.string.game_accuracy, percent(score.accuracy)), style = MaterialTheme.typography.titleMedium)
+        // Big enough to show across the table.
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Dimens.xs)) {
+            Text(
+                pluralStringResource(R.plurals.game_points, score.points, score.points),
+                style = MaterialTheme.typography.displayLarge, modifier = Modifier.testTag("game.points"),
+            )
+            if (level != null) {
+                Text(stringResource(level.labelRes), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.testTag("game.level"))
+            }
+            Text(
+                stringResource(R.string.game_found, score.exact.size, score.exact.size + score.family.size + score.missed.size),
+                style = MaterialTheme.typography.headlineSmall,
+            )
+            Text(stringResource(R.string.game_accuracy, percent(score.accuracy)), style = MaterialTheme.typography.titleMedium)
+        }
         @Composable
         fun line(icon: ImageVector, text: String, points: Int?) {
             Row(verticalAlignment = Alignment.CenterVertically) {

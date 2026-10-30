@@ -14,6 +14,8 @@ struct AromaGameView: View {
     @State private var levels: [String: Int] = [:]
     @State private var guessesStructure = false
     @State private var result: AromaGameRecord?
+    /// The level reached with this game, shown with its score.
+    @State private var level: Palate.Level?
 
     var body: some View {
         NavigationStack {
@@ -21,7 +23,7 @@ struct AromaGameView: View {
                 if let wine = model.cellar.wines[wineID], let profile = wine.expectedOrBundledProfile {
                     Form {
                         if let result {
-                            AromaGameResultSections(record: result)
+                            AromaGameResultSections(record: result, level: level)
                             if let copyToTasting {
                                 Section {
                                     Button("Copy Guesses into the Tasting Note", systemImage: "square.and.pencil") {
@@ -137,7 +139,9 @@ struct AromaGameView: View {
         let record = AromaGameRecord(wineID: wineID, bottleID: bottleID, date: Date(), guesses: picks,
                                      structure: guessesStructure ? levels : [:], expected: profile.aromas ?? [],
                                      expectedStructure: profile.structure ?? [:])
-        AromaGameStore().add(record)
+        let store = AromaGameStore()
+        store.add(record)
+        level = Palate(records: store.load(), today: Date()).level
         withAnimation { result = record }
     }
 }
@@ -145,21 +149,36 @@ struct AromaGameView: View {
 /// The score of a game: points, accuracy, and each aroma and level.
 struct AromaGameResultSections: View {
     let record: AromaGameRecord
+    /// The player's level with this game (My palate).
+    var level: Palate.Level?
 
     var body: some View {
         let score = record.score
+        // Big enough to show across the table.
         Section {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(spacing: 8) {
                 let points = score.points
                 Text("\(points) points")
-                    .font(.largeTitle.weight(.bold))
+                    .font(.system(size: 64, weight: .heavy, design: .rounded))
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
                     .accessibilityIdentifier("game.points")
+                if let level {
+                    Label { Text(level.title) } icon: { Image(systemName: "medal") }
+                        .font(.title.weight(.semibold))
+                        .accessibilityIdentifier("game.level")
+                }
+                let found = score.exact.count, expected = score.exact.count + score.family.count + score.missed.count
+                Text("\(found) of \(expected) aromas found")
+                    .font(.title2)
                 let accuracyLabel = (Double(score.accuracy) / 100).formatted(.percent.precision(.fractionLength(0)))
                 Text("Accuracy: \(accuracyLabel)")
                     .font(.title3)
                     .foregroundStyle(.secondary)
             }
-            .padding(.vertical, 4)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
             .accessibilityElement(children: .combine)
         }
         if !score.exact.isEmpty {
