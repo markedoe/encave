@@ -105,6 +105,8 @@ data class Wine(
     val closure: String? = null,
     /** Critics' and guides' scores and awards, as typed. Null rather than empty. */
     val criticScores: List<CriticScore>? = null,
+    /** What to expect when tasting it, from the AI or kept from the bundled profiles; null shows the bundled profile ([expectedOrBundledProfile]). */
+    val expectedProfile: ExpectedProfile? = null,
     /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
     @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {

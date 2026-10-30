@@ -86,6 +86,9 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     public var criticScores: [CriticScore]? {
         didSet { if criticScores?.isEmpty == true { criticScores = nil } }
     }
+    /// What to expect when tasting it, from the AI or kept from the bundled profiles; nil
+    /// shows the bundled profile (`expectedOrBundledProfile`).
+    public var expectedProfile: ExpectedProfile?
     /// Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1).
     /// Part of equality, so a merge that only brings them in is still saved.
     public var unknownFields = UnknownFields()
@@ -95,7 +98,7 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         case photoID, barcodes, tags, extraPhotoIDs, currentPrice, currentPriceCurrency, currentPriceDate
         case coverPhotoID, attachments, aiCompletedAt, labelFrame
         case abv, classification, lieuDit, dosage, sweetness, grapeShares, ageing, farming, farmingCertified, closure
-        case criticScores
+        case criticScores, expectedProfile
     }
 
     public init(
@@ -154,6 +157,7 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         farmingCertified = farming != nil && certified == true ? true : nil
         closure = Tasting.id(try c.decodeIfPresent(String.self, forKey: .closure))
         criticScores = try c.decodeIfPresent([CriticScore].self, forKey: .criticScores).flatMap { $0.isEmpty ? nil : $0 }
+        expectedProfile = try c.decodeIfPresent(ExpectedProfile.self, forKey: .expectedProfile)
         unknownFields = try UnknownFields(from: decoder, known: CodingKeys.self)
     }
 
@@ -193,6 +197,7 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         try c.encodeIfPresent(farming != nil && farmingCertified == true ? true : nil, forKey: .farmingCertified)
         try c.encodeIfPresent(closure, forKey: .closure)
         try c.encodeIfPresent(criticScores, forKey: .criticScores)
+        try c.encodeIfPresent(expectedProfile, forKey: .expectedProfile)
         try unknownFields.encode(to: encoder, known: CodingKeys.self)
     }
 

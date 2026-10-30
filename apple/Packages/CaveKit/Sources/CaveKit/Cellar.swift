@@ -754,6 +754,7 @@ public extension Cellar {
         into.ageing = into.ageing ?? from.ageing
         if into.farming == nil { into.farming = from.farming; into.farmingCertified = from.farmingCertified }
         into.closure = into.closure ?? from.closure
+        into.expectedProfile = into.expectedProfile ?? from.expectedProfile
         wines[target] = into
         wines[source] = nil
     }

@@ -7,6 +7,9 @@ import SwiftUI
 struct GuidedTastingRows: View {
     @Binding var draft: TastingDraft
     let color: WineColor?
+    /// What to expect from the wine, behind a disclosure so it does not lead the taster.
+    var expected: ExpectedProfile?
+    @State private var showsExpected = false
     @State private var showsAllHues = false
     @State private var showsAllAromas = false
     @State private var aromaQuery = ""
@@ -17,6 +20,14 @@ struct GuidedTastingRows: View {
         hueRow
 
         GuidedHeader(title: "Aromas")
+        if let expected, !(expected.aromas ?? []).isEmpty || expected.structure != nil {
+            DisclosureGroup(isExpanded: $showsExpected) {
+                ExpectedProfileRows(profile: expected, compact: true)
+            } label: {
+                Label(showsExpected ? LocalizedStringKey("What to expect") : LocalizedStringKey("Show What to Expect"), systemImage: "eye")
+                    .accessibilityIdentifier("tasting.showExpected")
+            }
+        }
         TextField("Search Aromas", text: $aromaQuery, prompt: Text("Cherry, vanilla, leather…"))
             .plainInput()
             .accessibilityIdentifier("tasting.aromaSearch")

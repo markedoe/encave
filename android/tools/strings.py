@@ -1880,6 +1880,30 @@ S += [("level_feminine_" + ident, en, fr) for ident, en, fr in LEVEL_FEMININE]
 # AI estimates, expected profiles, web completion and the aroma game.
 S += [
  ("ai_estimated", "Estimated by AI", "Estimé par l’IA"),
+ ('expected_title', 'What to expect', 'À quoi s’attendre'),
+ ('expected_none', 'Nothing bundled matches this wine yet. Add its grapes, appellation or style, or ask the AI.', 'Aucun profil fourni ne correspond encore à ce vin. Ajoutez ses cépages, son appellation ou son style, ou demandez à l’IA.'),
+ ('game_title', 'Guess the aromas', 'Devinez les arômes'),
+ ('expected_asking', 'Asking the AI…', 'Question posée à l’IA…'),
+ ('expected_ask_again', 'Ask again', 'Demander à nouveau'),
+ ('expected_ask', 'What to expect', 'À quoi s’attendre'),
+ ('expected_use_typical', 'Use the typical profile', 'Revenir au profil type'),
+ ('expected_footer_ai', 'What to expect sends only the producer, name, appellation, vintage, colour and grapes to the AI models set in Settings, never the photo, notes, prices or places.', 'À quoi s’attendre envoie seulement le producteur, le nom, l’appellation, le millésime, la couleur et les cépages aux modèles d’IA choisis dans les Réglages, jamais la photo, les notes, les prix ni les lieux.'),
+ ('expected_footer_bundled', 'Typical of the appellation, grape or style, bundled with Encave: nothing is sent.', 'Typique de l’appellation, du cépage ou du style, fourni avec Encave : rien n’est envoyé.'),
+ ('expected_goes_with', 'Goes with', 'Se marie avec'),
+ ('expected_source_bundled', 'Typical profile, bundled with Encave', 'Profil type, fourni avec Encave'),
+ ('expected_source_web', 'From the web, by %1$s · %2$s', 'D’après le web, par %1$s · %2$s'),
+ ('expected_source_ai', 'Estimated by %1$s · %2$s', 'Estimé par %1$s · %2$s'),
+ ('expected_show', 'Show what to expect', 'Voir ce qui est attendu'),
+ ('expected_hide', 'Hide what to expect', 'Masquer ce qui est attendu'),
+ ('expected_ai_unknown', 'The AI does not know this wine well enough.', 'L’IA ne connaît pas assez ce vin.'),
+ ('expected_removed', 'Back to the typical profile', 'Retour au profil type'),
+ ('expected_saved', 'What to expect saved', 'À quoi s’attendre enregistré'),
+ ('comparison_title', 'Compared with what to expect', 'Comparé à ce qui est attendu'),
+ ('comparison_found', 'You found %1$d of %2$d expected aromas', 'Vous avez trouvé %1$d des %2$d arômes attendus'),
+ ('comparison_matched', 'Found', 'Trouvés'),
+ ('comparison_missed', 'Not found this time', 'Pas trouvés cette fois'),
+ ('comparison_extra', 'Also found', 'Trouvés en plus'),
+ ('comparison_extra_footer', 'Aromas you found that were not expected: every bottle and every palate is different.', 'Les arômes trouvés qui n’étaient pas attendus : chaque bouteille et chaque palais sont différents.'),
 ]
 
 

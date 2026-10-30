@@ -47,6 +47,8 @@ struct WineDraft: Equatable {
     /// (`LabelRequest.sourceKeys`), with the value it filled: marked "Estimated by AI"
     /// while the field still holds it. Never saved.
     var aiEstimates: [String: String] = [:]
+    /// What to expect, from the AI's reading of the label; not edited in the form, but kept.
+    var expectedProfile: ExpectedProfile?
 
     init() {}
 
@@ -83,6 +85,7 @@ struct WineDraft: Equatable {
         farmingCertified = wine.farmingCertified == true
         closure = wine.closure
         criticScores = wine.criticScores
+        expectedProfile = wine.expectedProfile
     }
 
     /// The grapes as listed, each once, in the order typed.
@@ -179,6 +182,7 @@ struct WineDraft: Equatable {
         wine.farmingCertified = farming != nil && farmingCertified ? true : nil
         wine.closure = closure
         wine.criticScores = criticScores
+        wine.expectedProfile = expectedProfile
         return wine
     }
 }

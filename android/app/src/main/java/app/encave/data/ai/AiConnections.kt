@@ -1,5 +1,9 @@
 package app.encave.data.ai
 
+import app.encave.core.AiWebSearch
+import kotlinx.serialization.json.putJsonObject
+import kotlinx.serialization.json.putJsonArray
+
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import java.util.UUID
@@ -32,9 +36,25 @@ data class AiConnection(
     val baseUrl: String = "",
     /** OpenRouter only. False (the default): requests refuse providers that keep or train on data. */
     val allowsDataCollection: Boolean = false,
+    /**
+     * Off by default: "Allow web search", for a provider whose API searches the web itself
+     * ([webSearch]). Used only to complete a saved wine from the web, never for a label.
+     */
+    val allowsWebSearch: Boolean = false,
 ) {
     constructor(provider: AiProvider, name: String = "", baseUrl: String = "", allowsDataCollection: Boolean = false) :
         this(UUID.randomUUID().toString(), provider.raw, name, baseUrl, allowsDataCollection)
+
+    /** How this connection's API searches the web, null when it cannot: by its provider, at the provider's own address. */
+    val webSearch: app.encave.core.AiWebSearch.Kind?
+        get() {
+            val kind = provider.webSearch ?: return null
+            fun host(url: String) = runCatching { java.net.URI(url).host?.lowercase() }.getOrNull().orEmpty()
+            return if (host(effectiveBaseUrl) == host(provider.defaultBaseUrl)) kind else null
+        }
+
+    /** Web search is allowed and possible. */
+    val searchesWeb: Boolean get() = allowsWebSearch && webSearch != null
 
     /** A provider of a newer version is left out when the configuration is read. */
     val provider: AiProvider get() = AiProvider.fromRaw(providerRaw) ?: AiProvider.Local
@@ -319,4 +339,92 @@ object AiRequestBody {
     }
 
     internal fun hasArchitecture(items: JsonArray) = items.any { (it as? JsonObject)?.get("architecture") != null }
+
+    /**
+     * A Chat Completions request with the prompt and the photo (none for a question about the
+     * wine's identity); [format] is the response_format, null to send none. With [webSearch],
+     * through OpenRouter only, its web plugin. As CaveKit's `AIRequestBody.chatCompletions`.
+     */
+    fun chatCompletions(connection: AiConnection, model: String, prompt: String, jpegBase64: String?, format: JsonObject?, webSearch: Boolean = false): JsonObject =
+        buildJsonObject {
+            put("model", model)
+            if (format != null) put("response_format", format)
+            openRouterProvider(connection)?.let { put("provider", it) }
+            if (webSearch && connection.webSearch == AiWebSearch.Kind.OpenRouterPlugin) {
+                putJsonArray("plugins") { add(buildJsonObject { put("id", "web"); put("max_results", 5) }) }
+            }
+            putJsonArray("messages") {
+                add(buildJsonObject {
+                    put("role", "user")
+                    putJsonArray("content") {
+                        add(buildJsonObject { put("type", "text"); put("text", prompt) })
+                        if (jpegBase64 != null) {
+                            add(buildJsonObject {
+                                put("type", "image_url")
+                                putJsonObject("image_url") { put("url", "data:image/jpeg;base64,$jpegBase64") }
+                            })
+                        }
+                    }
+                })
+            }
+        }
+
+    /**
+     * The Anthropic Messages request: the photo when there is one, then the prompt. With
+     * [webSearch], the web search tool (at most 5 searches) and no output format, the JSON
+     * object asked in the prompt instead. As CaveKit's `AIRequestBody.claude`.
+     */
+    fun claude(model: String, prompt: String, schema: JsonObject, jpegBase64: String?, webSearch: Boolean, effort: Boolean, fallbacks: Boolean): JsonObject =
+        buildJsonObject {
+            put("model", model)
+            put("max_tokens", 8000)
+            if (fallbacks) put("fallbacks", "default")
+            if (!webSearch || effort) {
+                putJsonObject("output_config") {
+                    // Reading a label is a simple task.
+                    if (effort) put("effort", "low")
+                    if (!webSearch) {
+                        putJsonObject("format") {
+                            put("type", "json_schema")
+                            put("schema", schema)
+                        }
+                    }
+                }
+            }
+            if (webSearch) {
+                putJsonArray("tools") {
+                    add(buildJsonObject { put("type", "web_search_20250305"); put("name", "web_search"); put("max_uses", 5) })
+                }
+            }
+            putJsonArray("messages") {
+                add(buildJsonObject {
+                    put("role", "user")
+                    putJsonArray("content") {
+                        if (jpegBase64 != null) {
+                            add(buildJsonObject {
+                                put("type", "image")
+                                putJsonObject("source") {
+                                    put("type", "base64")
+                                    put("media_type", "image/jpeg")
+                                    put("data", jpegBase64)
+                                }
+                            })
+                        }
+                        add(buildJsonObject { put("type", "text"); put("text", if (webSearch) AiWebSearch.prompt(prompt, schema) else prompt) })
+                    }
+                })
+            }
+        }
+
+    /** The Responses request of OpenAI and xAI with their web search tool: text only (never a photo). */
+    fun responses(model: String, prompt: String, schema: JsonObject): JsonObject = buildJsonObject {
+        put("model", model)
+        putJsonArray("input") {
+            add(buildJsonObject {
+                put("role", "user")
+                putJsonArray("content") { add(buildJsonObject { put("type", "input_text"); put("text", AiWebSearch.prompt(prompt, schema)) }) }
+            })
+        }
+        putJsonArray("tools") { add(buildJsonObject { put("type", "web_search") }) }
+    }
 }

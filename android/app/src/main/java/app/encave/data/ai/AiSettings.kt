@@ -39,6 +39,19 @@ enum class AiProvider(
 
     val usesAnthropicApi: Boolean get() = this == Anthropic
 
+    /**
+     * How the provider's API searches the web itself, null when it does not (or not in a way
+     * Encave uses): Claude's web search tool, OpenRouter's web plugin, and the web search tool
+     * of the Responses API of OpenAI and xAI. As CaveKit's `AIProvider.webSearch`.
+     */
+    val webSearch: app.encave.core.AiWebSearch.Kind?
+        get() = when (this) {
+            Anthropic -> app.encave.core.AiWebSearch.Kind.AnthropicTool
+            OpenRouter -> app.encave.core.AiWebSearch.Kind.OpenRouterPlugin
+            OpenAi, Xai -> app.encave.core.AiWebSearch.Kind.ResponsesTool
+            else -> null
+        }
+
     /** Ollama has its own API (structured outputs, list of models that read images). */
     val usesOllamaApi: Boolean get() = this == Ollama
 

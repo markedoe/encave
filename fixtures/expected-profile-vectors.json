@@ -1,0 +1,511 @@
+{
+ "about": "Shared vectors of the expected profile (docs/SYNC.md §1): 'read' is how wine.expectedProfile is read and written back (unknown keys kept), 'lookup' the bundled profile chosen for a wine (fixtures/expected-profiles.json), 'comparison' the aromas found against those expected. Read by ExpectedProfileTests.swift and ExpectedProfileTest.kt. 'answers' is how an AI answer's \"expected\" object is read, with source \"ai\", model \"m\" and language \"fr\" (the date left out of the comparison): ids neither app knows, levels below 1 and temperatures of 0 or less dropped, at most 8 aromas and 6 pairings.",
+ "read": [
+  {
+   "note": "normalized: ids once, levels into 1…5, temperatures swapped, empty values left out",
+   "input": {
+    "aromas": [
+     "fruit.redCherry",
+     "",
+     "fruit.redCherry",
+     "fruit.newBerry"
+    ],
+    "structure": {
+     "acidity": 7,
+     "tannin": 0,
+     "body": 3,
+     "": 2
+    },
+    "servingMin": 18,
+    "servingMax": 15,
+    "decantMinutes": 30,
+    "pairings": [
+     "game",
+     "game",
+     "newDish"
+    ],
+    "text": "",
+    "language": "",
+    "source": "ai",
+    "model": "",
+    "bundled": ""
+   },
+   "output": {
+    "aromas": [
+     "fruit.redCherry",
+     "fruit.newBerry"
+    ],
+    "structure": {
+     "acidity": 5,
+     "tannin": 1,
+     "body": 3
+    },
+    "servingMin": 15,
+    "servingMax": 18,
+    "decantMinutes": 30,
+    "pairings": [
+     "game",
+     "newDish"
+    ],
+    "source": "ai"
+   }
+  },
+  {
+   "note": "out of range values dropped, unknown keys kept",
+   "input": {
+    "servingMin": -2,
+    "servingMax": 40,
+    "decantMinutes": 2000,
+    "aromas": [],
+    "pairings": [],
+    "structure": {},
+    "source": "web",
+    "text": "Fresh.",
+    "language": "fr",
+    "model": "m",
+    "sources": [
+     {
+      "url": "https://example.org"
+     }
+    ],
+    "future": {
+     "a": 1
+    }
+   },
+   "output": {
+    "source": "web",
+    "text": "Fresh.",
+    "language": "fr",
+    "model": "m",
+    "sources": [
+     {
+      "url": "https://example.org"
+     }
+    ],
+    "future": {
+     "a": 1
+    }
+   }
+  },
+  {
+   "note": "no source: empty, written back",
+   "input": {
+    "aromas": [
+     "oak.vanilla"
+    ],
+    "bundled": "merlot"
+   },
+   "output": {
+    "aromas": [
+     "oak.vanilla"
+    ],
+    "bundled": "merlot",
+    "source": ""
+   }
+  },
+  {
+   "note": "a bundled profile as stored",
+   "input": {
+    "aromas": [
+     "fruit.plum"
+    ],
+    "structure": {
+     "tannin": 3
+    },
+    "servingMin": 15,
+    "servingMax": 17,
+    "decantMinutes": 0,
+    "pairings": [
+     "redMeat"
+    ],
+    "source": "bundled",
+    "bundled": "merlot"
+   },
+   "output": {
+    "aromas": [
+     "fruit.plum"
+    ],
+    "structure": {
+     "tannin": 3
+    },
+    "servingMin": 15,
+    "servingMax": 17,
+    "decantMinutes": 0,
+    "pairings": [
+     "redMeat"
+    ],
+    "source": "bundled",
+    "bundled": "merlot"
+   }
+  }
+ ],
+ "lookup": [
+  {
+   "note": "appellation",
+   "wine": {
+    "color": "red",
+    "appellation": "Pauillac",
+    "region": "Bordeaux",
+    "grapes": [
+     "Cabernet Sauvignon",
+     "Merlot"
+    ],
+    "name": "Test"
+   },
+   "profile": "leftBankBordeaux"
+  },
+  {
+   "note": "appellation with accents, hyphens and a longer name",
+   "wine": {
+    "color": "red",
+    "appellation": "Saint-Émilion Grand Cru",
+    "name": "Test"
+   },
+   "profile": "rightBankBordeaux"
+  },
+  {
+   "note": "appellation first, then region",
+   "wine": {
+    "color": "red",
+    "appellation": "Fleurie",
+    "region": "Bourgogne",
+    "name": "Test"
+   },
+   "profile": "beaujolais"
+  },
+  {
+   "note": "region when the appellation is unknown",
+   "wine": {
+    "color": "red",
+    "appellation": "Vin de France",
+    "region": "Rioja",
+    "name": "Test"
+   },
+   "profile": "rioja"
+  },
+  {
+   "note": "same appellation, other color",
+   "wine": {
+    "color": "white",
+    "appellation": "Bourgogne Hautes-Côtes de Nuits",
+    "name": "Test"
+   },
+   "profile": "whiteBurgundy"
+  },
+  {
+   "note": "same appellation, no color: the first listed",
+   "wine": {
+    "appellation": "Bourgogne",
+    "name": "Test"
+   },
+   "profile": "redBurgundy"
+  },
+  {
+   "note": "an entry of another color is skipped",
+   "wine": {
+    "color": "rose",
+    "appellation": "Bandol",
+    "name": "Test"
+   },
+   "profile": "provenceRose"
+  },
+  {
+   "note": "Bandol red",
+   "wine": {
+    "color": "red",
+    "appellation": "Bandol",
+    "name": "Test"
+   },
+   "profile": "bandol"
+  },
+  {
+   "note": "a prefix that is not a whole word does not match",
+   "wine": {
+    "color": "red",
+    "appellation": "Margauxville",
+    "name": "Test"
+   },
+   "profile": "red"
+  },
+  {
+   "note": "blend of two grapes",
+   "wine": {
+    "color": "red",
+    "grapes": [
+     "Merlot",
+     "Cabernet Sauvignon",
+     "Cabernet Franc"
+    ],
+    "name": "Test"
+   },
+   "profile": "bordeauxBlend"
+  },
+  {
+   "note": "blend with a synonym",
+   "wine": {
+    "color": "red",
+    "grapes": [
+     "Shiraz",
+     "Garnacha"
+    ],
+    "name": "Test"
+   },
+   "profile": "rhoneBlend"
+  },
+  {
+   "note": "main grape by share",
+   "wine": {
+    "color": "red",
+    "grapes": [
+     "Merlot",
+     "Malbec"
+    ],
+    "grapeShares": {
+     "Merlot": 20,
+     "Malbec": 80
+    },
+    "name": "Test"
+   },
+   "profile": "malbec"
+  },
+  {
+   "note": "main grape: the first when no share",
+   "wine": {
+    "color": "white",
+    "grapes": [
+     "Riesling",
+     "Pinot Gris"
+    ],
+    "name": "Test"
+   },
+   "profile": "riesling"
+  },
+  {
+   "note": "grape with accents",
+   "wine": {
+    "color": "white",
+    "grapes": [
+     "Grüner Veltliner"
+    ],
+    "name": "Test"
+   },
+   "profile": "gruner"
+  },
+  {
+   "note": "grape of another color: the color's fallback",
+   "wine": {
+    "color": "rose",
+    "grapes": [
+     "Pinot Noir"
+    ],
+    "name": "Test"
+   },
+   "profile": "rose"
+  },
+  {
+   "note": "grape without color",
+   "wine": {
+    "grapes": [
+     "Nebbiolo"
+    ],
+    "name": "Test"
+   },
+   "profile": "nebbiolo"
+  },
+  {
+   "note": "unknown grape, by color",
+   "wine": {
+    "color": "orange",
+    "grapes": [
+     "Rkatsiteli"
+    ],
+    "name": "Test"
+   },
+   "profile": "orange"
+  },
+  {
+   "note": "Champagne by region",
+   "wine": {
+    "color": "sparkling",
+    "region": "Champagne",
+    "name": "Test"
+   },
+   "profile": "champagne"
+  },
+  {
+   "note": "sparkling Chardonnay and Pinot Noir",
+   "wine": {
+    "color": "sparkling",
+    "grapes": [
+     "Chardonnay",
+     "Pinot Noir"
+    ],
+    "name": "Test"
+   },
+   "profile": "champagneBlend"
+  },
+  {
+   "note": "Sauternes as dessert",
+   "wine": {
+    "color": "dessert",
+    "appellation": "Sauternes",
+    "name": "Test"
+   },
+   "profile": "sauternes"
+  },
+  {
+   "note": "Port",
+   "wine": {
+    "color": "fortified",
+    "appellation": "Porto",
+    "region": "Douro",
+    "name": "Test"
+   },
+   "profile": "port"
+  },
+  {
+   "note": "nothing to go by",
+   "wine": {
+    "name": "Mystery"
+   },
+   "profile": null
+  },
+  {
+   "note": "nothing but an unknown grape and no color",
+   "wine": {
+    "grapes": [
+     "Xinomavro"
+    ],
+    "name": "Test"
+   },
+   "profile": null
+  },
+  {
+   "note": "Côtes du Rhône Villages",
+   "wine": {
+    "color": "red",
+    "appellation": "Côtes du Rhône Villages",
+    "name": "Test"
+   },
+   "profile": "southernRhone"
+  },
+  {
+   "note": "English region name",
+   "wine": {
+    "color": "white",
+    "region": "Burgundy",
+    "name": "Test"
+   },
+   "profile": "whiteBurgundy"
+  }
+ ],
+ "comparison": [
+  {
+   "expected": [
+    "fruit.redCherry",
+    "fruit.raspberry",
+    "earth.forestFloor",
+    "floral.violet",
+    "oak.vanilla",
+    "spice.clove"
+   ],
+   "found": [
+    "fruit.raspberry",
+    "oak.smoke",
+    "fruit.redCherry",
+    "earth.forestFloor",
+    "floral.violet",
+    "oak.smoke"
+   ],
+   "matched": [
+    "fruit.redCherry",
+    "fruit.raspberry",
+    "earth.forestFloor",
+    "floral.violet"
+   ],
+   "missed": [
+    "oak.vanilla",
+    "spice.clove"
+   ],
+   "extra": [
+    "oak.smoke"
+   ]
+  },
+  {
+   "expected": [],
+   "found": [
+    "fruit.lemon"
+   ],
+   "matched": [],
+   "missed": [],
+   "extra": [
+    "fruit.lemon"
+   ]
+  },
+  {
+   "expected": [
+    "fruit.lemon",
+    "fruit.lemon"
+   ],
+   "found": [],
+   "matched": [],
+   "missed": [
+    "fruit.lemon"
+   ],
+   "extra": []
+  }
+ ],
+ "answers": [
+  {
+   "note": "a full answer",
+   "answer": "{\"expected\":{\"aromas\":[\"fruit.redCherry\",\"fruit.unknown\",\"earth.forestFloor\"],\"structure\":{\"sweetness\":1,\"acidity\":4,\"tannin\":0,\"body\":3,\"alcohol\":3,\"length\":4,\"colour\":2},\"servingMin\":15,\"servingMax\":17,\"decantMinutes\":0,\"pairings\":[\"poultry\",\"barbecue\",\"game\"],\"text\":\"  Soyeux et frais.  \"}}",
+   "profile": {
+    "aromas": [
+     "fruit.redCherry",
+     "earth.forestFloor"
+    ],
+    "structure": {
+     "sweetness": 1,
+     "acidity": 4,
+     "body": 3,
+     "alcohol": 3,
+     "length": 4
+    },
+    "servingMin": 15,
+    "servingMax": 17,
+    "decantMinutes": 0,
+    "pairings": [
+     "poultry",
+     "game"
+    ],
+    "text": "Soyeux et frais.",
+    "language": "fr",
+    "source": "ai",
+    "model": "m"
+   }
+  },
+  {
+   "note": "inside a label answer, with text around and types a model got wrong",
+   "answer": "Sure: {\"name\":\"X\",\"expected\":{\"aromas\":\"fruit.plum\",\"structure\":{\"acidity\":\"high\",\"body\":4.4},\"servingMin\":0,\"servingMax\":18,\"decantMinutes\":60,\"pairings\":[],\"text\":\"\"}} done",
+   "profile": {
+    "structure": {
+     "body": 4
+    },
+    "servingMax": 18,
+    "decantMinutes": 60,
+    "source": "ai",
+    "model": "m"
+   }
+  },
+  {
+   "note": "nothing known",
+   "answer": "{\"expected\":{\"aromas\":[],\"structure\":{\"acidity\":0},\"servingMin\":0,\"servingMax\":0,\"pairings\":[],\"text\":\"\"}}",
+   "profile": null
+  },
+  {
+   "note": "no expected object",
+   "answer": "{\"name\":\"X\"}",
+   "profile": null
+  }
+ ]
+}

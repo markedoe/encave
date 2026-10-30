@@ -106,14 +106,18 @@ public struct AIConnection: Codable, Equatable, Identifiable, Sendable {
     /// OpenRouter only. Off (the default): every request asks OpenRouter to skip the
     /// providers that keep or train on the data it is sent.
     public var allowsDataCollection: Bool
+    /// Off by default: "Allow web search", for a provider whose API searches the web itself
+    /// (`webSearch`). Used only to complete a saved wine from the web, never for a label.
+    public var allowsWebSearch: Bool
 
     public init(id: UUID = UUID(), provider: AIProvider, name: String = "", baseURL: String = "",
-                allowsDataCollection: Bool = false) {
+                allowsDataCollection: Bool = false, allowsWebSearch: Bool = false) {
         self.id = id
         self.provider = provider
         self.name = name
         self.baseURL = baseURL
         self.allowsDataCollection = allowsDataCollection
+        self.allowsWebSearch = allowsWebSearch
     }
 
     public init(from decoder: Decoder) throws {
@@ -123,7 +127,20 @@ public struct AIConnection: Codable, Equatable, Identifiable, Sendable {
         name = try c.decodeIfPresent(String.self, forKey: .name) ?? ""
         baseURL = try c.decodeIfPresent(String.self, forKey: .baseURL) ?? ""
         allowsDataCollection = try c.decodeIfPresent(Bool.self, forKey: .allowsDataCollection) ?? false
+        allowsWebSearch = try c.decodeIfPresent(Bool.self, forKey: .allowsWebSearch) ?? false
     }
+
+    /// How this connection's API searches the web, nil when it cannot: by its provider, at
+    /// the provider's own address (another server with the same API may not search).
+    public var webSearch: AIWebSearch.Kind? {
+        guard let kind = provider.webSearch else { return nil }
+        let host = URL(string: effectiveBaseURL)?.host?.lowercased() ?? ""
+        let usual = URL(string: provider.defaultBaseURL)?.host?.lowercased() ?? ""
+        return host == usual ? kind : nil
+    }
+
+    /// Web search is allowed and possible.
+    public var searchesWeb: Bool { allowsWebSearch && webSearch != nil }
 
     public var effectiveBaseURL: String {
         let trimmed = baseURL.trimmingCharacters(in: .whitespaces)
@@ -455,24 +472,59 @@ public enum AIRequestBody {
         connection.deniesDataCollection ? ["data_collection": "deny"] : nil
     }
 
-    /// A Chat Completions request with the prompt and the photo; `format` is the
-    /// response_format, nil to send none.
+    /// A Chat Completions request with the prompt and the photo (none for a question about
+    /// the wine's identity); `format` is the response_format, nil to send none. With
+    /// `webSearch`, through OpenRouter only, its web plugin (openrouter.ai/docs, web search).
     public static func chatCompletions(connection: AIConnection, model: String, prompt: String,
-                                       jpeg: Data, format: [String: Any]?) -> [String: Any] {
+                                       jpeg: Data?, format: [String: Any]?, webSearch: Bool = false) -> [String: Any] {
+        var content: [[String: Any]] = [["type": "text", "text": prompt]]
+        if let jpeg {
+            content.append(["type": "image_url", "image_url": ["url": "data:image/jpeg;base64,\(jpeg.base64EncodedString())"]])
+        }
         var body: [String: Any] = [
             "model": model,
-            "messages": [[
-                "role": "user",
-                "content": [
-                    ["type": "text", "text": prompt] as [String: Any],
-                    ["type": "image_url",
-                     "image_url": ["url": "data:image/jpeg;base64,\(jpeg.base64EncodedString())"]] as [String: Any],
-                ],
-            ] as [String: Any]],
+            "messages": [["role": "user", "content": content] as [String: Any]],
         ]
         if let format { body["response_format"] = format }
         if let provider = openRouterProvider(for: connection) { body["provider"] = provider }
+        if webSearch, connection.webSearch == .openRouterPlugin { body["plugins"] = [["id": "web", "max_results": 5]] }
         return body
+    }
+
+    /// The Anthropic Messages request: the photo when there is one, then the prompt. With
+    /// `webSearch`, the web search tool (at most 5 searches) and no output format, which the
+    /// search's citations do not go with: the prompt asks for the JSON object instead.
+    public static func claude(model: String, prompt: String, schema: [String: Any], jpeg: Data?, webSearch: Bool,
+                              effort: Bool, fallbacks: Bool) -> [String: Any] {
+        var content: [[String: Any]] = []
+        if let jpeg {
+            content.append(["type": "image",
+                            "source": ["type": "base64", "media_type": "image/jpeg", "data": jpeg.base64EncodedString()]])
+        }
+        content.append(["type": "text", "text": webSearch ? AIWebSearch.prompt(prompt, schema: schema) : prompt])
+        var body: [String: Any] = [
+            "model": model,
+            "max_tokens": 8000,
+            "messages": [["role": "user", "content": content] as [String: Any]],
+        ]
+        var output: [String: Any] = [:]
+        if !webSearch { output["format"] = ["type": "json_schema", "schema": schema] as [String: Any] }
+        // Reading a label is a simple task.
+        if effort { output["effort"] = "low" }
+        if !output.isEmpty { body["output_config"] = output }
+        if fallbacks { body["fallbacks"] = "default" }
+        if webSearch { body["tools"] = [["type": "web_search_20250305", "name": "web_search", "max_uses": 5]] }
+        return body
+    }
+
+    /// The Responses request of OpenAI and xAI with their web search tool: text only (never
+    /// a photo), the JSON object asked in the prompt.
+    public static func responses(model: String, prompt: String, schema: [String: Any]) -> [String: Any] {
+        [
+            "model": model,
+            "input": [["role": "user", "content": [["type": "input_text", "text": AIWebSearch.prompt(prompt, schema: schema)]]]],
+            "tools": [["type": "web_search"]],
+        ]
     }
 
     /// Of OpenRouter's model list, the models that read images

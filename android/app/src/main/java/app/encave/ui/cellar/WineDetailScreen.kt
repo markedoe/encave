@@ -147,6 +147,8 @@ fun WineDetailScreen(
     showMessages: Boolean = true,
 ) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
+    val aiConfiguration by viewModel.ai.configuration.collectAsStateWithLifecycle()
+    val askingExpected by viewModel.askingExpected.collectAsStateWithLifecycle()
     val id = remember(wineId) { runCatching { UUID.fromString(wineId) }.getOrNull() }
     val wine = id?.let { cellar.wines[it] }
     val back = onBack ?: { navigator.back() }
@@ -335,6 +337,13 @@ fun WineDetailScreen(
                 )
             }
             ServingAdvice.advice(wine, viewModel.year)?.let { advice -> item { Serving(advice, onEdit = { edit(WineFormField.Style) }) } }
+            item {
+                ExpectedProfileSection(
+                    wine, aiEnabled = aiConfiguration.isEnabled, asking = wine.id in askingExpected, language = viewModel.appLanguage,
+                    onAsk = { viewModel.askWhatToExpect(wine.id) },
+                    onUseTypical = { viewModel.setExpectedProfile(wine.id, null) },
+                )
+            }
             if (wine.currentPrice != null || webSearch.isEnabled) {
                 item {
                     ValueSection(

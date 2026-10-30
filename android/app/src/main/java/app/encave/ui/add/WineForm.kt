@@ -152,6 +152,9 @@ class WineFormState(
     /** Values filled automatically from the label; those may be replaced again, typed ones never. */
     private val autoFilled = mutableMapOf<String, Any>()
 
+    /** What to expect, from the AI's reading of the label; not edited in the form, but kept. */
+    var expectedProfile by mutableStateOf(initial?.expectedProfile)
+
     /**
      * The details the AI gave from its own knowledge ([app.encave.core.AiLabelSources] keys),
      * with the value it filled: marked "Estimated by AI" while the field still holds it.
@@ -249,6 +252,13 @@ class WineFormState(
             windowEnabled = true
             touched += "drinkWindow"
         }
+        // What to expect, unless the wine has one this reading did not fill.
+        analysis.expected?.let { expected ->
+            if (expectedProfile == null || expectedProfile == autoFilled["expected"]) {
+                expectedProfile = expected
+                autoFilled["expected"] = expected
+            }
+        }
         // What this answer filled is marked when the model estimated it, unmarked when read on the label.
         for (key in touched) {
             if (key in analysis.estimated) aiEstimates[key] = aiValue(key) else aiEstimates.remove(key)
@@ -299,6 +309,7 @@ class WineFormState(
                     f.abvText, f.classification, f.lieuDit, f.dosage, f.sweetness,
                     ArrayList(f.grapeShares.keys), ArrayList(f.grapeShares.values), ArrayList(f.ageing), f.farming, f.farmingCertified, f.closure,
                     ArrayList(f.aiEstimates.keys), ArrayList(f.aiEstimates.values),
+                    f.expectedProfile?.let { app.encave.core.CellarJson.json.encodeToString(app.encave.core.ExpectedProfile.serializer(), it) },
                 )
             },
             restore = { v ->
@@ -327,6 +338,7 @@ class WineFormState(
                         autoFilled[key] = when (key) {
                             "vintage" -> value.toInt()
                             "color" -> WineColor.fromRaw(value) ?: return@forEach
+                            "expected" -> return@forEach
                             else -> value
                         }
                     }
@@ -342,6 +354,9 @@ class WineFormState(
                     closure = v[31] as String?
                     aiEstimates.clear()
                     (v[32] as List<String>).zip(v[33] as List<String>).forEach { (key, value) -> aiEstimates[key] = value }
+                    expectedProfile = (v[34] as String?)?.let {
+                        runCatching { app.encave.core.CellarJson.json.decodeFromString(app.encave.core.ExpectedProfile.serializer(), it) }.getOrNull()
+                    }
                 }
             },
         )
@@ -351,7 +366,7 @@ class WineFormState(
     fun snapshot(): List<Any?> = listOf(
         name, producer, vintageText, color, region, country, appellation, grapes.toList(), grapeInput, notes,
         tags.toList(), tagInput, newPhoto != null, photoRemoved, manualWindow, windowEnabled, aiCompletedAt,
-        abvText, classification, lieuDit, dosage, sweetness, grapeShares, ageing, farming, farmingCertified, closure,
+        abvText, classification, lieuDit, dosage, sweetness, grapeShares, ageing, farming, farmingCertified, closure, expectedProfile,
     )
 
     fun addGrape() {
@@ -393,6 +408,7 @@ class WineFormState(
             farming = farming,
             farmingCertified = if (farming != null && farmingCertified) true else null,
             closure = closure,
+            expectedProfile = expectedProfile,
         )
     }
 }

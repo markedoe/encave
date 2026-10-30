@@ -11,8 +11,15 @@ import Foundation
 /// "Estimated by AI" (`LabelSources`). A detail the model is unsure of is left empty.
 public struct LabelRequest: Sendable, Equatable {
     public var findsLabel: Bool
+    /// The language of the person ("en", "fr"): the same request also asks what to expect
+    /// from the wine ("expected", `ExpectedRequest`), its short text in that language. Nil
+    /// does not ask it.
+    public var expectedLanguage: String?
 
-    public init(findsLabel: Bool) { self.findsLabel = findsLabel }
+    public init(findsLabel: Bool, expectedLanguage: String? = nil) {
+        self.findsLabel = findsLabel
+        self.expectedLanguage = expectedLanguage
+    }
 
     static let detailKeys = ["name", "producer", "vintage", "color", "appellation", "region", "country",
                              "grapes", "drinkFrom", "drinkUntil", "abv", "classification"]
@@ -44,6 +51,7 @@ public struct LabelRequest: Sendable, Equatable {
                     + "null if unknown.",
             ]
         }
+        if let expectedLanguage { lines += ExpectedRequest.lines(language: expectedLanguage) }
         lines += [
             "- sources: for each detail, \"label\" if you read it on the label, \"knowledge\" if it comes from what you "
                 + "know rather than from the label (an estimate), \"\" if you left it empty. drinkWindow is the source of "
@@ -81,11 +89,13 @@ public struct LabelRequest: Sendable, Equatable {
             properties["label_box"] = ["anyOf": [box, ["type": "null"]]]
             properties["label_angle"] = ["anyOf": [["type": "number"], ["type": "null"]]]
         }
+        if expectedLanguage != nil { properties["expected"] = ExpectedRequest.schema }
         return [
             "type": "object",
             "additionalProperties": false,
             // Strict schemas want every key listed: the label's place is null when not found.
-            "required": Self.detailKeys + ["sources"] + (findsLabel ? Self.labelKeys : []),
+            "required": Self.detailKeys + ["sources"] + (findsLabel ? Self.labelKeys : [])
+                + (expectedLanguage != nil ? ["expected"] : []),
             "properties": properties,
         ]
     }

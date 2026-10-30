@@ -23,6 +23,7 @@ fun LabelAnalysis.completing(wine: Wine): Wine {
         grapes = wine.grapes.ifEmpty { grapes.map { it.trim() }.filter { it.isNotEmpty() } },
         abv = wine.abv ?: abv?.let { java.math.BigDecimal(it.toString()).stripTrailingZeros() },
         classification = fill(wine.classification, classification),
+        expectedProfile = wine.expectedProfile ?: expected,
         // Where the label is, when the photo read is the wine's label photo.
         labelFrame = labelFrame?.takeIf { it.photoId == wine.photoId } ?: wine.labelFrame,
     )
@@ -53,6 +54,7 @@ fun Wine.completed(from: Wine, to: Wine): Wine = copy(
     grapes = if (grapes == from.grapes) to.grapes else grapes,
     abv = if (abv == from.abv) to.abv else abv,
     classification = if (classification == from.classification) to.classification else classification,
+    expectedProfile = if (expectedProfile == from.expectedProfile) to.expectedProfile else expectedProfile,
     drinkFrom = if (drinkFrom == from.drinkFrom) to.drinkFrom else drinkFrom,
     drinkUntil = if (drinkUntil == from.drinkUntil) to.drinkUntil else drinkUntil,
     aiCompletedAt = if (aiCompletedAt == from.aiCompletedAt) to.aiCompletedAt else aiCompletedAt,

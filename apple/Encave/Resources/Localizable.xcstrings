@@ -2837,6 +2837,16 @@
         }
       }
     },
+    "Also found": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trouvés en plus"
+          }
+        }
+      }
+    },
     "Amber": {
       "localizations": {
         "fr": {
@@ -3177,6 +3187,16 @@
         }
       }
     },
+    "Aromas you found that were not expected: every bottle and every palate is different.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les arômes trouvés qui n’étaient pas attendus : chaque bouteille et chaque palais sont différents."
+          }
+        }
+      }
+    },
     "Aromas: fruit, flowers, spices, wood…": {
       "localizations": {
         "fr": {
@@ -3193,6 +3213,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Demander"
+          }
+        }
+      }
+    },
+    "Ask Again": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demander à nouveau"
           }
         }
       }
@@ -3263,6 +3293,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Demander à votre cave avec Siri"
+          }
+        }
+      }
+    },
+    "Asking the AI…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Question posée à l’IA…"
           }
         }
       }
@@ -3393,6 +3433,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bouteilles du fond tête-bêche"
+          }
+        }
+      }
+    },
+    "Back to the typical profile": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retour au profil type"
           }
         }
       }
@@ -5043,6 +5093,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Comparer les codes"
+          }
+        }
+      }
+    },
+    "Compared with What to Expect": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comparé à ce qui est attendu"
           }
         }
       }
@@ -6797,6 +6857,16 @@
         }
       }
     },
+    "Estimated by %@ · %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimé par %@ · %@"
+          }
+        }
+      }
+    },
     "Estimated by AI": {
       "localizations": {
         "fr": {
@@ -7457,6 +7527,16 @@
         }
       }
     },
+    "From the web, by %@ · %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "D’après le web, par %@ · %@"
+          }
+        }
+      }
+    },
     "From your cellar": {
       "localizations": {
         "fr": {
@@ -7647,6 +7727,16 @@
         }
       }
     },
+    "Goes with": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se marie avec"
+          }
+        }
+      }
+    },
     "Gold": {
       "localizations": {
         "fr": {
@@ -7783,6 +7873,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Regroupez les vins à votre façon (cadeau, année de naissance, pour un ami) dans les **Tags** d’un vin. La Cave affiche une pastille par tag parmi les pastilles de filtre, après les styles : touchez-la pour ne voir que ces vins. La recherche trouve aussi les tags."
+          }
+        }
+      }
+    },
+    "Guess the Aromas": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Devinez les arômes"
           }
         }
       }
@@ -10639,6 +10739,16 @@
         }
       }
     },
+    "Not found this time": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas trouvés cette fois"
+          }
+        }
+      }
+    },
     "Not found yet": {
       "localizations": {
         "fr": {
@@ -10825,6 +10935,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Notes sur ce vin"
+          }
+        }
+      }
+    },
+    "Nothing bundled matches this wine yet. Add its grapes, appellation or style, or ask the AI.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun profil fourni ne correspond encore à ce vin. Ajoutez ses cépages, son appellation ou son style, ou demandez à l’IA."
           }
         }
       }
@@ -14711,6 +14831,16 @@
         }
       }
     },
+    "Show What to Expect": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voir ce qui est attendu"
+          }
+        }
+      }
+    },
     "Show Wine": {
       "localizations": {
         "fr": {
@@ -16057,6 +16187,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cette position est hors du rangement."
+          }
+        }
+      }
+    },
+    "The AI does not know this wine well enough.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’IA ne connaît pas assez ce vin."
           }
         }
       }
@@ -17731,6 +17871,26 @@
         }
       }
     },
+    "Typical of the appellation, grape or style, bundled with Encave: nothing is sent.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Typique de l’appellation, du cépage ou du style, fourni avec Encave : rien n’est envoyé."
+          }
+        }
+      }
+    },
+    "Typical profile, bundled with Encave": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profil type, fourni avec Encave"
+          }
+        }
+      }
+    },
     "Under **More details** in a tasting, a guided sheet as in a wine course: the intensity and hue of the wine, the aromas you find, as chips grouped by family, and its structure (sweetness, acidity, tannin, body, alcohol and length) from low to high. The aromas and hues of the wine's style come first; **More Aromas** shows the others, or search them by name. Tap a chosen aroma or level again to clear it. Everything is optional, and search in the Journal finds the aromas.": {
       "localizations": {
         "fr": {
@@ -17907,6 +18067,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Utiliser la photo d’étiquette"
+          }
+        }
+      }
+    },
+    "Use the Typical Profile": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revenir au profil type"
           }
         }
       }
@@ -18241,12 +18411,52 @@
         }
       }
     },
+    "What to Expect": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À quoi s’attendre"
+          }
+        }
+      }
+    },
+    "What to Expect sends only the producer, name, appellation, vintage, colour and grapes to the AI models set in Settings, never the photo, notes, prices or places.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À quoi s’attendre envoie seulement le producteur, le nom, l’appellation, le millésime, la couleur et les cépages aux modèles d’IA choisis dans les Réglages, jamais la photo, les notes, les prix ni les lieux."
+          }
+        }
+      }
+    },
     "What to Open Tonight": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Que boire ce soir"
+          }
+        }
+      }
+    },
+    "What to expect": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À quoi s’attendre"
+          }
+        }
+      }
+    },
+    "What to expect saved": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À quoi s’attendre enregistré"
           }
         }
       }
@@ -18803,6 +19013,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vous explorez la cave d’exemple"
+          }
+        }
+      }
+    },
+    "You found %lld of %lld expected aromas": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous avez trouvé %lld des %lld arômes attendus"
           }
         }
       }

@@ -69,6 +69,8 @@ import app.encave.data.ai.AiReading
 import app.encave.data.ai.AiPreferences
 import app.encave.data.ai.AiService
 import app.encave.data.ai.LabelAnalysis
+import app.encave.core.WineIdentity
+import app.encave.core.ExpectedProfile
 import app.encave.data.ai.completed
 import app.encave.data.ai.completing
 import app.encave.data.ai.sameDetails
@@ -884,7 +886,44 @@ class AppViewModel(
      */
     suspend fun analyzeLabel(jpeg: ByteArray, only: String? = null): Result<AiReading> {
         val findsLabel = preferences.studioLook.value
-        return runCatching { AiService.analyzeLabel(jpeg, ai.configuration.value, ai::apiKey, only, findsLabel) }
+        return runCatching { AiService.analyzeLabel(jpeg, ai.configuration.value, ai::apiKey, only, findsLabel, appLanguage) }
+    }
+
+    /** The language of the app ("en", "fr"), for the short text of what to expect. */
+    val appLanguage: String get() = if (java.util.Locale.getDefault().language == "fr") "fr" else "en"
+
+    /** Wines whose profile the AI is being asked for ("What to expect"). */
+    val askingExpected = MutableStateFlow<Set<UUID>>(emptySet())
+
+    /**
+     * "What to expect": asks the AI models in order, sending only the wine's identity
+     * (producer, name, appellation, vintage, colour, grapes), never its photo, notes, prices
+     * or places. The answer is kept with the wine, with Undo.
+     */
+    fun askWhatToExpect(wineId: UUID, only: String? = null) {
+        val wine = cellar.value.wines[wineId] ?: return
+        if (wineId in askingExpected.value) return
+        askingExpected.value = askingExpected.value + wineId
+        viewModelScope.launch {
+            val result = runCatching {
+                AiService.expectedProfile(WineIdentity(wine), appLanguage, ai.configuration.value, ai::apiKey, only)
+            }
+            askingExpected.value = askingExpected.value - wineId
+            result.onSuccess { (profile, _) ->
+                if (profile == null) return@onSuccess post(UiText.Res(R.string.expected_ai_unknown))
+                setExpectedProfile(wineId, profile)
+            }.onFailure { error -> if (error !is kotlinx.coroutines.CancellationException) post(aiErrorText(error)) }
+        }
+    }
+
+    /** Keeps [profile] with the wine (null: back to the bundled one), with Undo. */
+    fun setExpectedProfile(wineId: UUID, profile: ExpectedProfile?) {
+        val before = cellar.value.wines[wineId]?.expectedProfile
+        change<Unit>({
+            post(UiText.Res(if (profile == null) R.string.expected_removed else R.string.expected_saved)) {
+                change<Unit> { c -> c.wines[wineId]?.let { c.updateWine(it.copy(expectedProfile = before)) } }
+            }
+        }) { c -> c.wines[wineId]?.let { c.updateWine(it.copy(expectedProfile = profile)) } }
     }
 
     fun aiErrorText(error: Throwable): UiText = when (error) {

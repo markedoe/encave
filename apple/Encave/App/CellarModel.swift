@@ -1045,7 +1045,7 @@ final class CellarModel {
         }
         take(\.name); take(\.producer); take(\.vintage); take(\.color); take(\.appellation)
         take(\.region); take(\.country); take(\.grapes); take(\.drinkFrom); take(\.drinkUntil)
-        take(\.abv); take(\.classification)
+        take(\.abv); take(\.classification); take(\.expectedProfile)
         // Nothing left to fill (changed here or on another device since): not "completed".
         guard updated != live else {
             aiFoundNothing(for: id)
@@ -1070,7 +1070,7 @@ final class CellarModel {
             }
             restore(\.name); restore(\.producer); restore(\.vintage); restore(\.color); restore(\.appellation)
             restore(\.region); restore(\.country); restore(\.grapes); restore(\.drinkFrom); restore(\.drinkUntil)
-            restore(\.abv); restore(\.classification)
+            restore(\.abv); restore(\.classification); restore(\.expectedProfile)
             restore(\.aiCompletedAt)
             restore(\.labelFrame)
             cellar.wines[id] = wine

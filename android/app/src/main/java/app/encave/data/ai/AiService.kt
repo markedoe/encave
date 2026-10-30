@@ -3,6 +3,11 @@ package app.encave.data.ai
 import android.util.Base64
 import app.encave.core.AiLabelPlacement
 import app.encave.core.AiLabelSources
+import app.encave.core.AiWebSearch
+import app.encave.core.ExpectedProfile
+import app.encave.core.ExpectedRequest
+import app.encave.core.WineIdentity
+import app.encave.core.WineWebSource
 import app.encave.core.CappedRead
 import app.encave.core.Http
 import app.encave.core.WineLabelFrame
@@ -65,6 +70,8 @@ data class LabelAnalysis(
      * ([AiLabelSources] keys), which the form marks "Estimated by AI". Read as [abv].
      */
     @Transient val estimated: Set<String> = setOf("drinkWindow"),
+    /** What to expect from the wine, when the request asked it ([schema] with a language). */
+    @Transient val expected: ExpectedProfile? = null,
 ) {
     /** The label's frame for the studio picture, for the photo read. */
     val labelFrame: WineLabelFrame? get() = photoId?.let { id -> placement?.frame(id) }
@@ -80,12 +87,13 @@ data class LabelAnalysis(
          * The JSON schema of the answer, the same for every provider. With [findsLabel] (the
          * studio look on), it also asks where the label is: "label_box" and "label_angle".
          */
-        fun schema(findsLabel: Boolean): JsonObject = buildJsonObject {
+        fun schema(findsLabel: Boolean, expectedLanguage: String? = null): JsonObject = buildJsonObject {
             put("type", "object")
             put("additionalProperties", false)
             // Strict schemas want every key listed: the label's place is null when not found.
             putJsonArray("required") {
-                (detailKeys + "sources" + if (findsLabel) listOf("label_box", "label_angle") else emptyList()).forEach { add(JsonPrimitive(it)) }
+                (detailKeys + "sources" + (if (findsLabel) listOf("label_box", "label_angle") else emptyList()) +
+                    (if (expectedLanguage != null) listOf("expected") else emptyList())).forEach { add(JsonPrimitive(it)) }
             }
             putJsonObject("properties") {
                 listOf("name", "producer").forEach { putJsonObject(it) { put("type", "string") } }
@@ -103,6 +111,7 @@ data class LabelAnalysis(
                 putJsonObject("drinkUntil") { put("type", "integer") }
                 putJsonObject("abv") { put("type", "number") }
                 putJsonObject("classification") { put("type", "string") }
+                if (expectedLanguage != null) put("expected", ExpectedRequest.schema)
                 // "label", "knowledge" or "" for each detail.
                 putJsonObject("sources") {
                     put("type", "object")
@@ -144,7 +153,7 @@ data class LabelAnalysis(
         }
 
         /** The text sent with the photo; with [findsLabel], it also asks where the label is. */
-        fun prompt(findsLabel: Boolean): String = buildList {
+        fun prompt(findsLabel: Boolean, expectedLanguage: String? = null): String = buildList {
             add("This is a photo of a wine label. Read it and return the wine's details.")
             add("- name: the wine or cuvée name as printed (for example the château or domaine and cuvée), without the vintage.")
             add("- producer: the estate, domaine or house, if different from the name; otherwise \"\".")
@@ -166,6 +175,7 @@ data class LabelAnalysis(
                 )
                 add("- label_angle: the label's slant in degrees, positive when its text runs uphill to the right, 0 when level; null if unknown.")
             }
+            if (expectedLanguage != null) addAll(ExpectedRequest.lines(expectedLanguage))
             add(
                 "- sources: for each detail, \"label\" if you read it on the label, \"knowledge\" if it comes from what you " +
                     "know rather than from the label (an estimate), \"\" if you left it empty. drinkWindow is the source of " +
@@ -208,6 +218,16 @@ data class AiEndpoint(
     override fun toString() = "AiEndpoint(${connection.id}, $model)"
 }
 
+/**
+ * One question for a model: the text, the schema of the answer, and the label photo when
+ * there is one (a question about the wine's identity sends none). With [webSearch], the
+ * model may search the web where its connection allows it.
+ */
+class AiQuery(val prompt: String, val schema: JsonObject, val schemaName: String, val jpeg: ByteArray?, val webSearch: Boolean = false)
+
+/** A model's answer: its text, and the pages it cited when it searched the web. */
+data class AiAnswer(val text: String, val sources: List<WineWebSource> = emptyList())
+
 /** A label read: what it says, and which model of which connection read it. */
 data class AiReading(val analysis: LabelAnalysis, val model: AiModelChoice, val connection: AiConnection)
 
@@ -233,6 +253,7 @@ object AiService {
         keys: (AiConnection) -> String?,
         only: String? = null,
         findsLabel: Boolean = true,
+        expectedLanguage: String? = null,
     ): AiReading {
         val order = configuration.readingOrder(only)
         if (order.isEmpty()) throw AiError.NotConfigured
@@ -242,7 +263,7 @@ object AiService {
                 val key = withContext(Dispatchers.IO) { keys(connection) }
                 // The whole turn of a model, every request included, ends with its time.
                 withTimeoutOrNull(left) {
-                    analyze(jpeg, AiEndpoint(connection, model.model, key, System.currentTimeMillis() + left), findsLabel)
+                    analyze(jpeg, AiEndpoint(connection, model.model, key, System.currentTimeMillis() + left), findsLabel, expectedLanguage)
                 } ?: throw AiError.Server(0, "")
             }
         } catch (error: AiAllModelsFailed) {
@@ -254,16 +275,62 @@ object AiService {
     }
 
     /** One model, one request (two or three for a service that does not take every format). */
-    suspend fun analyze(jpeg: ByteArray, endpoint: AiEndpoint, findsLabel: Boolean): LabelAnalysis {
-        if (endpoint.provider.requiresKey && endpoint.apiKey.isNullOrEmpty()) throw AiError.MissingKey
-        if (endpoint.model.isBlank()) throw AiError.NoModel
-        val analysis = when {
-            endpoint.provider.usesAnthropicApi -> claude(jpeg, endpoint, findsLabel)
-            endpoint.provider.usesOllamaApi -> ollama(jpeg, endpoint, findsLabel)
-            else -> openAiCompatible(jpeg, endpoint, findsLabel)
+    suspend fun analyze(jpeg: ByteArray, endpoint: AiEndpoint, findsLabel: Boolean, expectedLanguage: String? = null): LabelAnalysis {
+        val query = AiQuery(LabelAnalysis.prompt(findsLabel, expectedLanguage), LabelAnalysis.schema(findsLabel, expectedLanguage), "wine_label", jpeg)
+        val answer = ask(query, endpoint)
+        val analysis = decode(answer.text)
+        val expected = expectedLanguage?.let {
+            ExpectedRequest.profileFromAnswer(answer.text, ExpectedProfile.AI, endpoint.model, it, java.time.Instant.now())
         }
         // Not asked for: an answer that gives it anyway is not used.
-        return if (findsLabel) analysis else analysis.copy(placement = null)
+        return analysis.copy(placement = if (findsLabel) analysis.placement else null, expected = expected)
+    }
+
+    /** Sends a query to one model: the photo when there is one, the schema of the answer, and nothing else. */
+    suspend fun ask(query: AiQuery, endpoint: AiEndpoint): AiAnswer {
+        if (endpoint.provider.requiresKey && endpoint.apiKey.isNullOrEmpty()) throw AiError.MissingKey
+        if (endpoint.model.isBlank()) throw AiError.NoModel
+        return when {
+            query.webSearch && query.jpeg == null && endpoint.connection.webSearch == AiWebSearch.Kind.ResponsesTool -> responses(query, endpoint)
+            endpoint.provider.usesAnthropicApi -> claude(query, endpoint)
+            endpoint.provider.usesOllamaApi -> ollama(query, endpoint)
+            else -> openAiCompatible(query, endpoint)
+        }
+    }
+
+    /**
+     * What to expect from a wine, from its identity alone (producer, name, appellation,
+     * vintage, colour, grapes): never the photo, the cellar, notes, prices or places. The
+     * models in order, as for a label. A null profile when the model did not know the wine.
+     */
+    suspend fun expectedProfile(
+        identity: WineIdentity,
+        language: String,
+        configuration: AiConfiguration,
+        keys: (AiConnection) -> String?,
+        only: String? = null,
+    ): Pair<ExpectedProfile?, AiModelChoice> {
+        val query = AiQuery(ExpectedRequest.prompt(identity, language), ExpectedRequest.answerSchema, "wine_expected", null)
+        val (model, answer) = askInOrder(query, configuration, keys, only)
+        return ExpectedRequest.profileFromAnswer(answer.text, ExpectedProfile.AI, model.model, language, java.time.Instant.now()) to model
+    }
+
+    /** The models in order, each within its time, until one answers. */
+    internal suspend fun askInOrder(query: AiQuery, configuration: AiConfiguration, keys: (AiConnection) -> String?, only: String?): Pair<AiModelChoice, AiAnswer> {
+        val order = configuration.readingOrder(only)
+        if (order.isEmpty()) throw AiError.NotConfigured
+        return try {
+            AiFallback.read(order) { model, left ->
+                val connection = configuration.connection(model) ?: throw AiError.NotConfigured
+                val key = withContext(Dispatchers.IO) { keys(connection) }
+                withTimeoutOrNull(left) {
+                    ask(query, AiEndpoint(connection, model.model, key, System.currentTimeMillis() + left))
+                } ?: throw AiError.Server(0, "")
+            }
+        } catch (error: AiAllModelsFailed) {
+            if (error.failures.size == 1 && error.untried.isEmpty()) throw error.failures.first().error
+            throw error
+        }
     }
 
     /**
@@ -333,50 +400,19 @@ object AiService {
     }
 
     /** Claude (Anthropic Messages API). */
-    private suspend fun claude(jpeg: ByteArray, endpoint: AiEndpoint, findsLabel: Boolean): LabelAnalysis {
+    private suspend fun claude(query: AiQuery, endpoint: AiEndpoint): AiAnswer {
         val options = claudeOptions(endpoint.model)
         return try {
-            claude(jpeg, endpoint, findsLabel, options)
+            claude(query, endpoint, options)
         } catch (error: AiError.Server) {
             // A model or service that does not take these options: once more without them.
             if (error.status != 400 || options == ClaudeOptions(effort = false, fallbacks = false)) throw error
-            claude(jpeg, endpoint, findsLabel, ClaudeOptions(effort = false, fallbacks = false))
+            claude(query, endpoint, ClaudeOptions(effort = false, fallbacks = false))
         }
     }
 
-    private suspend fun claude(jpeg: ByteArray, endpoint: AiEndpoint, findsLabel: Boolean, options: ClaudeOptions): LabelAnalysis {
-        val model = endpoint.model
-        val body = buildJsonObject {
-            put("model", model)
-            put("max_tokens", 8000)
-            if (options.fallbacks) put("fallbacks", "default")
-            putJsonObject("output_config") {
-                if (options.effort) put("effort", "low")
-                putJsonObject("format") {
-                    put("type", "json_schema")
-                    put("schema", LabelAnalysis.schema(findsLabel))
-                }
-            }
-            putJsonArray("messages") {
-                add(buildJsonObject {
-                    put("role", "user")
-                    putJsonArray("content") {
-                        add(buildJsonObject {
-                            put("type", "image")
-                            putJsonObject("source") {
-                                put("type", "base64")
-                                put("media_type", "image/jpeg")
-                                put("data", base64(jpeg))
-                            }
-                        })
-                        add(buildJsonObject {
-                            put("type", "text")
-                            put("text", LabelAnalysis.prompt(findsLabel))
-                        })
-                    }
-                })
-            }
-        }
+    private suspend fun claude(query: AiQuery, endpoint: AiEndpoint, options: ClaudeOptions): AiAnswer {
+        val body = AiRequestBody.claude(endpoint.model, query.prompt, query.schema, query.jpeg?.let(::base64), query.webSearch, options.effort, options.fallbacks)
         val headers = buildMap {
             put("x-api-key", endpoint.apiKey.orEmpty())
             put("anthropic-version", "2023-06-01")
@@ -386,22 +422,36 @@ object AiService {
         }
         val response = send(URL("${endpoint.baseUrl}/messages"), headers, body, timeout = endpoint.requestTimeout)
         if (response["stop_reason"]?.jsonPrimitive?.contentOrNull == "refusal") throw AiError.Refused
-        val text = (response["content"] as? JsonArray).orEmpty()
-            .map { it.jsonObject }
-            .firstOrNull { it["type"]?.jsonPrimitive?.contentOrNull == "text" }
-            ?.get("text")?.jsonPrimitive?.contentOrNull ?: throw AiError.InvalidResponse
-        return decode(text)
+        val blocks = (response["content"] as? JsonArray) ?: JsonArray(emptyList())
+        val texts = blocks.mapNotNull { it as? JsonObject }.filter { it["type"]?.jsonPrimitive?.contentOrNull == "text" }
+            .mapNotNull { it["text"]?.jsonPrimitive?.contentOrNull }
+        // With web search, the answer is the last text, after the searches.
+        val text = (if (query.webSearch) texts.lastOrNull { it.contains('{') } ?: texts.lastOrNull() else texts.firstOrNull())
+            ?: throw AiError.InvalidResponse
+        return AiAnswer(text, AiWebSearch.claude(blocks))
+    }
+
+    /** OpenAI and xAI with their web search tool (Responses API): text only. */
+    private suspend fun responses(query: AiQuery, endpoint: AiEndpoint): AiAnswer {
+        val url = runCatching { URL(endpoint.baseUrl + "/responses") }.getOrElse { throw AiError.NotConfigured }
+        val headers = buildMap {
+            put("Content-Type", "application/json")
+            if (!endpoint.apiKey.isNullOrEmpty()) put("Authorization", "Bearer ${endpoint.apiKey}")
+        }
+        val response = send(url, headers, AiRequestBody.responses(endpoint.model, query.prompt, query.schema), endpoint.requestTimeout)
+        val (text, sources) = AiWebSearch.responses(response)
+        return AiAnswer(text ?: throw AiError.InvalidResponse, sources)
     }
 
     /** OpenAI-compatible (Chat Completions). Not every service supports a JSON schema: falls back to plain JSON, then to no format. */
-    private suspend fun openAiCompatible(jpeg: ByteArray, endpoint: AiEndpoint, findsLabel: Boolean): LabelAnalysis {
+    private suspend fun openAiCompatible(query: AiQuery, endpoint: AiEndpoint): AiAnswer {
         val formats: List<JsonObject?> = listOf(
             buildJsonObject {
                 put("type", "json_schema")
                 putJsonObject("json_schema") {
-                    put("name", "wine_label")
+                    put("name", query.schemaName)
                     put("strict", true)
-                    put("schema", LabelAnalysis.schema(findsLabel))
+                    put("schema", query.schema)
                 }
             },
             buildJsonObject { put("type", "json_object") },
@@ -410,7 +460,7 @@ object AiService {
         var lastError: AiError = AiError.InvalidResponse
         for (format in formats) {
             try {
-                return openAiCompatible(jpeg, endpoint, findsLabel, format)
+                return openAiCompatible(query, endpoint, format)
             } catch (error: AiError.Server) {
                 if (error.status != 400 && error.status != 422) throw error
                 lastError = error
@@ -419,9 +469,9 @@ object AiService {
         throw lastError
     }
 
-    private suspend fun openAiCompatible(jpeg: ByteArray, endpoint: AiEndpoint, findsLabel: Boolean, format: JsonObject?): LabelAnalysis {
+    private suspend fun openAiCompatible(query: AiQuery, endpoint: AiEndpoint, format: JsonObject?): AiAnswer {
         val url = runCatching { URL(endpoint.baseUrl + "/chat/completions") }.getOrElse { throw AiError.NotConfigured }
-        val body = chatCompletionsBody(endpoint, findsLabel, base64(jpeg), format)
+        val body = AiRequestBody.chatCompletions(endpoint.connection, endpoint.model, query.prompt, query.jpeg?.let(::base64), format, query.webSearch)
         val headers = buildMap {
             put("Content-Type", "application/json")
             if (!endpoint.apiKey.isNullOrEmpty()) put("Authorization", "Bearer ${endpoint.apiKey}")
@@ -431,31 +481,12 @@ object AiService {
         val refusal = message?.get("refusal")?.let { (it as? JsonPrimitive)?.contentOrNull }
         if (!refusal.isNullOrEmpty()) throw AiError.Refused
         val text = (message?.get("content") as? JsonPrimitive)?.contentOrNull ?: throw AiError.InvalidResponse
-        return decode(text)
+        return AiAnswer(text, AiWebSearch.chatCompletions(message))
     }
 
-    /** A Chat Completions request; through OpenRouter, with the provider preferences that refuse providers keeping data. */
+    /** A Chat Completions request for a label; through OpenRouter, with the provider preferences that refuse providers keeping data. */
     internal fun chatCompletionsBody(endpoint: AiEndpoint, findsLabel: Boolean, jpegBase64: String, format: JsonObject?): JsonObject =
-        buildJsonObject {
-            put("model", endpoint.model)
-            if (format != null) put("response_format", format)
-            AiRequestBody.openRouterProvider(endpoint.connection)?.let { put("provider", it) }
-            putJsonArray("messages") {
-                add(buildJsonObject {
-                    put("role", "user")
-                    putJsonArray("content") {
-                        add(buildJsonObject {
-                            put("type", "text")
-                            put("text", LabelAnalysis.prompt(findsLabel))
-                        })
-                        add(buildJsonObject {
-                            put("type", "image_url")
-                            putJsonObject("image_url") { put("url", "data:image/jpeg;base64,$jpegBase64") }
-                        })
-                    }
-                })
-            }
-        }
+        AiRequestBody.chatCompletions(endpoint.connection, endpoint.model, LabelAnalysis.prompt(findsLabel), jpegBase64, format, webSearch = false)
 
     private const val LIST_TIMEOUT = 30_000
 
@@ -466,13 +497,13 @@ object AiService {
         return base
     }
 
-    /** Ollama's native API: structured output with the label schema, and the photo in "images". */
-    private suspend fun ollama(jpeg: ByteArray, endpoint: AiEndpoint, findsLabel: Boolean): LabelAnalysis {
+    /** Ollama's native API: structured output with the answer's schema, and the photo in "images". */
+    private suspend fun ollama(query: AiQuery, endpoint: AiEndpoint): AiAnswer {
         val url = runCatching { URL(ollamaBase(endpoint.baseUrl) + "/api/chat") }.getOrElse { throw AiError.NotConfigured }
         val body = buildJsonObject {
             put("model", endpoint.model)
             put("stream", false)
-            put("format", LabelAnalysis.schema(findsLabel))
+            put("format", query.schema)
             // A photo needs more room than Ollama's default context.
             putJsonObject("options") {
                 put("temperature", 0)
@@ -481,15 +512,15 @@ object AiService {
             putJsonArray("messages") {
                 add(buildJsonObject {
                     put("role", "user")
-                    put("content", LabelAnalysis.prompt(findsLabel))
-                    putJsonArray("images") { add(JsonPrimitive(base64(jpeg))) }
+                    put("content", query.prompt)
+                    query.jpeg?.let { jpeg -> putJsonArray("images") { add(JsonPrimitive(base64(jpeg))) } }
                 })
             }
         }
         val response = send(url, mapOf("Content-Type" to "application/json"), body, endpoint.requestTimeout)
         val text = ((response["message"] as? JsonObject)?.get("content") as? JsonPrimitive)?.contentOrNull
             ?: throw AiError.InvalidResponse
-        return decode(text)
+        return AiAnswer(text)
     }
 
     /** Installed models that read images (Ollama reports "vision"); all of them if none reports capabilities. */

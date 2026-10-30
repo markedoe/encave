@@ -103,6 +103,8 @@ private struct DrinkForm: View {
     @State private var confirmingDiscard = false
     /// Where Cancel or Back goes once the note is discarded.
     @State private var discardCloses = true
+    /// After Drink, with aromas noted: compared with what to expect.
+    @State private var comparison: ShownComparison?
 
     init(bottleID: UUID, showsCancel: Bool, close: @escaping () -> Void) {
         self.bottleID = bottleID
@@ -150,17 +152,28 @@ private struct DrinkForm: View {
                                 .accessibilityIdentifier("drink.which")
                             }
                         }
-                        TastingFormSections(draft: $draft, color: wine.color)
+                        TastingFormSections(draft: $draft, color: wine.color, expected: wine.expectedOrBundledProfile)
                         Section {
                             HelpLink(topic: .drinking, title: "Help with Tasting Notes")
                         }
                     }
                     .formStyle(.grouped)
+                    .navigationDestination(item: $comparison) { shown in
+                        AromaComparisonView(wineName: wine.displayName, comparison: shown.comparison, done: close)
+                            .navigationBarBackButtonHidden()
+                    }
                     .toolbar {
                         ToolbarItem(placement: .confirmationAction) {
                             Button("Drink") {
                                 // On failure the sheet stays open with what was typed, under the error.
-                                if model.drink(bottle.id, tasting: draft.makeTasting()) { close() }
+                                guard model.drink(bottle.id, tasting: draft.makeTasting()) else { return }
+                                // Aromas noted: how they compare with what to expect, then close.
+                                let expected = wine.expectedOrBundledProfile?.aromas ?? []
+                                if !draft.aromas.isEmpty, !expected.isEmpty {
+                                    comparison = ShownComparison(comparison: AromaComparison(expected: expected, found: draft.aromas))
+                                } else {
+                                    close()
+                                }
                             }
                             .keyboardShortcut(.defaultAction)
                             .accessibilityIdentifier("drink.confirm")
@@ -423,6 +436,8 @@ struct TastingFormSections: View {
     var startsExpanded = false
     /// The wine's style: the aromas and hues that suit it come first.
     var color: WineColor?
+    /// What to expect from the wine, behind a disclosure in the guided sheet.
+    var expected: ExpectedProfile?
     @State private var showsDetails = false
     @State private var showsGuided = false
 
@@ -469,7 +484,7 @@ struct TastingFormSections: View {
 
         Section {
             DisclosureGroup(isExpanded: $showsGuided) {
-                GuidedTastingRows(draft: $draft, color: color)
+                GuidedTastingRows(draft: $draft, color: color, expected: expected)
             } label: {
                 Text("More details")
                     .accessibilityIdentifier("tasting.more")
@@ -505,4 +520,10 @@ extension Occasion {
     static func displayName(_ text: String) -> String {
         matching(text).map { String(localized: $0.resource) } ?? text
     }
+}
+
+/// The comparison shown after Drink.
+struct ShownComparison: Identifiable, Hashable {
+    let id = UUID()
+    let comparison: AromaComparison
 }

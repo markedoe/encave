@@ -92,6 +92,8 @@ struct LabelAnalysis: Codable, Equatable, Sendable {
     /// (`LabelRequest.sourceKeys`), read from "sources" when the answer is read; the form
     /// marks them "Estimated by AI" until they are edited.
     var estimated: Set<String> = ["drinkWindow"]
+    /// What to expect from the wine, when the request asked it (`LabelRequest.expectedLanguage`).
+    var expected: ExpectedProfile? = nil
 
     private enum CodingKeys: String, CodingKey {
         case name, producer, vintage, color, appellation, region, country, grapes, drinkFrom, drinkUntil
@@ -152,6 +154,11 @@ struct LabelAnalysis: Codable, Equatable, Sendable {
             draft.drinkUntil = drinkUntil
             touched.insert("drinkWindow")
         }
+        // What to expect, unless the wine has one this reading did not fill.
+        if let expected, draft.expectedProfile == nil || draft.expectedProfile == filled.expectedProfile {
+            draft.expectedProfile = expected
+            filled.expectedProfile = expected
+        }
         // What this answer filled is marked when the model estimated it, unmarked when read on the label.
         for key in touched {
             draft.aiEstimates[key] = estimated.contains(key) ? draft.aiValue(key) : nil
@@ -181,6 +188,34 @@ extension LabelAnalysis {
 }
 
 typealias JSONObject = [String: Any]
+
+/// One question for a model: the text, the schema of the answer, and the label photo when
+/// there is one (a question about the wine's identity sends none). With `webSearch`, the
+/// model may search the web where its connection allows it.
+struct AIQuery: Sendable {
+    var prompt: String
+    /// The schema, as JSON (a dictionary is not Sendable).
+    var schemaJSON: Data
+    var schemaName: String
+    var jpeg: Data?
+    var webSearch = false
+
+    init(prompt: String, schema: JSONObject, schemaName: String, jpeg: Data?, webSearch: Bool = false) throws {
+        self.prompt = prompt
+        self.schemaJSON = try JSONSerialization.data(withJSONObject: schema)
+        self.schemaName = schemaName
+        self.jpeg = jpeg
+        self.webSearch = webSearch
+    }
+
+    var schema: JSONObject { ((try? JSONSerialization.jsonObject(with: schemaJSON)) as? JSONObject) ?? [:] }
+}
+
+/// A model's answer: its text, and the pages it cited when it searched the web.
+struct AIAnswer: Sendable {
+    var text: String
+    var sources: [WineWebSource] = []
+}
 
 enum AIServiceError: LocalizedError {
     case notConfigured
@@ -234,10 +269,15 @@ enum AIService {
         UserDefaults.standard.object(forKey: StudioPhoto.settingKey) as? Bool ?? true
     }
 
+    /// The language of the app ("en", "fr"), for the short text of what to expect.
+    static var language: String {
+        (Bundle.main.preferredLocalizations.first ?? "en").hasPrefix("fr") ? "fr" : "en"
+    }
+
     /// Sends the label photo (a resized JPEG) to the first model of the list; if it fails,
     /// to the next, one at a time, within `AIFallback.totalBudget`. With `only`, to that model.
     static func analyzeLabel(jpeg: Data, configuration: AIConfiguration = AISettings.load(), only modelID: UUID? = nil,
-                             request: LabelRequest = LabelRequest(findsLabel: findsLabel)) async throws -> AIReading {
+                             request: LabelRequest = LabelRequest(findsLabel: findsLabel, expectedLanguage: language)) async throws -> AIReading {
         let order = configuration.readingOrder(only: modelID)
         guard !order.isEmpty else { throw AIServiceError.notConfigured }
         let keys = AIKeychain()
@@ -257,19 +297,54 @@ enum AIService {
 
     /// One model, one request (two or three for a service that does not take every format).
     static func analyze(jpeg: Data, endpoint: AIEndpoint, request: LabelRequest) async throws -> LabelAnalysis {
-        if endpoint.provider.requiresKey, (endpoint.apiKey ?? "").isEmpty { throw AIServiceError.missingKey }
-        guard !endpoint.model.trimmingCharacters(in: .whitespaces).isEmpty else { throw AIServiceError.noModel }
-        var analysis: LabelAnalysis
-        if endpoint.provider.usesAnthropicAPI {
-            analysis = try await claude(jpeg: jpeg, endpoint: endpoint, request: request)
-        } else if endpoint.provider.usesOllamaAPI {
-            analysis = try await ollama(jpeg: jpeg, endpoint: endpoint, request: request)
-        } else {
-            analysis = try await openAICompatible(jpeg: jpeg, endpoint: endpoint, request: request)
-        }
+        let query = try AIQuery(prompt: request.prompt, schema: request.schema, schemaName: "wine_label", jpeg: jpeg)
+        let answer = try await ask(query, endpoint: endpoint)
+        var analysis = try decode(answer.text)
         // Not asked for: an answer that gives it anyway is not used.
         if !request.findsLabel { analysis.placement = nil }
+        if let language = request.expectedLanguage {
+            analysis.expected = ExpectedRequest.profile(fromAnswer: answer.text, source: ExpectedProfile.ai, model: endpoint.model,
+                                                        language: language, date: Date())
+        }
         return analysis
+    }
+
+    /// Sends a query to one model: the photo when there is one, the schema of the answer,
+    /// and nothing else.
+    static func ask(_ query: AIQuery, endpoint: AIEndpoint) async throws -> AIAnswer {
+        if endpoint.provider.requiresKey, (endpoint.apiKey ?? "").isEmpty { throw AIServiceError.missingKey }
+        guard !endpoint.model.trimmingCharacters(in: .whitespaces).isEmpty else { throw AIServiceError.noModel }
+        if query.webSearch, query.jpeg == nil, endpoint.connection.webSearch == .responsesTool {
+            return try await responses(query, endpoint: endpoint)
+        }
+        if endpoint.provider.usesAnthropicAPI { return try await claude(query, endpoint: endpoint) }
+        if endpoint.provider.usesOllamaAPI { return try await ollama(query, endpoint: endpoint) }
+        return try await openAICompatible(query, endpoint: endpoint)
+    }
+
+    /// What to expect from a wine, from its identity alone (producer, name, appellation,
+    /// vintage, colour, grapes): never the photo, the cellar, notes, prices or places. The
+    /// models in order, as for a label. Nil when the model did not know the wine.
+    static func expectedProfile(for identity: WineIdentity, language: String, configuration: AIConfiguration = AISettings.load(),
+                                only modelID: UUID? = nil) async throws -> (profile: ExpectedProfile?, model: AIModelChoice) {
+        let order = configuration.readingOrder(only: modelID)
+        guard !order.isEmpty else { throw AIServiceError.notConfigured }
+        let query = try AIQuery(prompt: ExpectedRequest.prompt(for: identity, language: language),
+                                schema: ExpectedRequest.answerSchema, schemaName: "wine_expected", jpeg: nil)
+        let keys = AIKeychain()
+        do {
+            let (model, answer) = try await AIFallback.read(order) { model, left in
+                guard let connection = configuration.connection(for: model) else { throw AIServiceError.notConfigured }
+                let endpoint = AIEndpoint(connection: connection, model: model.model, apiKey: keys.key(for: connection),
+                                          deadline: Date().addingTimeInterval(left))
+                return try await ask(query, endpoint: endpoint)
+            }
+            let profile = ExpectedRequest.profile(fromAnswer: answer.text, source: ExpectedProfile.ai, model: model.model,
+                                                  language: language, date: Date())
+            return (profile, model)
+        } catch let error as AIAllModelsFailed {
+            throw AIServiceError.describing(error, in: configuration)
+        }
     }
 
     /// The "Test" of a model: its key works and it answers on a picture of a made-up label
@@ -331,19 +406,17 @@ enum AIService {
     static func supportsEffort(_ model: String) -> Bool { effortModelPrefixes.contains { model.hasPrefix($0) } }
     static func supportsFallbacks(_ model: String) -> Bool { fallbackModels.contains(model) }
 
-    private static func claude(jpeg: Data, endpoint: AIEndpoint, request label: LabelRequest) async throws -> LabelAnalysis {
+    private static func claude(_ query: AIQuery, endpoint: AIEndpoint) async throws -> AIAnswer {
         let options = supportsEffort(endpoint.model) || supportsFallbacks(endpoint.model)
         do {
-            return try await claude(jpeg: jpeg, endpoint: endpoint, request: label, withOptions: options)
+            return try await claude(query, endpoint: endpoint, withOptions: options)
         } catch AIServiceError.server(let status, _) where status == 400 && options {
             // A model or server that does not take these options yet: once more without them.
-            return try await claude(jpeg: jpeg, endpoint: endpoint, request: label, withOptions: false)
+            return try await claude(query, endpoint: endpoint, withOptions: false)
         }
     }
 
-    private static func claude(jpeg: Data, endpoint: AIEndpoint, request label: LabelRequest,
-                               withOptions: Bool) async throws -> LabelAnalysis {
-        let model = endpoint.model
+    private static func claude(_ query: AIQuery, endpoint: AIEndpoint, withOptions: Bool) async throws -> AIAnswer {
         guard let url = URL(string: endpoint.baseURL + "/messages") else { throw AIServiceError.notConfigured }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -351,54 +424,59 @@ enum AIService {
         request.setValue(endpoint.apiKey ?? "", forHTTPHeaderField: "x-api-key")
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         request.setValue("application/json", forHTTPHeaderField: "content-type")
-        var output: JSONObject = ["format": ["type": "json_schema", "schema": label.schema] as JSONObject]
-        var body: JSONObject = [
-            "model": model,
-            "max_tokens": 8000,
-            "messages": [[
-                "role": "user",
-                "content": [
-                    ["type": "image",
-                     "source": ["type": "base64", "media_type": "image/jpeg", "data": jpeg.base64EncodedString()]] as JSONObject,
-                    ["type": "text", "text": label.prompt],
-                ] as [JSONObject],
-            ] as JSONObject],
-        ]
-        if withOptions, supportsEffort(model) {
-            // Reading a label is a simple task.
-            output["effort"] = "low"
-        }
-        if withOptions, supportsFallbacks(model) {
+        let body = AIRequestBody.claude(model: endpoint.model, prompt: query.prompt, schema: query.schema, jpeg: query.jpeg,
+                                        webSearch: query.webSearch, effort: withOptions && supportsEffort(endpoint.model),
+                                        fallbacks: withOptions && supportsFallbacks(endpoint.model))
+        if withOptions, supportsFallbacks(endpoint.model) {
             // Re-runs a declined request on another model instead of returning a refusal.
             request.setValue("server-side-fallback-2026-07-01", forHTTPHeaderField: "anthropic-beta")
-            body["fallbacks"] = "default"
         }
-        body["output_config"] = output
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let json = try await send(request)
         if json["stop_reason"] as? String == "refusal" { throw AIServiceError.refused }
         let blocks = json["content"] as? [[String: Any]] ?? []
-        guard let text = blocks.first(where: { $0["type"] as? String == "text" })?["text"] as? String else {
+        // With web search, the answer is the last text, after the searches.
+        let texts = blocks.filter { $0["type"] as? String == "text" }.compactMap { $0["text"] as? String }
+        guard let text = query.webSearch ? texts.last(where: { $0.contains("{") }) ?? texts.last : texts.first else {
             throw AIServiceError.invalidResponse
         }
-        return try decode(text)
+        return AIAnswer(text: text, sources: AIWebSearch.claude(blocks))
+    }
+
+    // MARK: Responses API (OpenAI and xAI, with their web search tool)
+
+    private static func responses(_ query: AIQuery, endpoint: AIEndpoint) async throws -> AIAnswer {
+        guard let url = URL(string: endpoint.baseURL + "/responses") else { throw AIServiceError.notConfigured }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = endpoint.requestTimeout
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let apiKey = endpoint.apiKey, !apiKey.isEmpty {
+            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        }
+        request.httpBody = try JSONSerialization.data(withJSONObject: AIRequestBody.responses(
+            model: endpoint.model, prompt: query.prompt, schema: query.schema))
+        let json = try await send(request)
+        let (text, sources) = AIWebSearch.responses(json)
+        guard let text else { throw AIServiceError.invalidResponse }
+        return AIAnswer(text: text, sources: sources)
     }
 
     // MARK: OpenAI-compatible (Chat Completions)
 
-    private static func openAICompatible(jpeg: Data, endpoint: AIEndpoint, request label: LabelRequest) async throws -> LabelAnalysis {
+    private static func openAICompatible(_ query: AIQuery, endpoint: AIEndpoint) async throws -> AIAnswer {
         // Not every service supports a JSON schema: fall back to plain JSON, then to no format.
         let formats: [JSONObject?] = [
             ["type": "json_schema",
-             "json_schema": ["name": "wine_label", "strict": true, "schema": label.schema] as JSONObject],
+             "json_schema": ["name": query.schemaName, "strict": true, "schema": query.schema] as JSONObject],
             ["type": "json_object"],
             nil,
         ]
         var lastError: Error = AIServiceError.invalidResponse
         for format in formats {
             do {
-                return try await openAICompatible(jpeg: jpeg, endpoint: endpoint, request: label, format: format)
+                return try await openAICompatible(query, endpoint: endpoint, format: format)
             } catch AIServiceError.server(let status, let message) where status == 400 || status == 422 {
                 lastError = AIServiceError.server(status: status, message: message)
             }
@@ -406,8 +484,7 @@ enum AIService {
         throw lastError
     }
 
-    private static func openAICompatible(jpeg: Data, endpoint: AIEndpoint, request label: LabelRequest,
-                                         format: JSONObject?) async throws -> LabelAnalysis {
+    private static func openAICompatible(_ query: AIQuery, endpoint: AIEndpoint, format: JSONObject?) async throws -> AIAnswer {
         guard let url = URL(string: endpoint.baseURL + "/chat/completions") else {
             throw AIServiceError.notConfigured
         }
@@ -420,7 +497,7 @@ enum AIService {
         }
         // Through OpenRouter, with the provider preferences that refuse providers keeping the data.
         let body = AIRequestBody.chatCompletions(connection: endpoint.connection, model: endpoint.model,
-                                                 prompt: label.prompt, jpeg: jpeg, format: format)
+                                                 prompt: query.prompt, jpeg: query.jpeg, format: format, webSearch: query.webSearch)
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let json = try await send(request)
@@ -428,7 +505,7 @@ enum AIService {
         let message = choices.first?["message"] as? [String: Any]
         if let refusal = message?["refusal"] as? String, !refusal.isEmpty { throw AIServiceError.refused }
         guard let text = message?["content"] as? String else { throw AIServiceError.invalidResponse }
-        return try decode(text)
+        return AIAnswer(text: text, sources: AIWebSearch.chatCompletions(message ?? [:]))
     }
 
     // MARK: Ollama (native API)
@@ -440,31 +517,29 @@ enum AIService {
         return base
     }
 
-    /// Structured output with the label's JSON schema, and the photo in "images".
-    private static func ollama(jpeg: Data, endpoint: AIEndpoint, request label: LabelRequest) async throws -> LabelAnalysis {
+    /// Structured output with the answer's JSON schema, and the photo in "images".
+    private static func ollama(_ query: AIQuery, endpoint: AIEndpoint) async throws -> AIAnswer {
         guard let url = URL(string: ollamaBase(endpoint.baseURL) + "/api/chat") else { throw AIServiceError.notConfigured }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.timeoutInterval = endpoint.requestTimeout
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        var message: JSONObject = ["role": "user", "content": query.prompt]
+        if let jpeg = query.jpeg { message["images"] = [jpeg.base64EncodedString()] }
         let body: JSONObject = [
             "model": endpoint.model,
             "stream": false,
-            "format": label.schema,
+            "format": query.schema,
             // A photo needs more room than Ollama's default context.
             "options": ["temperature": 0, "num_ctx": 8192] as JSONObject,
-            "messages": [[
-                "role": "user",
-                "content": label.prompt,
-                "images": [jpeg.base64EncodedString()],
-            ] as JSONObject],
+            "messages": [message],
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         let json = try await send(request)
         guard let text = (json["message"] as? [String: Any])?["content"] as? String else {
             throw AIServiceError.invalidResponse
         }
-        return try decode(text)
+        return AIAnswer(text: text, sources: [])
     }
 
     /// Installed models, the ones that read images first (Ollama reports "vision" for them).

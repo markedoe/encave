@@ -139,12 +139,22 @@ private fun ShowMoreButton(expanded: Boolean, more: Int, fewer: Int, modifier: M
  * under "More aromas"; a search finds any by its label in the person's language.
  */
 @Composable
-internal fun AromaFields(state: TastingFormState, color: WineColor?) {
+internal fun AromaFields(state: TastingFormState, color: WineColor?, expected: app.encave.core.ExpectedProfile? = null) {
     val resources = LocalResources.current
     var query by rememberSaveable { mutableStateOf("") }
     var more by rememberSaveable { mutableStateOf(false) }
+    var showsExpected by rememberSaveable { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
         GroupLabel(stringResource(R.string.tasting_aromas))
+        // What to expect, behind one tap so it does not lead the taster.
+        if (expected != null && (!expected.aromas.isNullOrEmpty() || expected.structure != null)) {
+            ShowMoreButton(showsExpected, R.string.expected_show, R.string.expected_hide, Modifier.testTag("tasting.show_expected")) {
+                showsExpected = !showsExpected
+            }
+            if (showsExpected) {
+                app.encave.ui.cellar.ExpectedProfileContent(expected, language = "", compact = true)
+            }
+        }
         OutlinedTextField(
             value = query, onValueChange = { query = it },
             label = { Text(stringResource(R.string.tasting_aroma_search)) },

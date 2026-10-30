@@ -1,0 +1,204 @@
+{
+ "about": "Pages an AI cited when it searched the web, read by both apps (AIWebSearch in CaveKit, AiWebSearch in the Kotlin core): each address once, http and https only, at most 8. Claude: the citations of its text, else its search results; Chat Completions (OpenRouter): message.annotations url_citation; Responses (OpenAI, xAI): output message output_text annotations, and the last text holding a JSON object. Read by AIWebSearchTests.swift and AiWebSearchTest.kt.",
+ "claude": [
+  {
+   "note": "citations win over results",
+   "blocks": [
+    {
+     "type": "server_tool_use",
+     "name": "web_search",
+     "input": {
+      "query": "Domaine Martin Chablis 2021"
+     }
+    },
+    {
+     "type": "web_search_tool_result",
+     "content": [
+      {
+       "type": "web_search_result",
+       "url": "https://a.example/one",
+       "title": "One"
+      },
+      {
+       "type": "web_search_result",
+       "url": "https://b.example/two",
+       "title": "Two"
+      }
+     ]
+    },
+    {
+     "type": "text",
+     "text": "Found it.",
+     "citations": [
+      {
+       "type": "web_search_result_location",
+       "url": "https://b.example/two",
+       "title": "Two",
+       "cited_text": "..."
+      },
+      {
+       "type": "web_search_result_location",
+       "url": "https://b.example/two",
+       "title": "Two"
+      }
+     ]
+    },
+    {
+     "type": "text",
+     "text": "{\"expected\":{}}"
+    }
+   ],
+   "sources": [
+    {
+     "url": "https://b.example/two",
+     "title": "Two"
+    }
+   ]
+  },
+  {
+   "note": "no citations: the results, not a file or javascript address",
+   "blocks": [
+    {
+     "type": "web_search_tool_result",
+     "content": [
+      {
+       "url": "https://a.example/one",
+       "title": "One"
+      },
+      {
+       "url": "javascript:alert(1)",
+       "title": "Bad"
+      },
+      {
+       "url": "file:///etc/hosts"
+      },
+      {
+       "url": "http://c.example/three",
+       "title": ""
+      }
+     ]
+    },
+    {
+     "type": "text",
+     "text": "{}"
+    }
+   ],
+   "sources": [
+    {
+     "url": "https://a.example/one",
+     "title": "One"
+    },
+    {
+     "url": "http://c.example/three"
+    }
+   ]
+  },
+  {
+   "note": "a search error",
+   "blocks": [
+    {
+     "type": "web_search_tool_result",
+     "content": {
+      "type": "web_search_tool_result_error",
+      "error_code": "max_uses_exceeded"
+     }
+    },
+    {
+     "type": "text",
+     "text": "{}"
+    }
+   ],
+   "sources": []
+  }
+ ],
+ "chatCompletions": [
+  {
+   "note": "OpenRouter annotations",
+   "message": {
+    "content": "{}",
+    "annotations": [
+     {
+      "type": "url_citation",
+      "url_citation": {
+       "url": "https://a.example/one",
+       "title": "One"
+      }
+     },
+     {
+      "type": "url_citation",
+      "url_citation": {
+       "url": "https://a.example/one",
+       "title": "One again"
+      }
+     },
+     {
+      "type": "other"
+     }
+    ]
+   },
+   "sources": [
+    {
+     "url": "https://a.example/one",
+     "title": "One"
+    }
+   ]
+  },
+  {
+   "note": "no annotations",
+   "message": {
+    "content": "{}"
+   },
+   "sources": []
+  }
+ ],
+ "responses": [
+  {
+   "note": "the last text with JSON, and its citations",
+   "json": {
+    "output": [
+     {
+      "type": "web_search_call",
+      "status": "completed"
+     },
+     {
+      "type": "message",
+      "content": [
+       {
+        "type": "output_text",
+        "text": "Searching first."
+       },
+       {
+        "type": "output_text",
+        "text": "{\"expected\":{}}",
+        "annotations": [
+         {
+          "type": "url_citation",
+          "url": "https://d.example/four",
+          "title": "Four",
+          "start_index": 0,
+          "end_index": 3
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   "text": "{\"expected\":{}}",
+   "sources": [
+    {
+     "url": "https://d.example/four",
+     "title": "Four"
+    }
+   ]
+  },
+  {
+   "note": "nothing",
+   "json": {
+    "output": []
+   },
+   "text": null,
+   "sources": []
+  }
+ ]
+}

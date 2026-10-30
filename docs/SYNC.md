@@ -166,6 +166,29 @@ implementations:
   | 19 | 97.5 | 5 |
   | 20 | 100 | 5 |
 
+- **What to expect.** `wine.expectedProfile` is optional and left out when the
+  wine has none; versions that do not know it keep it as an unknown field, so it
+  needs no new protocol version. It is an object, and keeps its own unknown keys:
+  - `aromas`: array of aroma ids of `fixtures/tasting-vocabulary.json`;
+    `structure`: object of levels 1 to 5 keyed by structure attribute id
+    (`acidity`); `servingMin`, `servingMax`: degrees Celsius (integers);
+    `decantMinutes`: integer, 0 for no decanting; `pairings`: array of dish ids
+    (`redMeat`, `poultry`, `pork`, `game`, `fish`, `shellfish`, `cheese`,
+    `spicy`, `vegetarian`, `pasta`, `dessert`, `aperitif`).
+  - `text` and its `language` (`en`, `fr`): a sentence or two from the AI.
+  - `source`: `bundled` (from `fixtures/expected-profiles.json`, named by
+    `bundled`, its note given by each app in the person's language), `ai` (from
+    the label reading or from the wine's identity alone) or `web` (the AI with
+    web search); `model`: the model's id; `date`: when it was made (a date, like
+    the other dates of the record). Another `source` is kept and shown as AI.
+
+  Read the same way on every device (vectors:
+  `fixtures/expected-profile-vectors.json`): ids kept once, in order, empty ones
+  dropped, unknown ones kept; levels brought into 1…5; a temperature outside
+  0…30 dropped, the lower one first; decanting outside 0…1440 dropped; empty
+  strings, arrays and objects left out; a missing `source` read as `""`. A wine
+  without the key shows the bundled profile that matches it, which is not
+  written; merging two wines keeps the target's profile, else the other's.
 - Readers are strict: an unknown value of `wine.color`, `bottle.status`,
   `rack.kind` or `discovery.setting` fails decoding; readers never replace it
   with a default. A device that does not know a new value refuses the sync
@@ -309,7 +332,7 @@ implementations:
     `..`: apps never use it as a path, only as the name shown or given to a
     copy they make.
 - Fields a reader does not know are kept and sent back unchanged. Every record
-  (wine and its critic scores, bottle and its `slot` and `tasting`, document, rack, discovery,
+  (wine and its critic scores and expected profile, bottle and its `slot` and `tasting`, document, rack, discovery,
   settings, saved search, and device in a membership) keeps each key it does
   not know, with its value as raw JSON, and writes it back unchanged whenever it
   writes the record: after a local edit, in sync payloads, in the cellar file

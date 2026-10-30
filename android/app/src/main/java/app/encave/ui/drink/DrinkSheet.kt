@@ -43,6 +43,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import app.encave.core.expectedOrBundledProfile
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -172,7 +173,7 @@ class TastingFormState(initial: Tasting, start: Tasting? = null) {
  * aromas and hues that suit it first.
  */
 @Composable
-fun TastingFields(state: TastingFormState, modifier: Modifier = Modifier, color: WineColor? = null) {
+fun TastingFields(state: TastingFormState, modifier: Modifier = Modifier, color: WineColor? = null, expected: app.encave.core.ExpectedProfile? = null) {
     var pickingDate by rememberSaveable { mutableStateOf(false) }
     val scale = LocalRatingScale.current
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
@@ -254,7 +255,7 @@ fun TastingFields(state: TastingFormState, modifier: Modifier = Modifier, color:
             AppearanceFields(state, color)
             written(R.string.field_appearance to R.string.help_field_appearance, state.appearance) { state.appearance = it }
             GuidedHeader(R.string.tasting_section_nose)
-            AromaFields(state, color)
+            AromaFields(state, color, expected)
             written(R.string.field_nose to R.string.help_field_nose, state.nose) { state.nose = it }
             GuidedHeader(R.string.tasting_section_palate)
             StructureFields(state, color)
@@ -332,6 +333,16 @@ fun DrinkSheet(
     onDismiss: () -> Unit,
     onDrink: (Bottle, Tasting) -> Unit,
 ) {
+    // After Drink, with aromas noted: how they compare with what to expect, then Done closes.
+    var comparison by remember { mutableStateOf<Pair<String, app.encave.core.AromaComparison>?>(null) }
+    comparison?.let { (name, shown) ->
+        ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+            Column(
+                Modifier.verticalScroll(rememberScrollState()).padding(horizontal = Dimens.xl).padding(bottom = Dimens.l).navigationBarsPadding(),
+            ) { app.encave.ui.cellar.AromaComparisonContent(name, shown, onDone = onDismiss) }
+        }
+        return
+    }
     val opened = cellar.bottles.values.firstOrNull { it.id.toString() == bottleId && it.status == Bottle.Status.InCellar }
     if (opened == null) {
         // Opened or removed meanwhile (on another device).
@@ -420,11 +431,20 @@ fun DrinkSheet(
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary,
                 )
             }
-            TastingFields(form, color = wine?.color)
+            val expected = wine?.expectedOrBundledProfile
+            TastingFields(form, color = wine?.color, expected = expected)
             Button(
                 onClick = {
-                    onDrink(chosen, form.toTasting())
-                    close()
+                    val tasting = form.toTasting()
+                    onDrink(chosen, tasting)
+                    val expectedAromas = expected?.aromas.orEmpty()
+                    val found = tasting.aromas.orEmpty()
+                    if (wine != null && found.isNotEmpty() && expectedAromas.isNotEmpty()) {
+                        comparison = wine.displayName to app.encave.core.AromaComparison.of(expectedAromas, found)
+                        forget(formKey)
+                    } else {
+                        close()
+                    }
                 },
                 modifier = Modifier.fillMaxWidth().testTag("action.drink_confirm"),
             ) { ActionContent(stringResource(R.string.action_drink), Icons.Outlined.LocalBar) }
