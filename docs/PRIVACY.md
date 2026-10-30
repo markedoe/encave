@@ -35,6 +35,11 @@ Keys and passwords you enter (AI and web search keys, the WebDAV login, the
 sync keys) are kept in the Keychain (Apple) or encrypted with an Android
 Keystore key, on that device only.
 
+The aroma game's guesses and scores ("Guess the aromas", "My palate") stay on
+the device that played: they are never synced, not even with people sharing
+your cellar, and are left out of Encave's backups and exports and of Android's
+backups and device transfer.
+
 Reminders, notifications of changes from your other devices, widgets, Siri,
 Shortcuts and Spotlight, and the on-device features of Apple Intelligence
 (asking your cellar, suggesting details, estimating a price) are worked out on
@@ -98,6 +103,13 @@ not encrypted either: it goes where you choose to save or share it.
    not keep or train on the data, unless you turn that off. Each service's own
    privacy policy applies to the photo. Your keys stay on your device: they are
    never synced, exported or backed up.
+   When you ask **What to expect** from a wine, Encave sends **only the wine's
+   identity** (producer, name, appellation, vintage, colour and grapes), never
+   the photo. If you allow **web search** for a connection (off by default,
+   for Claude, ChatGPT, Grok and OpenRouter), **Complete from the web** sends
+   the same identity to that model, which may search the web with it through
+   its provider's own search; the pages it used are listed on the wine's page.
+   Your cellar, notes, prices and places are never sent.
 3. **Web search** (off by default). If you choose a search service, Encave
    sends **only the search terms**: the producer, name, appellation and
    vintage of a wine, and for a price the bottle size. They are shown, and can

@@ -103,8 +103,8 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         private val screens = listOf(
             "cellar", "cellar-drink-soon", "cellar-tag", "cellar-occasion", "cellar-menu", "save-search",
             "saved-search", "cellar-on-order", "cellar-select", "cellar-select-delete", "cellar-table",
-            "cellar-table-wine", "insights", "insights-drink-down",
-            "wine", "wine-critic-scores", "drink-sheet", "wine-on-order", "wine-occasion", "wine-explore", "wine-edit-window",
+            "cellar-table-wine", "insights", "insights-drink-down", "my-palate",
+            "wine", "wine-critic-scores", "wine-expected", "game-result", "drink-sheet", "tasting-expected", "tasting-comparison", "wine-on-order", "wine-occasion", "wine-explore", "wine-edit-window",
             "wine-tags", "more-photos",
             "add-bottle", "add-bottle-end", "add-bottle-on-order", "barcode-scanner", "barcode-match",
             "racks", "rack", "rack-place-sheet", "rack-card", "rack-key", "rack-zoomed", "rack-bottle-list",
@@ -929,6 +929,71 @@ class ScreenTourTest(private val device: String, private val variant: String) {
             capture("tasting-guided")
         } finally {
             preferences.setRatingScale(app.encave.core.RatingScale.Stars)
+        }
+    }
+
+    /** The sample's older Clos des Tilleuls (a Pauillac in the cellar): its bundled profile is the left bank's. */
+    private fun tilleuls(): app.encave.core.Wine =
+        ApplicationProvider.getApplicationContext<EncaveApplication>().repository.cellar.value.wines.values
+            .filter { it.name == "Clos des Tilleuls" }.minBy { it.vintage ?: 0 }
+
+    /** What to expect on the wine page, then the aroma game played and scored. */
+    @Test
+    fun whatToExpectAndAromaGame() {
+        relaunch("encave://wine/${tilleuls().id}")
+        scrollToTop("wine.detail", "detail.expected")
+        compose.onAllNodesWithTag("expected.aromas").onFirst().assertExists()
+        capture("wine-expected")
+        tap("action.aroma_game")
+        tap("game.aroma.fruit.blackcurrant")
+        tap("game.aroma.fruit.plum")
+        tap("game.aroma.spice.clove")
+        tap("game.reveal")
+        compose.onAllNodesWithTag("game.points").onFirst().assertExists()
+        capture("game-result")
+    }
+
+    /** The tasting sheet with what to expect shown, then the comparison after Drink. */
+    @Test
+    fun tastingWhatToExpectAndComparison() {
+        relaunch("encave://wine/${tilleuls().id}")
+        tap("action.drink")
+        tap("tasting.more_details")
+        tap("tasting.show_expected")
+        compose.onAllNodesWithTag("expected.aromas").onFirst().assertExists()
+        capture("tasting-expected")
+        tap("aroma.fruit.blackcurrant")
+        tap("aroma.oak.smoke")
+        tap("action.drink_confirm")
+        compose.onAllNodesWithTag("comparison.summary").onFirst().assertExists()
+        capture("tasting-comparison")
+    }
+
+    /** My palate in Insights, with three games played on this device. */
+    @Test
+    fun myPalate() {
+        val app = ApplicationProvider.getApplicationContext<EncaveApplication>()
+        val store = app.encave.core.AromaGameStore(app.encave.ui.drink.aromaGameFile(app))
+        store.removeAll()
+        val wines = app.repository.cellar.value.wines.values.sortedBy { it.name }
+            .mapNotNull { wine -> app.encave.core.ExpectedProfiles.profile(wine)?.let { wine to it } }.take(3)
+        wines.forEachIndexed { index, (wine, profile) ->
+            val aromas = profile.aromas.orEmpty()
+            store.add(
+                app.encave.core.AromaGameRecord(
+                    wineId = wine.id, date = java.time.Instant.now().minusSeconds(86_400L * index),
+                    guesses = aromas.take(2 + index % 2) + "spice.clove", structure = profile.structure.orEmpty(),
+                    expected = aromas, expectedStructure = profile.structure.orEmpty(),
+                ),
+            )
+        }
+        try {
+            tap("cellar.stat.bottles")
+            scrollTo("palate.card")
+            compose.onNodeWithTag("palate.level").assertExists()
+            capture("my-palate")
+        } finally {
+            store.removeAll()
         }
     }
 

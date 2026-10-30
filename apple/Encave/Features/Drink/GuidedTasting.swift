@@ -51,6 +51,7 @@ struct GuidedTastingRows: View {
                             // Chosen: a checkmark as well as the fill, not the color alone.
                             if isSelected { Image(systemName: "checkmark").accessibilityHidden(true) }
                         }
+                        .accessibilityIdentifier("tasting.aroma.\(aroma.id)")
                     }
                 }
             }

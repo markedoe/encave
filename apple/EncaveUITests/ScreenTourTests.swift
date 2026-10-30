@@ -315,6 +315,10 @@ final class ScreenTourTests: XCTestCase {
         snapshot("journal")
         checkJournal()
 
+        // What to expect, the aroma game, the tasting compared, and My palate. Last, as it
+        // opens a bottle of the sample cellar.
+        checkWhatToExpect()
+
         #if os(iOS)
         // Settings and help (on the Mac they are in the app menu and the Help menu).
         openSection(0, "cellar")
@@ -726,6 +730,92 @@ final class ScreenTourTests: XCTestCase {
     }
 
     // MARK: Cellar
+
+    /// A wine's page scrolled to what to expect; the aroma game played; the tasting sheet with
+    /// what to expect shown, and the comparison after Drink; My palate in Insights.
+    private func checkWhatToExpect() {
+        openSection(0, "cellar")
+        guard let row = require("wine.row", "what to expect: no wine", timeout: 10) else { return }
+        row.press()
+        let source = element("expected.source")
+        scrollIntoView(source)
+        guard source.exists else {
+            XCTFail("wine: no What to expect section")
+            return
+        }
+        snapshot("wine-expected")
+        if let play = require("action.wine.aromaGame", "wine: no Guess the Aromas button") {
+            play.press()
+            for aroma in ["fruit.redCherry", "fruit.lemon", "oak.vanilla"] {
+                let chip = element("game.aroma.\(aroma)")
+                scrollIntoView(chip)
+                if chip.exists, chip.isHittable { chip.press() }
+            }
+            let reveal = element("game.reveal")
+            scrollIntoView(reveal)
+            if reveal.exists, reveal.isHittable {
+                reveal.press()
+                XCTAssertTrue(element("game.points").waitForExistence(timeout: 5), "game: no score after Reveal")
+                snapshot("game-result")
+            } else {
+                XCTFail("game: no Reveal button")
+            }
+            if let done = require("game.done", "game: no Done button") { done.press() }
+        }
+        // The tasting sheet: More details, then Show What to Expect.
+        let drink = element("action.wine.drink")
+        scrollIntoView(drink)
+        #if os(iOS)
+        // Back up to the top, where Drink is.
+        for _ in 0..<12 where !(drink.exists && drink.isHittable) { app.swipeDown() }
+        #endif
+        guard drink.exists, drink.isHittable else {
+            XCTFail("wine: no Drink button to reach the tasting sheet")
+            goBack()
+            return
+        }
+        drink.press()
+        let more = element("tasting.more")
+        scrollIntoView(more)
+        if more.exists { more.press() }
+        let show = element("tasting.showExpected")
+        scrollIntoView(show)
+        if show.exists, show.isHittable {
+            show.press()
+            snapshot("tasting-expected")
+        } else {
+            XCTFail("tasting sheet: no Show What to Expect")
+        }
+        let aroma = app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH %@", "tasting.aroma.")).firstMatch
+        scrollIntoView(aroma)
+        if aroma.exists, aroma.isHittable { aroma.press() }
+        if let confirm = require("drink.confirm", "tasting sheet: no Drink button") {
+            confirm.press()
+            if element("comparison.summary").waitForExistence(timeout: 5) {
+                snapshot("tasting-comparison")
+                element("comparison.done").press()
+            } else {
+                XCTFail("tasting sheet: no comparison after Drink")
+                closeSheet()
+            }
+        }
+        sleep(1)
+        goBack()
+        // My palate, in Insights (made-up games of the sample cellar).
+        openSection(0, "cellar")
+        let bottles = element("cellar.stat.bottles")
+        if bottles.waitForExistence(timeout: 5), bottles.isHittable {
+            bottles.press()
+            let card = element("palate.card")
+            scrollIntoView(card)
+            if card.exists {
+                snapshot("my-palate")
+            } else {
+                XCTFail("insights: no My palate card")
+            }
+            closeSheet()
+        }
+    }
 
     /// The figures at the top of the cellar: "to drink soon" filters, "bottles" opens insights.
     private func checkCellarFigures() {

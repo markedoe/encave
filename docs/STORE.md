@@ -33,7 +33,12 @@
   time (the next only if the previous one fails or the user asks for another
   reading). Through OpenRouter it reaches the chosen model's provider; requests
   ask OpenRouter to skip providers that keep or train on data, unless the user
-  turns that off.
+  turns that off. "What to expect" sends only the wine's identity (producer,
+  name, appellation, vintage, colour, grapes), never the photo; with web search
+  allowed per connection (off by default), the provider may search the web
+  with that identity.
+- The aroma game's guesses and scores stay on the device that played: never
+  synced, backed up or exported.
 - Web search (off by default): only the search terms (producer, name,
   appellation, vintage, and for a price the bottle size), shown and editable
   before sending, to the provider the user set up. For a price, the first five
@@ -54,7 +59,7 @@ the request in real time.
 
 - **Sync**: end-to-end encrypted, stored in the user's own iCloud, WebDAV
   folder or relay; neither the developer nor any partner can read it.
-- **AI label photo and search terms**: sent, at the user's request, to a
+- **AI label photo, wine identity and search terms**: sent, at the user's request, to a
   service the user picked and pays for with their own account and key, as a
   mail client or browser would. The developer has no relationship with these
   services and never receives the data. The in-app texts and the policy say

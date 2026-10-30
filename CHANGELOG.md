@@ -6,6 +6,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- Honest AI fields: the label request asks, for each detail, whether it was
+  read on the label or comes from the model's knowledge, and to leave a detail
+  empty when unsure. The form and the scan summary mark estimates "Estimated by
+  AI" until you change them
+- What to expect: a wine's page shows typical aromas, structure, serving
+  temperature, decanting and pairings, from 72 profiles bundled for common
+  appellations, blends, grapes and styles (offline), or from the AI: asked in
+  the same label request, or with What to Expect, which sends only the wine's
+  identity. Kept on the wine as a new synced field that older versions keep. In
+  the tasting sheet it stays behind Show What to Expect; after Drink, the
+  aromas you noted are compared ("You found 4 of 6 expected aromas")
+- AI web search, off by default: a connection to Claude, ChatGPT, Grok or
+  OpenRouter can allow web search. Complete from the Web on a wine's page, or
+  after adding a wine when turned on, fills only empty details and what to
+  expect, lists the pages used and offers Undo; never while reading a label
+- Guess the Aromas: pick aromas (and the structure if you like) before seeing
+  what to expect, then get points (10 for an expected aroma, 4 for the same
+  family, 5 for a level within one) and the accuracy; copy the guesses into the
+  tasting. My palate in Insights shows points, level, accuracy, streak, best
+  and weakest families and the last games. Games stay on the device that played
 - AI label recognition with several models: Settings › AI now has Connections
   (a provider, an optional name, a server address and a key; several per
   provider, for example two OpenRouter accounts) and Models, in order of
