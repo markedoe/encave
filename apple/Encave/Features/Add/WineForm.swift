@@ -565,6 +565,12 @@ extension Wine {
         // Pages from the last web completion, not edited in the form.
         webSources = live.webSources
     }
+
+    /// What to expect as it is now (asked meanwhile, or synced), unless this form's label
+    /// reading filled it (`filledByScan`).
+    mutating func keepExpected(from live: Wine, filledByScan: ExpectedProfile?) {
+        if expectedProfile == nil || expectedProfile != filledByScan { expectedProfile = live.expectedProfile }
+    }
 }
 
 /// A text field that keeps its title visible next to the value, as in Contacts.

@@ -108,7 +108,9 @@ not encrypted either: it goes where you choose to save or share it.
    the photo. If you allow **web search** for a connection (off by default,
    for Claude, ChatGPT, Grok and OpenRouter), **Complete from the web** sends
    the same identity to that model, which may search the web with it through
-   its provider's own search; the pages it used are listed on the wine's page.
+   its provider's own search (through OpenRouter, the search may go through its
+   search partner, such as Exa, for models without a search of their own); the
+   pages it used are listed on the wine's page.
    Your cellar, notes, prices and places are never sent.
 3. **Web search** (off by default). If you choose a search service, Encave
    sends **only the search terms**: the producer, name, appellation and

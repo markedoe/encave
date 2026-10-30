@@ -143,7 +143,7 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
         if (existing == null) {
             viewModel.addDiscovery(discovery, record, form.newPhoto)
         } else {
-            viewModel.updateDiscovery(discovery, record, form.newPhoto, form.photoRemoved)
+            viewModel.updateDiscovery(discovery, record, form.newPhoto, form.photoRemoved, keepsExpected = !form.expectedChanged)
         }
         navigator.back()
     }

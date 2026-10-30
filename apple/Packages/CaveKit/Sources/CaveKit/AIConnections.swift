@@ -524,6 +524,8 @@ public enum AIRequestBody {
             "model": model,
             "input": [["role": "user", "content": [["type": "input_text", "text": AIWebSearch.prompt(prompt, schema: schema)]]]],
             "tools": [["type": "web_search"]],
+            // The Responses API keeps requests and answers by default: not these.
+            "store": false,
         ]
     }
 

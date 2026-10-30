@@ -11579,12 +11579,12 @@
         }
       }
     },
-    "Off by default. Lets this provider search the web to complete a wine you saved, with its producer, name, appellation, vintage, colour and grapes only, and list the pages it used. Never while reading a label. The provider may charge for searches.": {
+    "Off by default. Lets this provider search the web to complete a wine you saved, with its producer, name, appellation, vintage, colour and grapes only, and list the pages it used. Never while reading a label. Through OpenRouter, the search may go through its search partner (Exa). The provider may charge for searches.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Désactivé par défaut. Permet à ce fournisseur de chercher sur le web pour compléter un vin enregistré, avec seulement son producteur, son nom, son appellation, son millésime, sa couleur et ses cépages, et de lister les pages utilisées. Jamais pendant la lecture d’une étiquette. Le fournisseur peut facturer les recherches."
+            "value": "Désactivé par défaut. Permet à ce fournisseur de chercher sur le web pour compléter un vin enregistré, avec seulement son producteur, son nom, son appellation, son millésime, sa couleur et ses cépages, et de lister les pages utilisées. Jamais pendant la lecture d’une étiquette. Avec OpenRouter, la recherche peut passer par son partenaire de recherche (Exa). Le fournisseur peut facturer les recherches."
           }
         }
       }

@@ -99,5 +99,6 @@ class AiRequestPrivacyTest {
         assertNull(AiRequestBody.chatCompletions(AiConnection(AiProvider.Mistral), "m", "p", null, null, webSearch = true)["plugins"])
         val responses = AiRequestBody.responses("gpt-x", "p", schema)
         assertEquals("web_search", (responses["tools"] as JsonArray).single().jsonObject["type"]?.jsonPrimitive?.content)
+        assertEquals("false", responses["store"]?.jsonPrimitive?.content)
     }
 }

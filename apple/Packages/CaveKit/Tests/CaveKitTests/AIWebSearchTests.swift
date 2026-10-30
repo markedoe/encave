@@ -64,5 +64,6 @@ import Testing
         #expect(content.count == 1 && content.first?["type"] as? String == "text")
         let responses = AIRequestBody.responses(model: "m", prompt: "p", schema: schema)
         #expect((responses["tools"] as? [[String: Any]])?.first?["type"] as? String == "web_search")
+        #expect(responses["store"] as? Bool == false)
     }
 }

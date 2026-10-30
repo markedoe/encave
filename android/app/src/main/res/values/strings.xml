@@ -1713,7 +1713,7 @@
     <string name="web_automatic">Complete new wines from the web</string>
     <string name="web_automatic_body">After you add a wine, a model allowed to search the web completes its empty details, with Undo. Adding never waits for it.</string>
     <string name="ai_allow_web">Allow web search</string>
-    <string name="ai_allow_web_body">Off by default. Lets this provider search the web to complete a wine you saved, with its producer, name, appellation, vintage, colour and grapes only, and list the pages it used. Never while reading a label. The provider may charge for searches.</string>
+    <string name="ai_allow_web_body">Off by default. Lets this provider search the web to complete a wine you saved, with its producer, name, appellation, vintage, colour and grapes only, and list the pages it used. Never while reading a label. Through OpenRouter, the search may go through its search partner (Exa). The provider may charge for searches.</string>
     <string name="expected_title">What to expect</string>
     <string name="expected_none">Nothing bundled matches this wine yet. Add its grapes, appellation or style, or ask the AI.</string>
     <string name="game_title">Guess the aromas</string>

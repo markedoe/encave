@@ -429,5 +429,7 @@ object AiRequestBody {
             })
         }
         putJsonArray("tools") { add(buildJsonObject { put("type", "web_search") }) }
+        // The Responses API keeps requests and answers by default: not these.
+        put("store", false)
     }
 }

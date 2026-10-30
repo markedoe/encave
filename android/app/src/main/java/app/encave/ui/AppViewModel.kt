@@ -728,7 +728,7 @@ class AppViewModel(
         }
     }
 
-    fun updateDiscovery(discovery: Discovery, wine: Wine, photo: ByteArray?, removePhoto: Boolean) {
+    fun updateDiscovery(discovery: Discovery, wine: Wine, photo: ByteArray?, removePhoto: Boolean, keepsExpected: Boolean = true) {
         viewModelScope.launch {
             val newId = photo?.let { withContext(Dispatchers.IO) { photos.save(it) } }
             val record = when {
@@ -739,7 +739,16 @@ class AppViewModel(
             repository.update {
                 // Critic scores are edited on the wine page: the live ones are kept, as for the wine form.
                 val live = it.wines[record.id]
-                it.updateWine(if (live != null) record.copy(attachments = live.attachments, criticScores = live.criticScores) else record)
+                it.updateWine(
+                    if (live != null) {
+                        record.copy(
+                            attachments = live.attachments, criticScores = live.criticScores, webSources = live.webSources,
+                            expectedProfile = if (keepsExpected) live.expectedProfile else record.expectedProfile,
+                        )
+                    } else {
+                        record
+                    },
+                )
                 it.updateDiscovery(discovery)
             }.onSuccess { post(UiText.Res(R.string.msg_saved)) }
                 .onFailure { fail(it) }
@@ -981,7 +990,8 @@ class AppViewModel(
         val before = cellar.value.wines[wineId]?.expectedProfile
         change<Unit>({
             post(UiText.Res(if (profile == null) R.string.expected_removed else R.string.expected_saved)) {
-                change<Unit> { c -> c.wines[wineId]?.let { c.updateWine(it.copy(expectedProfile = before)) } }
+                // Only while the wine still has what this change saved: a newer profile is kept.
+                change<Unit> { c -> c.wines[wineId]?.takeIf { it.expectedProfile == profile }?.let { c.updateWine(it.copy(expectedProfile = before)) } }
             }
         }) { c -> c.wines[wineId]?.let { c.updateWine(it.copy(expectedProfile = profile)) } }
     }

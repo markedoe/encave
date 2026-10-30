@@ -320,7 +320,7 @@ struct AIConnectionEditor: View {
                     Toggle("Allow Web Search", isOn: $connection.allowsWebSearch)
                         .accessibilityIdentifier("ai.connection.webSearch")
                 } footer: {
-                    Text("Off by default. Lets this provider search the web to complete a wine you saved, with its producer, name, appellation, vintage, colour and grapes only, and list the pages it used. Never while reading a label. The provider may charge for searches.")
+                    Text("Off by default. Lets this provider search the web to complete a wine you saved, with its producer, name, appellation, vintage, colour and grapes only, and list the pages it used. Never while reading a label. Through OpenRouter, the search may go through its search partner (Exa). The provider may charge for searches.")
                 }
             }
 

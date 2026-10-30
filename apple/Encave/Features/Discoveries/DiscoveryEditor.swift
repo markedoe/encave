@@ -209,6 +209,7 @@ struct DiscoveryEditor: View {
             if let live = model.cellar.wines[wine.id] {
                 // A wine of the cellar recognized by the scan: what was changed in the form is kept.
                 wine.keepUnedited(from: live)
+                wine.keepExpected(from: live, filledByScan: scan.autoFilled.expectedProfile)
                 // The drinking window is not shown here: it stays as it is.
                 wine.drinkFrom = live.drinkFrom
                 wine.drinkUntil = live.drinkUntil
@@ -223,6 +224,7 @@ struct DiscoveryEditor: View {
         }
         if let live = model.cellar.wines[wine.id] {
             wine.keepUnedited(from: live)
+            wine.keepExpected(from: live, filledByScan: scan.autoFilled.expectedProfile)
             wine.drinkFrom = live.drinkFrom
             wine.drinkUntil = live.drinkUntil
         }

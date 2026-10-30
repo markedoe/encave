@@ -193,7 +193,13 @@ implementations:
   kept as an unknown field by versions that do not know it: an array of
   `{url, title?}` (each keeps its unknown keys), the pages the AI cited when it
   last completed the wine from the web (`fixtures/web-completion-vectors.json`).
-  Apps open only `http` and `https` addresses. A new completion replaces the list.
+  Apps open only `http` and `https` addresses. A new completion replaces the list;
+  merging two wines keeps the target's list, else the other's.
+
+  Both fields are typed like the other keys of a record: in `expectedProfile`,
+  levels, temperatures and minutes are integers and texts are strings; in
+  `webSources`, `url` is required. A value of another type fails reading the
+  wine on every device, as for the existing keys; writers must not send one.
 - Readers are strict: an unknown value of `wine.color`, `bottle.status`,
   `rack.kind` or `discovery.setting` fails decoding; readers never replace it
   with a default. A device that does not know a new value refuses the sync
