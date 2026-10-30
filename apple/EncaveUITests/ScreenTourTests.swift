@@ -805,13 +805,10 @@ final class ScreenTourTests: XCTestCase {
         let bottles = element("cellar.stat.bottles")
         if bottles.waitForExistence(timeout: 5), bottles.isHittable {
             bottles.press()
-            if reach("palate.card") != nil {
+            if reach("palate.card") != nil || reach("palate.level") != nil {
                 snapshot("my-palate")
-            } else if app.horizontalSizeClassIsCompact {
-                XCTFail("insights: no My palate card")
             } else {
-                // Insights can be out of reach of the scroll on some layouts, as for critic scores.
-                print("my palate: not reached on this layout")
+                XCTFail("insights: no My palate card")
             }
             closeSheet()
         }

@@ -346,6 +346,7 @@ struct MyPalateCard: View {
         }
         .padding(16)
         .background(Color.secondary.opacity(0.07), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("palate.card")
         .confirmationDialog("Reset your palate?", isPresented: $confirmingReset, titleVisibility: .visible) {
             Button("Remove All Games", role: .destructive) {
