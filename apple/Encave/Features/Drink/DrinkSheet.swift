@@ -105,6 +105,8 @@ private struct DrinkForm: View {
     @State private var discardCloses = true
     /// After Drink, with aromas noted: compared with what to expect.
     @State private var comparison: ShownComparison?
+    /// Guess the Aromas before tasting.
+    @State private var playingGame = false
 
     init(bottleID: UUID, showsCancel: Bool, close: @escaping () -> Void) {
         self.bottleID = bottleID
@@ -152,12 +154,30 @@ private struct DrinkForm: View {
                                 .accessibilityIdentifier("drink.which")
                             }
                         }
+                        if !(wine.expectedOrBundledProfile?.aromas ?? []).isEmpty {
+                            Section {
+                                Button {
+                                    playingGame = true
+                                } label: {
+                                    Label("Guess the Aromas", systemImage: "nose")
+                                }
+                                .accessibilityIdentifier("drink.aromaGame")
+                            } footer: {
+                                Text("Pick the aromas you expect before tasting, then compare. Just for fun: kept on this device.")
+                            }
+                        }
                         TastingFormSections(draft: $draft, color: wine.color, expected: wine.expectedOrBundledProfile)
                         Section {
                             HelpLink(topic: .drinking, title: "Help with Tasting Notes")
                         }
                     }
                     .formStyle(.grouped)
+                    .sheet(isPresented: $playingGame) {
+                        AromaGameView(wineID: wine.id, bottleID: bottle.id) { aromas, levels in
+                            draft.aromas = aromas
+                            for (attribute, level) in levels { draft.levels[attribute] = level }
+                        }
+                    }
                     .navigationDestination(item: $comparison) { shown in
                         AromaComparisonView(wineName: wine.displayName, comparison: shown.comparison, done: close)
                             .navigationBarBackButtonHidden()

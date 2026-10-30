@@ -43,6 +43,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import app.encave.core.expectedOrBundledProfile
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -360,6 +361,7 @@ fun DrinkSheet(
     var chosenId by rememberSaveable(bottleId) { mutableStateOf(bottleId) }
     val chosen = choices.firstOrNull { it.id.toString() == chosenId } ?: opened
     var confirmingDiscard by rememberSaveable { mutableStateOf(false) }
+    var playingGame by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
@@ -432,6 +434,19 @@ fun DrinkSheet(
                 )
             }
             val expected = wine?.expectedOrBundledProfile
+            if (wine != null && !expected?.aromas.isNullOrEmpty()) {
+                OutlinedButton(onClick = { playingGame = true }, modifier = Modifier.testTag("drink.aroma_game")) {
+                    Text(stringResource(R.string.game_title))
+                }
+                Hint(stringResource(R.string.game_drink_footer))
+                if (playingGame) {
+                    AromaGameSheet(wine, chosen.id, onDismiss = { playingGame = false }) { aromas, levels ->
+                        form.aromas = aromas
+                        levels.forEach { (attribute, level) -> form.setLevel(attribute, level) }
+                        form.expanded = true
+                    }
+                }
+            }
             TastingFields(form, color = wine?.color, expected = expected)
             Button(
                 onClick = {

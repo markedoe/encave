@@ -41,6 +41,7 @@ struct InsightsView: View {
                 }
 
                 DrinkDownCard()
+                MyPalateCard()
 
                 if !stats.byColor.isEmpty {
                     ChartCard(title: "By style") {

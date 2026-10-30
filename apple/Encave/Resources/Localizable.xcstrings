@@ -161,6 +161,16 @@
         }
       }
     },
+    "%@, for %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, pour %2$@"
+          }
+        }
+      }
+    },
     "%@, other wine": {
       "localizations": {
         "fr": {
@@ -701,6 +711,46 @@
         }
       }
     },
+    "%lld days": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld days"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld jour"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld jours"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld devices": {
       "localizations": {
         "fr": {
@@ -961,6 +1011,16 @@
         }
       }
     },
+    "%lld of %lld picked": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld sur %lld choisis"
+          }
+        }
+      }
+    },
     "%lld other changes": {
       "localizations": {
         "en": {
@@ -1114,6 +1174,86 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld photos ou documents n’y sont pas : un fichier ZIP contient au plus 4 Go. La cave elle-même est complète."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld points": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld point"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld points"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld point"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld points"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld points to the next level": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld point to the next level"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld points to the next level"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld point avant le niveau suivant"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld points avant le niveau suivant"
                 }
               }
             }
@@ -2011,6 +2151,16 @@
         }
       }
     },
+    "A wine no longer in the cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un vin qui n’est plus en cave"
+          }
+        }
+      }
+    },
     "A wine's page": {
       "localizations": {
         "fr": {
@@ -2143,6 +2293,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Acacia"
+          }
+        }
+      }
+    },
+    "Accuracy": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Précision"
+          }
+        }
+      }
+    },
+    "Accuracy: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Précision : %@"
           }
         }
       }
@@ -2657,6 +2827,16 @@
         }
       }
     },
+    "Adds your aromas and structure to the tasting you are writing; nothing is saved until you tap Drink.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoute vos arômes et votre structure à la dégustation en cours ; rien n’est enregistré avant de toucher Boire."
+          }
+        }
+      }
+    },
     "After a scan, or while editing a wine that has a label photo, **Complete with AI** sends the photo and fills the empty details. With the studio look on, the same answer also says where the label is in the photo, so the picture is framed on it. Once it has, the button reads **Complete Again** and “Completed by AI” shows the day, there and in the details of the wine's page. Tap it again after a new photo, for example. While the AI reads the label, the button shows its progress and cannot be tapped. When the AI finds nothing to add, it says so (“The AI found nothing to add”) and the wine is not marked as completed. When its answer turns a new wine into one already in your cellar, a banner says **Same wine as …** and offers **Merge**, which moves the bottles and tastings into that wine; **Undo** takes it back.": {
       "localizations": {
         "fr": {
@@ -2837,6 +3017,16 @@
         }
       }
     },
+    "Also Guess the Structure": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deviner aussi la structure"
+          }
+        }
+      }
+    },
     "Also erase previous versions and backups": {
       "localizations": {
         "fr": {
@@ -2853,6 +3043,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Trouvés en plus"
+          }
+        }
+      }
+    },
+    "Amateur": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Amateur"
           }
         }
       }
@@ -2893,6 +3093,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Une soirée avec une app d’assistant"
+          }
+        }
+      }
+    },
+    "An expected aroma: 10 points. One of the same family: 4. Your guesses stay on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un arôme attendu : 10 points. Un de la même famille : 4. Vos choix restent sur cet appareil."
           }
         }
       }
@@ -3543,6 +3753,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "D’après %lld de vos %lld vins : les plus proches de la question et les plus urgents."
+          }
+        }
+      }
+    },
+    "Best found": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le mieux trouvé"
           }
         }
       }
@@ -5267,6 +5487,16 @@
         }
       }
     },
+    "Connoisseur": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connaisseur"
+          }
+        }
+      }
+    },
     "Containing": {
       "localizations": {
         "fr": {
@@ -5303,6 +5533,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Copier"
+          }
+        }
+      }
+    },
+    "Copy Guesses into the Tasting Note": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copier mes choix dans la note de dégustation"
           }
         }
       }
@@ -6997,6 +7237,16 @@
         }
       }
     },
+    "Every game played on this device is removed. This cannot be undone.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les parties jouées sur cet appareil sont supprimées. Impossible d’annuler."
+          }
+        }
+      }
+    },
     "Every minute": {
       "localizations": {
         "fr": {
@@ -7063,6 +7313,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Livraison prévue"
+          }
+        }
+      }
+    },
+    "Expected, not picked": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attendus, non choisis"
           }
         }
       }
@@ -7653,6 +7913,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Gibier"
+          }
+        }
+      }
+    },
+    "Games": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parties"
           }
         }
       }
@@ -9223,6 +9493,16 @@
         }
       }
     },
+    "Last games": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dernières parties"
+          }
+        }
+      }
+    },
     "Late: expected %@": {
       "localizations": {
         "fr": {
@@ -10149,6 +10429,16 @@
         }
       }
     },
+    "My palate": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mon palais"
+          }
+        }
+      }
+    },
     "NV": {
       "localizations": {
         "fr": {
@@ -10789,6 +11079,16 @@
         }
       }
     },
+    "Not expected": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non attendus"
+          }
+        }
+      }
+    },
     "Not found": {
       "localizations": {
         "fr": {
@@ -11059,6 +11359,16 @@
         }
       }
     },
+    "Nothing to guess": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rien à deviner"
+          }
+        }
+      }
+    },
     "Nothing to suggest yet": {
       "localizations": {
         "fr": {
@@ -11075,6 +11385,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les notifications sont désactivées pour Encave. Activez-les dans les réglages du système."
+          }
+        }
+      }
+    },
+    "Novice": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Novice"
           }
         }
       }
@@ -12535,6 +12855,26 @@
         }
       }
     },
+    "Pick the aromas you expect before tasting, then compare. Just for fun: kept on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez les arômes que vous attendez avant de goûter, puis comparez. Pour le plaisir : gardé sur cet appareil."
+          }
+        }
+      }
+    },
+    "Pick up to %lld aromas you expect to find, then reveal what to expect.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez jusqu’à %lld arômes que vous pensez trouver, puis révélez ce qui est attendu."
+          }
+        }
+      }
+    },
     "Pictures": {
       "localizations": {
         "fr": {
@@ -13435,6 +13775,16 @@
         }
       }
     },
+    "Remove All Games": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer toutes les parties"
+          }
+        }
+      }
+    },
     "Remove Barcode": {
       "localizations": {
         "fr": {
@@ -13635,6 +13985,26 @@
         }
       }
     },
+    "Reset My Palate": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinitialiser mon palais"
+          }
+        }
+      }
+    },
+    "Reset your palate?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinitialiser votre palais ?"
+          }
+        }
+      }
+    },
     "Restaurant": {
       "localizations": {
         "fr": {
@@ -13741,6 +14111,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Renvoie les bouteilles de votre cave en texte ou en JSON, pour une autre app ou un assistant IA sur cet appareil. Encave n’envoie rien."
+          }
+        }
+      }
+    },
+    "Reveal": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Révéler"
           }
         }
       }
@@ -13911,6 +14291,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Identique à votre cave"
+          }
+        }
+      }
+    },
+    "Same family": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Même famille"
           }
         }
       }
@@ -15331,6 +15721,16 @@
         }
       }
     },
+    "Sommelier": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sommelier"
+          }
+        }
+      }
+    },
     "Sort": {
       "localizations": {
         "fr": {
@@ -15597,6 +15997,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fraise"
+          }
+        }
+      }
+    },
+    "Streak": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Série"
           }
         }
       }
@@ -17531,6 +17941,16 @@
         }
       }
     },
+    "This wine has no profile to compare with yet.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce vin n’a pas encore de profil à comparer."
+          }
+        }
+      }
+    },
     "Through OpenRouter, the photo reaches the provider of the model you choose. Off: Encave asks OpenRouter to use only providers that do not keep the photo or train on it, so some models may not answer. On: any provider can be used.": {
       "localizations": {
         "fr": {
@@ -17597,6 +18017,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pour laisser une app d’assistant de votre choix, comme Claude, choisir les bouteilles, créez un raccourci dans l’app Raccourcis. Ajoutez d’abord **Préparer une demande de soirée** d’Encave et réglez **Occasion** sur Demander à chaque fois ; vous pouvez aussi régler **Nombre de bouteilles** ou désactiver **Seulement les bouteilles prêtes à boire**. Ajoutez ensuite l’action de l’app d’assistant, comme Ask Claude, avec le résultat de la première. Nommez le raccourci « Soirée » et dites « Dis Siri, Soirée ». La demande liste vos bouteilles et leur position, sans prix, notes ni lieux d’achat. Encave n’envoie rien : votre raccourci donne le texte à l’app que vous avez choisie, et il quitte cet appareil selon la politique de confidentialité de cette app. Rien ne se passe tant que vous ne créez pas ce raccourci. Sans Siri, utilisez **Partager une demande de soirée** dans Ce soir."
+          }
+        }
+      }
+    },
+    "To practise": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À travailler"
           }
         }
       }
@@ -19067,6 +19497,16 @@
         }
       }
     },
+    "Within one level of what to expect: 5 points each.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À un niveau près de ce qui est attendu : 5 points chacun."
+          }
+        }
+      }
+    },
     "Without syncing away from home, devices still sync on the same Wi-Fi.": {
       "localizations": {
         "fr": {
@@ -19133,6 +19573,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vous avez trouvé %lld des %lld arômes attendus"
+          }
+        }
+      }
+    },
+    "You: %@ · Expected: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous : %1$@ · Attendu : %2$@"
           }
         }
       }
@@ -19343,6 +19793,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vos appareils"
+          }
+        }
+      }
+    },
+    "Your guesses and scores stay on this device: never synced, backed up or exported.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos choix et scores restent sur cet appareil : jamais synchronisés, sauvegardés ni exportés."
           }
         }
       }
@@ -19855,6 +20315,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "milieu"
+          }
+        }
+      }
+    },
+    "points": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "points"
           }
         }
       }

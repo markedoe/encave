@@ -15,6 +15,8 @@ struct WineDetailView: View {
     @State private var documents = DocumentActions()
     /// A critic's score being added or changed.
     @State private var editingCritic: CriticScoreEdit?
+    /// Guess the Aromas, from what to expect.
+    @State private var playingGame = false
     private let webSearchEnabled = WebSearchSettings.load().isEnabled
 
     var body: some View {
@@ -135,7 +137,7 @@ struct WineDetailView: View {
                     }
                 }
 
-                ExpectedProfileSection(wine: wine)
+                ExpectedProfileSection(wine: wine, playGame: { playingGame = true })
                 WebCompletionSection(wine: wine)
 
                 if wine.currentPrice != nil || webSearchEnabled {
@@ -229,6 +231,9 @@ struct WineDetailView: View {
                         }
                     }
                 }
+            }
+            .sheet(isPresented: $playingGame) {
+                AromaGameView(wineID: wineID)
             }
             .documentActions(documents)
             .navigationTitle(wine.displayName)

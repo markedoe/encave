@@ -1659,6 +1659,39 @@
     <string name="level_feminine_short">Short</string>
     <string name="level_feminine_long">Long</string>
     <string name="ai_estimated">Estimated by AI</string>
+    <string name="game_copy">Copy guesses into the tasting note</string>
+    <string name="game_copy_footer">Adds your aromas and structure to the tasting you are writing; nothing is saved until you tap Drink.</string>
+    <string name="game_intro">Pick up to %1$d aromas you expect to find, then reveal what to expect.</string>
+    <string name="game_picked">%1$d of %2$d picked</string>
+    <string name="game_structure">Also guess the structure</string>
+    <string name="game_structure_footer">Within one level of what to expect: 5 points each.</string>
+    <string name="game_reveal">Reveal</string>
+    <string name="game_rules">An expected aroma: 10 points. One of the same family: 4. Your guesses stay on this device.</string>
+    <string name="game_accuracy">Accuracy: %1$s</string>
+    <string name="game_same_family">Same family</string>
+    <string name="game_family_match">%1$s, for %2$s</string>
+    <string name="game_missed">Expected, not picked</string>
+    <string name="game_wrong">Not expected</string>
+    <string name="game_structure_title">Structure</string>
+    <string name="game_level">%1$s — you: %2$s · expected: %3$s</string>
+    <string name="game_drink_footer">Pick the aromas you expect before tasting, then compare. Just for fun: kept on this device.</string>
+    <string name="palate_title">My palate</string>
+    <string name="palate_accuracy">Accuracy</string>
+    <string name="palate_streak">Streak</string>
+    <string name="palate_games">Games</string>
+    <string name="palate_best">Best found</string>
+    <string name="palate_weakest">To practise</string>
+    <string name="palate_recent">Last games</string>
+    <string name="palate_wine_gone">A wine no longer in the cellar</string>
+    <string name="palate_footer">Your guesses and scores stay on this device: never synced, backed up or exported.</string>
+    <string name="palate_reset">Reset my palate</string>
+    <string name="palate_reset_title">Reset your palate?</string>
+    <string name="palate_reset_body">Every game played on this device is removed. This cannot be undone.</string>
+    <string name="palate_reset_confirm">Remove all games</string>
+    <string name="palate_level_novice">Novice</string>
+    <string name="palate_level_amateur">Amateur</string>
+    <string name="palate_level_connoisseur">Connoisseur</string>
+    <string name="palate_level_sommelier">Sommelier</string>
     <string name="web_section">From the web</string>
     <string name="web_complete">Complete from the web</string>
     <string name="web_searching">Searching the web…</string>
@@ -1694,6 +1727,22 @@
     <string name="comparison_missed">Not found this time</string>
     <string name="comparison_extra">Also found</string>
     <string name="comparison_extra_footer">Aromas you found that were not expected: every bottle and every palate is different.</string>
+    <plurals name="game_points">
+        <item quantity="one">%d point</item>
+        <item quantity="other">%d points</item>
+    </plurals>
+    <plurals name="palate_points_caption" tools:ignore="ImpliedQuantity">
+        <item quantity="one">point</item>
+        <item quantity="other">points</item>
+    </plurals>
+    <plurals name="palate_to_next">
+        <item quantity="one">%d point to the next level</item>
+        <item quantity="other">%d points to the next level</item>
+    </plurals>
+    <plurals name="palate_days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
     <plurals name="storage_rows">
         <item quantity="one">%d row</item>
         <item quantity="other">%d rows</item>

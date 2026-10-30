@@ -13,6 +13,8 @@
         <include domain="file" path="." />
         <!-- Sync state belongs to this device (its identity key stays here). -->
         <exclude domain="file" path="sync/" />
+        <!-- Aroma game guesses and scores stay on the device that played. -->
+        <exclude domain="file" path="aroma-game/" />
         <include domain="sharedpref" path="preferences.xml" />
         <include domain="sharedpref" path="ai.xml" />
         <include domain="sharedpref" path="websearch.xml" />

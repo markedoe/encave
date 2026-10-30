@@ -1,0 +1,508 @@
+{
+ "about": "Scoring of the aroma game (AromaGame in CaveKit and the Kotlin core): exact aroma +10, same family +4 (one expected aroma per pick, in the order picked, the first 6 picks each once), structure within one level +5; maxPoints is 10 per expected aroma and 5 per expected level guessed; accuracy a whole percentage, halves up. 'levels' maps total points to the level, 'palate' the My palate card (days in UTC; the streak ends today or yesterday; best and weakest families among those expected at least twice). Read by AromaGameTests.swift and AromaGameTest.kt.",
+ "scores": [
+  {
+   "note": "all found, structure close",
+   "guesses": [
+    "fruit.redCherry",
+    "fruit.raspberry",
+    "earth.forestFloor"
+   ],
+   "structure": {
+    "acidity": 4,
+    "tannin": 3
+   },
+   "expected": [
+    "fruit.redCherry",
+    "fruit.raspberry",
+    "earth.forestFloor"
+   ],
+   "expectedStructure": {
+    "acidity": 4,
+    "tannin": 2,
+    "body": 3
+   },
+   "points": 40,
+   "maxPoints": 40,
+   "accuracy": 100,
+   "exact": [
+    "fruit.redCherry",
+    "fruit.raspberry",
+    "earth.forestFloor"
+   ],
+   "family": [],
+   "missed": [],
+   "wrong": []
+  },
+  {
+   "note": "a family match, a wrong pick, one level too far",
+   "guesses": [
+    "fruit.strawberry",
+    "oak.vanilla",
+    "spice.clove",
+    "fruit.blackcurrant"
+   ],
+   "structure": {
+    "tannin": 1,
+    "body": 3
+   },
+   "expected": [
+    "fruit.redCherry",
+    "fruit.blackcurrant",
+    "oak.cedar",
+    "herbal.greenPepper"
+   ],
+   "expectedStructure": {
+    "tannin": 4,
+    "body": 4
+   },
+   "points": 23,
+   "maxPoints": 50,
+   "accuracy": 46,
+   "exact": [
+    "fruit.blackcurrant"
+   ],
+   "family": [
+    [
+     "fruit.strawberry",
+     "fruit.redCherry"
+    ],
+    [
+     "oak.vanilla",
+     "oak.cedar"
+    ]
+   ],
+   "missed": [
+    "herbal.greenPepper"
+   ],
+   "wrong": [
+    "spice.clove"
+   ]
+  },
+  {
+   "note": "family credit goes to one expected aroma per pick, in the order picked",
+   "guesses": [
+    "fruit.lemon",
+    "fruit.grapefruit",
+    "fruit.orangePeel"
+   ],
+   "structure": {},
+   "expected": [
+    "fruit.lemon",
+    "fruit.grapefruit"
+   ],
+   "expectedStructure": {},
+   "points": 20,
+   "maxPoints": 20,
+   "accuracy": 100,
+   "exact": [
+    "fruit.lemon",
+    "fruit.grapefruit"
+   ],
+   "family": [],
+   "missed": [],
+   "wrong": [
+    "fruit.orangePeel"
+   ]
+  },
+  {
+   "note": "only the first six picks, each once",
+   "guesses": [
+    "fruit.lemon",
+    "fruit.lemon",
+    "fruit.pear",
+    "fruit.peach",
+    "floral.acacia",
+    "dried.honey",
+    "earth.flint",
+    "fruit.greenApple"
+   ],
+   "structure": {},
+   "expected": [
+    "fruit.greenApple",
+    "fruit.lemon"
+   ],
+   "expectedStructure": {},
+   "points": 14,
+   "maxPoints": 20,
+   "accuracy": 70,
+   "exact": [
+    "fruit.lemon"
+   ],
+   "family": [
+    [
+     "fruit.pear",
+     "fruit.greenApple"
+    ]
+   ],
+   "missed": [],
+   "wrong": [
+    "fruit.peach",
+    "floral.acacia",
+    "dried.honey",
+    "earth.flint"
+   ]
+  },
+  {
+   "note": "no structure guessed: not counted",
+   "guesses": [
+    "dried.honey"
+   ],
+   "structure": {},
+   "expected": [
+    "fruit.apricot",
+    "dried.honey"
+   ],
+   "expectedStructure": {
+    "sweetness": 5
+   },
+   "points": 10,
+   "maxPoints": 20,
+   "accuracy": 50,
+   "exact": [
+    "dried.honey"
+   ],
+   "family": [],
+   "missed": [
+    "fruit.apricot"
+   ],
+   "wrong": []
+  },
+  {
+   "note": "unknown ids get no family credit",
+   "guesses": [
+    "fruit.newBerry"
+   ],
+   "structure": {
+    "sweetness": 2
+   },
+   "expected": [
+    "fruit.newBerry2",
+    "fruit.lemon"
+   ],
+   "expectedStructure": {
+    "sweetness": 1
+   },
+   "points": 5,
+   "maxPoints": 25,
+   "accuracy": 20,
+   "exact": [],
+   "family": [],
+   "missed": [
+    "fruit.newBerry2",
+    "fruit.lemon"
+   ],
+   "wrong": [
+    "fruit.newBerry"
+   ]
+  },
+  {
+   "note": "nothing expected",
+   "guesses": [
+    "fruit.lemon"
+   ],
+   "structure": {},
+   "expected": [],
+   "expectedStructure": {},
+   "points": 0,
+   "maxPoints": 0,
+   "accuracy": 0,
+   "exact": [],
+   "family": [],
+   "missed": [],
+   "wrong": [
+    "fruit.lemon"
+   ]
+  }
+ ],
+ "levels": [
+  [
+   0,
+   "novice"
+  ],
+  [
+   99,
+   "novice"
+  ],
+  [
+   100,
+   "amateur"
+  ],
+  [
+   499,
+   "amateur"
+  ],
+  [
+   500,
+   "connoisseur"
+  ],
+  [
+   1499,
+   "connoisseur"
+  ],
+  [
+   1500,
+   "sommelier"
+  ],
+  [
+   9000,
+   "sommelier"
+  ]
+ ],
+ "palate": [
+  {
+   "note": "a streak of three days, families",
+   "today": "2026-10-30",
+   "games": [
+    {
+     "day": "2026-10-30",
+     "guesses": [
+      "fruit.lemon",
+      "fruit.greenApple"
+     ],
+     "structure": {},
+     "expected": [
+      "fruit.lemon",
+      "fruit.greenApple",
+      "earth.flint"
+     ],
+     "expectedStructure": {}
+    },
+    {
+     "day": "2026-10-29",
+     "guesses": [
+      "fruit.redCherry"
+     ],
+     "structure": {
+      "tannin": 2
+     },
+     "expected": [
+      "fruit.redCherry",
+      "earth.forestFloor"
+     ],
+     "expectedStructure": {
+      "tannin": 2
+     }
+    },
+    {
+     "day": "2026-10-29",
+     "guesses": [
+      "fruit.lemon"
+     ],
+     "structure": {},
+     "expected": [
+      "fruit.lemon",
+      "earth.flint"
+     ],
+     "expectedStructure": {}
+    },
+    {
+     "day": "2026-10-28",
+     "guesses": [
+      "oak.vanilla"
+     ],
+     "structure": {},
+     "expected": [
+      "fruit.plum",
+      "earth.mushroom"
+     ],
+     "expectedStructure": {}
+    },
+    {
+     "day": "2026-10-25",
+     "guesses": [
+      "fruit.plum"
+     ],
+     "structure": {},
+     "expected": [
+      "fruit.plum"
+     ],
+     "expectedStructure": {}
+    }
+   ],
+   "result": {
+    "points": 55,
+    "level": "novice",
+    "accuracy": 52,
+    "streak": 3,
+    "best": "citrus",
+    "weakest": "earthMineral",
+    "games": 5
+   }
+  },
+  {
+   "note": "no game today: the streak ends yesterday",
+   "today": "2026-10-31",
+   "games": [
+    {
+     "day": "2026-10-30",
+     "guesses": [
+      "fruit.lemon",
+      "fruit.greenApple"
+     ],
+     "structure": {},
+     "expected": [
+      "fruit.lemon",
+      "fruit.greenApple",
+      "earth.flint"
+     ],
+     "expectedStructure": {}
+    },
+    {
+     "day": "2026-10-29",
+     "guesses": [
+      "fruit.redCherry"
+     ],
+     "structure": {
+      "tannin": 2
+     },
+     "expected": [
+      "fruit.redCherry",
+      "earth.forestFloor"
+     ],
+     "expectedStructure": {
+      "tannin": 2
+     }
+    },
+    {
+     "day": "2026-10-29",
+     "guesses": [
+      "fruit.lemon"
+     ],
+     "structure": {},
+     "expected": [
+      "fruit.lemon",
+      "earth.flint"
+     ],
+     "expectedStructure": {}
+    },
+    {
+     "day": "2026-10-28",
+     "guesses": [
+      "oak.vanilla"
+     ],
+     "structure": {},
+     "expected": [
+      "fruit.plum",
+      "earth.mushroom"
+     ],
+     "expectedStructure": {}
+    },
+    {
+     "day": "2026-10-25",
+     "guesses": [
+      "fruit.plum"
+     ],
+     "structure": {},
+     "expected": [
+      "fruit.plum"
+     ],
+     "expectedStructure": {}
+    }
+   ],
+   "result": {
+    "points": 55,
+    "level": "novice",
+    "accuracy": 52,
+    "streak": 3,
+    "best": "citrus",
+    "weakest": "earthMineral",
+    "games": 5
+   }
+  },
+  {
+   "note": "no game for two days",
+   "today": "2026-11-01",
+   "games": [
+    {
+     "day": "2026-10-30",
+     "guesses": [
+      "fruit.lemon",
+      "fruit.greenApple"
+     ],
+     "structure": {},
+     "expected": [
+      "fruit.lemon",
+      "fruit.greenApple",
+      "earth.flint"
+     ],
+     "expectedStructure": {}
+    },
+    {
+     "day": "2026-10-29",
+     "guesses": [
+      "fruit.redCherry"
+     ],
+     "structure": {
+      "tannin": 2
+     },
+     "expected": [
+      "fruit.redCherry",
+      "earth.forestFloor"
+     ],
+     "expectedStructure": {
+      "tannin": 2
+     }
+    },
+    {
+     "day": "2026-10-29",
+     "guesses": [
+      "fruit.lemon"
+     ],
+     "structure": {},
+     "expected": [
+      "fruit.lemon",
+      "earth.flint"
+     ],
+     "expectedStructure": {}
+    },
+    {
+     "day": "2026-10-28",
+     "guesses": [
+      "oak.vanilla"
+     ],
+     "structure": {},
+     "expected": [
+      "fruit.plum",
+      "earth.mushroom"
+     ],
+     "expectedStructure": {}
+    },
+    {
+     "day": "2026-10-25",
+     "guesses": [
+      "fruit.plum"
+     ],
+     "structure": {},
+     "expected": [
+      "fruit.plum"
+     ],
+     "expectedStructure": {}
+    }
+   ],
+   "result": {
+    "points": 55,
+    "level": "novice",
+    "accuracy": 52,
+    "streak": 0,
+    "best": "citrus",
+    "weakest": "earthMineral",
+    "games": 5
+   }
+  },
+  {
+   "note": "no games",
+   "today": "2026-10-30",
+   "games": [],
+   "result": {
+    "points": 0,
+    "level": "novice",
+    "accuracy": null,
+    "streak": 0,
+    "best": null,
+    "weakest": null,
+    "games": 0
+   }
+  }
+ ]
+}

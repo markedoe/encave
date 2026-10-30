@@ -1658,6 +1658,39 @@
     <string name="level_feminine_short">Courte</string>
     <string name="level_feminine_long">Longue</string>
     <string name="ai_estimated">Estimé par l’IA</string>
+    <string name="game_copy">Copier mes choix dans la note de dégustation</string>
+    <string name="game_copy_footer">Ajoute vos arômes et votre structure à la dégustation en cours ; rien n’est enregistré avant de toucher Boire.</string>
+    <string name="game_intro">Choisissez jusqu’à %1$d arômes que vous pensez trouver, puis révélez ce qui est attendu.</string>
+    <string name="game_picked">%1$d sur %2$d choisis</string>
+    <string name="game_structure">Deviner aussi la structure</string>
+    <string name="game_structure_footer">À un niveau près de ce qui est attendu : 5 points chacun.</string>
+    <string name="game_reveal">Révéler</string>
+    <string name="game_rules">Un arôme attendu : 10 points. Un de la même famille : 4. Vos choix restent sur cet appareil.</string>
+    <string name="game_accuracy">Précision : %1$s</string>
+    <string name="game_same_family">Même famille</string>
+    <string name="game_family_match">%1$s, pour %2$s</string>
+    <string name="game_missed">Attendus, non choisis</string>
+    <string name="game_wrong">Non attendus</string>
+    <string name="game_structure_title">Structure</string>
+    <string name="game_level">%1$s — vous : %2$s · attendu : %3$s</string>
+    <string name="game_drink_footer">Choisissez les arômes que vous attendez avant de goûter, puis comparez. Pour le plaisir : gardé sur cet appareil.</string>
+    <string name="palate_title">Mon palais</string>
+    <string name="palate_accuracy">Précision</string>
+    <string name="palate_streak">Série</string>
+    <string name="palate_games">Parties</string>
+    <string name="palate_best">Le mieux trouvé</string>
+    <string name="palate_weakest">À travailler</string>
+    <string name="palate_recent">Dernières parties</string>
+    <string name="palate_wine_gone">Un vin qui n’est plus en cave</string>
+    <string name="palate_footer">Vos choix et scores restent sur cet appareil : jamais synchronisés, sauvegardés ni exportés.</string>
+    <string name="palate_reset">Réinitialiser mon palais</string>
+    <string name="palate_reset_title">Réinitialiser votre palais ?</string>
+    <string name="palate_reset_body">Toutes les parties jouées sur cet appareil sont supprimées. Impossible d’annuler.</string>
+    <string name="palate_reset_confirm">Supprimer toutes les parties</string>
+    <string name="palate_level_novice">Novice</string>
+    <string name="palate_level_amateur">Amateur</string>
+    <string name="palate_level_connoisseur">Connaisseur</string>
+    <string name="palate_level_sommelier">Sommelier</string>
     <string name="web_section">D’après le web</string>
     <string name="web_complete">Compléter avec le web</string>
     <string name="web_searching">Recherche sur le web…</string>
@@ -1693,6 +1726,26 @@
     <string name="comparison_missed">Pas trouvés cette fois</string>
     <string name="comparison_extra">Trouvés en plus</string>
     <string name="comparison_extra_footer">Les arômes trouvés qui n’étaient pas attendus : chaque bouteille et chaque palais sont différents.</string>
+    <plurals name="game_points">
+        <item quantity="one">%d point</item>
+        <item quantity="many">%d points</item>
+        <item quantity="other">%d points</item>
+    </plurals>
+    <plurals name="palate_points_caption" tools:ignore="ImpliedQuantity">
+        <item quantity="one">point</item>
+        <item quantity="many">points</item>
+        <item quantity="other">points</item>
+    </plurals>
+    <plurals name="palate_to_next">
+        <item quantity="one">%d point avant le niveau suivant</item>
+        <item quantity="many">%d points avant le niveau suivant</item>
+        <item quantity="other">%d points avant le niveau suivant</item>
+    </plurals>
+    <plurals name="palate_days">
+        <item quantity="one">%d jour</item>
+        <item quantity="many">%d jours</item>
+        <item quantity="other">%d jours</item>
+    </plurals>
     <plurals name="storage_rows">
         <item quantity="one">%d rangée</item>
         <item quantity="many">%d rangées</item>

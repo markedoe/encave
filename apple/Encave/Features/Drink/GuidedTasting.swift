@@ -198,7 +198,7 @@ private struct ClearButton: View {
 /// One structure attribute from 1 to 5, as five segments filled up to the level, with its
 /// word ("Medium+") written beside the name. Tapping the current level clears it, as
 /// with the stars. For VoiceOver, one adjustable element that says the word.
-private struct LevelRow: View {
+struct LevelRow: View {
     let attribute: Vocabulary.Attribute
     @Binding var value: Int?
 

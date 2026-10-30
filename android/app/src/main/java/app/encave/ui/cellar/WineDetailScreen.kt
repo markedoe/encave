@@ -150,6 +150,7 @@ fun WineDetailScreen(
     val aiConfiguration by viewModel.ai.configuration.collectAsStateWithLifecycle()
     val askingExpected by viewModel.askingExpected.collectAsStateWithLifecycle()
     val completingFromWeb by viewModel.completingFromWeb.collectAsStateWithLifecycle()
+    var playingGame by rememberSaveable { mutableStateOf(false) }
     val id = remember(wineId) { runCatching { UUID.fromString(wineId) }.getOrNull() }
     val wine = id?.let { cellar.wines[it] }
     val back = onBack ?: { navigator.back() }
@@ -343,6 +344,7 @@ fun WineDetailScreen(
                     wine, aiEnabled = aiConfiguration.isEnabled, asking = wine.id in askingExpected, language = viewModel.appLanguage,
                     onAsk = { viewModel.askWhatToExpect(wine.id) },
                     onUseTypical = { viewModel.setExpectedProfile(wine.id, null) },
+                    onPlay = { playingGame = true },
                 )
             }
             item {
@@ -409,6 +411,9 @@ fun WineDetailScreen(
         }
     }
 
+    if (playingGame && wine != null) {
+        app.encave.ui.drink.AromaGameSheet(wine, bottleId = null, onDismiss = { playingGame = false })
+    }
     drinking?.let { id ->
         DrinkSheet(
             cellar = cellar,
