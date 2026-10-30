@@ -234,6 +234,7 @@ fun AiConnectionScreen(viewModel: AppViewModel, navigator: AppNavigator, connect
     var showKey by remember { mutableStateOf(false) }
     var check by remember(connectionId) { mutableStateOf<KeyCheck>(KeyCheck.Idle) }
     var confirmingDelete by remember { mutableStateOf(false) }
+    var addingModel by remember { mutableStateOf(false) }
     if (!isNew) LaunchedEffect(connectionId) { apiKey = withContext(Dispatchers.IO) { viewModel.ai.apiKey(draft).orEmpty() } }
 
     fun change(connection: AiConnection) {
@@ -393,6 +394,27 @@ fun AiConnectionScreen(viewModel: AppViewModel, navigator: AppNavigator, connect
             )
         }
         if (!isNew) {
+            // This connection's models in the list, and Add model with it chosen.
+            HorizontalDivider()
+            Text(
+                stringResource(R.string.settings_ai_models), style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(horizontal = Dimens.l, vertical = Dimens.s),
+            )
+            val models = configuration.modelsOf(draft.id)
+            if (models.isEmpty()) {
+                Text(
+                    stringResource(R.string.ai_connection_no_model), style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = Dimens.l),
+                )
+            }
+            models.forEach { ListItem(headlineContent = { Text(it.model) }) }
+            TextButton(
+                onClick = { addingModel = true },
+                modifier = Modifier.padding(horizontal = Dimens.s).testTag("ai.connection.add_model"),
+            ) {
+                Icon(Icons.Outlined.Add, contentDescription = null)
+                Text(stringResource(R.string.ai_model_add), Modifier.padding(start = Dimens.s))
+            }
             HorizontalDivider()
             TextButton(
                 onClick = {
@@ -410,6 +432,7 @@ fun AiConnectionScreen(viewModel: AppViewModel, navigator: AppNavigator, connect
             }
         }
     }
+    if (addingModel) AddModelDialog(viewModel, preselected = draft.id) { addingModel = false }
     if (confirmingDelete) {
         val count = configuration.modelsOf(draft.id).size
         AlertDialog(
@@ -573,11 +596,11 @@ fun AiModelsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
 
 /** Adds a model of a connection: typed, or picked from its list (loaded with its key). */
 @Composable
-private fun AddModelDialog(viewModel: AppViewModel, close: () -> Unit) {
+private fun AddModelDialog(viewModel: AppViewModel, preselected: String? = null, close: () -> Unit) {
     val configuration by viewModel.ai.configuration.collectAsStateWithLifecycle()
     val resources = LocalResources.current
     val scope = rememberCoroutineScope()
-    var connectionId by rememberSaveable { mutableStateOf(configuration.connections.firstOrNull()?.id) }
+    var connectionId by rememberSaveable { mutableStateOf(preselected ?: configuration.connections.firstOrNull()?.id) }
     val connection = connectionId?.let { configuration.connection(it) }
     var model by rememberSaveable(connectionId) { mutableStateOf(connection?.provider?.suggestedModel.orEmpty()) }
     var loading by remember { mutableStateOf(false) }

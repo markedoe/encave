@@ -2537,6 +2537,16 @@
         }
       }
     },
+    "Add a Model": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un modèle"
+          }
+        }
+      }
+    },
     "Add a Photo": {
       "localizations": {
         "fr": {
@@ -2773,6 +2783,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajouté : %1$lld × %2$@, fiche complétée par l’IA"
+          }
+        }
+      }
+    },
+    "Added to your models with this connection. You can add others in Models.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouté à vos modèles avec cette connexion. Vous pouvez en ajouter d’autres dans Modèles."
           }
         }
       }
@@ -10929,6 +10949,16 @@
         }
       }
     },
+    "No model of this connection is used yet.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun modèle de cette connexion n’est encore utilisé."
+          }
+        }
+      }
+    },
     "No other bottle with this detail is in the cellar or on order.": {
       "localizations": {
         "fr": {
@@ -14721,6 +14751,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La recherche du Journal cherche aussi dans le lieu, les notes et les tags."
+          }
+        }
+      }
+    },
+    "Search models": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechercher un modèle"
           }
         }
       }

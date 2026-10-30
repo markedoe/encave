@@ -470,6 +470,7 @@ S = [
  ("ai_err_invalid", "The answer from the AI service could not be read.", "La réponse du service d’IA est illisible."),
  ('settings_ai_connections', 'Connections', 'Connexions'),
  ('settings_ai_models', 'Models', 'Modèles'),
+ ('ai_connection_no_model', 'No model of this connection is used yet.', 'Aucun modèle de cette connexion n’est encore utilisé.'),
  ('ai_connections_empty', 'No connection yet. Add one for each AI service or server you use, with its API key.', 'Aucune connexion pour l’instant. Ajoutez-en une pour chaque service d’IA ou serveur que vous utilisez, avec sa clé d’API.'),
  ('ai_connections_footer', 'Several connections to the same service are possible, for example two OpenRouter accounts. Keys stay encrypted on this device: they are never synced, exported or backed up.', 'Plusieurs connexions au même service sont possibles, par exemple deux comptes OpenRouter. Les clés restent chiffrées sur cet appareil : elles ne sont jamais synchronisées, exportées ni sauvegardées.'),
  ('ai_connection_add', 'Add connection', 'Ajouter une connexion'),

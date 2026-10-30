@@ -131,6 +131,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
   scale, "16/20" is 4 stars
 
 ### Fixed
+- Settings › AI: a model can be chosen right where it is needed. A new connection
+  offers its models once its key is checked (searchable, OpenRouter lists
+  hundreds), and a connection's page lists its models with Add a Model
 - Racks on iPhone zoom again with two fingers: the pinch no longer gives way to
   scrolling, which only moved the rack
 - The Add a Bottle button of an empty cellar opens the label scanner first, as

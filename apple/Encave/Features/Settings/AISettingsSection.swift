@@ -235,6 +235,9 @@ struct AIConnectionEditor: View {
     @State private var check: KeyCheck = .idle
     @State private var loaded = false
     @State private var confirmingDelete = false
+    /// A new connection: the model added with it, picked once its models are loaded.
+    @State private var firstModel = ""
+    @State private var addingModel = false
 
     enum KeyCheck: Equatable {
         case idle, checking, valid(Int), failed(String)
@@ -306,6 +309,8 @@ struct AIConnectionEditor: View {
                 }
             }
 
+            modelsSection
+
             if connection.provider == .openRouter {
                 Section {
                     Toggle("Allow Providers That Keep Data", isOn: $connection.allowsDataCollection)
@@ -347,7 +352,11 @@ struct AIConnectionEditor: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
-                        store.update { $0.upsert(connection) }
+                        let model = firstModel.trimmingCharacters(in: .whitespaces)
+                        store.update {
+                            $0.upsert(connection)
+                            if !model.isEmpty { _ = $0.addModel(model, connection: connection.id) }
+                        }
                         store.setKey(AISettings.cleanKey(apiKey), for: connection)
                         dismiss()
                     }
@@ -388,7 +397,50 @@ struct AIConnectionEditor: View {
             }
             if check != .checking { check = .idle }
         }
+        .sheet(isPresented: $addingModel) {
+            NavigationStack { AddAIModelView(store: store, preselected: connection.id) }
+                .macSheetFrame(width: 520, height: 620)
+        }
         .macSheetFrame(width: 520, height: 680)
+    }
+
+    /// The models of this connection. A new one: the model to add with it, from the list
+    /// its key loaded. An existing one: its models in the list, and Add a Model.
+    @ViewBuilder
+    private var modelsSection: some View {
+        let loadedList = store.loadedModels[connection.id] ?? []
+        if isNew {
+            if !loadedList.isEmpty {
+                Section {
+                    NavigationLink {
+                        AIModelListPicker(models: loadedList, selection: $firstModel)
+                    } label: {
+                        LabeledContent("Model") {
+                            Text(verbatim: firstModel.isEmpty ? String(localized: "Choose…") : firstModel)
+                        }
+                    }
+                    .accessibilityIdentifier("ai.connection.firstModel")
+                } footer: {
+                    Text("Added to your models with this connection. You can add others in Models.")
+                }
+            }
+        } else {
+            Section {
+                let models = store.configuration.models(of: connection.id)
+                if models.isEmpty {
+                    Text("No model of this connection is used yet.").foregroundStyle(.secondary)
+                }
+                ForEach(models) { Text(verbatim: $0.model) }
+                Button {
+                    addingModel = true
+                } label: {
+                    Label("Add a Model", systemImage: "plus")
+                }
+                .accessibilityIdentifier("ai.connection.addModel")
+            } header: {
+                Text("Models")
+            }
+        }
     }
 
     @ViewBuilder
@@ -448,6 +500,9 @@ struct AIConnectionEditor: View {
                 guard isCurrent(checked, key: key) else { check = .idle; return }
                 store.loadedModels[checked.id] = list
                 check = .valid(list.count)
+                if isNew, firstModel.isEmpty, list.contains(checked.provider.suggestedModel) {
+                    firstModel = checked.provider.suggestedModel
+                }
             } catch {
                 check = isCurrent(checked, key: key) ? .failed(error.localizedDescription) : .idle
             }
@@ -565,8 +620,10 @@ private struct AIModelRow: View {
 }
 
 /// Adds a model of a connection, from its list (checked with its key) or typed.
-private struct AddAIModelView: View {
+struct AddAIModelView: View {
     @Bindable var store: AIConfigurationModel
+    /// The connection to add a model of, when opened from that connection.
+    var preselected: UUID? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var connectionID: UUID?
     @State private var model = ""
@@ -584,13 +641,14 @@ private struct AddAIModelView: View {
                     ForEach(store.configuration.connections) { Text(verbatim: $0.title).tag(Optional($0.id)) }
                 }
                 if !list.isEmpty && !typing {
-                    Picker("Model", selection: $model) {
-                        if !list.contains(model) { Text("Choose…").tag(model) }
-                        ForEach(list, id: \.self) { Text(verbatim: $0).tag($0) }
+                    NavigationLink {
+                        AIModelListPicker(models: list, selection: $model)
+                    } label: {
+                        LabeledContent("Model") {
+                            Text(verbatim: model.isEmpty ? String(localized: "Choose…") : model)
+                        }
                     }
-                    #if os(iOS)
-                    .pickerStyle(.navigationLink)
-                    #endif
+                    .accessibilityIdentifier("ai.addModel.model")
                     Button("Enter a model name") { typing = true }
                 } else {
                     let suggested = connection?.provider.suggestedModel ?? ""
@@ -641,7 +699,7 @@ private struct AddAIModelView: View {
         }
         .onAppear {
             guard connectionID == nil else { return }
-            connectionID = store.configuration.connections.first?.id
+            connectionID = preselected ?? store.configuration.connections.first?.id
         }
         .onChange(of: connectionID) { _, _ in
             problem = nil
@@ -670,5 +728,44 @@ private struct AddAIModelView: View {
                 typing = true
             }
         }
+    }
+}
+
+/// A connection's models, searchable (OpenRouter lists hundreds): a tap picks one.
+struct AIModelListPicker: View {
+    let models: [String]
+    @Binding var selection: String
+    @State private var query = ""
+    @Environment(\.dismiss) private var dismiss
+
+    private var shown: [String] {
+        let words = query.lowercased().split(separator: " ")
+        guard !words.isEmpty else { return models }
+        return models.filter { model in words.allSatisfy { model.lowercased().contains($0) } }
+    }
+
+    var body: some View {
+        List(shown, id: \.self) { model in
+            Button {
+                selection = model
+                dismiss()
+            } label: {
+                HStack {
+                    Text(verbatim: model).foregroundStyle(.primary)
+                    Spacer()
+                    if model == selection {
+                        Image(systemName: "checkmark").foregroundStyle(.tint)
+                            .accessibilityHidden(true)
+                    }
+                }
+            }
+            .accessibilityAddTraits(model == selection ? .isSelected : [])
+        }
+        .overlay {
+            if shown.isEmpty { ContentUnavailableView.search(text: query) }
+        }
+        .searchable(text: $query, prompt: Text("Search models"))
+        .navigationTitle("Model")
+        .inlineTitle()
     }
 }

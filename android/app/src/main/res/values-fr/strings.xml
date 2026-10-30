@@ -439,6 +439,7 @@
     <string name="ai_err_invalid">La réponse du service d’IA est illisible.</string>
     <string name="settings_ai_connections">Connexions</string>
     <string name="settings_ai_models">Modèles</string>
+    <string name="ai_connection_no_model">Aucun modèle de cette connexion n’est encore utilisé.</string>
     <string name="ai_connections_empty">Aucune connexion pour l’instant. Ajoutez-en une pour chaque service d’IA ou serveur que vous utilisez, avec sa clé d’API.</string>
     <string name="ai_connections_footer">Plusieurs connexions au même service sont possibles, par exemple deux comptes OpenRouter. Les clés restent chiffrées sur cet appareil : elles ne sont jamais synchronisées, exportées ni sauvegardées.</string>
     <string name="ai_connection_add">Ajouter une connexion</string>
