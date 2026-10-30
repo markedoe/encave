@@ -173,8 +173,8 @@ fun InsightsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                     )
                 }
             }
-            DrinkDownCard(cellar, viewModel.year)
             app.encave.ui.drink.MyPalateCard(cellar)
+            DrinkDownCard(cellar, viewModel.year)
             if (stats.byColor.isNotEmpty()) ChartCard(stringResource(R.string.insights_by_style)) { StyleDonut(stats) }
             if (stats.byMaturity.isNotEmpty()) {
                 ChartCard(stringResource(R.string.insights_by_maturity)) {
