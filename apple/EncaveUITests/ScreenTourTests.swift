@@ -751,8 +751,16 @@ final class ScreenTourTests: XCTestCase {
         }
         snapshot("wine-expected")
         play.press()
-        for aroma in ["fruit.greenApple", "fruit.lemon", "pastry.brioche"] {
-            reach("game.aroma.\(aroma)")?.press()
+        // The first aromas on screen: enough for a score, without scrolling the whole list.
+        let chips = app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH %@", "game.aroma."))
+        _ = chips.firstMatch.waitForExistence(timeout: 5)
+        var picked = 0
+        for index in 0..<min(chips.count, 8) where picked < 3 {
+            let chip = chips.element(boundBy: index)
+            if chip.isHittable {
+                chip.press()
+                picked += 1
+            }
         }
         if let reveal = reach("game.reveal") {
             reveal.press()
@@ -813,13 +821,13 @@ final class ScreenTourTests: XCTestCase {
     @discardableResult
     private func reach(_ identifier: String, down: Bool = false) -> XCUIElement? {
         let item = element(identifier)
-        _ = item.waitForExistence(timeout: 2)
-        for _ in 0..<30 where !(item.exists && item.isHittable) {
+        for _ in 0..<15 where !(item.exists && item.isHittable) {
             #if os(iOS)
-            // A slow drag: a fast one can fling the element past the screen between two checks.
-            let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.4 : 0.6))
-            from.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.6 : 0.4)),
-                       withVelocity: .slow, thenHoldForDuration: 0.1)
+            // A drag of a third of the screen, not a fling, which can carry the element past the
+            // screen between two checks.
+            let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.3 : 0.7))
+            from.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.7 : 0.3)),
+                       withVelocity: .default, thenHoldForDuration: 0.1)
             #else
             app.scroll(byDeltaX: 0, deltaY: down ? 300 : -300)
             #endif
