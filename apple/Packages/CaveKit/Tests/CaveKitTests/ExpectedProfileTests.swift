@@ -18,7 +18,8 @@ import Testing
         for row in rows("read") {
             let profile = try JSONDecoder().decode(ExpectedProfile.self, from: try json(try #require(row["input"])))
             let written = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(profile)) as? NSDictionary)
-            #expect(written == (try #require(row["output"] as? NSDictionary)), "\(row["note"] ?? "")")
+            let output = try #require(row["output"] as? NSDictionary)
+            #expect(written == output, "\(row["note"] ?? "")")
         }
     }
 
@@ -148,7 +149,8 @@ private struct OlderWine: Codable {
                 #expect(profile == nil, "\(row["note"] ?? "")")
                 continue
             }
-            var written = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(try #require(profile))) as? [String: Any])
+            let read = try #require(profile)
+            var written = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(read)) as? [String: Any])
             written["date"] = nil
             #expect(NSDictionary(dictionary: written) == expected, "\(row["note"] ?? "")")
         }
