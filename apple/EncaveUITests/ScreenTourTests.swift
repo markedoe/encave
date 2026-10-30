@@ -737,9 +737,11 @@ final class ScreenTourTests: XCTestCase {
         openSection(0, "cellar")
         guard let row = require("wine.row", "what to expect: no wine", timeout: 10) else { return }
         row.press()
+        // Below the bottles, the window, serving and price: a long page.
         let source = element("expected.source")
-        scrollIntoView(source)
+        for _ in 0..<3 where !(source.exists && source.isHittable) { scrollIntoView(source) }
         guard source.exists else {
+            print(app.debugDescription)
             XCTFail("wine: no What to expect section")
             return
         }
@@ -767,7 +769,7 @@ final class ScreenTourTests: XCTestCase {
         scrollIntoView(drink)
         #if os(iOS)
         // Back up to the top, where Drink is.
-        for _ in 0..<12 where !(drink.exists && drink.isHittable) { app.swipeDown() }
+        for _ in 0..<40 where !(drink.exists && drink.isHittable) { app.swipeDown() }
         #endif
         guard drink.exists, drink.isHittable else {
             XCTFail("wine: no Drink button to reach the tasting sheet")
