@@ -189,6 +189,11 @@ implementations:
   strings, arrays and objects left out; a missing `source` read as `""`. A wine
   without the key shows the bundled profile that matches it, which is not
   written; merging two wines keeps the target's profile, else the other's.
+- **Pages from the web.** `wine.webSources` is optional, left out when empty, and
+  kept as an unknown field by versions that do not know it: an array of
+  `{url, title?}` (each keeps its unknown keys), the pages the AI cited when it
+  last completed the wine from the web (`fixtures/web-completion-vectors.json`).
+  Apps open only `http` and `https` addresses. A new completion replaces the list.
 - Readers are strict: an unknown value of `wine.color`, `bottle.status`,
   `rack.kind` or `discovery.setting` fails decoding; readers never replace it
   with a default. A device that does not know a new value refuses the sync
@@ -332,7 +337,7 @@ implementations:
     `..`: apps never use it as a path, only as the name shown or given to a
     copy they make.
 - Fields a reader does not know are kept and sent back unchanged. Every record
-  (wine and its critic scores and expected profile, bottle and its `slot` and `tasting`, document, rack, discovery,
+  (wine and its critic scores, expected profile and web sources, bottle and its `slot` and `tasting`, document, rack, discovery,
   settings, saved search, and device in a membership) keeps each key it does
   not know, with its value as raw JSON, and writes it back unchanged whenever it
   writes the record: after a local edit, in sync payloads, in the cellar file

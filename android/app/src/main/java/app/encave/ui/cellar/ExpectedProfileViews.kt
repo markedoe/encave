@@ -1,5 +1,6 @@
 package app.encave.ui.cellar
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -247,5 +248,38 @@ fun AromaComparisonContent(wineName: String, comparison: AromaComparison, onDone
         group(R.string.comparison_extra, comparison.extra, Icons.Outlined.AddCircleOutline)
         if (comparison.extra.isNotEmpty()) Hint(stringResource(R.string.comparison_extra_footer))
         Button(onClick = onDone, modifier = Modifier.fillMaxWidth().testTag("comparison.done")) { Text(stringResource(R.string.action_done)) }
+    }
+}
+
+/**
+ * "Complete from the web" and the pages the AI cited, when a connection allows web search or
+ * the wine has pages from an earlier completion. Only http and https pages are opened.
+ */
+@Composable
+fun WebCompletionSection(wine: Wine, available: Boolean, running: Boolean, onComplete: () -> Unit) {
+    val sources = wine.webSources.orEmpty().filter { it.isWebAddress }
+    if (!available && sources.isEmpty()) return
+    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+    SectionHeader(stringResource(R.string.web_section), Modifier.testTag("detail.web"))
+    Column(Modifier.padding(horizontal = Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
+        if (available) {
+            OutlinedButton(onClick = onComplete, enabled = !running, modifier = Modifier.testTag("action.complete_from_web")) {
+                if (running) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Icon(Icons.Outlined.Public, contentDescription = null)
+                Text(stringResource(if (running) R.string.web_searching else R.string.web_complete), Modifier.padding(start = Dimens.s))
+            }
+        }
+        sources.forEach { source ->
+            val host = runCatching { java.net.URI(source.url).host }.getOrNull() ?: source.url
+            val openLabel = stringResource(R.string.web_open_page)
+            Column(
+                Modifier.fillMaxWidth()
+                    .clickable(onClickLabel = openLabel) { runCatching { uriHandler.openUri(source.url) } }
+                    .padding(vertical = Dimens.xs),
+            ) {
+                Text(source.title ?: host, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary, maxLines = 2)
+                Text(host, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Hint(stringResource(if (available) R.string.web_footer else R.string.web_footer_sources))
     }
 }

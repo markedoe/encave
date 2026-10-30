@@ -1,6 +1,7 @@
 package app.encave.data.ai
 
 import android.content.Context
+import androidx.core.content.edit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -99,6 +100,15 @@ class AiPreferences(context: Context, private val keys: AiKeyStore = SecretKeys(
 
     val configuration: StateFlow<AiConfiguration> = state.asStateFlow()
 
+    /** "Complete new wines from the web": on this device only, off by default. */
+    private val webAutomaticState = MutableStateFlow(prefs.getBoolean(KEY_WEB_AUTOMATIC, false))
+    val webAutomatic: StateFlow<Boolean> = webAutomaticState.asStateFlow()
+
+    fun setWebAutomatic(on: Boolean) {
+        webAutomaticState.value = on
+        prefs.edit { putBoolean(KEY_WEB_AUTOMATIC, on) }
+    }
+
     fun update(transform: (AiConfiguration) -> AiConfiguration) {
         val next = transform(state.value)
         if (next == state.value) return
@@ -121,6 +131,8 @@ class AiPreferences(context: Context, private val keys: AiKeyStore = SecretKeys(
     }
 
     companion object {
+        private const val KEY_WEB_AUTOMATIC = "webCompletion.automatic"
+
         /** Pasted keys often carry spaces, line breaks or quotes, which providers reject as invalid. */
         fun cleanKey(key: String): String = key.trim { it.isWhitespace() || it in "\"'“”‘’" }
     }

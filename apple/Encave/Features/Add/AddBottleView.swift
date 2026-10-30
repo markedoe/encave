@@ -455,6 +455,11 @@ struct AddBottleView: View {
             var saved = draft
             saved.photoID = wine.photoID
             scan.completeLater(saved, in: model)
+            // From the web too, when asked in Settings: after saving, so adding never waits for it.
+            if WebCompletionSettings.isAutomatic, WebCompletionSettings.isAvailable {
+                let wineID = wine.id
+                Task { await model.completeFromWeb(wineID, automatic: true) }
+            }
         }
         dismiss()
     }

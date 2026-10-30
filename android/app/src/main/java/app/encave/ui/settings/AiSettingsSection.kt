@@ -43,6 +43,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -129,6 +131,18 @@ fun AiSettingsSection(viewModel: AppViewModel, navigator: AppNavigator) {
         headlineContent = { Text(stringResource(R.string.settings_ai_models)) },
         trailingContent = { Text(configuration.usableModels.size.toString()) },
     )
+    val webAutomatic by viewModel.ai.webAutomatic.collectAsStateWithLifecycle()
+    val searches = configuration.webSearchOrder.isNotEmpty()
+    if (searches) {
+        ListItem(
+            modifier = Modifier.testTag("settings.ai.web_automatic")
+                .toggleable(webAutomatic, role = androidx.compose.ui.semantics.Role.Switch) { viewModel.ai.setWebAutomatic(it) },
+            leadingContent = { Icon(Icons.Outlined.Public, contentDescription = null) },
+            headlineContent = { Text(stringResource(R.string.web_automatic)) },
+            supportingContent = { Text(stringResource(R.string.web_automatic_body)) },
+            trailingContent = { Switch(checked = webAutomatic, onCheckedChange = null) },
+        )
+    }
     Text(
         stringResource(if (configuration.isEnabled) R.string.settings_ai_on_body else R.string.settings_ai_off_body),
         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -233,7 +247,7 @@ fun AiConnectionScreen(viewModel: AppViewModel, navigator: AppNavigator, connect
         if (provider == draft.provider) return
         apiKey = ""
         check = KeyCheck.Idle
-        draft = draft.withProvider(provider).copy(baseUrl = "", allowsDataCollection = false)
+        draft = draft.withProvider(provider).copy(baseUrl = "", allowsDataCollection = false, allowsWebSearch = false)
     }
 
     fun checkKey() {
@@ -366,6 +380,16 @@ fun AiConnectionScreen(viewModel: AppViewModel, navigator: AppNavigator, connect
                 headlineContent = { Text(stringResource(R.string.ai_allow_data)) },
                 supportingContent = { Text(stringResource(R.string.ai_allow_data_body)) },
                 trailingContent = { Switch(checked = draft.allowsDataCollection, onCheckedChange = null) },
+            )
+        }
+        if (draft.webSearch != null) {
+            HorizontalDivider()
+            ListItem(
+                modifier = Modifier.testTag("ai.connection.web_search")
+                    .toggleable(draft.allowsWebSearch, role = androidx.compose.ui.semantics.Role.Switch) { change(draft.copy(allowsWebSearch = it)) },
+                headlineContent = { Text(stringResource(R.string.ai_allow_web)) },
+                supportingContent = { Text(stringResource(R.string.ai_allow_web_body)) },
+                trailingContent = { Switch(checked = draft.allowsWebSearch, onCheckedChange = null) },
             )
         }
         if (!isNew) {

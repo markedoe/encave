@@ -149,6 +149,7 @@ fun WineDetailScreen(
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val aiConfiguration by viewModel.ai.configuration.collectAsStateWithLifecycle()
     val askingExpected by viewModel.askingExpected.collectAsStateWithLifecycle()
+    val completingFromWeb by viewModel.completingFromWeb.collectAsStateWithLifecycle()
     val id = remember(wineId) { runCatching { UUID.fromString(wineId) }.getOrNull() }
     val wine = id?.let { cellar.wines[it] }
     val back = onBack ?: { navigator.back() }
@@ -342,6 +343,12 @@ fun WineDetailScreen(
                     wine, aiEnabled = aiConfiguration.isEnabled, asking = wine.id in askingExpected, language = viewModel.appLanguage,
                     onAsk = { viewModel.askWhatToExpect(wine.id) },
                     onUseTypical = { viewModel.setExpectedProfile(wine.id, null) },
+                )
+            }
+            item {
+                WebCompletionSection(
+                    wine, available = aiConfiguration.webSearchOrder.isNotEmpty(), running = wine.id in completingFromWeb,
+                    onComplete = { viewModel.completeFromWeb(wine.id) },
                 )
             }
             if (wine.currentPrice != null || webSearch.isEnabled) {

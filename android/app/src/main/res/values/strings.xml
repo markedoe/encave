@@ -1659,6 +1659,17 @@
     <string name="level_feminine_short">Short</string>
     <string name="level_feminine_long">Long</string>
     <string name="ai_estimated">Estimated by AI</string>
+    <string name="web_section">From the web</string>
+    <string name="web_complete">Complete from the web</string>
+    <string name="web_searching">Searching the web…</string>
+    <string name="web_open_page">Open the page</string>
+    <string name="web_footer">Sends only the producer, name, appellation, vintage, colour and grapes to the AI model allowed to search the web, which looks the wine up and lists the pages it used. Fills only empty details and what to expect, with Undo.</string>
+    <string name="web_footer_sources">The pages the AI used when it last completed this wine.</string>
+    <string name="web_completed">Completed from the web</string>
+    <string name="web_automatic">Complete new wines from the web</string>
+    <string name="web_automatic_body">After you add a wine, a model allowed to search the web completes its empty details, with Undo. Adding never waits for it.</string>
+    <string name="ai_allow_web">Allow web search</string>
+    <string name="ai_allow_web_body">Off by default. Lets this provider search the web to complete a wine you saved, with its producer, name, appellation, vintage, colour and grapes only, and list the pages it used. Never while reading a label. The provider may charge for searches.</string>
     <string name="expected_title">What to expect</string>
     <string name="expected_none">Nothing bundled matches this wine yet. Add its grapes, appellation or style, or ask the AI.</string>
     <string name="game_title">Guess the aromas</string>

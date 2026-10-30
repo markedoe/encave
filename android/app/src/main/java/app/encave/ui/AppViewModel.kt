@@ -72,6 +72,7 @@ import app.encave.data.ai.LabelAnalysis
 import app.encave.core.WineIdentity
 import app.encave.core.ExpectedProfile
 import app.encave.data.ai.completed
+import app.encave.data.ai.completedFromWeb
 import app.encave.data.ai.completing
 import app.encave.data.ai.sameDetails
 import app.encave.sync.ChangeNotifications
@@ -326,6 +327,10 @@ class AppViewModel(
                     messageChannel.trySend(UiMessage(text, { change<Unit>(block = revert) }, slot = slot))
                     // Added without the documents that could not be stored (a full disk…).
                     if (attachments.size < pendingDocuments.size) post(UiText.Res(R.string.err_document_unreadable))
+                    // A new wine, completed from the web when asked in Settings: after saving, so adding never waits for it.
+                    if (previousWine == null && ai.webAutomatic.value && ai.configuration.value.webSearchOrder.isNotEmpty()) {
+                        completeFromWeb(record.id, automatic = true)
+                    }
                     onDone(true)
                 }
                 .onFailure {
@@ -913,6 +918,50 @@ class AppViewModel(
                 if (profile == null) return@onSuccess post(UiText.Res(R.string.expected_ai_unknown))
                 setExpectedProfile(wineId, profile)
             }.onFailure { error -> if (error !is kotlinx.coroutines.CancellationException) post(aiErrorText(error)) }
+        }
+    }
+
+    /** Wines being completed from the web. */
+    val completingFromWeb = MutableStateFlow<Set<UUID>>(emptySet())
+
+    /**
+     * "Complete from the web": a model allowed to search the web is sent only the wine's
+     * identity; its empty details, what to expect and the pages cited are filled, with Undo.
+     * An automatic completion says nothing when it fails or finds nothing.
+     */
+    fun completeFromWeb(wineId: UUID, automatic: Boolean = false) {
+        val wine = cellar.value.wines[wineId] ?: return
+        if (wineId in completingFromWeb.value) return
+        completingFromWeb.value = completingFromWeb.value + wineId
+        viewModelScope.launch {
+            val result = runCatching { AiService.completeFromWeb(WineIdentity(wine), appLanguage, ai.configuration.value, ai::apiKey) }
+            completingFromWeb.value = completingFromWeb.value - wineId
+            result.onFailure { error -> if (!automatic && error !is kotlinx.coroutines.CancellationException) post(aiErrorText(error)) }
+            val found = result.getOrNull()
+            if (found == null) {
+                if (!automatic && result.isSuccess) post(UiText.Res(R.string.ai_err_invalid))
+                return@launch
+            }
+            val (completion, sources) = found
+            var change: Pair<Wine, Wine>? = null
+            repository.update { cellar ->
+                val live = cellar.wines[wineId] ?: return@update
+                val completed = completion.completing(live, sources, java.time.Instant.now())
+                if (completed != live) {
+                    cellar.updateWine(completed)
+                    change = live to completed
+                }
+            }.onSuccess {
+                val done = change
+                if (done == null) {
+                    if (!automatic) post(UiText.Res(R.string.msg_ai_nothing))
+                    return@onSuccess
+                }
+                val (live, completed) = done
+                post(UiText.Res(R.string.web_completed)) {
+                    change<Unit> { c -> c.wines[wineId]?.let { c.updateWine(it.completedFromWeb(from = completed, to = live)) } }
+                }
+            }.onFailure { if (!automatic) fail(it) }
         }
     }
 

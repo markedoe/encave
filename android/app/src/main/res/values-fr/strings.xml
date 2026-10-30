@@ -1658,6 +1658,17 @@
     <string name="level_feminine_short">Courte</string>
     <string name="level_feminine_long">Longue</string>
     <string name="ai_estimated">Estimé par l’IA</string>
+    <string name="web_section">D’après le web</string>
+    <string name="web_complete">Compléter avec le web</string>
+    <string name="web_searching">Recherche sur le web…</string>
+    <string name="web_open_page">Ouvrir la page</string>
+    <string name="web_footer">Envoie seulement le producteur, le nom, l’appellation, le millésime, la couleur et les cépages au modèle d’IA autorisé à chercher sur le web, qui recherche le vin et liste les pages utilisées. Remplit seulement les détails vides et ce qui est attendu, avec Annuler.</string>
+    <string name="web_footer_sources">Les pages utilisées par l’IA la dernière fois qu’elle a complété ce vin.</string>
+    <string name="web_completed">Complété avec le web</string>
+    <string name="web_automatic">Compléter les nouveaux vins avec le web</string>
+    <string name="web_automatic_body">Après l’ajout d’un vin, un modèle autorisé à chercher sur le web complète ses détails vides, avec Annuler. L’ajout ne l’attend jamais.</string>
+    <string name="ai_allow_web">Autoriser la recherche web</string>
+    <string name="ai_allow_web_body">Désactivé par défaut. Permet à ce fournisseur de chercher sur le web pour compléter un vin enregistré, avec seulement son producteur, son nom, son appellation, son millésime, sa couleur et ses cépages, et de lister les pages utilisées. Jamais pendant la lecture d’une étiquette. Le fournisseur peut facturer les recherches.</string>
     <string name="expected_title">À quoi s’attendre</string>
     <string name="expected_none">Aucun profil fourni ne correspond encore à ce vin. Ajoutez ses cépages, son appellation ou son style, ou demandez à l’IA.</string>
     <string name="game_title">Devinez les arômes</string>

@@ -136,6 +136,7 @@ struct WineDetailView: View {
                 }
 
                 ExpectedProfileSection(wine: wine)
+                WebCompletionSection(wine: wine)
 
                 if wine.currentPrice != nil || webSearchEnabled {
                     priceSection(wine)

@@ -1,0 +1,140 @@
+{
+ "about": "Completing a saved wine from the web (WebCompletion in CaveKit and the Kotlin core): only empty details are filled, the drinking window when the wine has none or only the estimate, the expected profile replaced (source web), the cited pages kept, aiCompletedAt set only when something changed. 'result' lists the wine's fields after completion (null: none). Answers are read with model \"m\" and language \"en\". Read by WebCompletionTests.swift and WebCompletionTest.kt.",
+ "cases": [
+  {
+   "note": "a wine with only its name and vintage",
+   "wine": {
+    "name": "Clos des Lilas",
+    "vintage": 2019,
+    "color": "red"
+   },
+   "answer": "{\"producer\": \"Domaine Martin\", \"appellation\": \"Pauillac\", \"region\": \"Bordeaux\", \"country\": \"France\", \"grapes\": [\"Cabernet Sauvignon\", \"Merlot\"], \"drinkFrom\": 2027, \"drinkUntil\": 2045, \"abv\": 13.5, \"classification\": \"Grand Cru Class\\u00e9\", \"expected\": {\"aromas\": [\"fruit.blackcurrant\", \"oak.cedar\"], \"structure\": {\"tannin\": 4}, \"servingMin\": 16, \"servingMax\": 18, \"decantMinutes\": 60, \"pairings\": [\"redMeat\"], \"text\": \"\"}}",
+   "sources": [
+    {
+     "url": "https://a.example/one",
+     "title": "One"
+    },
+    {
+     "url": "ftp://b.example/x"
+    }
+   ],
+   "changed": true,
+   "result": {
+    "producer": "Domaine Martin",
+    "appellation": "Pauillac",
+    "region": "Bordeaux",
+    "country": "France",
+    "grapes": [
+     "Cabernet Sauvignon",
+     "Merlot"
+    ],
+    "abv": 13.5,
+    "classification": "Grand Cru Classé",
+    "drinkFrom": 2027,
+    "drinkUntil": 2045,
+    "expectedAromas": [
+     "fruit.blackcurrant",
+     "oak.cedar"
+    ],
+    "expectedSource": "web",
+    "webSources": [
+     "https://a.example/one"
+    ]
+   }
+  },
+  {
+   "note": "details already there are kept, an entered window too",
+   "wine": {
+    "name": "Clos",
+    "vintage": 2019,
+    "color": "red",
+    "region": "Médoc",
+    "grapes": [
+     "Merlot"
+    ],
+    "abv": 13,
+    "drinkFrom": 2041,
+    "drinkUntil": 2042
+   },
+   "answer": "Here: {\"producer\": \"Domaine Martin\", \"appellation\": \"Pauillac\", \"region\": \"Bordeaux\", \"country\": \"France\", \"grapes\": [\"Cabernet Sauvignon\", \"Merlot\"], \"drinkFrom\": 2027, \"drinkUntil\": 2045, \"abv\": 13.5, \"classification\": \"Grand Cru Class\\u00e9\", \"expected\": {\"aromas\": [\"fruit.blackcurrant\", \"oak.cedar\"], \"structure\": {\"tannin\": 4}, \"servingMin\": 16, \"servingMax\": 18, \"decantMinutes\": 60, \"pairings\": [\"redMeat\"], \"text\": \"\"}} (from the web)",
+   "sources": [],
+   "changed": true,
+   "result": {
+    "producer": "Domaine Martin",
+    "appellation": "Pauillac",
+    "region": "Médoc",
+    "country": "France",
+    "grapes": [
+     "Merlot"
+    ],
+    "abv": 13,
+    "classification": "Grand Cru Classé",
+    "drinkFrom": 2041,
+    "drinkUntil": 2042,
+    "expectedAromas": [
+     "fruit.blackcurrant",
+     "oak.cedar"
+    ],
+    "expectedSource": "web",
+    "webSources": null
+   }
+  },
+  {
+   "note": "nothing new",
+   "wine": {
+    "name": "Clos",
+    "producer": "Domaine Martin"
+   },
+   "answer": "{\"producer\": \"Other\", \"appellation\": \"\", \"region\": \"\", \"country\": \"\", \"grapes\": [], \"drinkFrom\": 0, \"drinkUntil\": 0, \"abv\": 0, \"classification\": \"\", \"expected\": {\"aromas\": [], \"structure\": {}, \"servingMin\": 0, \"servingMax\": 0, \"pairings\": [], \"text\": \"\"}}",
+   "sources": [],
+   "changed": false,
+   "result": {
+    "producer": "Domaine Martin",
+    "appellation": null,
+    "region": null,
+    "country": null,
+    "grapes": [],
+    "abv": null,
+    "classification": null,
+    "drinkFrom": null,
+    "drinkUntil": null,
+    "expectedAromas": null,
+    "expectedSource": null,
+    "webSources": null
+   }
+  },
+  {
+   "note": "an implausible alcohol and window are left out",
+   "wine": {
+    "name": "Clos"
+   },
+   "answer": "{\"abv\": 135, \"drinkFrom\": 2030, \"drinkUntil\": 2020}",
+   "sources": [],
+   "changed": false,
+   "result": {
+    "producer": null,
+    "appellation": null,
+    "region": null,
+    "country": null,
+    "grapes": [],
+    "abv": null,
+    "classification": null,
+    "drinkFrom": null,
+    "drinkUntil": null,
+    "expectedAromas": null,
+    "expectedSource": null,
+    "webSources": null
+   }
+  },
+  {
+   "note": "not an answer",
+   "wine": {
+    "name": "Clos"
+   },
+   "answer": "Sorry, nothing found.",
+   "sources": [],
+   "changed": false,
+   "result": null
+  }
+ ]
+}

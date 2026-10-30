@@ -2767,6 +2767,16 @@
         }
       }
     },
+    "Allow Web Search": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autoriser la recherche web"
+          }
+        }
+      }
+    },
     "Allow the camera for Encave in Settings to scan labels, or choose a photo of the label.": {
       "localizations": {
         "fr": {
@@ -5127,12 +5137,42 @@
         }
       }
     },
+    "Complete New Wines from the Web": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compléter les nouveaux vins avec le web"
+          }
+        }
+      }
+    },
+    "Complete New Wines from the Web: after you add a wine, a model allowed to search the web completes its empty details, with Undo. Adding never waits for it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compléter les nouveaux vins avec le web : après l’ajout d’un vin, un modèle autorisé à chercher sur le web complète ses détails vides, avec Annuler. L’ajout ne l’attend jamais."
+          }
+        }
+      }
+    },
     "Complete a wine's details or find its price on the web, with the search service you choose.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Complétez la fiche d’un vin ou trouvez son prix sur le web, avec le service de recherche de votre choix."
+          }
+        }
+      }
+    },
+    "Complete from the Web": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compléter avec le web"
           }
         }
       }
@@ -5153,6 +5193,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Complétée par l’IA · %@"
+          }
+        }
+      }
+    },
+    "Completed from the web": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Complété avec le web"
           }
         }
       }
@@ -7523,6 +7573,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Depuis Internet"
+          }
+        }
+      }
+    },
+    "From the web": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "D’après le web"
           }
         }
       }
@@ -11129,6 +11189,16 @@
         }
       }
     },
+    "Off by default. Lets this provider search the web to complete a wine you saved, with its producer, name, appellation, vintage, colour and grapes only, and list the pages it used. Never while reading a label. The provider may charge for searches.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désactivé par défaut. Permet à ce fournisseur de chercher sur le web pour compléter un vin enregistré, avec seulement son producteur, son nom, son appellation, son millésime, sa couleur et ses cépages, et de lister les pages utilisées. Jamais pendant la lecture d’une étiquette. Le fournisseur peut facturer les recherches."
+          }
+        }
+      }
+    },
     "Off-dry": {
       "localizations": {
         "fr": {
@@ -11925,6 +11995,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouvre le document."
+          }
+        }
+      }
+    },
+    "Opens the page in the browser.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvre la page dans le navigateur."
           }
         }
       }
@@ -14225,6 +14305,16 @@
         }
       }
     },
+    "Searching the web…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recherche sur le web…"
+          }
+        }
+      }
+    },
     "Searching…": {
       "localizations": {
         "fr": {
@@ -14331,6 +14421,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Envoi de la cave et de ses photos. Gardez les deux appareils ouverts."
+          }
+        }
+      }
+    },
+    "Sends only the producer, name, appellation, vintage, colour and grapes to the AI model allowed to search the web, which looks the wine up and lists the pages it used. Fills only empty details and what to expect, with Undo.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envoie seulement le producteur, le nom, l’appellation, le millésime, la couleur et les cépages au modèle d’IA autorisé à chercher sur le web, qui recherche le vin et liste les pages utilisées. Remplit seulement les détails vides et ce qui est attendu, avec Annuler."
           }
         }
       }
@@ -16657,6 +16757,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "L’autre appareil utilise une version différente d’Encave. Mettez les deux à jour."
+          }
+        }
+      }
+    },
+    "The pages the AI used when it last completed this wine.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les pages utilisées par l’IA la dernière fois qu’elle a complété ce vin."
           }
         }
       }

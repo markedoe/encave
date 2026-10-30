@@ -347,6 +347,33 @@ enum AIService {
         }
     }
 
+    /// Completes a saved wine from the web: the models whose connection allows web search,
+    /// in order, are sent only the wine's identity and may search the web with it. Never a
+    /// photo, the cellar, notes, prices or places. Nil when the answer could not be read.
+    static func completeFromWeb(_ identity: WineIdentity, language: String,
+                                configuration: AIConfiguration = AISettings.load()) async throws
+        -> (completion: WebCompletion, sources: [WineWebSource], model: String)? {
+        let order = configuration.webSearchOrder
+        guard !order.isEmpty else { throw AIServiceError.notConfigured }
+        let query = try AIQuery(prompt: WebCompletion.prompt(for: identity, language: language), schema: WebCompletion.schema,
+                                schemaName: "wine_web", jpeg: nil, webSearch: true)
+        let keys = AIKeychain()
+        do {
+            let (model, answer) = try await AIFallback.read(order) { model, left in
+                guard let connection = configuration.connection(for: model) else { throw AIServiceError.notConfigured }
+                let endpoint = AIEndpoint(connection: connection, model: model.model, apiKey: keys.key(for: connection),
+                                          deadline: Date().addingTimeInterval(left))
+                return try await ask(query, endpoint: endpoint)
+            }
+            guard let completion = WebCompletion.parse(answer: answer.text, model: model.model, language: language, date: Date()) else {
+                return nil
+            }
+            return (completion, answer.sources, model.model)
+        } catch let error as AIAllModelsFailed {
+            throw AIServiceError.describing(error, in: configuration)
+        }
+    }
+
     /// The "Test" of a model: its key works and it answers on a picture of a made-up label
     /// bundled with the app. No photo or data of the user is sent.
     static func test(connection: AIConnection, model: String, apiKey: String?) async throws {

@@ -6,6 +6,7 @@ import app.encave.core.AiLabelSources
 import app.encave.core.AiWebSearch
 import app.encave.core.ExpectedProfile
 import app.encave.core.ExpectedRequest
+import app.encave.core.WebCompletion
 import app.encave.core.WineIdentity
 import app.encave.core.WineWebSource
 import app.encave.core.CappedRead
@@ -313,6 +314,26 @@ object AiService {
         val query = AiQuery(ExpectedRequest.prompt(identity, language), ExpectedRequest.answerSchema, "wine_expected", null)
         val (model, answer) = askInOrder(query, configuration, keys, only)
         return ExpectedRequest.profileFromAnswer(answer.text, ExpectedProfile.AI, model.model, language, java.time.Instant.now()) to model
+    }
+
+    /**
+     * Completes a saved wine from the web: the models whose connection allows web search, in
+     * order, are sent only the wine's identity and may search the web with it. Never a photo,
+     * the cellar, notes, prices or places. Null when the answer could not be read.
+     */
+    suspend fun completeFromWeb(
+        identity: WineIdentity,
+        language: String,
+        configuration: AiConfiguration,
+        keys: (AiConnection) -> String?,
+    ): Pair<WebCompletion, List<WineWebSource>>? {
+        val order = configuration.webSearchOrder
+        if (order.isEmpty()) throw AiError.NotConfigured
+        val webOnly = configuration.copy(models = order)
+        val query = AiQuery(WebCompletion.prompt(identity, language), WebCompletion.schema, "wine_web", null, webSearch = true)
+        val (model, answer) = askInOrder(query, webOnly, keys, null)
+        val completion = WebCompletion.parse(answer.text, model.model, language, java.time.Instant.now()) ?: return null
+        return completion to answer.sources
     }
 
     /** The models in order, each within its time, until one answers. */

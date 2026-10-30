@@ -558,6 +558,7 @@ class Cellar(
             farmingCertified = if (merged.farming == null) from.farmingCertified else merged.farmingCertified,
             closure = merged.closure ?: from.closure,
             expectedProfile = merged.expectedProfile ?: from.expectedProfile,
+            webSources = merged.webSources ?: from.webSources,
         ).normalized()
         wineMap.remove(source)
     }

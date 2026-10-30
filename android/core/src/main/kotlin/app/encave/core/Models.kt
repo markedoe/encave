@@ -107,6 +107,8 @@ data class Wine(
     val criticScores: List<CriticScore>? = null,
     /** What to expect when tasting it, from the AI or kept from the bundled profiles; null shows the bundled profile ([expectedOrBundledProfile]). */
     val expectedProfile: ExpectedProfile? = null,
+    /** The pages the AI cited when it last completed the wine from the web. Null rather than empty. */
+    val webSources: List<WineWebSource>? = null,
     /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
     @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {
@@ -133,12 +135,15 @@ data class Wine(
         val cleanCertified = if (cleanFarming != null && farmingCertified == true) true else null
         val cleanClosure = closure?.ifEmpty { null }
         val cleanCritics = criticScores?.ifEmpty { null }
+        val cleanSources = webSources?.ifEmpty { null }
         if (cleanAbv == abv && cleanDosage == dosage && cleanSweetness == sweetness && cleanShares == grapeShares && cleanAgeing == ageing &&
-            cleanFarming == farming && cleanCertified == farmingCertified && cleanClosure == closure && cleanCritics == criticScores
+            cleanFarming == farming && cleanCertified == farmingCertified && cleanClosure == closure && cleanCritics == criticScores &&
+            cleanSources == webSources
         ) return this
         return copy(
             abv = cleanAbv, dosage = cleanDosage, sweetness = cleanSweetness, grapeShares = cleanShares, ageing = cleanAgeing,
             farming = cleanFarming, farmingCertified = cleanCertified, closure = cleanClosure, criticScores = cleanCritics,
+            webSources = cleanSources,
         )
     }
 

@@ -129,6 +129,9 @@ data class AiConfiguration(
 
     /** The models to try for a reading: all in order, or the one the user picked. */
     fun readingOrder(only: String? = null): List<AiModelChoice> = usableModels.filter { only == null || it.id == only }
+
+    /** The models that may search the web, in order: those whose connection allows it. */
+    val webSearchOrder: List<AiModelChoice> get() = usableModels.filter { connection(it)?.searchesWeb == true }
 }
 
 /** What a key read found. A failure (the Keystore) is not "missing": such a key is never replaced or lost. */

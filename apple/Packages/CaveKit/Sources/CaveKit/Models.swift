@@ -89,6 +89,10 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     /// What to expect when tasting it, from the AI or kept from the bundled profiles; nil
     /// shows the bundled profile (`expectedOrBundledProfile`).
     public var expectedProfile: ExpectedProfile?
+    /// The pages the AI cited when it last completed the wine from the web. Nil rather than empty.
+    public var webSources: [WineWebSource]? {
+        didSet { if webSources?.isEmpty == true { webSources = nil } }
+    }
     /// Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1).
     /// Part of equality, so a merge that only brings them in is still saved.
     public var unknownFields = UnknownFields()
@@ -98,7 +102,7 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         case photoID, barcodes, tags, extraPhotoIDs, currentPrice, currentPriceCurrency, currentPriceDate
         case coverPhotoID, attachments, aiCompletedAt, labelFrame
         case abv, classification, lieuDit, dosage, sweetness, grapeShares, ageing, farming, farmingCertified, closure
-        case criticScores, expectedProfile
+        case criticScores, expectedProfile, webSources
     }
 
     public init(
@@ -158,6 +162,7 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         closure = Tasting.id(try c.decodeIfPresent(String.self, forKey: .closure))
         criticScores = try c.decodeIfPresent([CriticScore].self, forKey: .criticScores).flatMap { $0.isEmpty ? nil : $0 }
         expectedProfile = try c.decodeIfPresent(ExpectedProfile.self, forKey: .expectedProfile)
+        webSources = try c.decodeIfPresent([WineWebSource].self, forKey: .webSources).flatMap { $0.isEmpty ? nil : $0 }
         unknownFields = try UnknownFields(from: decoder, known: CodingKeys.self)
     }
 
@@ -198,6 +203,7 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         try c.encodeIfPresent(closure, forKey: .closure)
         try c.encodeIfPresent(criticScores, forKey: .criticScores)
         try c.encodeIfPresent(expectedProfile, forKey: .expectedProfile)
+        try c.encodeIfPresent(webSources, forKey: .webSources)
         try unknownFields.encode(to: encoder, known: CodingKeys.self)
     }
 

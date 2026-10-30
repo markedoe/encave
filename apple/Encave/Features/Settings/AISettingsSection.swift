@@ -5,6 +5,7 @@ import SwiftUI
 /// photos, in order. Keys stay in the Keychain on this device, one per connection.
 struct AISettingsSection: View {
     @State private var store = AIConfigurationModel()
+    @AppStorage(WebCompletionSettings.automaticKey) private var completesFromWeb = false
 
     var body: some View {
         Section {
@@ -28,12 +29,23 @@ struct AISettingsSection: View {
                 }
             }
             .accessibilityIdentifier("settings.ai.models")
+            if !store.configuration.webSearchOrder.isEmpty {
+                Toggle(isOn: $completesFromWeb) {
+                    Label("Complete New Wines from the Web", systemImage: "globe")
+                }
+                .accessibilityIdentifier("settings.ai.webAutomatic")
+            }
             HelpLink(topic: .ai, title: "How to set up AI")
         } header: {
             Text("AI")
         } footer: {
             if store.configuration.isEnabled {
-                Text("Only the label photo is sent: to the first model of the list, and to the next one only if it fails. Your cellar is never sent. Keys are stored in the Keychain on this device.")
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Only the label photo is sent: to the first model of the list, and to the next one only if it fails. Your cellar is never sent. Keys are stored in the Keychain on this device.")
+                    if !store.configuration.webSearchOrder.isEmpty {
+                        Text("Complete New Wines from the Web: after you add a wine, a model allowed to search the web completes its empty details, with Undo. Adding never waits for it.")
+                    }
+                }
             } else {
                 Text("Optional. Reads labels from a photo with the AI models you choose, using your own API keys.")
             }
@@ -303,6 +315,15 @@ struct AIConnectionEditor: View {
                 }
             }
 
+            if connection.webSearch != nil {
+                Section {
+                    Toggle("Allow Web Search", isOn: $connection.allowsWebSearch)
+                        .accessibilityIdentifier("ai.connection.webSearch")
+                } footer: {
+                    Text("Off by default. Lets this provider search the web to complete a wine you saved, with its producer, name, appellation, vintage, colour and grapes only, and list the pages it used. Never while reading a label. The provider may charge for searches.")
+                }
+            }
+
             if !isNew {
                 Section {
                     Button("Delete Connection", role: .destructive) {
@@ -355,6 +376,7 @@ struct AIConnectionEditor: View {
                 apiKey = ""
                 connection.baseURL = ""
                 connection.allowsDataCollection = false
+                connection.allowsWebSearch = false
             }
             // Only an existing connection is saved as it changes; a new one on Add.
             if !isNew, store.configuration.connection(id: new.id) != nil { store.update { $0.upsert(new) } }

@@ -284,3 +284,70 @@ struct AromaComparisonView: View {
         }
     }
 }
+
+/// "Complete from the Web" and the pages the AI cited, when a connection allows web
+/// search or the wine has pages from an earlier completion.
+struct WebCompletionSection: View {
+    @Environment(CellarModel.self) private var model
+    let wine: Wine
+    @State private var running = false
+    @State private var problem: String?
+    private let available = WebCompletionSettings.isAvailable
+
+    var body: some View {
+        let sources = (wine.webSources ?? []).filter(\.isWebAddress)
+        if available || !sources.isEmpty {
+            Section {
+                if available {
+                    Button {
+                        run()
+                    } label: {
+                        if running {
+                            Label("Searching the web…", systemImage: "globe")
+                        } else {
+                            Label("Complete from the Web", systemImage: "globe")
+                        }
+                    }
+                    .disabled(running)
+                    .accessibilityIdentifier("action.wine.completeFromWeb")
+                }
+                if let problem {
+                    Label(problem, systemImage: "exclamationmark.triangle")
+                        .foregroundStyle(.secondary)
+                }
+                ForEach(sources, id: \.url) { source in
+                    if let url = URL(string: source.url) {
+                        Link(destination: url) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(verbatim: source.title ?? url.host() ?? source.url)
+                                    .lineLimit(2)
+                                Text(verbatim: url.host() ?? source.url)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .accessibilityHint(Text("Opens the page in the browser."))
+                    }
+                }
+            } header: {
+                Text("From the web")
+            } footer: {
+                if available {
+                    Text("Sends only the producer, name, appellation, vintage, colour and grapes to the AI model allowed to search the web, which looks the wine up and lists the pages it used. Fills only empty details and what to expect, with Undo.")
+                } else {
+                    Text("The pages the AI used when it last completed this wine.")
+                }
+            }
+        }
+    }
+
+    private func run() {
+        guard !running else { return }
+        running = true
+        problem = nil
+        Task {
+            problem = await model.completeFromWeb(wine.id)
+            running = false
+        }
+    }
+}

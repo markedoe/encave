@@ -1866,6 +1866,17 @@ FR = {
     'Show What to Expect': 'Voir ce qui est attendu',
     'Back to the typical profile': 'Retour au profil type',
     'What to expect saved': 'À quoi s’attendre enregistré',
+    'Searching the web…': 'Recherche sur le web…',
+    'Complete from the Web': 'Compléter avec le web',
+    'Opens the page in the browser.': 'Ouvre la page dans le navigateur.',
+    'From the web': 'D’après le web',
+    'Sends only the producer, name, appellation, vintage, colour and grapes to the AI model allowed to search the web, which looks the wine up and lists the pages it used. Fills only empty details and what to expect, with Undo.': 'Envoie seulement le producteur, le nom, l’appellation, le millésime, la couleur et les cépages au modèle d’IA autorisé à chercher sur le web, qui recherche le vin et liste les pages utilisées. Remplit seulement les détails vides et ce qui est attendu, avec Annuler.',
+    'The pages the AI used when it last completed this wine.': 'Les pages utilisées par l’IA la dernière fois qu’elle a complété ce vin.',
+    'Allow Web Search': 'Autoriser la recherche web',
+    'Off by default. Lets this provider search the web to complete a wine you saved, with its producer, name, appellation, vintage, colour and grapes only, and list the pages it used. Never while reading a label. The provider may charge for searches.': 'Désactivé par défaut. Permet à ce fournisseur de chercher sur le web pour compléter un vin enregistré, avec seulement son producteur, son nom, son appellation, son millésime, sa couleur et ses cépages, et de lister les pages utilisées. Jamais pendant la lecture d’une étiquette. Le fournisseur peut facturer les recherches.',
+    'Complete New Wines from the Web': 'Compléter les nouveaux vins avec le web',
+    'Complete New Wines from the Web: after you add a wine, a model allowed to search the web completes its empty details, with Undo. Adding never waits for it.': 'Compléter les nouveaux vins avec le web : après l’ajout d’un vin, un modèle autorisé à chercher sur le web complète ses détails vides, avec Annuler. L’ajout ne l’attend jamais.',
+    'Completed from the web': 'Complété avec le web',
 }
 
 # Keys with plural forms: English one/other and French one/other.

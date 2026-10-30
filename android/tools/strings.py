@@ -1880,6 +1880,17 @@ S += [("level_feminine_" + ident, en, fr) for ident, en, fr in LEVEL_FEMININE]
 # AI estimates, expected profiles, web completion and the aroma game.
 S += [
  ("ai_estimated", "Estimated by AI", "Estimé par l’IA"),
+ ('web_section', 'From the web', 'D’après le web'),
+ ('web_complete', 'Complete from the web', 'Compléter avec le web'),
+ ('web_searching', 'Searching the web…', 'Recherche sur le web…'),
+ ('web_open_page', 'Open the page', 'Ouvrir la page'),
+ ('web_footer', 'Sends only the producer, name, appellation, vintage, colour and grapes to the AI model allowed to search the web, which looks the wine up and lists the pages it used. Fills only empty details and what to expect, with Undo.', 'Envoie seulement le producteur, le nom, l’appellation, le millésime, la couleur et les cépages au modèle d’IA autorisé à chercher sur le web, qui recherche le vin et liste les pages utilisées. Remplit seulement les détails vides et ce qui est attendu, avec Annuler.'),
+ ('web_footer_sources', 'The pages the AI used when it last completed this wine.', 'Les pages utilisées par l’IA la dernière fois qu’elle a complété ce vin.'),
+ ('web_completed', 'Completed from the web', 'Complété avec le web'),
+ ('web_automatic', 'Complete new wines from the web', 'Compléter les nouveaux vins avec le web'),
+ ('web_automatic_body', 'After you add a wine, a model allowed to search the web completes its empty details, with Undo. Adding never waits for it.', 'Après l’ajout d’un vin, un modèle autorisé à chercher sur le web complète ses détails vides, avec Annuler. L’ajout ne l’attend jamais.'),
+ ('ai_allow_web', 'Allow web search', 'Autoriser la recherche web'),
+ ('ai_allow_web_body', 'Off by default. Lets this provider search the web to complete a wine you saved, with its producer, name, appellation, vintage, colour and grapes only, and list the pages it used. Never while reading a label. The provider may charge for searches.', 'Désactivé par défaut. Permet à ce fournisseur de chercher sur le web pour compléter un vin enregistré, avec seulement son producteur, son nom, son appellation, son millésime, sa couleur et ses cépages, et de lister les pages utilisées. Jamais pendant la lecture d’une étiquette. Le fournisseur peut facturer les recherches.'),
  ('expected_title', 'What to expect', 'À quoi s’attendre'),
  ('expected_none', 'Nothing bundled matches this wine yet. Add its grapes, appellation or style, or ask the AI.', 'Aucun profil fourni ne correspond encore à ce vin. Ajoutez ses cépages, son appellation ou son style, ou demandez à l’IA.'),
  ('game_title', 'Guess the aromas', 'Devinez les arômes'),

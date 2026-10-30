@@ -36,6 +36,14 @@ fun LabelAnalysis.completing(wine: Wine): Wine {
     return if (result.sameDetails(wine)) wine.copy(labelFrame = result.labelFrame) else result.copy(aiCompletedAt = ReferenceDates.now())
 }
 
+/**
+ * This wine with the fields a web completion fills taken from [to] where it still holds the
+ * value of [from]: the undo of "Complete from the web", keeping what was changed since.
+ */
+fun Wine.completedFromWeb(from: Wine, to: Wine): Wine = completed(from, to).copy(
+    webSources = if (webSources == from.webSources) to.webSources else webSources,
+)
+
 /** The same details as [other], whatever the AI's date and label frame: nothing was completed. */
 fun Wine.sameDetails(other: Wine): Boolean = copy(aiCompletedAt = other.aiCompletedAt, labelFrame = other.labelFrame) == other
 
