@@ -409,13 +409,16 @@ enum AIService {
                 return vision.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
             }
         }
-        // Gemini lists "models/gemini-…"; chat requests take the bare name.
-        let ids = items.compactMap { (($0["id"] as? String) ?? ($0["name"] as? String))?.replacingOccurrences(of: "models/", with: "") }
         // Leave out models that cannot chat: embeddings, speech, image generation, moderation.
         let excluded = ["embed", "tts", "whisper", "dall-e", "audio", "realtime", "moderation", "transcribe",
                         "gpt-image", "imagen", "rerank", "speech", "sora", "veo"]
-        let chat = ids.filter { id in !excluded.contains { id.lowercased().contains($0) } }
-        return Array(Set(chat)).sorted { $0.localizedStandardCompare($1) == .orderedDescending }
+        let chat = items.filter { item in
+            let id = ((item["id"] as? String) ?? (item["name"] as? String) ?? "").lowercased()
+            return !excluded.contains { id.contains($0) }
+        }
+        // Only the models that read a label photo (Gemini's "models/…" prefix dropped).
+        let ids = AIRequestBody.imageModels(chat, provider: provider)
+        return Array(Set(ids)).sorted { $0.localizedStandardCompare($1) == .orderedDescending }
     }
 
     // MARK: Claude (Anthropic Messages API)

@@ -392,12 +392,13 @@ object AiService {
         if (provider == AiProvider.OpenRouter && AiRequestBody.hasArchitecture(items)) {
             return AiRequestBody.openRouterVisionModels(items).distinct().sortedWith(collator)
         }
-        // Gemini lists "models/gemini-…"; chat requests take the bare name.
-        val ids = items.mapNotNull { item ->
-            val obj = item as? JsonObject ?: return@mapNotNull null
-            ((obj["id"] ?: obj["name"]) as? JsonPrimitive)?.contentOrNull?.replace("models/", "")
+        // Models that can chat (no embeddings, speech, image generation…) and read a label
+        // photo; Gemini's "models/…" prefix is dropped.
+        val chat = items.mapNotNull { it as? JsonObject }.filter { obj ->
+            val id = ((obj["id"] ?: obj["name"]) as? JsonPrimitive)?.contentOrNull.orEmpty().lowercase()
+            excludedModels.none { id.contains(it) }
         }
-        return ids.filter { id -> excludedModels.none { id.lowercase().contains(it) } }.distinct().sortedWith(collator).reversed()
+        return AiRequestBody.imageModels(chat, provider).distinct().sortedWith(collator).reversed()
     }
 
     private fun base64(jpeg: ByteArray) = Base64.encodeToString(jpeg, Base64.NO_WRAP)

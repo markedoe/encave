@@ -343,6 +343,88 @@ object AiRequestBody {
 
     internal fun hasArchitecture(items: JsonArray) = items.any { (it as? JsonObject)?.get("architecture") != null }
 
+    /** Whether a listed model reads images: yes, no, or not known. */
+    enum class Vision { Yes, No, Unknown }
+
+    private fun JsonElement?.strings(): List<String>? =
+        (this as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }
+
+    /**
+     * A model list entry: its own metadata first (OpenRouter and xAI `input_modalities`,
+     * Mistral `capabilities.vision`), then its name (`fixtures/model-vision-vectors.json`, as CaveKit).
+     */
+    fun vision(item: JsonObject, provider: AiProvider): Vision {
+        val modalities = (item["architecture"] as? JsonObject)?.get("input_modalities").strings() ?: item["input_modalities"].strings()
+        if (modalities != null) return if ("image" in modalities) Vision.Yes else Vision.No
+        val flag = ((item["capabilities"] as? JsonObject)?.get("vision") as? JsonPrimitive)?.contentOrNull
+        if (flag == "true") return Vision.Yes
+        if (flag == "false") return Vision.No
+        val id = ((item["id"] ?: item["name"]) as? JsonPrimitive)?.contentOrNull ?: return Vision.Unknown
+        return vision(id, provider)
+    }
+
+    /** By the model's name, from each provider's documentation of the models that take images. */
+    fun vision(id: String, provider: AiProvider): Vision {
+        val full = id.lowercase().replace("models/", "")
+        val name = full.substringAfterLast('/')
+        fun has(vararg parts: String) = parts.any { name.contains(it) }
+        fun starts(vararg prefixes: String) = prefixes.any { name.startsWith(it) }
+        fun yes(condition: Boolean, otherwise: Vision = Vision.No) = if (condition) Vision.Yes else otherwise
+        return when (provider) {
+            AiProvider.Anthropic -> when {
+                !starts("claude") -> Vision.Unknown
+                starts("claude-1", "claude-2", "claude-instant") -> Vision.No
+                else -> Vision.Yes
+            }
+            AiProvider.OpenAi -> when {
+                starts("gpt-3.5", "davinci", "babbage", "text-", "o1-mini", "o3-mini", "gpt-oss", "gpt-4-0") ||
+                    has("instruct") || name == "gpt-4" -> Vision.No
+                starts("gpt-4o", "gpt-4.1", "gpt-4.5", "gpt-5", "chatgpt-4o", "gpt-4-turbo", "gpt-4-vision", "o1", "o3", "o4") -> Vision.Yes
+                else -> Vision.Unknown
+            }
+            AiProvider.Google -> when {
+                starts("gemini") -> Vision.Yes
+                starts("gemma-3-1b") -> Vision.No
+                else -> yes(starts("gemma-3"), Vision.Unknown)
+            }
+            AiProvider.Xai -> when {
+                has("image") -> Vision.No
+                has("vision") || starts("grok-4") -> Vision.Yes
+                starts("grok-code", "grok-3", "grok-2", "grok-beta") -> Vision.No
+                else -> Vision.Unknown
+            }
+            AiProvider.Mistral -> yes(starts("pixtral"), Vision.Unknown)
+            AiProvider.DeepSeek -> yes(has("vl"))
+            AiProvider.Qwen -> yes(has("vl", "omni") || starts("qvq"))
+            AiProvider.Kimi -> when {
+                has("vision", "-vl") || name == "kimi-latest" -> Vision.Yes
+                starts("kimi-k2", "moonshot-v1") -> Vision.No
+                else -> Vision.Unknown
+            }
+            AiProvider.Zhipu -> yes(Regex("^glm-[0-9.]+v").containsMatchIn(name))
+            AiProvider.MiniMax -> yes(has("vl"), Vision.Unknown)
+            else -> Vision.Unknown
+        }
+    }
+
+    /**
+     * The models to offer for reading labels: those known to read images; when none is
+     * known, those not known either way (a new or unlisted model); never one known not to.
+     */
+    fun imageModels(items: List<JsonObject>, provider: AiProvider): List<String> {
+        val known = mutableListOf<String>()
+        val unsure = mutableListOf<String>()
+        for (item in items) {
+            val id = ((item["id"] ?: item["name"]) as? JsonPrimitive)?.contentOrNull?.replace("models/", "") ?: continue
+            when (vision(item, provider)) {
+                Vision.Yes -> known += id
+                Vision.Unknown -> unsure += id
+                Vision.No -> Unit
+            }
+        }
+        return known.ifEmpty { unsure }
+    }
+
     /**
      * A Chat Completions request with the prompt and the photo (none for a question about the
      * wine's identity); [format] is the response_format, null to send none. With [webSearch],

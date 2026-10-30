@@ -284,6 +284,24 @@ private func freshDefaults() -> UserDefaults {
         #expect(AIRequestBody.openRouterVisionModels(items) == ["vendor/vision"])
     }
 
+    /// Only models that read images are offered (`fixtures/model-vision-vectors.json`, as AiVisionModelsTest.kt).
+    @Test func modelsThatReadImages() throws {
+        let vectors = try SharedFixture.object("model-vision-vectors.json")
+        let cases = vectors["cases"] as? [[String: Any]] ?? []
+        #expect(!cases.isEmpty)
+        for row in cases {
+            let provider = try #require(AIProvider(rawValue: row["provider"] as? String ?? ""))
+            let item = row["item"] as? [String: Any] ?? [:]
+            #expect(AIRequestBody.vision(of: item, provider: provider).rawValue == row["vision"] as? String,
+                    "\(provider.rawValue) \(item["id"] ?? "")")
+        }
+        for row in vectors["lists"] as? [[String: Any]] ?? [] {
+            let provider = try #require(AIProvider(rawValue: row["provider"] as? String ?? ""))
+            let items = (row["ids"] as? [String] ?? []).map { ["id": $0] as [String: Any] }
+            #expect(AIRequestBody.imageModels(items, provider: provider) == row["offered"] as? [String] ?? [])
+        }
+    }
+
     @Test func connectionAddressesAndKeyAccounts() {
         let connection = AIConnection(provider: .local, baseURL: "http://example.test:8080/v1/")
         #expect(connection.effectiveBaseURL == "http://example.test:8080/v1")

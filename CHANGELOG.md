@@ -131,6 +131,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
   scale, "16/20" is 4 stars
 
 ### Fixed
+- Settings › AI: the model lists offer only models that read images, from each
+  service's own description when it gives one (OpenRouter, Mistral, xAI) and
+  otherwise from its documented model names; a name can still be typed
 - Settings › AI: a model can be chosen right where it is needed. A new connection
   offers its models once its key is checked (searchable, OpenRouter lists
   hundreds), and a connection's page lists its models with Add a Model

@@ -539,4 +539,78 @@ public enum AIRequestBody {
             return id
         }
     }
+
+    /// Whether a listed model reads images: yes, no, or not known.
+    public enum Vision: String, Sendable { case yes, no, unknown }
+
+    /// A model list entry: its own metadata first (OpenRouter and xAI `input_modalities`,
+    /// Mistral `capabilities.vision`), then its name (`fixtures/model-vision-vectors.json`).
+    public static func vision(of item: [String: Any], provider: AIProvider) -> Vision {
+        if let modalities = (item["architecture"] as? [String: Any])?["input_modalities"] as? [String]
+            ?? item["input_modalities"] as? [String] {
+            return modalities.contains("image") ? .yes : .no
+        }
+        if let vision = (item["capabilities"] as? [String: Any])?["vision"] as? Bool { return vision ? .yes : .no }
+        guard let id = (item["id"] as? String) ?? (item["name"] as? String) else { return .unknown }
+        return vision(ofModel: id, provider: provider)
+    }
+
+    /// By the model's name, from each provider's documentation of the models that take images.
+    public static func vision(ofModel id: String, provider: AIProvider) -> Vision {
+        let full = id.lowercased().replacingOccurrences(of: "models/", with: "")
+        let name = full.split(separator: "/").last.map(String.init) ?? full
+        func has(_ parts: String...) -> Bool { parts.contains { name.contains($0) } }
+        func starts(_ prefixes: String...) -> Bool { prefixes.contains { name.hasPrefix($0) } }
+        switch provider {
+        case .anthropic:
+            guard starts("claude") else { return .unknown }
+            return starts("claude-1", "claude-2", "claude-instant") ? .no : .yes
+        case .openAI:
+            if starts("gpt-3.5", "davinci", "babbage", "text-", "o1-mini", "o3-mini", "gpt-oss", "gpt-4-0")
+                || has("instruct") || name == "gpt-4" { return .no }
+            if starts("gpt-4o", "gpt-4.1", "gpt-4.5", "gpt-5", "chatgpt-4o", "gpt-4-turbo", "gpt-4-vision", "o1", "o3", "o4") {
+                return .yes
+            }
+            return .unknown
+        case .google:
+            if starts("gemini") { return .yes }
+            if starts("gemma-3-1b") { return .no }
+            return starts("gemma-3") ? .yes : .unknown
+        case .xai:
+            if has("image") { return .no }
+            if has("vision") || starts("grok-4") { return .yes }
+            return starts("grok-code", "grok-3", "grok-2", "grok-beta") ? .no : .unknown
+        case .mistral:
+            return starts("pixtral") ? .yes : .unknown
+        case .deepseek:
+            return has("vl") ? .yes : .no
+        case .qwen:
+            return has("vl", "omni") || starts("qvq") ? .yes : .no
+        case .kimi:
+            if has("vision", "-vl") || name == "kimi-latest" { return .yes }
+            return starts("kimi-k2", "moonshot-v1") ? .no : .unknown
+        case .zhipu:
+            return name.range(of: #"^glm-[0-9.]+v"#, options: .regularExpression) != nil ? .yes : .no
+        case .minimax:
+            return has("vl") ? .yes : .unknown
+        default:
+            return .unknown
+        }
+    }
+
+    /// The models to offer for reading labels: those known to read images; when none is
+    /// known, those not known either way (a new or unlisted model); never one known not to.
+    public static func imageModels(_ items: [[String: Any]], provider: AIProvider) -> [String] {
+        var known: [String] = [], unsure: [String] = []
+        for item in items {
+            guard let raw = (item["id"] as? String) ?? (item["name"] as? String) else { continue }
+            let id = raw.replacingOccurrences(of: "models/", with: "")
+            switch vision(of: item, provider: provider) {
+            case .yes: known.append(id)
+            case .unknown: unsure.append(id)
+            case .no: break
+            }
+        }
+        return known.isEmpty ? unsure : known
+    }
 }
