@@ -71,6 +71,7 @@ struct WineMoreDetailsSection: View {
             Text("Alcohol")
         }
         .fieldHelp("Alcohol by volume, as printed on the label.")
+        .aiEstimated(draft.isEstimatedByAI("abv"))
     }
 
     private var classificationRow: some View {
@@ -89,6 +90,7 @@ struct WineMoreDetailsSection: View {
             .fixedSize()
         }
         .fieldHelp("A classification printed on the label. Type your own or choose a suggestion.")
+        .aiEstimated(draft.isEstimatedByAI("classification"))
     }
 
     /// Several ways of ageing can apply (oak barrel and on lees): chips with a checkmark.

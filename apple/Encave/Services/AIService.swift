@@ -88,6 +88,10 @@ struct LabelAnalysis: Codable, Equatable, Sendable {
     /// Where the whole front label is in the photo ("label_box" and "label_angle"), checked
     /// when the answer is read; nil when absent or invalid, which never fails the answer.
     var placement: AILabelPlacement? = nil
+    /// The details the model gave from its own knowledge rather than read on the label
+    /// (`LabelRequest.sourceKeys`), read from "sources" when the answer is read; the form
+    /// marks them "Estimated by AI" until they are edited.
+    var estimated: Set<String> = ["drinkWindow"]
 
     private enum CodingKeys: String, CodingKey {
         case name, producer, vintage, color, appellation, region, country, grapes, drinkFrom, drinkUntil
@@ -108,39 +112,49 @@ struct LabelAnalysis: Codable, Equatable, Sendable {
     @discardableResult
     func apply(to draft: inout WineDraft, replacing filled: inout WineDraft) -> Bool {
         let before = draft
-        func fill(_ field: WritableKeyPath<WineDraft, String>, _ value: String) {
+        var touched: Set<String> = []
+        func fill(_ field: WritableKeyPath<WineDraft, String>, _ key: String, _ value: String) {
             let value = value.trimmingCharacters(in: .whitespaces)
             let current = draft[keyPath: field].trimmingCharacters(in: .whitespaces)
             if !value.isEmpty, current.isEmpty || current == filled[keyPath: field] {
                 draft[keyPath: field] = value
                 filled[keyPath: field] = value
+                touched.insert(key)
             }
         }
-        fill(\.name, name)
-        fill(\.producer, producer)
-        fill(\.appellation, appellation)
-        fill(\.region, region)
-        fill(\.country, country)
-        fill(\.grapes, grapes.joined(separator: ", "))
-        fill(\.classification, classification)
+        fill(\.name, "name", name)
+        fill(\.producer, "producer", producer)
+        fill(\.appellation, "appellation", appellation)
+        fill(\.region, "region", region)
+        fill(\.country, "country", country)
+        fill(\.grapes, "grapes", grapes.joined(separator: ", "))
+        fill(\.classification, "classification", classification)
         // A plausible strength only (a misread "135" is not one).
         if abv > 0, abv <= 100, let value = Decimal(string: String(format: "%.2f", locale: Locale(identifier: "en_US_POSIX"), abv)),
            draft.abv == nil || draft.abv == filled.abv {
             draft.abv = value
             filled.abv = value
+            touched.insert("abv")
         }
         if (1900...2100).contains(vintage), draft.vintage == nil || draft.vintage == filled.vintage {
             draft.vintage = vintage
             filled.vintage = vintage
+            touched.insert("vintage")
         }
         if let wineColor, draft.color == nil || draft.color == filled.color {
             draft.color = wineColor
             filled.color = wineColor
+            touched.insert("color")
         }
         if draft.windowIsAutomatic, drinkFrom > 1900, drinkUntil >= drinkFrom {
             draft.windowIsAutomatic = false
             draft.drinkFrom = drinkFrom
             draft.drinkUntil = drinkUntil
+            touched.insert("drinkWindow")
+        }
+        // What this answer filled is marked when the model estimated it, unmarked when read on the label.
+        for key in touched {
+            draft.aiEstimates[key] = estimated.contains(key) ? draft.aiValue(key) : nil
         }
         return draft != before
     }
@@ -541,6 +555,7 @@ enum AIService {
             throw AIServiceError.invalidResponse
         }
         analysis.placement = AILabelPlacement.parse(Data(text.utf8))
+        analysis.estimated = LabelSources.estimated(inAnswer: text)
         return analysis
     }
 }

@@ -1,0 +1,35 @@
+{
+  "about": "AI label answers and the details each app marks as \"Estimated by AI\" (LabelSources in CaveKit, AiLabelSources in the Kotlin core). A detail is an estimate when its source is \"knowledge\" (ignoring case and spaces); the drinking window (drinkWindow) is never printed on a label, so it is always one. No sources, another value or a label source: not marked. Read by LabelSourcesTests.swift and LabelSourcesTest.kt.",
+  "answers": [
+    {
+      "note": "Strict answer: name and vintage read, grapes and region from knowledge",
+      "answer": "{\"name\":\"Clos des Lilas\",\"producer\":\"\",\"vintage\":2019,\"color\":\"red\",\"appellation\":\"Pauillac\",\"region\":\"Bordeaux\",\"country\":\"France\",\"grapes\":[\"Cabernet Sauvignon\",\"Merlot\"],\"drinkFrom\":2026,\"drinkUntil\":2040,\"abv\":13.5,\"classification\":\"\",\"sources\":{\"name\":\"label\",\"producer\":\"\",\"vintage\":\"label\",\"color\":\"knowledge\",\"appellation\":\"label\",\"region\":\"knowledge\",\"country\":\"knowledge\",\"grapes\":\"knowledge\",\"drinkWindow\":\"knowledge\",\"abv\":\"label\",\"classification\":\"\"}}",
+      "estimated": ["color", "country", "drinkWindow", "grapes", "region"]
+    },
+    {
+      "note": "Everything read on the label: only the window is an estimate",
+      "answer": "{\"name\":\"Les Galets\",\"producer\":\"Domaine Martin\",\"vintage\":2021,\"color\":\"white\",\"appellation\":\"Chablis\",\"region\":\"Bourgogne\",\"country\":\"France\",\"grapes\":[\"Chardonnay\"],\"drinkFrom\":0,\"drinkUntil\":0,\"abv\":12.5,\"classification\":\"Premier Cru\",\"sources\":{\"name\":\"label\",\"producer\":\"label\",\"vintage\":\"label\",\"color\":\"label\",\"appellation\":\"label\",\"region\":\"label\",\"country\":\"label\",\"grapes\":\"label\",\"drinkWindow\":\"\",\"abv\":\"label\",\"classification\":\"label\"}}",
+      "estimated": ["drinkWindow"]
+    },
+    {
+      "note": "A model that ignores the schema: no sources",
+      "answer": "Here is the wine:\n```json\n{\"name\":\"Rosso\",\"producer\":\"\",\"vintage\":0,\"color\":\"red\",\"appellation\":\"\",\"region\":\"\",\"country\":\"Italy\",\"grapes\":[\"Sangiovese\"],\"drinkFrom\":0,\"drinkUntil\":0}\n```",
+      "estimated": ["drinkWindow"]
+    },
+    {
+      "note": "Case, spaces, unknown keys and values of another type",
+      "answer": "<think>reading</think>{\"name\":\"X\",\"sources\":{\"name\":\" Knowledge \",\"producer\":\"LABEL\",\"grapes\":[\"knowledge\"],\"vintage\":null,\"appellation\":\"memory\",\"tasteNotes\":\"knowledge\",\"abv\":\"knowledge\"}}",
+      "estimated": ["abv", "drinkWindow", "name"]
+    },
+    {
+      "note": "Sources that are not an object",
+      "answer": "{\"name\":\"X\",\"sources\":[\"knowledge\"]}",
+      "estimated": ["drinkWindow"]
+    },
+    {
+      "note": "Not JSON at all",
+      "answer": "Sorry, I cannot read this label.",
+      "estimated": ["drinkWindow"]
+    }
+  ]
+}

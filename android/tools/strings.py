@@ -1877,6 +1877,11 @@ def vocab_key(kind, ident):
 S += [(vocab_key(kind, ident), en, fr) for kind, rows in VOCAB.items() for ident, en, fr in rows]
 S += [("level_feminine_" + ident, en, fr) for ident, en, fr in LEVEL_FEMININE]
 
+# AI estimates, expected profiles, web completion and the aroma game.
+S += [
+ ("ai_estimated", "Estimated by AI", "Estimé par l’IA"),
+]
+
 
 def fixture_ids():
     """(kind, id) of every id in fixtures/tasting-vocabulary.json, by the kinds of Vocabulary.Kind."""

@@ -43,6 +43,10 @@ struct WineDraft: Equatable {
     var closure: String?
     /// Edited on the wine's page, not in the form, but kept.
     var criticScores: [CriticScore]?
+    /// The details the AI gave from its own knowledge rather than read on the label
+    /// (`LabelRequest.sourceKeys`), with the value it filled: marked "Estimated by AI"
+    /// while the field still holds it. Never saved.
+    var aiEstimates: [String: String] = [:]
 
     init() {}
 
@@ -104,6 +108,31 @@ struct WineDraft: Equatable {
     }
 
     var isValid: Bool { !name.trimmingCharacters(in: .whitespaces).isEmpty }
+
+    /// The value of a detail as compared with what the AI filled.
+    func aiValue(_ key: String) -> String {
+        func trimmed(_ text: String) -> String { text.trimmingCharacters(in: .whitespaces) }
+        switch key {
+        case "name": return trimmed(name)
+        case "producer": return trimmed(producer)
+        case "vintage": return vintage.map(String.init) ?? ""
+        case "color": return color?.rawValue ?? ""
+        case "appellation": return trimmed(appellation)
+        case "region": return trimmed(region)
+        case "country": return trimmed(country)
+        case "grapes": return trimmed(grapes)
+        case "drinkWindow": return windowIsAutomatic ? "" : "\(manualWindow.from)-\(manualWindow.until)"
+        case "abv": return abv.map { "\($0)" } ?? ""
+        case "classification": return trimmed(classification)
+        default: return ""
+        }
+    }
+
+    /// True while the detail still holds what the AI estimated (not read on the label), until edited.
+    func isEstimatedByAI(_ key: String) -> Bool {
+        guard let value = aiEstimates[key], !value.isEmpty else { return false }
+        return value == aiValue(key)
+    }
 
     /// Window used when automatic: estimated from style and vintage.
     var estimatedWindow: (from: Int, until: Int)? {
@@ -187,11 +216,14 @@ struct WineFormSections: View {
                 .fieldHelp("The name on the label, without the vintage. Required.")
                 .focused($focused, equals: .name)
                 .submitLabel(.next)
+                .aiEstimated(draft.isEstimatedByAI("name"))
                 .id(WineFormField.name)
             LabeledField("Producer", text: $draft.producer)
                 .fieldHelp("The estate, domaine or house that made the wine.")
+                .aiEstimated(draft.isEstimatedByAI("producer"))
                 .id(WineFormField.producer)
             VintagePicker(vintage: $draft.vintage)
+                .aiEstimated(draft.isEstimatedByAI("vintage"))
                 .id(WineFormField.vintage)
         } header: {
             Text("Wine")
@@ -216,6 +248,7 @@ struct WineFormSections: View {
 
         Section {
             StyleChips(color: $draft.color)
+                .aiEstimated(draft.isEstimatedByAI("color"))
                 .id(WineFormField.style)
         } header: {
             Text("Style")
@@ -226,14 +259,18 @@ struct WineFormSections: View {
         Section {
             LabeledField("Appellation", text: $draft.appellation)
                 .fieldHelp("The protected name of origin, such as Pauillac or Chablis.")
+                .aiEstimated(draft.isEstimatedByAI("appellation"))
                 .id(WineFormField.appellation)
             LabeledField("Region", text: $draft.region)
                 .fieldHelp("The wine region, such as Bordeaux or Tuscany.")
+                .aiEstimated(draft.isEstimatedByAI("region"))
                 .id(WineFormField.region)
             LabeledField("Country", text: $draft.country)
+                .aiEstimated(draft.isEstimatedByAI("country"))
                 .id(WineFormField.country)
             LabeledField("Grapes", text: $draft.grapes, prompt: Text("Pinot Noir, Gamay"))
                 .fieldHelp("Grape varieties, separated by commas.")
+                .aiEstimated(draft.isEstimatedByAI("grapes"))
                 .id(WineFormField.grapes)
         } header: {
             Text("Origin")
@@ -281,6 +318,7 @@ struct WineFormSections: View {
                 Stepper(value: fromBinding, in: 1900...(currentYear + 60)) {
                     LabeledContent("From") { Text(verbatim: "\(fromBinding.wrappedValue)").monospacedDigit() }
                 }
+                .aiEstimated(draft.isEstimatedByAI("drinkWindow"))
                 Stepper(value: untilBinding, in: fromBinding.wrappedValue...(currentYear + 80)) {
                     LabeledContent("Until") { Text(verbatim: "\(untilBinding.wrappedValue)").monospacedDigit() }
                 }

@@ -6797,6 +6797,16 @@
         }
       }
     },
+    "Estimated by AI": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimé par l’IA"
+          }
+        }
+      }
+    },
     "Estimated from the style and the vintage: ready %lld years after the harvest, then at its best for %lld years. Adjust it if the producer or a guide says otherwise.": {
       "localizations": {
         "fr": {

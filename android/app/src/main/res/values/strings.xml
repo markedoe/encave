@@ -1658,6 +1658,7 @@
     <string name="level_feminine_high">High</string>
     <string name="level_feminine_short">Short</string>
     <string name="level_feminine_long">Long</string>
+    <string name="ai_estimated">Estimated by AI</string>
     <plurals name="storage_rows">
         <item quantity="one">%d row</item>
         <item quantity="other">%d rows</item>

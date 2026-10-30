@@ -43,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
@@ -151,6 +152,31 @@ class WineFormState(
     /** Values filled automatically from the label; those may be replaced again, typed ones never. */
     private val autoFilled = mutableMapOf<String, Any>()
 
+    /**
+     * The details the AI gave from its own knowledge ([app.encave.core.AiLabelSources] keys),
+     * with the value it filled: marked "Estimated by AI" while the field still holds it.
+     */
+    private val aiEstimates = mutableStateMapOf<String, String>()
+
+    /** The value of a detail as compared with what the AI filled. */
+    private fun aiValue(key: String): String = when (key) {
+        "name" -> name.trim()
+        "producer" -> producer.trim()
+        "vintage" -> vintageText.trim()
+        "color" -> color?.raw.orEmpty()
+        "appellation" -> appellation.trim()
+        "region" -> region.trim()
+        "country" -> country.trim()
+        "grapes" -> grapes.joinToString(", ")
+        "drinkWindow" -> manualWindow?.let { "${it.first}-${it.last}" }.orEmpty()
+        "abv" -> abvText.trim()
+        "classification" -> classification.trim()
+        else -> ""
+    }
+
+    /** True while the detail still holds what the AI estimated (not read on the label), until edited. */
+    fun isEstimatedByAi(key: String): Boolean = aiEstimates[key]?.let { it.isNotEmpty() && it == aiValue(key) } == true
+
     /** Null while following the estimate. */
     var manualWindow by mutableStateOf(
         if (initial?.drinkFrom != null && initial.drinkUntil != null) initial.drinkFrom!!..initial.drinkUntil!! else null,
@@ -186,11 +212,13 @@ class WineFormState(
     fun apply(analysis: LabelAnalysis): Boolean {
         analysis.labelFrame?.let { labelFrame = it }
         val before = snapshot()
+        val touched = mutableSetOf<String>()
         fun fill(key: String, current: String, value: String, set: (String) -> Unit) {
             val clean = value.trim()
             if (clean.isNotEmpty() && (current.trim().isEmpty() || current.trim() == autoFilled[key])) {
                 set(clean)
                 autoFilled[key] = clean
+                touched += key
             }
         }
         fill("name", name, analysis.name) { name = it }
@@ -205,11 +233,13 @@ class WineFormState(
         if (analysis.vintage in 1900..2100 && (vintage == null || vintage == autoFilled["vintage"])) {
             vintageText = analysis.vintage.toString()
             autoFilled["vintage"] = analysis.vintage
+            touched += "vintage"
         }
         val color = WineColor.fromRaw(analysis.color)
         if (color != null && (this.color == null || this.color == autoFilled["color"])) {
             this.color = color
             autoFilled["color"] = color
+            touched += "color"
         }
         // Alcohol and classification, when printed on the label.
         analysis.abv?.let { value -> fill("abv", abvText, abvText(value)) { abvText = it } }
@@ -217,6 +247,11 @@ class WineFormState(
         if (manualWindow == null && analysis.drinkFrom > 1900 && analysis.drinkUntil >= analysis.drinkFrom) {
             manualWindow = analysis.drinkFrom..analysis.drinkUntil
             windowEnabled = true
+            touched += "drinkWindow"
+        }
+        // What this answer filled is marked when the model estimated it, unmarked when read on the label.
+        for (key in touched) {
+            if (key in analysis.estimated) aiEstimates[key] = aiValue(key) else aiEstimates.remove(key)
         }
         if (snapshot() == before) return false
         aiCompletedAt = app.encave.core.ReferenceDates.now()
@@ -245,6 +280,7 @@ class WineFormState(
         farmingCertified = wine.farmingCertified == true
         closure = wine.closure
         autoFilled.clear()
+        aiEstimates.clear()
     }
 
     companion object {
@@ -262,6 +298,7 @@ class WineFormState(
                     ArrayList(f.autoFilled.keys), ArrayList(f.autoFilled.values.map { (it as? WineColor)?.raw ?: it.toString() }),
                     f.abvText, f.classification, f.lieuDit, f.dosage, f.sweetness,
                     ArrayList(f.grapeShares.keys), ArrayList(f.grapeShares.values), ArrayList(f.ageing), f.farming, f.farmingCertified, f.closure,
+                    ArrayList(f.aiEstimates.keys), ArrayList(f.aiEstimates.values),
                 )
             },
             restore = { v ->
@@ -303,6 +340,8 @@ class WineFormState(
                     farming = v[29] as String?
                     farmingCertified = v[30] as Boolean
                     closure = v[31] as String?
+                    aiEstimates.clear()
+                    (v[32] as List<String>).zip(v[33] as List<String>).forEach { (key, value) -> aiEstimates[key] = value }
                 }
             },
         )
@@ -392,7 +431,7 @@ fun WineEssentials(
             label = { Text(stringResource(R.string.field_name)) },
             isError = nameError,
             supportingText = {
-                Text(stringResource(if (nameError) R.string.add_name_required else R.string.help_field_name))
+                Text(if (nameError) stringResource(R.string.add_name_required) else aiSupporting(form, "name", stringResource(R.string.help_field_name)))
             },
             singleLine = true,
             modifier = Modifier.fillMaxWidth().testTag("field.name")
@@ -405,7 +444,7 @@ fun WineEssentials(
             AutoCompleteField(
                 value = form.producer, onValueChange = { form.producer = it }, label = stringResource(R.string.field_producer),
                 options = known.producers, modifier = modifier,
-                supporting = stringResource(R.string.help_field_producer),
+                supporting = aiSupporting(form, "producer", stringResource(R.string.help_field_producer)),
             )
         }
         val vintage: @Composable (Modifier) -> Unit = { modifier ->
@@ -415,7 +454,10 @@ fun WineEssentials(
                 label = { Text(stringResource(R.string.field_vintage)) },
                 isError = form.vintageInvalid,
                 supportingText = {
-                    Text(stringResource(if (form.vintageInvalid) R.string.add_vintage_invalid else R.string.help_field_vintage))
+                    Text(
+                        if (form.vintageInvalid) stringResource(R.string.add_vintage_invalid)
+                        else aiSupporting(form, "vintage", stringResource(R.string.help_field_vintage)),
+                    )
                 },
                 singleLine = true,
                 modifier = modifier.testTag("field.vintage").then(if (vintageFocus != null) Modifier.focusRequester(vintageFocus) else Modifier),
@@ -464,9 +506,17 @@ fun WineEssentials(
                 )
             }
         }
-        Hint(stringResource(R.string.help_style_footer))
+        Hint(aiSupporting(form, "color", stringResource(R.string.help_style_footer)))
     }
 }
+
+/**
+ * The supporting text of a detail: "Estimated by AI" while it holds what the AI gave from
+ * its own knowledge rather than read on the label (until edited), else [help].
+ */
+@Composable
+fun aiSupporting(form: WineFormState, key: String, help: String): String =
+    if (form.isEstimatedByAi(key)) stringResource(R.string.ai_estimated) else help
 
 @Composable
 fun WineMoreDetails(
@@ -488,15 +538,16 @@ fun WineMoreDetails(
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.m)) {
             AutoCompleteField(
                 form.region, { form.region = it }, stringResource(R.string.field_region), known.regions, Modifier.weight(1f),
-                supporting = stringResource(R.string.help_field_region),
+                supporting = aiSupporting(form, "region", stringResource(R.string.help_field_region)),
             )
             AutoCompleteField(
                 form.country, { form.country = it }, stringResource(R.string.field_country), known.countries, Modifier.weight(1f),
+                supporting = if (form.isEstimatedByAi("country")) stringResource(R.string.ai_estimated) else null,
             )
         }
         AutoCompleteField(
             form.appellation, { form.appellation = it }, stringResource(R.string.field_appellation), known.appellations, Modifier.fillMaxWidth(),
-            supporting = stringResource(R.string.help_field_appellation),
+            supporting = aiSupporting(form, "appellation", stringResource(R.string.help_field_appellation)),
         )
         GrapesField(form, known.grapes)
         // Lined up with the fields' helper text above it.
@@ -574,7 +625,7 @@ private fun GrapesField(form: WineFormState, suggestions: List<String>) {
             onPick = { form.grapeInput = it; form.addGrape() },
             imeAction = ImeAction.Done,
             onImeAction = { form.addGrape() },
-            supporting = stringResource(R.string.help_field_grapes),
+            supporting = aiSupporting(form, "grapes", stringResource(R.string.help_field_grapes)),
             trailing = {
                 if (form.grapeInput.isNotBlank()) {
                     IconButton(onClick = { form.addGrape() }) {
@@ -623,6 +674,7 @@ fun DrinkingWindowField(form: WineFormState, modifier: Modifier = Modifier) {
                 steps = (bounds.last - bounds.first - 1).coerceAtLeast(0),
             )
             if (form.isEstimated) Hint(stringResource(R.string.add_window_auto))
+            if (form.isEstimatedByAi("drinkWindow")) Hint(stringResource(R.string.ai_estimated))
         }
         Hint(stringResource(R.string.help_window_footer))
     }

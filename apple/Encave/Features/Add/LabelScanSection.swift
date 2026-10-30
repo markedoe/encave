@@ -344,7 +344,9 @@ struct WineSummarySections: View {
         // vintage may be missing or misread. The estimated window follows them.
         Section {
             VintagePicker(vintage: $draft.vintage)
+                .aiEstimated(draft.isEstimatedByAI("vintage"))
             StyleChips(color: $draft.color)
+                .aiEstimated(draft.isEstimatedByAI("color"))
         } footer: {
             if scan.isAnalyzing {
                 Label("Reading the label…", systemImage: "sparkles")
@@ -357,10 +359,12 @@ struct WineSummarySections: View {
 
         // Only what was found: a row per empty field would look like a failed scan.
         let details = [
-            SummaryDetail(title: "Appellation", value: draft.appellation), SummaryDetail(title: "Region", value: draft.region),
-            SummaryDetail(title: "Country", value: draft.country), SummaryDetail(title: "Grapes", value: draft.grapes),
-            SummaryDetail(title: "Classification", value: draft.classification),
-            SummaryDetail(title: "Alcohol", value: draft.abv.map(WineDetailText.alcohol) ?? ""),
+            SummaryDetail(title: "Appellation", value: draft.appellation, key: "appellation"),
+            SummaryDetail(title: "Region", value: draft.region, key: "region"),
+            SummaryDetail(title: "Country", value: draft.country, key: "country"),
+            SummaryDetail(title: "Grapes", value: draft.grapes, key: "grapes"),
+            SummaryDetail(title: "Classification", value: draft.classification, key: "classification"),
+            SummaryDetail(title: "Alcohol", value: draft.abv.map(WineDetailText.alcohol) ?? "", key: "abv"),
         ].filter { !$0.value.trimmingCharacters(in: .whitespaces).isEmpty }
         if !details.isEmpty || window != nil {
             Section {
@@ -368,11 +372,13 @@ struct WineSummarySections: View {
                     LabeledContent(LocalizedStringKey(detail.title)) {
                         Text(detail.value).multilineTextAlignment(.trailing)
                     }
+                    .aiEstimated(draft.isEstimatedByAI(detail.key))
                 }
                 if let window {
                     LabeledContent("Drinking window") {
                         Text(verbatim: "\(window.0) – \(window.1)").monospacedDigit()
                     }
+                    .aiEstimated(draft.isEstimatedByAI("drinkWindow"))
                 }
             } header: {
                 Text("Details")
@@ -399,6 +405,8 @@ struct WineSummarySections: View {
 private struct SummaryDetail: Identifiable {
     let title: String
     let value: String
+    /// Its `LabelRequest.sourceKeys` key, to mark it "Estimated by AI".
+    let key: String
     var id: String { title }
 }
 

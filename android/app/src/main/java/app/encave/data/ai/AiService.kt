@@ -2,6 +2,7 @@ package app.encave.data.ai
 
 import android.util.Base64
 import app.encave.core.AiLabelPlacement
+import app.encave.core.AiLabelSources
 import app.encave.core.CappedRead
 import app.encave.core.Http
 import app.encave.core.WineLabelFrame
@@ -59,6 +60,11 @@ data class LabelAnalysis(
     @Transient val abv: Double? = null,
     /** A classification printed on the label ("Grand Cru"), "" when none; read as [abv]. */
     @Transient val classification: String = "",
+    /**
+     * The details the model gave from its own knowledge rather than read on the label
+     * ([AiLabelSources] keys), which the form marks "Estimated by AI". Read as [abv].
+     */
+    @Transient val estimated: Set<String> = setOf("drinkWindow"),
 ) {
     /** The label's frame for the studio picture, for the photo read. */
     val labelFrame: WineLabelFrame? get() = photoId?.let { id -> placement?.frame(id) }
@@ -79,7 +85,7 @@ data class LabelAnalysis(
             put("additionalProperties", false)
             // Strict schemas want every key listed: the label's place is null when not found.
             putJsonArray("required") {
-                (detailKeys + if (findsLabel) listOf("label_box", "label_angle") else emptyList()).forEach { add(JsonPrimitive(it)) }
+                (detailKeys + "sources" + if (findsLabel) listOf("label_box", "label_angle") else emptyList()).forEach { add(JsonPrimitive(it)) }
             }
             putJsonObject("properties") {
                 listOf("name", "producer").forEach { putJsonObject(it) { put("type", "string") } }
@@ -97,6 +103,20 @@ data class LabelAnalysis(
                 putJsonObject("drinkUntil") { put("type", "integer") }
                 putJsonObject("abv") { put("type", "number") }
                 putJsonObject("classification") { put("type", "string") }
+                // "label", "knowledge" or "" for each detail.
+                putJsonObject("sources") {
+                    put("type", "object")
+                    put("additionalProperties", false)
+                    putJsonArray("required") { AiLabelSources.keys.forEach { add(JsonPrimitive(it)) } }
+                    putJsonObject("properties") {
+                        AiLabelSources.keys.forEach { key ->
+                            putJsonObject(key) {
+                                put("type", "string")
+                                putJsonArray("enum") { listOf("", AiLabelSources.LABEL, AiLabelSources.KNOWLEDGE).forEach { add(JsonPrimitive(it)) } }
+                            }
+                        }
+                    }
+                }
                 if (findsLabel) {
                     putJsonObject("label_box") {
                         putJsonArray("anyOf") {
@@ -131,7 +151,7 @@ data class LabelAnalysis(
             add("- vintage: the year on the label, or 0 for a non-vintage wine.")
             add("- color: one of red, white, rose, sparkling, dessert, fortified, orange; \"\" if you cannot tell.")
             add("- appellation, region, country: from the label, or from your knowledge of the appellation. Country in English.")
-            add("- grapes: the grape varieties if printed or typical of the appellation; [] if unsure.")
+            add("- grapes: the grape varieties if printed, or if you know them for this wine or appellation; [] if unsure.")
             add("- drinkFrom and drinkUntil: a realistic drinking window in years for this wine and vintage, or 0 if unknown.")
             add("- abv: the alcohol by volume printed on the label, in percent (for example 13.5), or 0 if not printed.")
             add(
@@ -146,7 +166,15 @@ data class LabelAnalysis(
                 )
                 add("- label_angle: the label's slant in degrees, positive when its text runs uphill to the right, 0 when level; null if unknown.")
             }
-            add("Use \"\" or 0 for anything you cannot determine. Do not invent a producer or vintage that is not visible.")
+            add(
+                "- sources: for each detail, \"label\" if you read it on the label, \"knowledge\" if it comes from what you " +
+                    "know rather than from the label (an estimate), \"\" if you left it empty. drinkWindow is the source of " +
+                    "drinkFrom and drinkUntil.",
+            )
+            add(
+                "Leave a detail empty (\"\", 0 or []) when you are not sure of it rather than guessing. " +
+                    "Do not invent a producer or vintage that is not visible.",
+            )
         }.joinToString("\n")
     }
 }
@@ -556,6 +584,7 @@ object AiService {
             placement = AiLabelPlacement.parse(trimmed),
             abv = abv(fields?.get("abv")),
             classification = (fields?.get("classification") as? JsonPrimitive)?.takeIf { it.isString }?.content?.trim().orEmpty(),
+            estimated = AiLabelSources.estimated(trimmed),
         )
     }
 

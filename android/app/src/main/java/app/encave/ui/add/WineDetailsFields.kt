@@ -107,12 +107,12 @@ private fun WineDetailsFields(form: WineFormState) {
             label = { Text(stringResource(R.string.field_abv)) },
             suffix = { Text("%") },
             isError = form.abvInvalid,
-            supportingText = { Text(abvError) },
+            supportingText = { Text(if (form.abvInvalid) abvError else aiSupporting(form, "abv", abvError)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth().testTag("field.abv").semantics { if (form.abvInvalid) error(abvError) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
         )
-        ClassificationField(form.classification) { form.classification = it }
+        ClassificationField(form.classification, estimated = form.isEstimatedByAi("classification")) { form.classification = it }
         OutlinedTextField(
             value = form.lieuDit, onValueChange = { form.lieuDit = it },
             label = { Text(stringResource(R.string.field_lieu_dit)) }, singleLine = true,
@@ -208,7 +208,7 @@ private fun VocabularyDropdown(label: Int, kind: Vocabulary.Kind, ids: List<Stri
 
 /** Free text with the usual classifications offered, all of them while it is empty. */
 @Composable
-private fun ClassificationField(value: String, onChange: (String) -> Unit) {
+private fun ClassificationField(value: String, estimated: Boolean, onChange: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     val needle = value.trim()
     val matches = Vocabulary.classificationSuggestions.filter { it.contains(needle, ignoreCase = true) && !it.equals(needle, ignoreCase = true) }
@@ -217,6 +217,7 @@ private fun ClassificationField(value: String, onChange: (String) -> Unit) {
             value = value,
             onValueChange = { onChange(it); expanded = true },
             label = { Text(stringResource(R.string.field_classification)) },
+            supportingText = if (estimated) ({ Text(stringResource(R.string.ai_estimated)) }) else null,
             singleLine = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded && matches.isNotEmpty()) },
             modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable).testTag("field.classification"),
