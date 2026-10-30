@@ -743,7 +743,7 @@ final class ScreenTourTests: XCTestCase {
         }
         // Below the bottles, the window and serving: scrolled until Guess the Aromas shows,
         // so the section is on screen and Drink, at the top, is off it.
-        guard let play = reach("action.wine.aromaGame") else {
+        guard let play = reach("wine.aromaGame") else {
             snapshot("wine-expected-missing")
             XCTFail("wine: no Guess the Aromas button")
             goBack()
@@ -813,7 +813,10 @@ final class ScreenTourTests: XCTestCase {
         _ = item.waitForExistence(timeout: 2)
         for _ in 0..<30 where !(item.exists && item.isHittable) {
             #if os(iOS)
-            if down { app.swipeDown() } else { swipeContentUp() }
+            // A slow drag: a fast one can fling the element past the screen between two checks.
+            let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.4 : 0.6))
+            from.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.6 : 0.4)),
+                       withVelocity: .slow, thenHoldForDuration: 0.1)
             #else
             app.scroll(byDeltaX: 0, deltaY: down ? 300 : -300)
             #endif

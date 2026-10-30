@@ -29,7 +29,7 @@ struct ExpectedProfileSection: View {
                     Button(action: playGame) {
                         Label("Guess the Aromas", systemImage: "nose")
                     }
-                    .accessibilityIdentifier("action.wine.aromaGame")
+                    .accessibilityIdentifier("wine.aromaGame")
                 }
                 if aiConfiguration.isEnabled {
                     Button(action: ask) {
@@ -42,13 +42,13 @@ struct ExpectedProfileSection: View {
                         }
                     }
                     .disabled(asking)
-                    .accessibilityIdentifier("action.wine.whatToExpect")
+                    .accessibilityIdentifier("wine.whatToExpect")
                 }
                 if wine.expectedProfile != nil, ExpectedProfiles.profile(for: wine) != nil {
                     Button("Use the Typical Profile", systemImage: "arrow.uturn.backward") {
                         model.setExpectedProfile(nil, for: wine.id)
                     }
-                    .accessibilityIdentifier("action.wine.typicalProfile")
+                    .accessibilityIdentifier("wine.typicalProfile")
                 }
                 if let problem {
                     Label(problem, systemImage: "exclamationmark.triangle")
@@ -310,7 +310,7 @@ struct WebCompletionSection: View {
                         }
                     }
                     .disabled(running)
-                    .accessibilityIdentifier("action.wine.completeFromWeb")
+                    .accessibilityIdentifier("wine.completeFromWeb")
                 }
                 if let problem {
                     Label(problem, systemImage: "exclamationmark.triangle")
