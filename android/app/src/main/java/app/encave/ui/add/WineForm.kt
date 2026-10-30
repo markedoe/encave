@@ -155,6 +155,9 @@ class WineFormState(
     /** What to expect, from the AI's reading of the label; not edited in the form, but kept. */
     var expectedProfile by mutableStateOf(initial?.expectedProfile)
 
+    /** The AI's reading in this form changed what to expect. */
+    val expectedChanged: Boolean get() = expectedProfile != initial?.expectedProfile
+
     /**
      * The details the AI gave from its own knowledge ([app.encave.core.AiLabelSources] keys),
      * with the value it filled: marked "Estimated by AI" while the field still holds it.

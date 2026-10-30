@@ -199,7 +199,7 @@ struct AromaGameResultSections: View {
                     let name = VocabularyLabels.text(.structure, level.attribute)
                     let guessedLabel = word(level.guess, level.attribute), expectedLabel = word(level.expected, level.attribute)
                     LabeledContent {
-                        Text(level.isClose ? "+\(AromaGame.structurePoints)" : "0").monospacedDigit()
+                        Text(verbatim: level.isClose ? "+\(AromaGame.structurePoints)" : "0").monospacedDigit()
                     } label: {
                         Label {
                             VStack(alignment: .leading, spacing: 2) {

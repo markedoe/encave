@@ -623,7 +623,15 @@ class AppViewModel(
     }
 
     /** [photo] replaces the wine's photo when set; [removePhoto] clears it. */
-    fun updateWine(wine: Wine, photo: ByteArray? = null, removePhoto: Boolean = false, quiet: Boolean = false, fromForm: Boolean = false) {
+    fun updateWine(
+        wine: Wine,
+        photo: ByteArray? = null,
+        removePhoto: Boolean = false,
+        quiet: Boolean = false,
+        fromForm: Boolean = false,
+        /** The form did not change what to expect: the wine's own is kept (asked meanwhile, or synced). */
+        keepsExpected: Boolean = false,
+    ) {
         viewModelScope.launch {
             val newId = photo?.let { withContext(Dispatchers.IO) { photos.save(it) } }
             val record = when {
@@ -640,6 +648,9 @@ class AppViewModel(
                     record.copy(
                         attachments = live?.attachments ?: record.attachments,
                         criticScores = if (fromForm && live != null) live.criticScores else record.criticScores,
+                        // Pages of the last web completion, not edited in the form.
+                        webSources = if (fromForm && live != null) live.webSources else record.webSources,
+                        expectedProfile = if (fromForm && keepsExpected && live != null) live.expectedProfile else record.expectedProfile,
                     ),
                 )
             }

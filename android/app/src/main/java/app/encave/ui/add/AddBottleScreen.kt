@@ -868,7 +868,9 @@ private fun EditWineForm(viewModel: AppViewModel, navigator: AppNavigator, wineI
     fun save() {
         form.showErrors = true
         if (wine == null || form.nameMissing || form.vintageInvalid) return
-        viewModel.updateWine(form.build(), photo = form.newPhoto, removePhoto = form.photoRemoved, fromForm = true)
+        viewModel.updateWine(
+            form.build(), photo = form.newPhoto, removePhoto = form.photoRemoved, fromForm = true, keepsExpected = !form.expectedChanged,
+        )
         navigator.back()
     }
     Scaffold(

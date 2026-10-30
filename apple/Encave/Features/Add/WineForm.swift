@@ -538,7 +538,11 @@ struct EditWineView: View {
         } else if photoRemoved {
             wine.photoID = nil
         }
-        if let live = model.cellar.wines[wine.id] { wine.keepUnedited(from: live) }
+        if let live = model.cellar.wines[wine.id] {
+            wine.keepUnedited(from: live)
+            // What to expect, unless the AI read the label again here: as it is now (asked meanwhile, or synced).
+            if draft.expectedProfile == loadedDraft?.expectedProfile { wine.expectedProfile = live.expectedProfile }
+        }
         // A replaced photo file is removed by the cleanup at launch, after a grace period.
         guard model.update({ try $0.updateWine(wine) }) else { return }
         dismiss()
@@ -558,6 +562,8 @@ extension Wine {
         currentPrice = live.currentPrice
         currentPriceCurrency = live.currentPriceCurrency
         currentPriceDate = live.currentPriceDate
+        // Pages from the last web completion, not edited in the form.
+        webSources = live.webSources
     }
 }
 
