@@ -30,19 +30,25 @@ public struct Discovery: Identifiable, Codable, Hashable, Sendable {
     public var wantsToBuy: Bool
     /// When a bottle of it was added to the cellar from the shopping list.
     public var boughtAt: Date?
+    /// The full tasting note, as for a bottle opened from the cellar: appearance, nose,
+    /// palate, finish, food, and the guided sheet (aromas, structure, intensity, hue). Its
+    /// `date` is the discovery's; the stars, score and note stay in `rating`, `score100` and
+    /// `note`, which older versions read (docs/SYNC.md §1).
+    public var tasting: Tasting?
     /// Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1).
     /// Part of equality, so a merge that only brings them in is still saved.
     public var unknownFields = UnknownFields()
 
     private enum CodingKeys: String, CodingKey, CaseIterable {
         case id, wineID, date, setting, place, rating, note, tags, price, currency, wantsToBuy, boughtAt
-        case score100
+        case score100, tasting
     }
 
     public init(
         id: UUID = UUID(), wineID: UUID, date: Date = .now, setting: Setting? = nil, place: String? = nil,
         rating: Int? = nil, note: String? = nil, tags: [String] = [], price: Decimal? = nil,
-        currency: String? = nil, wantsToBuy: Bool = false, boughtAt: Date? = nil, score100: Double? = nil
+        currency: String? = nil, wantsToBuy: Bool = false, boughtAt: Date? = nil, score100: Double? = nil,
+        tasting: Tasting? = nil
     ) {
         self.id = id; self.wineID = wineID; self.date = date; self.setting = setting; self.place = place
         let rating = rating.map { min(5, max(1, $0)) }
@@ -50,6 +56,7 @@ public struct Discovery: Identifiable, Codable, Hashable, Sendable {
         self.score100 = Score.kept(score100, rating: rating)
         self.note = note; self.tags = Discovery.normalized(tags); self.price = price; self.currency = currency
         self.wantsToBuy = wantsToBuy; self.boughtAt = boughtAt
+        self.tasting = tasting
     }
 
     public init(from decoder: Decoder) throws {
@@ -70,6 +77,7 @@ public struct Discovery: Identifiable, Codable, Hashable, Sendable {
         currency = try c.decodeIfPresent(String.self, forKey: .currency)
         wantsToBuy = try c.decodeIfPresent(Bool.self, forKey: .wantsToBuy) ?? false
         boughtAt = try c.decodeIfPresent(Date.self, forKey: .boughtAt)
+        tasting = try c.decodeIfPresent(Tasting.self, forKey: .tasting)
         unknownFields = try UnknownFields(from: decoder, known: CodingKeys.self)
     }
 
@@ -88,6 +96,7 @@ public struct Discovery: Identifiable, Codable, Hashable, Sendable {
         try c.encode(wantsToBuy, forKey: .wantsToBuy)
         try c.encodeIfPresent(boughtAt, forKey: .boughtAt)
         try c.encodeIfPresent(Score.kept(score100, rating: rating), forKey: .score100)
+        try c.encodeIfPresent(tasting, forKey: .tasting)
         try unknownFields.encode(to: encoder, known: CodingKeys.self)
     }
 
@@ -180,6 +189,9 @@ public extension Cellar {
         guard wines[discovery.wineID] != nil else { throw CellarError.unknownWine }
         var copy = discovery
         copy.unknownFields = copy.unknownFields.orKept(stored.unknownFields)
+        if let fields = copy.tasting?.unknownFields {
+            copy.tasting?.unknownFields = fields.orKept(stored.tasting?.unknownFields)
+        }
         copy.tags = Discovery.normalized(copy.tags)
         discoveries[discovery.id] = copy
     }

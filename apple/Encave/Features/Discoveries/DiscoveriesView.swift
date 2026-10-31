@@ -109,6 +109,10 @@ struct DiscoveryRow: View {
                     if showsWine, let style = wine?.color?.name {
                         Text(style)
                     }
+                    // A full tasting note, said as for a bottle of the cellar.
+                    if discovery.tasting?.isDetailed == true {
+                        Text("Full note")
+                    }
                     if !showsSource {
                         if let place = discovery.place {
                             Label(place, systemImage: discovery.setting?.systemImage ?? "mappin.and.ellipse")
@@ -180,6 +184,7 @@ struct DiscoveryRow: View {
             parts.append(String(localized: "Bought"))
         }
         if let note = discovery.note { parts.append(note) }
+        if discovery.tasting?.isDetailed == true { parts.append(String(localized: "Full note")) }
         if let price = discovery.price {
             parts.append(price.formatted(.currency(code: discovery.currency ?? model.cellar.settings.currency)))
         }

@@ -177,7 +177,14 @@ class TastingFormState(initial: Tasting, start: Tasting? = null) {
  * aromas and hues that suit it first.
  */
 @Composable
-fun TastingFields(state: TastingFormState, modifier: Modifier = Modifier, color: WineColor? = null, expected: app.encave.core.ExpectedProfile? = null) {
+fun TastingFields(
+    state: TastingFormState,
+    modifier: Modifier = Modifier,
+    color: WineColor? = null,
+    expected: app.encave.core.ExpectedProfile? = null,
+    /** The occasion and date: left out for a wine tasted elsewhere, whose place and date are its own. */
+    showsOccasion: Boolean = true,
+) {
     var pickingDate by rememberSaveable { mutableStateOf(false) }
     val scale = LocalRatingScale.current
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
@@ -199,36 +206,38 @@ fun TastingFields(state: TastingFormState, modifier: Modifier = Modifier, color:
             modifier = Modifier.fillMaxWidth(), minLines = 2,
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
         )
-        Text(stringResource(R.string.field_occasion), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.s), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
-            // A note written in another language still shows its chip as chosen.
-            val chosen = Occasion.matching(state.occasion)
-            Occasion.entries.forEach { occasion ->
-                val label = stringResource(occasion.labelRes)
-                FilterChip(
-                    selected = chosen == occasion,
-                    onClick = { state.occasion = if (chosen == occasion) "" else label },
-                    label = { Text(label) },
-                    // Chosen: a check, not only a tint.
-                    leadingIcon = if (chosen == occasion) {
-                        { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
-                    } else {
-                        null
-                    },
-                )
+        if (showsOccasion) {
+            Text(stringResource(R.string.field_occasion), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.s), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
+                // A note written in another language still shows its chip as chosen.
+                val chosen = Occasion.matching(state.occasion)
+                Occasion.entries.forEach { occasion ->
+                    val label = stringResource(occasion.labelRes)
+                    FilterChip(
+                        selected = chosen == occasion,
+                        onClick = { state.occasion = if (chosen == occasion) "" else label },
+                        label = { Text(label) },
+                        // Chosen: a check, not only a tint.
+                        leadingIcon = if (chosen == occasion) {
+                            { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
+                        } else {
+                            null
+                        },
+                    )
+                }
             }
+            OutlinedTextField(
+                value = state.occasion, onValueChange = { state.occasion = it },
+                label = { Text(stringResource(R.string.field_occasion)) }, singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            )
+            AssistChip(
+                onClick = { pickingDate = true },
+                label = { Text(Formats.day(state.date)) },
+                leadingIcon = { Icon(Icons.Outlined.CalendarMonth, contentDescription = stringResource(R.string.field_date)) },
+            )
         }
-        OutlinedTextField(
-            value = state.occasion, onValueChange = { state.occasion = it },
-            label = { Text(stringResource(R.string.field_occasion)) }, singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-        )
-        AssistChip(
-            onClick = { pickingDate = true },
-            label = { Text(Formats.day(state.date)) },
-            leadingIcon = { Icon(Icons.Outlined.CalendarMonth, contentDescription = stringResource(R.string.field_date)) },
-        )
         Hint(stringResource(R.string.help_tasting_footer))
         // Shows or hides the fields; what they hold is kept either way.
         val expandedLabel = stringResource(if (state.expanded) R.string.state_expanded else R.string.state_collapsed)

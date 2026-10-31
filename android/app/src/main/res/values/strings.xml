@@ -109,7 +109,6 @@
     <string name="detail_window_now">Now</string>
     <string name="detail_window_description">Drinking window from %1$d to %2$d. %3$s.</string>
     <string name="detail_window_missing">Add a vintage or a drinking window to know when to open it.</string>
-    <string name="detail_bottles">In the cellar</string>
     <string name="detail_tastings">Tastings</string>
     <string name="detail_details">Details</string>
     <string name="detail_added">Added %1$s</string>
@@ -516,7 +515,6 @@
     <string name="discovery_place">Place</string>
     <string name="discovery_place_hint">Restaurant, city, friends’ names…</string>
     <string name="discovery_impression">Your impression</string>
-    <string name="discovery_note_hint">What you liked, the dish, the moment…</string>
     <string name="discovery_tags">Tags</string>
     <string name="discovery_add_tag">Add a tag</string>
     <string name="discovery_tag_hint">Gift idea, for summer…</string>
@@ -1384,7 +1382,7 @@
     <string name="journal_to_buy_empty_body">Turn on To buy for a wine tasted elsewhere to find it here.</string>
     <string name="drink_pick_title">Which bottle?</string>
     <string name="drink_pick_footer">The bottle you choose leaves your cellar, and its position in the storage becomes free.</string>
-    <string name="help_journal_add">Tap **Add a tasting** in the Journal and choose where you drank it. **A bottle from my cellar**: choose the wine, then add your note; the bottle leaves your cellar. **Somewhere else**: take a photo of the bottle and add where you were, a rating, notes and tags; your cellar does not change.</string>
+    <string name="help_journal_add">Tap **Add a tasting** in the Journal and choose where you drank it. **A bottle from my cellar**: choose the wine, then add your note; the bottle leaves your cellar. **Somewhere else**: take a photo of the bottle and add where you were, a rating, notes and tags, and the same full tasting note as for a bottle of your cellar (with **Guess the aromas** and the comparison with what to expect); your cellar does not change.</string>
     <string name="help_journal_diary_title">One diary</string>
     <string name="help_journal_filters_title">Filters</string>
     <string name="help_journal_filters">The chips at the top show **All**, or only **From my cellar**, **Tasted elsewhere** or **To buy**. Search looks in the wines, notes, places and tags.</string>
@@ -1681,6 +1679,7 @@
     <string name="help_drinking_game_title">Guess the aromas</string>
     <string name="help_drinking_game">**Guess the aromas**, in the Drink sheet or on a wine’s page, lets you pick up to six aromas, and the structure if you like, before you see what to expect; **Reveal** gives the points: 10 for an expected aroma, 4 for one of the same family, 5 for a level within one of the expected one, with the accuracy. From the Drink sheet, **Copy guesses into the tasting note** adds them to your tasting. **My palate**, in Insights, adds up your points, level, accuracy, streak and the families you find best. Games stay on this device: never synced, backed up or exported. **Reset my palate** removes them.</string>
     <string name="game_copy">Copy guesses into the tasting note</string>
+    <string name="game_copy_footer_save">Adds your aromas and structure to the tasting you are writing; nothing is saved until you tap Save.</string>
     <string name="game_copy_footer">Adds your aromas and structure to the tasting you are writing; nothing is saved until you tap Drink.</string>
     <string name="game_intro">Pick up to %1$d aromas you expect to find, then reveal what to expect.</string>
     <string name="game_picked">%1$d of %2$d picked</string>

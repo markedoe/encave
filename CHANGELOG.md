@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- A wine tasted elsewhere (Journal › + › Somewhere Else) gets the same
+  tasting as a bottle of the cellar: the full note and the guided sheet
+  (appearance, aromas, structure), Guess the Aromas before tasting, and after
+  Save the comparison with what to expect. Kept in a new optional synced field,
+  discovery.tasting, that older versions keep; the stars and the note stay
+  where they read them
 - Putting bottles away: a bottle without a position (added without a storage,
   received, put back from the Journal, taken out) shows Put Away beside it on
   the wine's page, and Put Away… in the wine's menu in the Cellar, Tonight and

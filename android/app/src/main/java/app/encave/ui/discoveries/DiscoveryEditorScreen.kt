@@ -1,5 +1,13 @@
 package app.encave.ui.discoveries
 
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.ModalBottomSheet
+import app.encave.ui.drink.AromaGameSheet
+import app.encave.ui.drink.TastingFields
+import app.encave.ui.drink.TastingFormState
+import app.encave.core.Wine
+import app.encave.core.Tasting
 import app.encave.ui.components.ActionContent
 import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.layout.Arrangement
@@ -106,16 +114,30 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
     var place by rememberSaveable { mutableStateOf(existing?.place.orEmpty()) }
     var date by rememberSaveable { mutableStateOf(existing?.date ?: app.encave.core.ReferenceDates.now()) }
     var pickingDate by remember { mutableStateOf(false) }
-    var rating by rememberSaveable { mutableStateOf(existing?.rating) }
-    // The precise score out of 20 or 100 kept with the rating, if any.
-    var score100 by rememberSaveable { mutableStateOf(existing?.score100) }
-    var note by rememberSaveable { mutableStateOf(existing?.note.orEmpty()) }
+    // The rating, the note and the tasting sheet, as in the Drink sheet: the stars, score and
+    // note are saved in the discovery's own fields, the rest in its tasting.
+    val tasting = rememberSaveable(saver = TastingFormState.Saver) {
+        TastingFormState(
+            (existing?.tasting ?: Tasting(date = existing?.date ?: app.encave.core.ReferenceDates.now()))
+                .copy(rating = existing?.rating, score100 = existing?.score100, note = existing?.note),
+        )
+    }
+    var playingGame by rememberSaveable { mutableStateOf(false) }
+    /** After Save, with aromas noted: how they compare with what to expect. */
+    var comparison by remember { mutableStateOf<Pair<String, app.encave.core.AromaComparison>?>(null) }
+    // The wine as typed, for what to expect and the game (without taking a grape or tag still being typed).
+    val typed = (wine ?: Wine(name = "")).copy(
+        id = form.id, name = form.name.trim(), producer = form.producer.trim().ifEmpty { null }, vintage = form.vintage,
+        color = form.color, region = form.region.trim().ifEmpty { null }, country = form.country.trim().ifEmpty { null },
+        appellation = form.appellation.trim().ifEmpty { null }, grapes = form.grapes.toList(),
+    )
+    val expected = typed.expectedOrBundledProfile
     val tags = rememberRetained("discovery.tags") { mutableStateListOf<String>().apply { existing?.tags?.let { addAll(it) } } }
     var pendingTag by rememberSaveable { mutableStateOf("") }
     var wantsToBuy by rememberSaveable { mutableStateOf(existing?.wantsToBuy ?: false) }
     var price by rememberSaveable { mutableStateOf(existing?.price?.toPlainString().orEmpty()) }
     // Back, the back gesture and ✕ ask first when something was entered.
-    val snapshot = form.snapshot() + listOf(setting, place, date, rating, score100, note, tags.toList(), pendingTag, wantsToBuy, price)
+    val snapshot = form.snapshot() + listOf(setting, place, date, tasting.toTasting(), tags.toList(), pendingTag, wantsToBuy, price)
     val start = rememberRetained("discovery.start") { snapshot }
     val leave = app.encave.ui.components.rememberDiscardGuard(snapshot != start) { navigator.back() }
 
@@ -133,10 +155,14 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
         val record = form.build()
         val priceValue = price.replace(",", ".").trim().toBigDecimalOrNull()
         val base = existing ?: Discovery(wineId = record.id)
+        // The stars, score and note in the discovery's own fields (older versions read them);
+        // the full note and the guided sheet in its tasting, dated like it.
+        val written = tasting.toTasting()
         val discovery = base.copy(
-            date = date, setting = setting, place = place.trim().ifEmpty { null }, rating = rating,
-            score100 = app.encave.core.Score.kept(score100, rating),
-            note = note.trim().ifEmpty { null }, tags = tags.toList(), price = priceValue,
+            date = date, setting = setting, place = place.trim().ifEmpty { null }, rating = written.rating,
+            score100 = app.encave.core.Score.kept(written.score100, written.rating), note = written.note,
+            tasting = written.copy(date = date, rating = null, score100 = null, note = null, occasion = null).takeIf { it.isDetailed },
+            tags = tags.toList(), price = priceValue,
             currency = if (priceValue == null) null else base.currency ?: cellar.settings.currency,
             wantsToBuy = wantsToBuy, boughtAt = if (wantsToBuy && !base.wantsToBuy) null else base.boughtAt,
         )
@@ -145,7 +171,13 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
         } else {
             viewModel.updateDiscovery(discovery, record, form.newPhoto, form.photoRemoved, keepsExpected = !form.expectedChanged)
         }
-        navigator.back()
+        // Aromas noted: how they compare with what to expect, then back.
+        val expectedAromas = record.expectedOrBundledProfile?.aromas.orEmpty()
+        if (tasting.aromas.isNotEmpty() && expectedAromas.isNotEmpty()) {
+            comparison = record.displayName to app.encave.core.AromaComparison.of(expectedAromas, tasting.aromas)
+        } else {
+            navigator.back()
+        }
     }
 
     Scaffold(
@@ -204,14 +236,14 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
             Hint(stringResource(R.string.help_where_footer))
 
             Header(R.string.discovery_impression)
-            app.encave.ui.components.RatingField(rating, score100, onChange = { r, s -> rating = r; score100 = s })
-            OutlinedTextField(
-                value = note, onValueChange = { note = it },
-                label = { Text(stringResource(R.string.field_notes)) },
-                placeholder = { Text(stringResource(R.string.discovery_note_hint)) },
-                minLines = 3, modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-            )
+            // The same tasting as for a bottle of the cellar, with the game before it.
+            if (!expected?.aromas.isNullOrEmpty()) {
+                OutlinedButton(onClick = { playingGame = true }, modifier = Modifier.testTag("discovery.aroma_game")) {
+                    Text(stringResource(R.string.game_title))
+                }
+                Hint(stringResource(R.string.game_drink_footer))
+            }
+            TastingFields(tasting, color = form.color, expected = expected, showsOccasion = false)
 
             Header(R.string.discovery_tags)
             val chosen = tags.map { it.lowercase() }.toSet()
@@ -281,6 +313,20 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
     }
     if (pickingDate) {
         DateDialog(initial = date, onPick = { picked -> picked?.let { date = it } }, onDismiss = { pickingDate = false }, allowClear = false)
+    }
+    if (playingGame) {
+        AromaGameSheet(typed, bottleId = null, onDismiss = { playingGame = false }, copyFooter = R.string.game_copy_footer_save) { aromas, levels ->
+            tasting.aromas = aromas
+            levels.forEach { (attribute, level) -> tasting.setLevel(attribute, level) }
+            tasting.expanded = true
+        }
+    }
+    comparison?.let { (name, shown) ->
+        ModalBottomSheet(onDismissRequest = { comparison = null; navigator.back() }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+            Column(
+                Modifier.verticalScroll(rememberScrollState()).padding(horizontal = Dimens.xl).padding(bottom = Dimens.l).navigationBarsPadding(),
+            ) { app.encave.ui.cellar.AromaComparisonContent(name, shown, onDone = { comparison = null; navigator.back() }) }
+        }
     }
 }
 

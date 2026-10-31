@@ -460,6 +460,9 @@ struct TastingFormSections: View {
     var color: WineColor?
     /// What to expect from the wine, behind a disclosure in the guided sheet.
     var expected: ExpectedProfile?
+    /// The occasion and date: left out for a wine tasted elsewhere, whose place and date
+    /// are its own.
+    var showsOccasion = true
     @State private var showsDetails = false
     @State private var showsGuided = false
 
@@ -473,18 +476,20 @@ struct TastingFormSections: View {
             Text("Everything is optional and can be changed later from the Journal.")
         }
 
-        Section("Occasion") {
-            FlowLayout(spacing: 8) {
-                // A note written in another language still shows its chip as chosen.
-                let chosen = Occasion.matching(draft.occasion)
-                ForEach(Occasion.allCases, id: \.self) { occasion in
-                    ChoiceChip(verbatim: String(localized: occasion.resource), isSelected: chosen == occasion) {
-                        draft.occasion = chosen == occasion ? "" : String(localized: occasion.resource)
+        if showsOccasion {
+            Section("Occasion") {
+                FlowLayout(spacing: 8) {
+                    // A note written in another language still shows its chip as chosen.
+                    let chosen = Occasion.matching(draft.occasion)
+                    ForEach(Occasion.allCases, id: \.self) { occasion in
+                        ChoiceChip(verbatim: String(localized: occasion.resource), isSelected: chosen == occasion) {
+                            draft.occasion = chosen == occasion ? "" : String(localized: occasion.resource)
+                        }
                     }
                 }
+                .padding(.vertical, 4)
+                DatePicker("Date", selection: $draft.date, in: ...Date.now, displayedComponents: .date)
             }
-            .padding(.vertical, 4)
-            DatePicker("Date", selection: $draft.date, in: ...Date.now, displayedComponents: .date)
         }
 
         Section {

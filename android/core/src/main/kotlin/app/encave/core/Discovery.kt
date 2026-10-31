@@ -39,6 +39,13 @@ data class Discovery(
     @Serializable(with = InstantSerializer::class) val boughtAt: Instant? = null,
     /** The precise score out of 100, when entered out of 20 or 100 (see [Tasting.score100]). */
     @Serializable(with = ScoreSerializer::class) val score100: Double? = null,
+    /**
+     * The full tasting note, as for a bottle opened from the cellar: appearance, nose, palate,
+     * finish, food, and the guided sheet (aromas, structure, intensity, hue). Its date is the
+     * discovery's; the stars, score and note stay in [rating], [score100] and [note], which
+     * older versions read (docs/SYNC.md §1).
+     */
+    val tasting: Tasting? = null,
     /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
     @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {
@@ -59,7 +66,9 @@ data class Discovery(
         val clean = normalized(tags)
         // Stale when it no longer matches the rating (docs/SYNC.md §1).
         val score = Score.kept(score100, clamped)
-        return if (clamped == rating && clean == tags && score == score100) this else copy(rating = clamped, tags = clean, score100 = score)
+        val cleanTasting = tasting?.normalized()
+        return if (clamped == rating && clean == tags && score == score100 && cleanTasting == tasting) this
+        else copy(rating = clamped, tags = clean, score100 = score, tasting = cleanTasting)
     }
 
     /** The rating from a value entered on a scale (see [Tasting.withRating]). */
@@ -121,7 +130,12 @@ fun Cellar.addDiscovery(discovery: Discovery, wine: Wine): Discovery {
 fun Cellar.updateDiscovery(discovery: Discovery) {
     val stored = discoveries[discovery.id] ?: throw CellarException(CellarError.UnknownDiscovery)
     if (wines[discovery.wineId] == null) throw CellarException(CellarError.UnknownWine)
-    putDiscovery(discovery.copy(unknownKeys = discovery.unknownKeys.orKept(stored.unknownKeys)))
+    putDiscovery(
+        discovery.copy(
+            unknownKeys = discovery.unknownKeys.orKept(stored.unknownKeys),
+            tasting = discovery.tasting?.let { it.copy(unknownKeys = it.unknownKeys.orKept(stored.tasting?.unknownKeys)) },
+        ),
+    )
 }
 
 /** Removes a discovery, and its wine if nothing else refers to it. */

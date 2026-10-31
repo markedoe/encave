@@ -2937,6 +2937,16 @@
         }
       }
     },
+    "Adds your aromas and structure to the tasting you are writing; nothing is saved until you tap Save.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoute vos arômes et la structure à la dégustation en cours ; rien n’est enregistré avant de toucher Enregistrer."
+          }
+        }
+      }
+    },
     "After a scan, or while editing a wine that has a label photo, **Complete with AI** sends the photo and fills the empty details. With the studio look on, the same answer also says where the label is in the photo, so the picture is framed on it. Once it has, the button reads **Complete Again** and “Completed by AI” shows the day, there and in the details of the wine's page. Tap it again after a new photo, for example. While the AI reads the label, the button shows its progress and cannot be tapped. When the AI finds nothing to add, it says so (“The AI found nothing to add”) and the wine is not marked as completed. When its answer turns a new wine into one already in your cellar, a banner says **Same wine as …** and offers **Merge**, which moves the bottles and tastings into that wine; **Undo** takes it back.": {
       "localizations": {
         "fr": {
@@ -16801,12 +16811,12 @@
         }
       }
     },
-    "Tap **+** in the Journal and choose where you drank it. **A Bottle from My Cellar**: choose the wine, then add your note; the bottle leaves your cellar. **Somewhere Else**: scan the bottle and add where you were, a rating, notes and tags; your cellar does not change.": {
+    "Tap **+** in the Journal and choose where you drank it. **A Bottle from My Cellar**: choose the wine, then add your note; the bottle leaves your cellar. **Somewhere Else**: scan the bottle and add where you were, a rating, notes and tags, and the same full tasting note as for a bottle of your cellar (with **Guess the Aromas** and the comparison with what to expect); your cellar does not change.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez **+** dans le Journal et choisissez où vous l’avez bu. **Une bouteille de ma cave** : choisissez le vin, puis ajoutez votre note ; la bouteille sort de votre cave. **Ailleurs** : scannez la bouteille et ajoutez le lieu, une note, du texte et des tags ; votre cave ne change pas."
+            "value": "Touchez **+** dans le Journal et choisissez où vous l’avez bu. **Une bouteille de ma cave** : choisissez le vin, puis ajoutez votre note ; la bouteille sort de votre cave. **Ailleurs** : scannez la bouteille et ajoutez le lieu, une note, du texte et des tags, et la même dégustation complète que pour une bouteille de votre cave (avec **Devinez les arômes** et la comparaison avec ce qu’on attend) ; votre cave ne change pas."
           }
         }
       }

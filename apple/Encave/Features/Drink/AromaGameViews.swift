@@ -8,6 +8,10 @@ struct AromaGameView: View {
     @Environment(\.dismiss) private var dismiss
     let wineID: UUID
     var bottleID: UUID?
+    /// A wine not saved yet (a wine tasted elsewhere being noted): played on it as typed.
+    var draftWine: Wine?
+    /// Under "Copy Guesses into the Tasting Note": what saves the tasting.
+    var copyHint: LocalizedStringKey = "Adds your aromas and structure to the tasting you are writing; nothing is saved until you tap Drink."
     /// From the Drink sheet: copies the guesses into the tasting being written.
     var copyToTasting: (([String], [String: Int]) -> Void)?
     @State private var picks: [String] = []
@@ -20,7 +24,7 @@ struct AromaGameView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if let wine = model.cellar.wines[wineID], let profile = wine.expectedOrBundledProfile {
+                if let wine = model.cellar.wines[wineID] ?? draftWine, let profile = wine.expectedOrBundledProfile {
                     Form {
                         if let result {
                             AromaGameResultSections(record: result, level: level)
@@ -32,7 +36,7 @@ struct AromaGameView: View {
                                     }
                                     .accessibilityIdentifier("game.copy")
                                 } footer: {
-                                    Text("Adds your aromas and structure to the tasting you are writing; nothing is saved until you tap Drink.")
+                                    Text(copyHint)
                                 }
                             }
                         } else {

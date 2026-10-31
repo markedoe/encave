@@ -130,6 +130,24 @@ class DiscoveryTest {
         assertEquals(cellar.discoveries.size, empty.discoveries.size)
     }
 
+    /** A wine tasted elsewhere keeps its full note and guided sheet, as a bottle's tasting does (as in CaveKit). */
+    @Test
+    fun aTastingNoteTravelsWithTheDiscovery() {
+        val cellar = Cellar()
+        val wine = Wine(name = "Coteaux du Layon")
+        val tasting = Tasting(nose = "Quince", aromas = listOf("fruit.quince"), sweetness = 4, hue = "gold")
+        val added = cellar.addDiscovery(Discovery(wineId = wine.id, rating = 4, note = "Lovely", tasting = tasting), wine)
+        val back = CellarJson.decode(CellarJson.encode(cellar)).discoveries.getValue(added.id)
+        assertEquals("Quince", back.tasting?.nose)
+        assertEquals(listOf("fruit.quince"), back.tasting?.aromas)
+        assertEquals(4, back.tasting?.sweetness)
+        assertEquals("gold", back.tasting?.hue)
+        assertEquals(4, back.rating)
+        assertEquals("Lovely", back.note)
+        // Without one, nothing is written.
+        assertFalse(CellarJson.encode(Cellar(discoveries = listOf(Discovery(wineId = wine.id)))).contains("\"tasting\""))
+    }
+
     @Test
     fun olderFilesWithoutDiscoveriesStillLoad() {
         val cellar = CellarJson.decode("""{"schemaVersion":2,"wines":[],"bottles":[],"racks":[]}""")

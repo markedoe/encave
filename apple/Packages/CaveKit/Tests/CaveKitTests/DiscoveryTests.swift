@@ -97,6 +97,25 @@ import Testing
         #expect(empty.discoveries.count == cellar.discoveries.count)
     }
 
+    /// A wine tasted elsewhere keeps its full note and guided sheet, as a bottle's tasting
+    /// does; the stars and the note stay where older versions read them.
+    @Test func aTastingNoteTravelsWithTheDiscovery() throws {
+        var cellar = Cellar()
+        let wine = Wine(name: "Coteaux du Layon")
+        let tasting = Tasting(date: .now, nose: "Quince", aromas: ["fruit.quince"], sweetness: 4, hue: "gold")
+        let added = cellar.addDiscovery(Discovery(wineID: wine.id, rating: 4, note: "Lovely", tasting: tasting), wine: wine)
+        let restored = try CellarExport.backup(fromJSON: try CellarExport.json(cellar)).cellar
+        let back = try #require(restored.discoveries[added.id])
+        #expect(back.tasting?.nose == "Quince")
+        #expect(back.tasting?.aromas == ["fruit.quince"])
+        #expect(back.tasting?.sweetness == 4)
+        #expect(back.tasting?.hue == "gold")
+        #expect(back.rating == 4 && back.note == "Lovely")
+        // Without one, nothing is written.
+        let plain = try CellarExport.json(Cellar(discoveries: [Discovery(wineID: wine.id)]))
+        #expect(!String(decoding: plain, as: UTF8.self).contains("\"tasting\""))
+    }
+
     @Test func olderFilesWithoutDiscoveriesStillLoad() throws {
         let json = #"{"schemaVersion":2,"wines":[],"bottles":[],"racks":[]}"#
         let cellar = try JSONDecoder().decode(Cellar.self, from: Data(json.utf8))

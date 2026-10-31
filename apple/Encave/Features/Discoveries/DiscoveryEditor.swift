@@ -1,8 +1,10 @@
 import CaveKit
 import SwiftUI
 
-/// Note a wine tasted elsewhere (restaurant, friends, a fair): scan it, say where, add notes and tags,
-/// and put it on the shopping list. The cellar does not change. Also edits an existing one.
+/// Note a wine tasted elsewhere (restaurant, friends, a fair): scan it, say where, rate it and
+/// write the same tasting note as for a bottle of the cellar (full note, guided sheet, Guess
+/// the Aromas, the comparison with what to expect), add tags, and put it on the shopping list.
+/// The cellar does not change. Also edits an existing one.
 struct DiscoveryEditor: View {
     @Environment(CellarModel.self) private var model
     @Environment(\.dismiss) private var dismiss
@@ -16,10 +18,13 @@ struct DiscoveryEditor: View {
     @State private var date = Date.now
     @State private var setting: Discovery.Setting?
     @State private var place = ""
-    @State private var rating: Int?
-    /// The precise score, when entered out of 20 or 100.
-    @State private var score100: Double?
-    @State private var note = ""
+    /// The rating, the note and the tasting sheet, as in the Drink sheet. The stars, score and
+    /// note are saved in the discovery's own fields; the rest in its `tasting`.
+    @State private var tasting = TastingDraft()
+    /// Guess the Aromas, from what to expect of the wine as typed.
+    @State private var playingGame = false
+    /// After Save, with aromas noted: compared with what to expect.
+    @State private var comparison: ShownComparison?
     @State private var tags: [String] = []
     @State private var pendingTag = ""
     @State private var price: Decimal?
@@ -34,9 +39,7 @@ struct DiscoveryEditor: View {
         var date: Date
         var setting: Discovery.Setting?
         var place: String
-        var rating: Int?
-        var score100: Double?
-        var note: String
+        var tasting: TastingDraft
         var tags: [String]
         var pendingTag: String
         var price: Decimal?
@@ -44,7 +47,7 @@ struct DiscoveryEditor: View {
     }
 
     private var formState: FormState {
-        FormState(draft: draft, date: date, setting: setting, place: place, rating: rating, score100: score100, note: note,
+        FormState(draft: draft, date: date, setting: setting, place: place, tasting: tasting,
                   tags: tags, pendingTag: pendingTag, price: price, wantsToBuy: wantsToBuy)
     }
 
@@ -97,11 +100,22 @@ struct DiscoveryEditor: View {
                     Text("Search in the Journal also looks in the place, notes and tags.")
                 }
 
-                Section("Your impression") {
-                    RatingInput(rating: $rating, score100: $score100)
-                    TextField("Notes", text: $note, prompt: Text("What you liked, the dish, the moment…"), axis: .vertical)
-                        .lineLimit(3...8)
+                // The same tasting as for a bottle of the cellar, with the game before it.
+                let wine = draft.makeWine()
+                if !(wine.expectedOrBundledProfile?.aromas ?? []).isEmpty {
+                    Section {
+                        Button {
+                            playingGame = true
+                        } label: {
+                            Label("Guess the Aromas", systemImage: "nose")
+                        }
+                        .accessibilityIdentifier("discovery.aromaGame")
+                    } footer: {
+                        Text("Pick the aromas you expect before tasting, then compare. Just for fun: kept on this device.")
+                    }
                 }
+                TastingFormSections(draft: $tasting, startsExpanded: discoveryID != nil, color: draft.color,
+                                    expected: wine.expectedOrBundledProfile, showsOccasion: false)
 
                 Section {
                     TagEditor(tags: $tags, suggestions: model.cellar.discoveryTags, newTag: $pendingTag)
@@ -154,6 +168,18 @@ struct DiscoveryEditor: View {
                 }
             }
             .onAppear(perform: load)
+            .sheet(isPresented: $playingGame) {
+                let wine = draft.makeWine()
+                AromaGameView(wineID: wine.id, draftWine: wine,
+                              copyHint: "Adds your aromas and structure to the tasting you are writing; nothing is saved until you tap Save.") { aromas, levels in
+                    tasting.aromas = aromas
+                    for (attribute, level) in levels { tasting.levels[attribute] = level }
+                }
+            }
+            .navigationDestination(item: $comparison) { shown in
+                AromaComparisonView(wineName: draft.makeWine().displayName, comparison: shown.comparison, done: { dismiss() })
+                    .navigationBarBackButtonHidden()
+            }
             .onChange(of: scan.matchedWine) { _, wine in
                 guard let wine else { return }
                 withAnimation {
@@ -178,9 +204,11 @@ struct DiscoveryEditor: View {
         date = discovery.date
         setting = discovery.setting
         place = discovery.place ?? ""
-        rating = discovery.rating
-        score100 = discovery.score100
-        note = discovery.note ?? ""
+        var loadedTasting = TastingDraft(discovery.tasting ?? Tasting(date: discovery.date))
+        loadedTasting.rating = discovery.rating
+        loadedTasting.score100 = discovery.score100
+        loadedTasting.note = discovery.note ?? ""
+        tasting = loadedTasting
         tags = discovery.tags
         price = discovery.price
         wantsToBuy = discovery.wantsToBuy
@@ -196,9 +224,18 @@ struct DiscoveryEditor: View {
         discovery.date = date
         discovery.setting = setting
         discovery.place = clean(place)
-        discovery.rating = rating
-        discovery.score100 = Score.kept(score100, rating: rating)
-        discovery.note = clean(note)
+        // The stars, score and note in the discovery's own fields (older versions read them);
+        // the full note and the guided sheet in its tasting, dated like it.
+        var note = tasting.makeTasting()
+        discovery.rating = note.rating
+        discovery.score100 = Score.kept(note.score100, rating: note.rating)
+        discovery.note = note.note
+        note.rating = nil
+        note.score100 = nil
+        note.note = nil
+        note.occasion = nil
+        note.date = date
+        discovery.tasting = note.isDetailed ? note : nil
         discovery.tags = Discovery.normalized(tags + pendingTag.split(separator: ",").map(String.init))
         discovery.price = price
         discovery.currency = price == nil ? nil : (discovery.currency ?? model.cellar.settings.currency)
@@ -219,7 +256,7 @@ struct DiscoveryEditor: View {
                 wine.photoID = PhotoStore.save(labelPhoto)
             }
             model.addDiscovery(discovery, wine: wine)
-            dismiss()
+            finish(wine: wine)
             return
         }
         if let live = model.cellar.wines[wine.id] {
@@ -238,6 +275,16 @@ struct DiscoveryEditor: View {
             try cellar.updateWine(wine)
             try cellar.updateDiscovery(discovery)
         }) else { return }
-        dismiss()
+        finish(wine: wine)
+    }
+
+    /// Saved: with aromas noted, how they compare with what to expect; else closed.
+    private func finish(wine: Wine) {
+        let expected = wine.expectedOrBundledProfile?.aromas ?? []
+        if !tasting.aromas.isEmpty, !expected.isEmpty {
+            comparison = ShownComparison(comparison: AromaComparison(expected: expected, found: tasting.aromas))
+        } else {
+            dismiss()
+        }
     }
 }

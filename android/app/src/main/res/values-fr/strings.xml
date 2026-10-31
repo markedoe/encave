@@ -108,7 +108,6 @@
     <string name="detail_window_now">Maintenant</string>
     <string name="detail_window_description">Fenêtre de dégustation de %1$d à %2$d. %3$s.</string>
     <string name="detail_window_missing">Ajoutez un millésime ou une fenêtre de dégustation pour savoir quand l’ouvrir.</string>
-    <string name="detail_bottles">En cave</string>
     <string name="detail_tastings">Dégustations</string>
     <string name="detail_details">Détails</string>
     <string name="detail_added">Ajoutée le %1$s</string>
@@ -515,7 +514,6 @@
     <string name="discovery_place">Lieu</string>
     <string name="discovery_place_hint">Restaurant, ville, prénoms des amis…</string>
     <string name="discovery_impression">Votre impression</string>
-    <string name="discovery_note_hint">Ce qui vous a plu, le plat, le moment…</string>
     <string name="discovery_tags">Tags</string>
     <string name="discovery_add_tag">Ajouter un tag</string>
     <string name="discovery_tag_hint">Idée cadeau, pour l’été…</string>
@@ -1383,7 +1381,7 @@
     <string name="journal_to_buy_empty_body">Activez À acheter sur un vin goûté ailleurs pour le retrouver ici.</string>
     <string name="drink_pick_title">Quelle bouteille ?</string>
     <string name="drink_pick_footer">La bouteille choisie sort de votre cave et sa position dans le rangement se libère.</string>
-    <string name="help_journal_add">Touchez **Noter une dégustation** dans le Journal et choisissez où vous l’avez bu. **Une bouteille de ma cave** : choisissez le vin, puis ajoutez votre note ; la bouteille sort de votre cave. **Ailleurs** : prenez la bouteille en photo et ajoutez le lieu, une note, du texte et des tags ; votre cave ne change pas.</string>
+    <string name="help_journal_add">Touchez **Noter une dégustation** dans le Journal et choisissez où vous l’avez bu. **Une bouteille de ma cave** : choisissez le vin, puis ajoutez votre note ; la bouteille sort de votre cave. **Ailleurs** : prenez la bouteille en photo et ajoutez le lieu, une note, du texte et des tags, et la même dégustation complète que pour une bouteille de votre cave (avec **Devinez les arômes** et la comparaison avec ce qu’on attend) ; votre cave ne change pas.</string>
     <string name="help_journal_diary_title">Un seul carnet</string>
     <string name="help_journal_filters_title">Filtres</string>
     <string name="help_journal_filters">Les filtres en haut montrent **Tout**, ou seulement **De ma cave**, **Goûté ailleurs** ou **À acheter**. La recherche porte sur les vins, les notes, les lieux et les tags.</string>
@@ -1680,6 +1678,7 @@
     <string name="help_drinking_game_title">Devinez les arômes</string>
     <string name="help_drinking_game">**Devinez les arômes**, dans la fiche Boire ou sur la fiche d’un vin, vous fait choisir jusqu’à six arômes, et la structure si vous voulez, avant de voir ce qui est attendu ; **Révéler** donne les points : 10 pour un arôme attendu, 4 pour un de la même famille, 5 pour un niveau à un près de celui attendu, avec la précision. Depuis la fiche Boire, **Copier mes choix dans la note de dégustation** les ajoute à votre dégustation. **Mon palais**, dans Statistiques, additionne vos points, niveau, précision, série et les familles que vous trouvez le mieux. Les parties restent sur cet appareil : jamais synchronisées, sauvegardées ni exportées. **Réinitialiser mon palais** les supprime.</string>
     <string name="game_copy">Copier mes choix dans la note de dégustation</string>
+    <string name="game_copy_footer_save">Ajoute vos arômes et votre structure à la dégustation en cours ; rien n’est enregistré avant de toucher Enregistrer.</string>
     <string name="game_copy_footer">Ajoute vos arômes et votre structure à la dégustation en cours ; rien n’est enregistré avant de toucher Boire.</string>
     <string name="game_intro">Choisissez jusqu’à %1$d arômes que vous pensez trouver, puis révélez ce qui est attendu.</string>
     <string name="game_picked">%1$d sur %2$d choisis</string>

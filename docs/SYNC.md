@@ -66,6 +66,12 @@ implementations:
   `expectedAt`, a date).
 - `bottle.tasting` is the optional tasting note of an opened bottle (its
   `date` is required); with discoveries, these make the Journal.
+  `discovery.tasting` is the same object for a wine tasted elsewhere, optional
+  and left out when empty: the full note and the guided sheet (appearance, nose,
+  palate, finish, food, aromas, structure, intensity, hue), its `date` the
+  discovery's. The stars, score and note of a discovery stay in its own
+  `rating`, `score100` and `note`, which versions that do not know `tasting`
+  read and keep it as an unknown field.
 - `wine.barcodes` and `wine.tags` are optional arrays of strings, left out
   when empty, and so is `wine.extraPhotoIDs` (more photos; they are synced like
   `photoID`). `wine.coverPhotoID` is an optional file ID (section 7): the

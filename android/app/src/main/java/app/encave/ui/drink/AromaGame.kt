@@ -89,7 +89,14 @@ fun rememberAromaGameStore(): AromaGameStore {
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun AromaGameSheet(wine: Wine, bottleId: UUID?, onDismiss: () -> Unit, onCopy: ((List<String>, Map<String, Int>) -> Unit)? = null) {
+fun AromaGameSheet(
+    wine: Wine,
+    bottleId: UUID?,
+    onDismiss: () -> Unit,
+    /** Under "Copy guesses into the tasting note": what saves the tasting. */
+    copyFooter: Int = R.string.game_copy_footer,
+    onCopy: ((List<String>, Map<String, Int>) -> Unit)? = null,
+) {
     val profile = wine.expectedOrBundledProfile ?: return onDismiss()
     val store = rememberAromaGameStore()
     var picks by rememberSaveable { mutableStateOf(listOf<String>()) }
@@ -115,7 +122,7 @@ fun AromaGameSheet(wine: Wine, bottleId: UUID?, onDismiss: () -> Unit, onCopy: (
                     OutlinedButton(onClick = { onCopy(shown.guesses, shown.structure); onDismiss() }, modifier = Modifier.fillMaxWidth().testTag("game.copy")) {
                         Text(stringResource(R.string.game_copy))
                     }
-                    Hint(stringResource(R.string.game_copy_footer))
+                    Hint(stringResource(copyFooter))
                 }
                 Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth().testTag("game.done")) { Text(stringResource(R.string.action_done)) }
                 return@Column
