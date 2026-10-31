@@ -1,5 +1,7 @@
 package app.encave.ui.components
 
+import androidx.compose.ui.unit.Dp
+import app.encave.core.Wine
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -112,6 +114,20 @@ fun LocationLine(cellar: Cellar, bottles: List<Bottle>) {
             color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.testTag("wine.row.location"),
         )
+    }
+}
+
+/**
+ * The wine's picture (its cover, else its label photo) or, without one, its bottle end:
+ * the same in rows, cards and sheets, as on Apple. [width] is the row size, 34 dp wide.
+ */
+@Composable
+fun WineThumbnail(wine: Wine?, modifier: Modifier = Modifier, width: Dp = 34.dp) {
+    val photos = LocalPhotoStore.current
+    if (wine != null && photos != null && photos.hasPicture(wine)) {
+        WineImage(wine, modifier.size(width, width * 46 / 34), maxPixelSize = 300, inset = 2.dp, corner = 7.dp)
+    } else {
+        BottleEnd(wine?.color, modifier, size = width)
     }
 }
 

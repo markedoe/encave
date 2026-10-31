@@ -199,6 +199,26 @@ class Cellar(
         }.map { it.second }
     }
 
+    /**
+     * The storage the Move sheet opens on for a bottle: its own; for one out of storage, the
+     * one holding most bottles of its wine (the first in order on a tie), else the first
+     * storage. Shared with CaveKit (`fixtures/bottle-place-vectors.json`).
+     */
+    fun storageToOpen(bottle: Bottle): Rack? {
+        bottle.slot?.let { slot -> rack(slot.rackId)?.let { return it } }
+        val counts = bottlesInCellar.filter { it.wineId == bottle.wineId }.mapNotNull { it.slot?.rackId }.groupingBy { it }.eachCount()
+        var best: Rack? = null
+        var bestCount = 0
+        for (rack in racks) {
+            val count = counts[rack.id] ?: 0
+            if (count > bestCount) {
+                best = rack
+                bestCount = count
+            }
+        }
+        return best ?: racks.firstOrNull()
+    }
+
     /** Bottles in the cellar without a position, to put away: oldest first. */
     val bottlesNotInStorage: List<Bottle> get() = bottlesInCellar.filter { it.slot == null }.sortedWith(bottleAddedOrder)
 

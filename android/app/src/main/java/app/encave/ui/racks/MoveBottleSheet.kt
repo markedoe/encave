@@ -1,5 +1,11 @@
 package app.encave.ui.racks
 
+import app.encave.ui.components.placeLabel
+import app.encave.ui.components.locationIcon
+import app.encave.ui.components.WineThumbnail
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -46,7 +52,8 @@ import app.encave.ui.theme.Dimens
 private const val NO_RACK = ""
 
 /**
- * Move a bottle to a place of any rack, or out of the racks with a note on where it is.
+ * Move a bottle to a place of any rack, or out of the racks with a note on where it is; for
+ * a bottle out of storage, Put away. The one sheet every Move and Put away opens, as on Apple.
  * Tap a free place to move it there; another bottle swaps them (one bottle per place);
  * a bin takes it if it has room.
  */
@@ -55,7 +62,8 @@ private const val NO_RACK = ""
 fun MoveBottleSheet(viewModel: AppViewModel, cellar: Cellar, bottle: Bottle, onDismiss: () -> Unit) {
     // The bottle's rack first, then the others in their order.
     val racks = cellar.racks.sortedBy { if (it.id == bottle.slot?.rackId) 0 else 1 }
-    var rackId by rememberSaveable { mutableStateOf((bottle.slot?.rackId ?: cellar.racks.firstOrNull()?.id)?.toString() ?: NO_RACK) }
+    // Its own storage; out of storage, where its wine's other bottles are.
+    var rackId by rememberSaveable { mutableStateOf(cellar.storageToOpen(bottle)?.id?.toString() ?: NO_RACK) }
     var note by rememberSaveable { mutableStateOf(bottle.storageNote.orEmpty()) }
     var expanded by rememberSaveable { mutableStateOf(false) }
     val rack = racks.firstOrNull { it.id.toString() == rackId }
@@ -68,8 +76,28 @@ fun MoveBottleSheet(viewModel: AppViewModel, cellar: Cellar, bottle: Bottle, onD
                 .padding(bottom = Dimens.l).testTag("move.sheet"),
             verticalArrangement = Arrangement.spacedBy(Dimens.m),
         ) {
-            Text(stringResource(R.string.move_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
-            cellar.wines[bottle.wineId]?.let { Text(it.displayName, style = MaterialTheme.typography.bodyLarge) }
+            Text(
+                stringResource(if (bottle.slot == null) R.string.move_title_put_away else R.string.move_title),
+                style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() },
+            )
+            // Which bottle, and where it is now.
+            val wine = cellar.wines[bottle.wineId]
+            Row(
+                Modifier.semantics(mergeDescendants = true) {},
+                horizontalArrangement = Arrangement.spacedBy(Dimens.m), verticalAlignment = Alignment.CenterVertically,
+            ) {
+                WineThumbnail(wine)
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(wine?.displayName ?: stringResource(R.string.unknown_wine), style = MaterialTheme.typography.titleMedium)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
+                        Icon(
+                            cellar.locationIcon(bottle), contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp),
+                        )
+                        Text(cellar.placeLabel(bottle), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
             ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
                 OutlinedTextField(
                     value = rack?.name ?: noRack,

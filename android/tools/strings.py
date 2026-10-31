@@ -1266,6 +1266,7 @@ S = [
  ("rack_displaced_body", "They stay in your cellar without a position.", "Elles restent dans votre cave, sans position."),
  ("rack_displaced_confirm", "Take them out and save", "Les retirer et enregistrer"),
  ("move_title", "Move bottle", "Déplacer la bouteille"),
+ ("move_title_put_away", "Put away bottle", "Ranger la bouteille"),
  ("move_rack", "Storage", "Rangement"),
  ("move_no_rack", "No storage", "Aucun rangement"),
  ('move_grid_hint', 'Tap a position. A position with room takes the bottle; where each position holds one bottle, tapping another bottle swaps them.', 'Touchez une position. Une position libre prend la bouteille ; là où chaque position tient une bouteille, toucher une autre bouteille les échange.'),

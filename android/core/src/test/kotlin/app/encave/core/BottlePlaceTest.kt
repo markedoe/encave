@@ -52,6 +52,8 @@ class BottlePlaceTest {
                 assertEquals(expectedOrder, cellar.inPlaceOrder(cellar.bottlesOf(wine.id)).map { it.id.toString() }, about)
                 assertEquals(expectedPutAway, cellar.bottlesOf(wine.id).bottleToPutAway?.id?.toString(), about)
                 assertEquals(expectedPutAway != null, cellar.bottlesOf(wine.id).hasBottleToPutAway, about)
+                val opened = cellar.bottlesOf(wine.id).bottleToPutAway?.let { cellar.storageToOpen(it) }
+                assertEquals(vector.string("openOn")?.lowercase(), opened?.id?.toString(), about)
             }
         }
     }

@@ -1178,6 +1178,7 @@
     <string name="rack_displaced_body">They stay in your cellar without a position.</string>
     <string name="rack_displaced_confirm">Take them out and save</string>
     <string name="move_title">Move bottle</string>
+    <string name="move_title_put_away">Put away bottle</string>
     <string name="move_rack">Storage</string>
     <string name="move_no_rack">No storage</string>
     <string name="move_grid_hint">Tap a position. A position with room takes the bottle; where each position holds one bottle, tapping another bottle swaps them.</string>

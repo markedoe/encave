@@ -856,7 +856,8 @@ struct SlotPickerView: View {
     }
 }
 
-/// Move a bottle to another rack position, or out of the racks.
+/// Move a bottle to another position, or out of the racks; for a bottle out of storage,
+/// Put Away. The one sheet every Move and Put Away opens, on both apps.
 struct MoveBottleView: View {
     @Environment(CellarModel.self) private var model
     @Environment(\.dismiss) private var dismiss
@@ -869,9 +870,25 @@ struct MoveBottleView: View {
             Group {
                 if let bottle = model.cellar.bottles[bottleID] {
                     VStack(spacing: 0) {
+                        // Which bottle, and where it is now.
+                        HStack(spacing: 12) {
+                            WineThumbnail(wine: model.cellar.wines[bottle.wineID])
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(model.cellar.wines[bottle.wineID]?.displayName ?? String(localized: "Unknown wine"))
+                                    .font(.headline)
+                                    .lineLimit(2)
+                                Label(model.placeLabel(for: bottle), systemImage: model.locationIcon(for: bottle))
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        .accessibilityElement(children: .combine)
+                        .padding(.horizontal)
+                        .padding(.top)
                         Picker("Store in", selection: $rackID) {
-                            Text("No storage").tag(UUID?.none)
                             ForEach(model.cellar.racks) { Text($0.name).tag(UUID?.some($0.id)) }
+                            Text("No storage").tag(UUID?.none)
                         }
                         .pickerStyle(.menu)
                         .padding()
@@ -910,7 +927,8 @@ struct MoveBottleView: View {
                         }
                     }
                     .onAppear {
-                        rackID = bottle.slot?.rackID ?? model.cellar.racks.first?.id
+                        // Its own storage; out of storage, where its wine's other bottles are.
+                        rackID = model.cellar.storageToOpen(for: bottle)?.id
                         storageNote = bottle.storageNote ?? ""
                     }
                 } else {
@@ -926,6 +944,6 @@ struct MoveBottleView: View {
                 }
             }
         }
-        .macSheetFrame(width: 560, height: 560)
+        .macSheetFrame(width: 560, height: 620)
     }
 }

@@ -1177,6 +1177,7 @@
     <string name="rack_displaced_body">Elles restent dans votre cave, sans position.</string>
     <string name="rack_displaced_confirm">Les retirer et enregistrer</string>
     <string name="move_title">Déplacer la bouteille</string>
+    <string name="move_title_put_away">Ranger la bouteille</string>
     <string name="move_rack">Rangement</string>
     <string name="move_no_rack">Aucun rangement</string>
     <string name="move_grid_hint">Touchez une position. Une position libre prend la bouteille ; là où chaque position tient une bouteille, toucher une autre bouteille les échange.</string>

@@ -15,6 +15,7 @@ struct BottlePlaceTests {
         }
         struct Case: Decodable {
             var about: String; var racks: [RackItem]; var bottles: [BottleItem]; var placeOrder: [String]; var putAway: String?
+            var openOn: String?
         }
         var cases: [Case]
     }
@@ -56,6 +57,8 @@ struct BottlePlaceTests {
                 #expect(cellar.bottles(of: wine.id).bottleToPutAway?.id.uuidString.lowercased() == vector.putAway?.lowercased(),
                         "\(vector.about)")
                 #expect(cellar.bottles(of: wine.id).hasBottleToPutAway == (vector.putAway != nil), "\(vector.about)")
+                let opened = cellar.bottles(of: wine.id).bottleToPutAway.flatMap { cellar.storageToOpen(for: $0) }
+                #expect(opened?.id.uuidString.lowercased() == vector.openOn?.lowercased(), "\(vector.about)")
             }
         }
     }

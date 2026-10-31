@@ -353,6 +353,24 @@ public extension Cellar {
         bottlesInCellar.filter { $0.wineID == wineID }.sorted(by: Bottle.addedOrder)
     }
 
+    /// The storage the Move sheet opens on for a bottle: its own; for one out of storage,
+    /// the one holding most bottles of its wine (the first in order on a tie), else the
+    /// first storage. Shared with the Android core (`fixtures/bottle-place-vectors.json`).
+    func storageToOpen(for bottle: Bottle) -> Rack? {
+        if let id = bottle.slot?.rackID, let own = rack(id) { return own }
+        var counts: [UUID: Int] = [:]
+        for other in bottlesInCellar where other.wineID == bottle.wineID {
+            if let id = other.slot?.rackID { counts[id, default: 0] += 1 }
+        }
+        var best: Rack?
+        var bestCount = 0
+        for rack in racks where (counts[rack.id] ?? 0) > bestCount {
+            best = rack
+            bestCount = counts[rack.id] ?? 0
+        }
+        return best ?? racks.first
+    }
+
     /// Bottles in the cellar without a position, to put away: oldest first.
     var bottlesNotInStorage: [Bottle] {
         bottlesInCellar.filter { $0.slot == nil }.sorted(by: Bottle.addedOrder)
