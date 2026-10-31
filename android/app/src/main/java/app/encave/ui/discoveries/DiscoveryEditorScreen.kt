@@ -1,5 +1,6 @@
 package app.encave.ui.discoveries
 
+import app.encave.core.expectedOrBundledProfile
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.ModalBottomSheet
