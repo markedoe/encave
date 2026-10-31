@@ -1,5 +1,7 @@
 package app.encave.ui.racks
 
+import app.encave.ui.components.BottlePlaceIcons
+import app.encave.core.Slot
 import androidx.compose.material.icons.outlined.RemoveCircleOutline
 import androidx.compose.material.icons.outlined.Outbox
 import androidx.compose.material3.ButtonDefaults
@@ -151,6 +153,9 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
     var focusWineId by rememberSaveable { mutableStateOf<String?>(null) }
     var highlightId by rememberSaveable { mutableStateOf(route.highlightBottleId) }
     var showsList by rememberSaveable { mutableStateOf(false) }
+    /** A free position tapped while bottles are out of storage: add one, or put one there. */
+    var freePlace by remember { mutableStateOf<Slot?>(null) }
+    var puttingHere by remember { mutableStateOf<Slot?>(null) }
     var drinking by rememberDrinking()
     /** A bottle whose documents are shown, and whether the file picker opens at once. */
     var bottleDocuments by remember { mutableStateOf<Pair<UUID, Boolean>?>(null) }
@@ -327,9 +332,14 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                             }
                             bottles.isEmpty() -> cellar.freeSlotAt(place)?.let { free ->
                                 selectedKey = null
-                                navigator.open(
-                                    AddBottleRoute(rackId = rack.id.toString(), row = free.row, column = free.column, depth = free.depth),
-                                )
+                                // Bottles out of storage: one of them may go here instead of a new one.
+                                if (cellar.bottlesNotInStorage.isEmpty()) {
+                                    navigator.open(
+                                        AddBottleRoute(rackId = rack.id.toString(), row = free.row, column = free.column, depth = free.depth),
+                                    )
+                                } else {
+                                    freePlace = free
+                                }
                             }
                             // One bottle per place: show it in the card. Several: open the list of the place.
                             place.holdsOne(rack, cellar) -> selectedKey = place.key()
@@ -498,6 +508,37 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
     }
     bottleDocuments?.let { (bottleId, importing) ->
         BottleDocumentsSheet(viewModel, bottleId, startPicking = importing, onDismiss = { bottleDocuments = null })
+    }
+    // A free position while bottles are out of storage: a new bottle, or one of those.
+    freePlace?.let { slot ->
+        val placeName = rack?.let { "${it.name} · ${it.displayLabel(slot, LocalResources.current)}" }.orEmpty()
+        ModalBottomSheet(onDismissRequest = { freePlace = null }) {
+            Column(Modifier.navigationBarsPadding().padding(bottom = Dimens.l)) {
+                ListItem(
+                    headlineContent = { Text(placeName, style = MaterialTheme.typography.titleLarge) },
+                    supportingContent = {
+                        Text(pluralStringResource(R.plurals.not_in_storage_count, cellar.bottlesNotInStorage.size, cellar.bottlesNotInStorage.size))
+                    },
+                )
+                ListItem(
+                    leadingContent = { Icon(BottlePlaceIcons.PutAway, contentDescription = null) },
+                    headlineContent = { Text(stringResource(R.string.rack_put_here)) },
+                    modifier = Modifier.clickable { freePlace = null; puttingHere = slot }.testTag("rack.free.put_here"),
+                )
+                ListItem(
+                    leadingContent = { Icon(Icons.Filled.Add, contentDescription = null) },
+                    headlineContent = { Text(stringResource(R.string.rack_add_here)) },
+                    modifier = Modifier.clickable {
+                        freePlace = null
+                        navigator.open(AddBottleRoute(rackId = slot.rackId.toString(), row = slot.row, column = slot.column, depth = slot.depth))
+                    },
+                )
+            }
+        }
+    }
+    puttingHere?.let { slot ->
+        val placeName = rack?.let { "${it.name} · ${it.displayLabel(slot, LocalResources.current)}" }.orEmpty()
+        PutBottleHereSheet(viewModel, cellar, slot, placeName) { puttingHere = null }
     }
     if (confirmingAudit && missing.isNotEmpty()) {
         androidx.compose.material3.AlertDialog(

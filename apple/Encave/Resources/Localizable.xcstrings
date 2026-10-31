@@ -511,6 +511,46 @@
         }
       }
     },
+    "%lld bottles not in storage": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottle not in storage"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottles not in storage"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteille hors rangement"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteilles hors rangement"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld bottles on order": {
       "localizations": {
         "en": {
@@ -4387,6 +4427,16 @@
         }
       }
     },
+    "Bottles without a position appear here, to put them away.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les bouteilles sans position apparaissent ici, pour les ranger."
+          }
+        }
+      }
+    },
     "Bottles you open from your cellar and your notes appear here.": {
       "localizations": {
         "fr": {
@@ -7263,6 +7313,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Toutes les 5 minutes"
+          }
+        }
+      }
+    },
+    "Every bottle is in storage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les bouteilles sont rangées"
           }
         }
       }
@@ -11219,6 +11279,16 @@
         }
       }
     },
+    "Not in Storage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hors rangement"
+          }
+        }
+      }
+    },
     "Not in storage": {
       "localizations": {
         "fr": {
@@ -13405,6 +13475,16 @@
         }
       }
     },
+    "Put Away opens the storages to choose a position. You can also tap a free position in a storage.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ranger ouvre les rangements pour choisir une position. Vous pouvez aussi toucher une position libre dans un rangement."
+          }
+        }
+      }
+    },
     "Put Away…": {
       "localizations": {
         "fr": {
@@ -13421,6 +13501,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Remettre en cave"
+          }
+        }
+      }
+    },
+    "Put a Bottle Here…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ranger une bouteille ici…"
+          }
+        }
+      }
+    },
+    "Put each bottle away, or drag it onto a storage in the sidebar.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rangez chaque bouteille, ou faites-la glisser sur un rangement de la barre latérale."
+          }
+        }
+      }
+    },
+    "Put them away in a storage.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez-leur une position."
           }
         }
       }
@@ -15647,6 +15757,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Affiche les bouteilles gardées pour cette occasion."
+          }
+        }
+      }
+    },
+    "Shows the bottles to put away.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Montre les bouteilles à ranger."
           }
         }
       }

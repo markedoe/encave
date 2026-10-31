@@ -28,6 +28,14 @@ def widget_sources():
     return glob.glob(str(ROOT / "EncaveWidgets" / "**" / "*.swift"), recursive=True) + [str(p) for p in WIDGET_SHARED]
 
 FR = {
+    'Not in Storage': 'Hors rangement',
+    'Every bottle is in storage': 'Toutes les bouteilles sont rangées',
+    'Bottles without a position appear here, to put them away.': 'Les bouteilles sans position apparaissent ici, pour les ranger.',
+    'Put Away opens the storages to choose a position. You can also tap a free position in a storage.': 'Ranger ouvre les rangements pour choisir une position. Vous pouvez aussi toucher une position libre dans un rangement.',
+    'Put them away in a storage.': 'Choisissez-leur une position.',
+    'Shows the bottles to put away.': 'Montre les bouteilles à ranger.',
+    'Put a Bottle Here…': 'Ranger une bouteille ici…',
+    'Put each bottle away, or drag it onto a storage in the sidebar.': 'Rangez chaque bouteille, ou faites-la glisser sur un rangement de la barre latérale.',
     'Put Away in': 'Ranger dans',
     'Show Inspector': 'Afficher l’inspecteur',
     'Location': 'Rangement',
@@ -1986,6 +1994,8 @@ PLURALS = {
          "%lld models of this connection are removed from the list, and its key from this device."),
         ("%lld modèle de cette connexion est retiré de la liste, et sa clé de cet appareil.",
          "%lld modèles de cette connexion sont retirés de la liste, et sa clé de cet appareil.")),
+    "%lld bottles not in storage": (("%lld bottle not in storage", "%lld bottles not in storage"),
+                                    ("%lld bouteille hors rangement", "%lld bouteilles hors rangement")),
     "%lld bottles on order": (("%lld bottle on order", "%lld bottles on order"),
                               ("%lld bouteille en commande", "%lld bouteilles en commande")),
     "%lld new wines": (("%lld new wine", "%lld new wines"), ("%lld nouveau vin", "%lld nouveaux vins")),

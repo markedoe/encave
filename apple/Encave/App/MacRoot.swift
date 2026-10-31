@@ -6,6 +6,8 @@ import SwiftUI
 /// What the Mac sidebar shows: a section, or one rack.
 enum MacDestination: Hashable {
     case cellar, tonight, journal
+    /// The bottles not in storage, to put away.
+    case notInStorage
     case rack(UUID)
 }
 
@@ -78,7 +80,7 @@ struct MacRoot: View {
             case .cellar: if router.selectedTab != .cellar { router.selectedTab = .cellar }
             case .tonight: if router.selectedTab != .tonight { router.selectedTab = .tonight }
             case .journal: if router.selectedTab != .journal { router.selectedTab = .journal }
-            case .rack: if router.selectedTab != .racks { router.selectedTab = .racks }
+            case .rack, .notInStorage: if router.selectedTab != .racks { router.selectedTab = .racks }
             case nil: break
             }
         }
@@ -103,6 +105,14 @@ struct MacRoot: View {
                     .accessibilityIdentifier("section.journal")
             }
             Section("Storage") {
+                // Bottles without a position: dragged from here onto a storage, or put away.
+                let loose = model.cellar.bottlesNotInStorage.count
+                if loose > 0 || destination == .notInStorage {
+                    SidebarLabel(title: Text("Not in Storage"), systemImage: BottlePlace.notInStorageIcon)
+                        .badge(loose)
+                        .tag(MacDestination.notInStorage)
+                        .accessibilityIdentifier("section.notInStorage")
+                }
                 ForEach(Array(model.cellar.racks.enumerated()), id: \.element.id) { index, rack in
                     SidebarLabel(title: Text(rack.name), systemImage: rack.systemImage)
                         .help(rack.name)
@@ -154,6 +164,8 @@ struct MacRoot: View {
             NavigationStack { TonightView(selection: $tonightWine) }
         case .journal:
             NavigationStack { JournalView(embedded: true) }
+        case .notInStorage:
+            NavigationStack { NotInStorageView() }
         case .rack(let id):
             RackBottleList(rackID: id, selection: $bottle)
         }
@@ -170,6 +182,9 @@ struct MacRoot: View {
             WinePane(wineID: tonightWine)
         case .journal:
             InsightsView()
+        case .notInStorage:
+            ContentUnavailableView("Not in Storage", systemImage: BottlePlace.notInStorageIcon,
+                                   description: Text("Put each bottle away, or drag it onto a storage in the sidebar."))
         case .rack(let id):
             if model.cellar.rack(id) != nil {
                 RackDetailView(rackID: id)
@@ -195,6 +210,7 @@ struct MacRoot: View {
         case .journal: if destination != .journal { destination = .journal }
         case .racks:
             if case .rack = destination { return }
+            if destination == .notInStorage { return }
             if let first = router.highlightedSlot?.rackID ?? model.cellar.racks.first?.id {
                 destination = .rack(first)
             } else {

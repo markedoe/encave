@@ -257,6 +257,7 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
                 }
                 composable<AddBottleRoute> { AddBottleScreen(viewModel, navigator, it.toRoute()) }
                 composable<RackDetailRoute> { RackDetailScreen(viewModel, navigator, it.toRoute()) }
+                composable<app.encave.ui.navigation.NotInStorageRoute> { app.encave.ui.racks.NotInStorageScreen(viewModel, navigator) }
                 composable<RackEditorRoute> {
                     val rackId = it.toRoute<RackEditorRoute>().rackId
                     // A new storage is made step by step; an existing one opens in the editor.

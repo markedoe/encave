@@ -26,6 +26,16 @@ struct RacksView: View {
                     }
                 } else {
                     ScrollView {
+                        // Bottles without a position: one tap from putting them away.
+                        let loose = model.cellar.bottlesNotInStorage.count
+                        if loose > 0 {
+                            NavigationLink(value: NotInStorageRoute()) {
+                                NotInStorageCard(count: loose)
+                            }
+                            .buttonStyle(.plain)
+                            .padding([.horizontal, .top])
+                            .accessibilityIdentifier("racks.notInStorage")
+                        }
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 260), spacing: 16, alignment: .top)], alignment: .leading, spacing: 16) {
                             ForEach(Array(model.cellar.racks.enumerated()), id: \.element.id) { index, rack in
                                 NavigationLink(value: rack.id) {
@@ -61,6 +71,7 @@ struct RacksView: View {
             .navigationTitle("Storage")
             .confirmsRackDeletion($deletingRackID)
             .navigationDestination(for: UUID.self) { RackDetailView(rackID: $0) }
+            .navigationDestination(for: NotInStorageRoute.self) { _ in NotInStorageView() }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {

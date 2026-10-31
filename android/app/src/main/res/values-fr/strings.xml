@@ -23,6 +23,12 @@
     <string name="action_add_bottles">Ajouter des bouteilles</string>
     <string name="action_show_in_rack">Voir dans le rangement</string>
     <string name="action_put_away">Ranger</string>
+    <string name="not_in_storage_title">Hors rangement</string>
+    <string name="not_in_storage_empty_title">Toutes les bouteilles sont rangées</string>
+    <string name="not_in_storage_empty_body">Les bouteilles sans position apparaissent ici, pour les ranger.</string>
+    <string name="not_in_storage_footer">Ranger ouvre les rangements pour choisir une position. Vous pouvez aussi toucher une position libre dans un rangement.</string>
+    <string name="not_in_storage_hint">Choisissez-leur une position.</string>
+    <string name="rack_put_here">Ranger une bouteille ici…</string>
     <string name="action_put_away_ellipsis">Ranger…</string>
     <string name="action_move">Déplacer</string>
     <string name="action_mark_gone">Plus en cave</string>
@@ -1823,6 +1829,11 @@
         <item quantity="one">%d bouteille en cave</item>
         <item quantity="many">%d bouteilles en cave</item>
         <item quantity="other">%d bouteilles en cave</item>
+    </plurals>
+    <plurals name="not_in_storage_count">
+        <item quantity="one">%d bouteille hors rangement</item>
+        <item quantity="many">%d bouteilles hors rangement</item>
+        <item quantity="other">%d bouteilles hors rangement</item>
     </plurals>
     <plurals name="detail_on_order">
         <item quantity="one">%d bouteille en commande</item>

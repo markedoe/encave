@@ -1,5 +1,9 @@
 package app.encave.ui.racks
 
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import app.encave.ui.navigation.NotInStorageRoute
+import app.encave.ui.components.BottlePlaceIcons
+import androidx.compose.foundation.clickable
 import app.encave.ui.components.measure
 import app.encave.ui.components.rememberFabSpace
 import androidx.compose.foundation.layout.width
@@ -142,6 +146,25 @@ private fun RacksList(viewModel: AppViewModel, navigator: AppNavigator, onOpen: 
             return@Scaffold
         }
         LazyColumn(Modifier.fillMaxSize().testTag("racks.list"), contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = fabSpace.listBottom)) {
+            // Bottles without a position: one tap from putting them away.
+            val loose = cellar.bottlesNotInStorage.size
+            if (loose > 0 && !reordering) {
+                item(key = "not-in-storage") {
+                    ListItem(
+                        modifier = Modifier
+                            .clickable(onClickLabel = stringResource(R.string.not_in_storage_hint)) { navigator.open(NotInStorageRoute) }
+                            .testTag("racks.not_in_storage"),
+                        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                        leadingContent = { Icon(BottlePlaceIcons.NotInStorage, contentDescription = null) },
+                        headlineContent = {
+                            Text(pluralStringResource(R.plurals.not_in_storage_count, loose, loose), style = MaterialTheme.typography.titleMedium)
+                        },
+                        supportingContent = { Text(stringResource(R.string.not_in_storage_hint)) },
+                        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+                    )
+                    HorizontalDivider()
+                }
+            }
             itemsIndexed(cellar.racks, key = { _, rack -> rack.id.toString() }) { index, rack ->
                 val used = cellar.occupancy(rack)
                 val id = rack.id.toString()

@@ -24,6 +24,12 @@
     <string name="action_add_bottles">Add bottles</string>
     <string name="action_show_in_rack">Show in storage</string>
     <string name="action_put_away">Put away</string>
+    <string name="not_in_storage_title">Not in storage</string>
+    <string name="not_in_storage_empty_title">Every bottle is in storage</string>
+    <string name="not_in_storage_empty_body">Bottles without a position appear here, to put them away.</string>
+    <string name="not_in_storage_footer">Put away opens the storages to choose a position. You can also tap a free position in a storage.</string>
+    <string name="not_in_storage_hint">Put them away in a storage.</string>
+    <string name="rack_put_here">Put a bottle here…</string>
     <string name="action_put_away_ellipsis">Put away…</string>
     <string name="action_move">Move</string>
     <string name="action_mark_gone">No longer in cellar</string>
@@ -1807,6 +1813,10 @@
     <plurals name="detail_bottles_count">
         <item quantity="one">%d bottle in the cellar</item>
         <item quantity="other">%d bottles in the cellar</item>
+    </plurals>
+    <plurals name="not_in_storage_count">
+        <item quantity="one">%d bottle not in storage</item>
+        <item quantity="other">%d bottles not in storage</item>
     </plurals>
     <plurals name="detail_on_order">
         <item quantity="one">%d bottle on order</item>

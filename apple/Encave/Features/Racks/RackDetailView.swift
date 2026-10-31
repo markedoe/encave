@@ -40,6 +40,9 @@ struct RackDetailView: View {
     @State private var checkingCell: OpenCell?
     /// The wine page opened from VoiceOver's actions on a place.
     @State private var wineRoute: WineRoute?
+    /// A free position tapped while bottles are out of storage: add one, or put one there.
+    @State private var freePlace: FreePlace?
+    @State private var puttingHere: FreePlace?
 
     var body: some View {
         if let rack = model.cellar.rack(rackID) {
@@ -96,6 +99,21 @@ struct RackDetailView: View {
                     }
                     .halfSheetDetents()
                     .solidSheetBackground()
+                }
+                // A free position while bottles are out of storage: a new bottle, or one of those.
+                .confirmationDialog(
+                    Text(verbatim: freePlace.map { rack.displayLabel(for: $0.slot) } ?? ""),
+                    isPresented: Binding(get: { freePlace != nil }, set: { if !$0 { freePlace = nil } }),
+                    titleVisibility: .visible, presenting: freePlace
+                ) { place in
+                    Button("Put a Bottle Here…") { puttingHere = place }
+                    Button("Add a Bottle Here") { router?.sheet = .addBottle(AddBottleContext(slot: place.slot)) }
+                    Button("Cancel", role: .cancel) {}
+                } message: { _ in
+                    Text("\(model.cellar.bottlesNotInStorage.count) bottles not in storage")
+                }
+                .sheet(item: $puttingHere) { place in
+                    PutBottleHereView(slot: place.slot)
                 }
                 .sheet(item: $checkingCell) { open in
                     CheckPlaceSheet(rack: rack, cell: open.cell, checked: $checked)
@@ -369,7 +387,12 @@ struct RackDetailView: View {
         }
         if bottles.isEmpty, let free = model.cellar.freeSlot(at: place) {
             selectedPlace = nil
-            router?.sheet = .addBottle(AddBottleContext(slot: free))
+            // Bottles out of storage: one of them may go here instead of a new one.
+            if model.cellar.bottlesNotInStorage.isEmpty {
+                router?.sheet = .addBottle(AddBottleContext(slot: free))
+            } else {
+                freePlace = FreePlace(slot: free)
+            }
         } else if place.holdsOne(in: rack, cellar: model.cellar), !bottles.isEmpty {
             withAnimation(.snappy) { selectedPlace = place }
         } else {
@@ -377,6 +400,12 @@ struct RackDetailView: View {
             openCell = OpenCell(cell: place.cell)
         }
     }
+}
+
+/// A free position, for the choice between adding a bottle and putting one there.
+struct FreePlace: Identifiable {
+    let slot: Slot
+    var id: String { "\(slot.rackID)-\(slot.row)-\(slot.column)-\(slot.depth)" }
 }
 
 private struct OpenCell: Identifiable {
