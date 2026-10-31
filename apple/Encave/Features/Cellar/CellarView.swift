@@ -704,7 +704,10 @@ private struct DeletedWineSelection: ViewModifier {
     }
 }
 
-/// Long-press menu shared by the cellar, tonight and pairing lists.
+/// Long-press menu shared by the cellar, tonight and pairing lists and the table, in the
+/// same order as on Android: Drink, Put Away or Move, Show in Storage, Add Bottles, Edit
+/// Wine, (Open in New Window), (Select), Delete Wine. Put Away places the wine's bottle out
+/// of storage (`bottleToPutAway`); Move, the bottle Drink would open.
 struct WineContextMenu: View {
     @Environment(CellarModel.self) private var model
     @Environment(SceneRouter.self) private var router: SceneRouter?
@@ -715,12 +718,19 @@ struct WineContextMenu: View {
     var body: some View {
         if let bottle = group.bottles.bottleToOpen {
             Button("Drink a Bottle", systemImage: "wineglass") { router?.sheet = .drink(bottleID: bottle.id) }
-            if bottle.slot != nil {
-                Button("Show in Storage", systemImage: BottlePlace.showIcon) { router?.showInRack(bottle) }
+        }
+        if let loose = group.bottles.bottleToPutAway {
+            Button("Put Away…", systemImage: BottlePlace.putAwayIcon) {
+                // With no storage yet, the Storage section, to make one.
+                if model.cellar.racks.isEmpty { router?.selectedTab = .racks } else { router?.sheet = .moveBottle(bottleID: loose.id) }
             }
+        } else if let bottle = group.bottles.bottleToOpen, bottle.slot != nil {
             Button("Move…", systemImage: "arrow.up.and.down.and.arrow.left.and.right") {
                 router?.sheet = .moveBottle(bottleID: bottle.id)
             }
+        }
+        if let placed = model.cellar.inPlaceOrder(group.bottles).first(where: { $0.slot != nil }) {
+            Button("Show in Storage", systemImage: BottlePlace.showIcon) { router?.showInRack(placed) }
         }
         Button("Add Bottles", systemImage: "plus") { router?.sheet = .addBottle(AddBottleContext(wine: group.wine)) }
         Button("Edit Wine", systemImage: "pencil") { router?.sheet = .editWine(wineID: group.wine.id) }

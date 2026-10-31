@@ -16,6 +16,7 @@
     <string name="action_ok">OK</string>
     <string name="action_delete">Delete</string>
     <string name="action_edit">Edit</string>
+    <string name="action_edit_wine">Edit wine</string>
     <string name="action_more">More options</string>
     <string name="action_undo">Undo</string>
     <string name="action_drink">Drink</string>

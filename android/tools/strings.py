@@ -25,6 +25,7 @@ S = [
  ("action_ok", "OK", "OK"),
  ("action_delete", "Delete", "Supprimer"),
  ("action_edit", "Edit", "Modifier"),
+ ("action_edit_wine", "Edit wine", "Modifier le vin"),
  ("action_more", "More options", "Plus d’options"),
  ("action_undo", "Undo", "Annuler"),
  ("action_drink", "Drink", "Boire"),

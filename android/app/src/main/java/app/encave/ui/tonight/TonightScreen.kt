@@ -1,5 +1,6 @@
 package app.encave.ui.tonight
 
+import app.encave.ui.cellar.WineMenuBox
 import android.content.Intent
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
@@ -42,7 +43,6 @@ import app.encave.core.reservedBottleCount
 import app.encave.core.tonightPicks
 import app.encave.reminders.Reminders
 import app.encave.ui.UiText
-import app.encave.ui.cellar.ReserveDialog
 import app.encave.ui.components.ConfirmDialog
 import app.encave.ui.components.OpenNotificationSettingsButton
 import app.encave.ui.components.sampleLabels
@@ -177,7 +177,6 @@ private fun TonightList(viewModel: AppViewModel, navigator: AppNavigator, onOpen
     // "Another idea" taps; the first suggestion of the day comes from the date.
     var pickOffset by rememberSaveable { mutableIntStateOf(0) }
     var drinking by rememberDrinking()
-    var reserving by rememberSaveable { mutableStateOf<String?>(null) }
     var confirmSample by rememberSaveable { mutableStateOf(false) }
     var askingEvening by rememberSaveable { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -303,12 +302,10 @@ private fun TonightList(viewModel: AppViewModel, navigator: AppNavigator, onOpen
                     }
                     items(section.groups, key = { section.maturity.raw + it.id }) { group ->
                         TonightRow(
-                            group = group, cellar = cellar, year = year,
+                            group = group, cellar = cellar, year = year, viewModel = viewModel, navigator = navigator,
                             onOpen = { openWine(group.id.toString()) },
                             selected = group.id.toString() == selectedId,
                             onDrink = { drinking = group.bottles.bottleToOpen?.id?.toString() },
-                            onShowInRack = group.bottles.firstOrNull { it.slot != null }?.let { bottle -> { showInRack(bottle) } },
-                            onReserve = { reserving = group.bottles.bottleToOpen?.id?.toString() },
                         )
                         HorizontalDivider(Modifier.padding(start = 56.dp))
                     }
@@ -319,13 +316,6 @@ private fun TonightList(viewModel: AppViewModel, navigator: AppNavigator, onOpen
     }
     drinking?.let { id ->
         DrinkSheet(cellar, id, onDismiss = { drinking = null }, onDrink = { b, t -> viewModel.drink(b.id, t) })
-    }
-    reserving?.let { id ->
-        ReserveDialog(
-            initial = cellar.reservations.firstOrNull().orEmpty(),
-            onKeep = { occasion -> viewModel.reserve(listOf(UUID.fromString(id)), occasion) },
-            onDismiss = { reserving = null },
-        )
     }
     if (askingEvening) {
         val context = LocalContext.current
@@ -391,47 +381,27 @@ private fun EveningRequestDialog(onDismiss: () -> Unit, onShare: (String, Boolea
     )
 }
 
-/** A wine in Tonight's list. Long press: Drink, Show in rack, Keep for an occasion; TalkBack offers the same. */
+/** A wine in Tonight's list. Long press: the wine's menu, as in the Cellar (and on Apple); TalkBack offers the same. */
 @Composable
 private fun TonightRow(
     group: WineGroup,
     cellar: Cellar,
     year: Int,
+    viewModel: AppViewModel,
+    navigator: AppNavigator,
     onOpen: () -> Unit,
     onDrink: () -> Unit,
-    onShowInRack: (() -> Unit)?,
-    onReserve: () -> Unit,
     selected: Boolean = false,
 ) {
-    var menu by remember { mutableStateOf(false) }
-    val drinkLabel = stringResource(R.string.action_drink)
-    val rackLabel = stringResource(R.string.action_show_in_rack)
-    val reserveLabel = stringResource(R.string.action_keep_for_occasion)
-    Box {
+    WineMenuBox(group, cellar, viewModel, navigator, onDrink = onDrink) { rowModifier, openMenu ->
         WineGroupRow(
             group = group, cellar = cellar, year = year, showMaturity = false,
             onClick = onOpen,
-            onLongClick = { menu = true },
+            onLongClick = openMenu,
             onLongClickLabel = stringResource(R.string.action_more),
             selected = selected,
-            modifier = Modifier.testTag("tonight.row").semantics {
-                customActions = listOfNotNull(
-                    CustomAccessibilityAction(drinkLabel) { onDrink(); true },
-                    onShowInRack?.let { show -> CustomAccessibilityAction(rackLabel) { show(); true } },
-                    CustomAccessibilityAction(reserveLabel) { onReserve(); true },
-                )
-            },
+            modifier = rowModifier.testTag("tonight.row"),
         )
-        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-            DropdownMenuItem(
-                text = { Text(drinkLabel) }, leadingIcon = { Icon(Icons.Outlined.LocalBar, null) },
-                onClick = { menu = false; onDrink() }, modifier = Modifier.testTag("tonight.menu.drink"),
-            )
-            onShowInRack?.let { show ->
-                DropdownMenuItem(text = { Text(rackLabel) }, leadingIcon = { Icon(BottlePlaceIcons.Show, null) }, onClick = { menu = false; show() })
-            }
-            DropdownMenuItem(text = { Text(reserveLabel) }, leadingIcon = { Icon(Icons.Outlined.CardGiftcard, null) }, onClick = { menu = false; onReserve() })
-        }
     }
 }
 

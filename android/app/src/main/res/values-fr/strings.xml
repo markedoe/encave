@@ -15,6 +15,7 @@
     <string name="action_ok">OK</string>
     <string name="action_delete">Supprimer</string>
     <string name="action_edit">Modifier</string>
+    <string name="action_edit_wine">Modifier le vin</string>
     <string name="action_more">Plus d’options</string>
     <string name="action_undo">Annuler</string>
     <string name="action_drink">Boire</string>
