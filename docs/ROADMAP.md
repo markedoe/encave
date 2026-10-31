@@ -213,6 +213,8 @@ kept within the privacy rules: everything is worked out on the device.
 | Search Online (Brave Search, Tavily, SearXNG; only the search terms are sent) | Done | Done |
 | Search Pictures of the bottle (cover picture; the label photo is kept) | Done | Done |
 | Suggest Details from the search results (on-device model) | Done (Apple Intelligence devices) | Later |
+| One presentation of a wine and its bottles on every screen, Put Away for bottles not in storage ([PRESENTATION.md](PRESENTATION.md)) | Done | Done |
+| Wine and bottle presentation, step 13: a wine's bottles grouped by storage on its page when it has more than about six; putting away several loose bottles of a wine at once from its page ("Put away the 3 bottles", at the first free positions or one tap each) | Later | Later |
 | Watch app | Later | Later (Wear OS tile) |
 | More places to sync through: a WebDAV folder (Synology, QNAP, Nextcloud, pCloud) with a login kept on each device. Each is a thin adapter of the same encrypted mailbox protocol | WebDAV done | WebDAV done |
 | Google Drive and Dropbox (need an OAuth app registered and verified with each provider), Proton Drive (no public API yet) | Later | Later |
