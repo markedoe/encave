@@ -63,6 +63,28 @@ struct BottlePlaceTests {
         }
     }
 
+    @Test func putAllAwayFillsTheStorageOfEachWine() throws {
+        let small = Rack(name: "Small", rows: 1, columns: 2), large = Rack(name: "Large", rows: 2, columns: 2)
+        var cellar = Cellar(racks: [small, large])
+        let stored = try cellar.addBottles(of: Wine(name: "Stored"), quantity: 2, slots: [Slot(rackID: small.id, row: 0, column: 0)])
+        let other = try cellar.addBottles(of: Wine(name: "Other"), quantity: 1)
+        // The wine's loose bottle goes beside it; the other wine's to the storage with most room.
+        #expect(try cellar.putAllAway() == 2)
+        #expect(cellar.bottlesNotInStorage.isEmpty)
+        #expect(cellar.bottles[stored[1].id]?.slot?.rackID == small.id)
+        #expect(cellar.bottles[other[0].id]?.slot?.rackID == large.id)
+    }
+
+    @Test func showInStorageOpensWhereMostBottlesAre() throws {
+        let first = Rack(name: "First", rows: 2, columns: 2), second = Rack(name: "Second", rows: 2, columns: 2)
+        var cellar = Cellar(racks: [first, second])
+        let added = try cellar.addBottles(of: Wine(name: "Spread"), quantity: 3, slots: [
+            Slot(rackID: first.id, row: 0, column: 0), Slot(rackID: second.id, row: 1, column: 1), Slot(rackID: second.id, row: 0, column: 1),
+        ])
+        let shown = cellar.bottleToShow(of: cellar.bottles(of: added[0].wineID))
+        #expect(shown?.slot == Slot(rackID: second.id, row: 0, column: 1))
+    }
+
     @Test func bottlesNotInStorageAreTheOnesWithoutAPosition() throws {
         let rack = Rack(name: "Rack", rows: 2, columns: 2)
         var cellar = Cellar(racks: [rack])

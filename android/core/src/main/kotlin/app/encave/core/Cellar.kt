@@ -201,10 +201,11 @@ class Cellar(
 
     /**
      * The storage the Move sheet opens on for a bottle: its own; for one out of storage, the
-     * one holding most bottles of its wine (the first in order on a tie), else the first
-     * storage. Shared with CaveKit (`fixtures/bottle-place-vectors.json`).
+     * one holding most bottles of its wine; else [preferred] (the last one used on this
+     * device) while it has a free position; else the one with most free positions. Ties go to
+     * the first in order. Shared with CaveKit (`fixtures/bottle-place-vectors.json`).
      */
-    fun storageToOpen(bottle: Bottle): Rack? {
+    fun storageToOpen(bottle: Bottle, preferred: UUID? = null): Rack? {
         bottle.slot?.let { slot -> rack(slot.rackId)?.let { return it } }
         val counts = bottlesInCellar.filter { it.wineId == bottle.wineId }.mapNotNull { it.slot?.rackId }.groupingBy { it }.eachCount()
         var best: Rack? = null
@@ -216,7 +217,56 @@ class Cellar(
                 bestCount = count
             }
         }
-        return best ?: racks.firstOrNull()
+        if (best != null) return best
+        preferred?.let { id -> rack(id)?.takeIf { freeSlots(it).isNotEmpty() }?.let { return it } }
+        var roomiest: Rack? = null
+        var mostFree = -1
+        for (rack in racks) {
+            val free = freeSlots(rack).size
+            if (free > mostFree) {
+                roomiest = rack
+                mostFree = free
+            }
+        }
+        return roomiest
+    }
+
+    /**
+     * Puts every bottle without a position away, oldest first: each in [storageToOpen], else in
+     * the storage with most free positions, at the first free position. A bottle that finds no
+     * room stays out. Returns how many were placed. As CaveKit's `putAllAway`.
+     */
+    fun putAllAway(preferred: UUID? = null): Int {
+        var placed = 0
+        for (bottle in bottlesNotInStorage) {
+            val choices = listOfNotNull(storageToOpen(bottle, preferred)) + racks.sortedByDescending { freeSlots(it).size }
+            val slot = choices.firstNotNullOfOrNull { freeSlots(it).firstOrNull() } ?: continue
+            move(bottle.id, slot)
+            // As when dropped onto a storage: the note said where it was before.
+            bottles[bottle.id]?.let { updateBottle(it.copy(storageNote = null)) }
+            placed++
+        }
+        return placed
+    }
+
+    /**
+     * The bottle "Show in storage" opens on for a wine: its first in place order within the
+     * storage that holds most of [bottles] (the first in order on a tie); null when none is
+     * stored. As CaveKit's `bottleToShow`.
+     */
+    fun bottleToShow(bottles: List<Bottle>): Bottle? {
+        val stored = inPlaceOrder(bottles).filter { it.slot != null }
+        val counts = stored.groupingBy { it.slot!!.rackId }.eachCount()
+        var best: UUID? = null
+        var bestCount = 0
+        for (rack in racks) {
+            val count = counts[rack.id] ?: 0
+            if (count > bestCount) {
+                best = rack.id
+                bestCount = count
+            }
+        }
+        return stored.firstOrNull { it.slot?.rackId == best }
     }
 
     /** Bottles in the cellar without a position, to put away: oldest first. */

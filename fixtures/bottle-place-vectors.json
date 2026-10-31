@@ -1,5 +1,5 @@
 {
-  "about": "How bottles are listed and which one Put Away places, shared by CaveKit (BottlePlaceTests.swift) and the Android core (BottlePlaceTest.kt). All bottles are of one wine and in the cellar. A bottle with 'rack' has that position (row, column, depth default 0). placeOrder is Cellar.inPlaceOrder: storages in their order, then shelf (wine fridge with layers) or row, depth front first, layer from the bottom, position; bottles without a position last, oldest first (addedAt), then by id compared as text ignoring case. putAway is bottleToPutAway: among bottles without a position, one not kept for an occasion first, then the oldest, then by id; null when every bottle has a position. openOn is the storage the Move sheet opens on for the putAway bottle (storageToOpen): for a bottle out of storage, the one holding most bottles of its wine (the first in order on a tie), else the first storage; null when there is no storage or no bottle to put away.",
+  "about": "How bottles are listed and which one Put Away places, shared by CaveKit (BottlePlaceTests.swift) and the Android core (BottlePlaceTest.kt). All bottles are of one wine and in the cellar. A bottle with 'rack' has that position (row, column, depth default 0). placeOrder is Cellar.inPlaceOrder: storages in their order, then shelf (wine fridge with layers) or row, depth front first, layer from the bottom, position; bottles without a position last, oldest first (addedAt), then by id compared as text ignoring case. putAway is bottleToPutAway: among bottles without a position, one not kept for an occasion first, then the oldest, then by id; null when every bottle has a position. openOn is the storage the Move sheet opens on for the putAway bottle (storageToOpen): for a bottle out of storage, the one holding most bottles of its wine (the first in order on a tie), else preferred (the last storage used on the device, null in these vectors) while it has a free position, else the one with most free positions (the first on a tie); null when there is no storage or no bottle to put away.",
   "cases": [
     {
       "about": "Two racks: the first rack's bottles first, by row, depth (front first) and position; bottles without a position last, oldest first. Put Away takes the oldest bottle not kept for an occasion.",
@@ -190,6 +190,34 @@
         "00000000-0000-4000-8000-000000000020"
       ],
       "putAway": "00000000-0000-4000-8000-000000000020",
+      "openOn": "00000000-0000-4000-8000-0000000000a2"
+    },
+    {
+      "about": "No bottle of the wine is stored: the Move sheet opens on the storage with most free positions, here the second (4 positions against 2).",
+      "racks": [
+        {
+          "id": "00000000-0000-4000-8000-0000000000a1",
+          "kind": "grid",
+          "rows": 1,
+          "columns": 2
+        },
+        {
+          "id": "00000000-0000-4000-8000-0000000000a2",
+          "kind": "grid",
+          "rows": 2,
+          "columns": 2
+        }
+      ],
+      "bottles": [
+        {
+          "id": "00000000-0000-4000-8000-000000000040",
+          "addedAt": "2026-01-01T00:00:00Z"
+        }
+      ],
+      "placeOrder": [
+        "00000000-0000-4000-8000-000000000040"
+      ],
+      "putAway": "00000000-0000-4000-8000-000000000040",
       "openOn": "00000000-0000-4000-8000-0000000000a2"
     }
   ]

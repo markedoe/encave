@@ -354,9 +354,10 @@ public extension Cellar {
     }
 
     /// The storage the Move sheet opens on for a bottle: its own; for one out of storage,
-    /// the one holding most bottles of its wine (the first in order on a tie), else the
-    /// first storage. Shared with the Android core (`fixtures/bottle-place-vectors.json`).
-    func storageToOpen(for bottle: Bottle) -> Rack? {
+    /// the one holding most bottles of its wine; else `preferred` (the last one used on this
+    /// device) while it has a free position; else the one with most free positions. Ties go
+    /// to the first in order. Shared with the Android core (`fixtures/bottle-place-vectors.json`).
+    func storageToOpen(for bottle: Bottle, preferred: UUID? = nil) -> Rack? {
         if let id = bottle.slot?.rackID, let own = rack(id) { return own }
         var counts: [UUID: Int] = [:]
         for other in bottlesInCellar where other.wineID == bottle.wineID {
@@ -368,7 +369,67 @@ public extension Cellar {
             best = rack
             bestCount = counts[rack.id] ?? 0
         }
-        return best ?? racks.first
+        if let best { return best }
+        if let preferred, let rack = rack(preferred), !freeSlots(in: rack).isEmpty { return rack }
+        var roomiest: Rack?
+        var mostFree = -1
+        for rack in racks {
+            let free = freeSlots(in: rack).count
+            if free > mostFree {
+                roomiest = rack
+                mostFree = free
+            }
+        }
+        return roomiest
+    }
+
+    /// Puts every bottle without a position away, oldest first: each in `storageToOpen`, else
+    /// in the storage with most free positions, at the first free position. A bottle that
+    /// finds no room stays out. Returns how many were placed. Shared with the Android core.
+    @discardableResult
+    mutating func putAllAway(preferred: UUID? = nil) throws -> Int {
+        var placed = 0
+        for bottle in bottlesNotInStorage {
+            // Free positions counted once per storage (a mutating method's closures cannot read self).
+            var freeCount: [UUID: Int] = [:]
+            for rack in racks { freeCount[rack.id] = freeSlots(in: rack).count }
+            let roomiest = racks.enumerated().sorted { a, b in
+                let freeA = freeCount[a.element.id] ?? 0, freeB = freeCount[b.element.id] ?? 0
+                return freeA != freeB ? freeA > freeB : a.offset < b.offset
+            }.map(\.element)
+            var choices = roomiest
+            if let first = storageToOpen(for: bottle, preferred: preferred) { choices.insert(first, at: 0) }
+            var found: Slot?
+            for rack in choices {
+                if let free = firstFreeSlot(in: rack) {
+                    found = free
+                    break
+                }
+            }
+            guard let slot = found else { continue }
+            try move(bottle.id, to: slot)
+            // As when dropped onto a storage: the note said where it was before.
+            bottles[bottle.id]?.storageNote = nil
+            placed += 1
+        }
+        return placed
+    }
+
+    /// The bottle "Show in Storage" opens on for a wine: its first in place order within the
+    /// storage that holds most of `bottles` (the first in order on a tie); nil when none is stored.
+    func bottleToShow(of bottles: [Bottle]) -> Bottle? {
+        let stored = inPlaceOrder(bottles).filter { $0.slot != nil }
+        var counts: [UUID: Int] = [:]
+        for bottle in stored {
+            if let id = bottle.slot?.rackID { counts[id, default: 0] += 1 }
+        }
+        var best: UUID?
+        var bestCount = 0
+        for rack in racks where (counts[rack.id] ?? 0) > bestCount {
+            best = rack.id
+            bestCount = counts[rack.id] ?? 0
+        }
+        return stored.first { $0.slot?.rackID == best }
     }
 
     /// Bottles in the cellar without a position, to put away: oldest first.

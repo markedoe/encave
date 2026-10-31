@@ -59,6 +59,32 @@ class BottlePlaceTest {
     }
 
     @Test
+    fun putAllAwayFillsTheStorageOfEachWine() {
+        val small = Rack(name = "Small", rows = 1, columns = 2)
+        val large = Rack(name = "Large", rows = 2, columns = 2)
+        val cellar = Cellar(racks = listOf(small, large))
+        val stored = cellar.addBottles(Wine(name = "Stored"), quantity = 2, slots = listOf(Slot(small.id, 0, 0)))
+        val other = cellar.addBottles(Wine(name = "Other"), quantity = 1)
+        // The wine's loose bottle goes beside it; the other wine's to the storage with most room.
+        assertEquals(2, cellar.putAllAway())
+        assertTrue(cellar.bottlesNotInStorage.isEmpty())
+        assertEquals(small.id, cellar.bottles.getValue(stored[1].id).slot?.rackId)
+        assertEquals(large.id, cellar.bottles.getValue(other[0].id).slot?.rackId)
+    }
+
+    @Test
+    fun showInStorageOpensWhereMostBottlesAre() {
+        val first = Rack(name = "First", rows = 2, columns = 2)
+        val second = Rack(name = "Second", rows = 2, columns = 2)
+        val cellar = Cellar(racks = listOf(first, second))
+        val added = cellar.addBottles(
+            Wine(name = "Spread"), quantity = 3,
+            slots = listOf(Slot(first.id, 0, 0), Slot(second.id, 1, 1), Slot(second.id, 0, 1)),
+        )
+        assertEquals(Slot(second.id, 0, 1), cellar.bottleToShow(cellar.bottlesOf(added[0].wineId))?.slot)
+    }
+
+    @Test
     fun bottlesNotInStorageAreTheOnesWithoutAPosition() {
         val rack = Rack(name = "Rack", rows = 2, columns = 2)
         val wine = Wine(name = "Wine")
