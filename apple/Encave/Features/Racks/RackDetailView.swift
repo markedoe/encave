@@ -104,31 +104,8 @@ struct RackDetailView: View {
                     .solidSheetBackground()
                 }
                 // A free position while bottles are out of storage: a new bottle, or one of those.
-                .confirmationDialog(
-                    Text(verbatim: freePlace.map { rack.displayLabel(for: $0.slot) } ?? ""),
-                    isPresented: Binding(get: { freePlace != nil }, set: { if !$0 { freePlace = nil } }),
-                    titleVisibility: .visible, presenting: freePlace
-                ) { place in
-                    Button("Put a Bottle Here…") { puttingHere = place }
-                    Button("Add a Bottle Here") { router?.sheet = .addBottle(AddBottleContext(slot: place.slot)) }
-                    Button("Cancel", role: .cancel) {}
-                } message: { _ in
-                    Text("\(model.cellar.bottlesNotInStorage.count) bottles not in storage")
-                }
-                .alert("Keep for an Occasion", isPresented: Binding(get: { reservingBottle != nil }, set: { if !$0 { reservingBottle = nil } })) {
-                    TextField("Occasion", text: $occasion)
-                    Button("Keep Bottle") {
-                        if let bottle = reservingBottle { model.reserve([bottle.id], for: occasion) }
-                        reservingBottle = nil
-                    }
-                    .disabled(occasion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    Button("Cancel", role: .cancel) { reservingBottle = nil }
-                } message: {
-                    Text("The bottle stays where it is but is no longer suggested for tonight.")
-                }
-                .sheet(item: $puttingHere) { place in
-                    PutBottleHereView(slot: place.slot)
-                }
+                .modifier(FreePlaceChoice(rack: rack, freePlace: $freePlace, puttingHere: $puttingHere))
+                .modifier(KeepForOccasionAlert(bottle: $reservingBottle, occasion: $occasion))
                 .sheet(item: $checkingCell) { open in
                     CheckPlaceSheet(rack: rack, cell: open.cell, checked: $checked)
                         .halfSheetDetents()
@@ -425,6 +402,56 @@ struct RackDetailView: View {
             selectedPlace = nil
             openCell = OpenCell(cell: place.cell)
         }
+    }
+}
+
+/// A free position tapped while bottles are out of storage: Put a Bottle Here (one of them)
+/// or Add a Bottle Here (a new one).
+private struct FreePlaceChoice: ViewModifier {
+    @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
+    let rack: Rack
+    @Binding var freePlace: FreePlace?
+    @Binding var puttingHere: FreePlace?
+
+    func body(content: Content) -> some View {
+        content
+            .confirmationDialog(
+                Text(verbatim: freePlace.map { rack.displayLabel(for: $0.slot) } ?? ""),
+                isPresented: Binding(get: { freePlace != nil }, set: { if !$0 { freePlace = nil } }),
+                titleVisibility: .visible, presenting: freePlace
+            ) { place in
+                Button("Put a Bottle Here…") { puttingHere = place }
+                Button("Add a Bottle Here") { router?.sheet = .addBottle(AddBottleContext(slot: place.slot)) }
+                Button("Cancel", role: .cancel) {}
+            } message: { _ in
+                Text("\(model.cellar.bottlesNotInStorage.count) bottles not in storage")
+            }
+            .sheet(item: $puttingHere) { place in
+                PutBottleHereView(slot: place.slot)
+            }
+    }
+}
+
+/// Keep for an Occasion on a bottle of the rack: the occasion asked first.
+private struct KeepForOccasionAlert: ViewModifier {
+    @Environment(CellarModel.self) private var model
+    @Binding var bottle: Bottle?
+    @Binding var occasion: String
+
+    func body(content: Content) -> some View {
+        content
+            .alert("Keep for an Occasion", isPresented: Binding(get: { bottle != nil }, set: { if !$0 { bottle = nil } })) {
+                TextField("Occasion", text: $occasion)
+                Button("Keep Bottle") {
+                    if let bottle { model.reserve([bottle.id], for: occasion) }
+                    bottle = nil
+                }
+                .disabled(occasion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                Button("Cancel", role: .cancel) { bottle = nil }
+            } message: {
+                Text("The bottle stays where it is but is no longer suggested for tonight.")
+            }
     }
 }
 
