@@ -163,10 +163,14 @@ def load_sample(strings, out):
         screenshot(out, "no-sample-button")
         sys.exit(f"No \"{strings['load_sample']}\" button on the empty Cellar.")
     tap(button)
-    # The confirmation dialog repeats the label on its button.
-    time.sleep(1)
-    tap(find([strings["load_sample"]]) or sys.exit("No confirmation for the sample cellar."))
-    if not find(strings["sample_loaded"]):
+    # The confirmation dialog repeats the label on its button. Another app's system dialog
+    # can take a tap meant for it (closed by screen()): try again, at most three times.
+    for _ in range(3):
+        time.sleep(1)
+        tap(find([strings["load_sample"]]) or sys.exit("No confirmation for the sample cellar."))
+        if find(strings["sample_loaded"], timeout=15):
+            break
+    else:
         screenshot(out, "sample-not-loaded")
         sys.exit("The sample cellar did not appear in the Cellar.")
     print("Sample cellar loaded.")
@@ -188,8 +192,12 @@ def main():
     # throwaway emulator). Background ANR dialogs are hidden too.
     shell("input keyevent KEYCODE_WAKEUP", check=False)
     for launcher in LAUNCHERS:
-        shell(f"pm disable-user --user 0 {launcher}", check=False)
+        print(f"Turning off {launcher}: {shell(f'pm disable-user --user 0 {launcher}', check=False).strip()}")
+        shell(f"am force-stop {launcher}", check=False)
     shell("settings put secure anr_show_background 0", check=False)
+    # Other apps' "isn't responding" and crash dialogs are not shown at all (system setting
+    # of the throwaway emulator); Encave's own crashes still fail through the crash log.
+    shell("settings put global hide_error_dialogs 1", check=False)
     time.sleep(5)
     adb("install", "-r", apk)
     adb("logcat", "-c", "-b", "all", check=False)
