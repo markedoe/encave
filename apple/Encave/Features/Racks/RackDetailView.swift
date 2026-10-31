@@ -42,6 +42,9 @@ struct RackDetailView: View {
     @State private var wineRoute: WineRoute?
     /// A free position tapped while bottles are out of storage: add one, or put one there.
     @State private var freePlace: FreePlace?
+    /// A bottle being kept for an occasion, and the occasion typed.
+    @State private var reservingBottle: Bottle?
+    @State private var occasion = ""
     @State private var puttingHere: FreePlace?
 
     var body: some View {
@@ -111,6 +114,17 @@ struct RackDetailView: View {
                     Button("Cancel", role: .cancel) {}
                 } message: { _ in
                     Text("\(model.cellar.bottlesNotInStorage.count) bottles not in storage")
+                }
+                .alert("Keep for an Occasion", isPresented: Binding(get: { reservingBottle != nil }, set: { if !$0 { reservingBottle = nil } })) {
+                    TextField("Occasion", text: $occasion)
+                    Button("Keep Bottle") {
+                        if let bottle = reservingBottle { model.reserve([bottle.id], for: occasion) }
+                        reservingBottle = nil
+                    }
+                    .disabled(occasion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    Button("Cancel", role: .cancel) { reservingBottle = nil }
+                } message: {
+                    Text("The bottle stays where it is but is no longer suggested for tonight.")
                 }
                 .sheet(item: $puttingHere) { place in
                     PutBottleHereView(slot: place.slot)
@@ -297,6 +311,18 @@ struct RackDetailView: View {
         case .remove(let bottle): model.markGone(bottle.id)
         case .add(let slot): router?.sheet = .addBottle(AddBottleContext(slot: slot))
         case .documents(let bottle, let importing): router?.sheet = .bottleDocuments(bottleID: bottle.id, importing: importing)
+        case .moveElsewhere(let bottle): router?.sheet = .moveBottle(bottleID: bottle.id)
+        case .takeOut(let bottle):
+            selectedPlace = nil
+            model.takeOutOfRack(bottle.id, note: nil)
+        case .reserve(let bottle):
+            if bottle.reservedFor == nil {
+                occasion = model.cellar.reservations.first ?? ""
+                reservingBottle = bottle
+            } else {
+                model.reserve([bottle.id], for: nil)
+            }
+        case .showWine(let bottle): wineRoute = WineRoute(id: bottle.wineID)
         }
     }
 
@@ -489,6 +515,17 @@ private struct SelectedBottleCard: View {
                 .buttonStyle(.bordered)
                 .accessibilityLabel(Text("Show Wine"))
                 .accessibilityIdentifier("rack.selection.wine")
+                // The bottle's other actions, in the same order as everywhere (and on Android).
+                Menu {
+                    BottleMoreActions(bottle: bottle, onAction: onAction)
+                } label: {
+                    Label("More", systemImage: "ellipsis.circle")
+                        .labelStyle(.iconOnly)
+                        .font(.title3)
+                }
+                .buttonStyle(.bordered)
+                .fixedSize()
+                .accessibilityIdentifier("rack.selection.more")
             }
         }
         .padding()
@@ -628,6 +665,12 @@ private struct RackKey: View {
 
 enum CellAction {
     case drink(Bottle), move(Bottle), remove(Bottle), add(Slot)
+    /// The Move sheet, for another storage or out of storage.
+    case moveElsewhere(Bottle)
+    case takeOut(Bottle)
+    /// Keep for an occasion (asked first), or free a kept bottle.
+    case reserve(Bottle)
+    case showWine(Bottle)
     /// The bottle's documents; `importing` opens the file picker right away.
     case documents(Bottle, importing: Bool)
 }
@@ -732,12 +775,7 @@ private struct BottleInCellRow: View {
                 }
                 Spacer()
                 Menu {
-                    if bottle.attachments != nil {
-                        Button("Documents…", systemImage: "paperclip") { onAction(.documents(bottle, importing: false)) }
-                    }
-                    Button("Attach a Document…", systemImage: "doc.badge.plus") { onAction(.documents(bottle, importing: true)) }
-                    Divider()
-                    NoLongerInCellarButton { onAction(.remove(bottle)) }
+                    BottleMoreActions(bottle: bottle, onAction: onAction, showsDocuments: true)
                 } label: {
                     Label("More", systemImage: "ellipsis.circle")
                         .labelStyle(.iconOnly)
@@ -747,6 +785,35 @@ private struct BottleInCellRow: View {
             .controlSize(.regular)
         }
         .padding(.vertical, 4)
+    }
+}
+
+/// A stored bottle's actions beyond Drink and Move, in the order every bottle lists them:
+/// Keep, (its documents,) Show Wine, then Move to Other Storage, Take Out of Storage and
+/// No Longer in Cellar.
+private struct BottleMoreActions: View {
+    let bottle: Bottle
+    let onAction: (CellAction) -> Void
+    /// The cell sheet's rows have no documents button of their own.
+    var showsDocuments = false
+
+    var body: some View {
+        if bottle.reservedFor == nil {
+            Button("Keep for an Occasion…", systemImage: "gift") { onAction(.reserve(bottle)) }
+        } else {
+            Button("Free This Bottle", systemImage: "gift.slash") { onAction(.reserve(bottle)) }
+        }
+        if showsDocuments {
+            if bottle.attachments != nil {
+                Button("Documents…", systemImage: "paperclip") { onAction(.documents(bottle, importing: false)) }
+            }
+            Button("Attach a Document…", systemImage: "doc.badge.plus") { onAction(.documents(bottle, importing: true)) }
+        }
+        Button("Show Wine", systemImage: "info.circle") { onAction(.showWine(bottle)) }
+        Divider()
+        Button("Move to Other Storage…", systemImage: "arrow.up.and.down.and.arrow.left.and.right") { onAction(.moveElsewhere(bottle)) }
+        Button("Take Out of Storage", systemImage: "tray.and.arrow.up") { onAction(.takeOut(bottle)) }
+        NoLongerInCellarButton { onAction(.remove(bottle)) }
     }
 }
 

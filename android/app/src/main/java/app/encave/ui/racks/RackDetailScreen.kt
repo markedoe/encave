@@ -1,5 +1,6 @@
 package app.encave.ui.racks
 
+import androidx.compose.material.icons.outlined.CardGiftcard
 import app.encave.ui.components.BottlePlaceIcons
 import app.encave.core.Slot
 import androidx.compose.material.icons.outlined.RemoveCircleOutline
@@ -153,6 +154,8 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
     var focusWineId by rememberSaveable { mutableStateOf<String?>(null) }
     var highlightId by rememberSaveable { mutableStateOf(route.highlightBottleId) }
     var showsList by rememberSaveable { mutableStateOf(false) }
+    /** A bottle being kept for an occasion (the occasion is asked first). */
+    var reservingId by rememberSaveable { mutableStateOf<String?>(null) }
     /** A free position tapped while bottles are out of storage: add one, or put one there. */
     var freePlace by remember { mutableStateOf<Slot?>(null) }
     var puttingHere by remember { mutableStateOf<Slot?>(null) }
@@ -437,6 +440,10 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                             onWinePage = { navigator.open(WineDetailRoute(bottle.wineId.toString())) },
                             onDocuments = { importing -> bottleDocuments = bottle.id to importing },
                             onMoveElsewhere = { moveSheetId = bottle.id.toString() },
+                            onReserve = {
+                                if (bottle.reservedFor == null) reservingId = bottle.id.toString()
+                                else viewModel.reserve(listOf(bottle.id), null)
+                            },
                             onTakeOut = { viewModel.move(bottle.id, null) },
                             onGone = { viewModel.markGone(bottle.id) },
                             onClose = { selectedKey = null },
@@ -486,9 +493,20 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
             onDrink = { drinking = actionBottle.id.toString() },
             onMove = { movingId = actionBottle.id.toString() },
             onMoveElsewhere = { moveSheetId = actionBottle.id.toString() },
+            onReserve = {
+                if (actionBottle.reservedFor == null) reservingId = actionBottle.id.toString()
+                else viewModel.reserve(listOf(actionBottle.id), null)
+            },
             onTakeOut = { viewModel.move(actionBottle.id, null) },
             onGone = { viewModel.markGone(actionBottle.id) },
             onDocuments = { importing -> bottleDocuments = actionBottle.id to importing },
+        )
+    }
+    reservingId?.let { id ->
+        app.encave.ui.cellar.ReserveDialog(
+            initial = cellar.reservations.firstOrNull().orEmpty(),
+            onKeep = { occasion -> viewModel.reserve(listOf(UUID.fromString(id)), occasion) },
+            onDismiss = { reservingId = null },
         )
     }
     val moveSheetBottle = moveSheetId?.let { id -> cellar.bottlesInCellar.firstOrNull { it.id.toString() == id } }
@@ -583,6 +601,8 @@ private fun SelectedBottleCard(
     /** The bottle's documents; true opens the file picker at once. */
     onDocuments: (Boolean) -> Unit,
     onMoveElsewhere: () -> Unit,
+    /** Keep for an occasion, or free a kept bottle. */
+    onReserve: () -> Unit,
     onTakeOut: () -> Unit,
     onGone: () -> Unit,
     onClose: () -> Unit,
@@ -619,7 +639,14 @@ private fun SelectedBottleCard(
             IconButton(onClick = { menu = true }, modifier = Modifier.testTag("rack.selection.more")) {
                 Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
             }
+            // The bottle's other actions, in the same order as everywhere (and on Apple).
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(if (bottle.reservedFor == null) R.string.action_keep_for_occasion else R.string.action_free_bottle)) },
+                    leadingIcon = { Icon(Icons.Outlined.CardGiftcard, contentDescription = null) },
+                    onClick = { menu = false; onReserve() },
+                    modifier = Modifier.testTag("rack.selection.reserve"),
+                )
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.action_move_other_rack)) },
                     leadingIcon = { Icon(Icons.Outlined.OpenWith, contentDescription = null) },
@@ -861,6 +888,7 @@ private fun BottleActionsSheet(
     onDrink: () -> Unit,
     onMove: () -> Unit,
     onMoveElsewhere: () -> Unit,
+    onReserve: () -> Unit,
     onTakeOut: () -> Unit,
     onGone: () -> Unit,
     onDocuments: (Boolean) -> Unit,
@@ -871,20 +899,23 @@ private fun BottleActionsSheet(
                 headlineContent = { Text(title, style = MaterialTheme.typography.titleLarge) },
                 supportingContent = { Text("${rack.name} · ${bottle.slot?.let { rack.displayLabel(it, LocalResources.current) }.orEmpty()}") },
             )
-            listOf(
-                Triple(Icons.Outlined.Info, R.string.action_show_wine, onOpen),
-                Triple(Icons.Outlined.LocalBar, R.string.action_drink, onDrink),
-                Triple(Icons.Outlined.OpenWith, R.string.action_move, onMove),
-                Triple(Icons.Outlined.OpenWith, R.string.action_move_other_rack, onMoveElsewhere),
-                Triple(Icons.Outlined.Outbox, R.string.action_take_out_of_rack, onTakeOut),
-                Triple(Icons.Outlined.RemoveCircleOutline, R.string.action_mark_gone, onGone),
-            ).let { actions ->
-                // The documents before the bottle leaves: "Documents…" when it has some.
+            // The bottle's actions in the same order as everywhere (and on Apple): Drink, Move,
+            // Keep, its documents, Show wine, then Take out and No longer in cellar.
+            run {
                 val documents = listOfNotNull(
                     if (bottle.attachments != null) Triple(Icons.Outlined.AttachFile, R.string.action_documents, { onDocuments(false) }) else null,
                     Triple(Icons.Outlined.UploadFile, R.string.action_attach_document, { onDocuments(true) }),
                 )
-                actions.dropLast(1) + documents + actions.last()
+                listOf(
+                    Triple(Icons.Outlined.LocalBar, R.string.action_drink, onDrink),
+                    Triple(Icons.Outlined.OpenWith, R.string.action_move, onMove),
+                    Triple(Icons.Outlined.OpenWith, R.string.action_move_other_rack, onMoveElsewhere),
+                    Triple(Icons.Outlined.CardGiftcard, if (bottle.reservedFor == null) R.string.action_keep_for_occasion else R.string.action_free_bottle, onReserve),
+                ) + documents + listOf(
+                    Triple(Icons.Outlined.Info, R.string.action_show_wine, onOpen),
+                    Triple(Icons.Outlined.Outbox, R.string.action_take_out_of_rack, onTakeOut),
+                    Triple(Icons.Outlined.RemoveCircleOutline, R.string.action_mark_gone, onGone),
+                )
             }.forEach { (icon, label, action) ->
                 ListItem(
                     leadingContent = { Icon(icon, contentDescription = null) },

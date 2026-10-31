@@ -10529,6 +10529,16 @@
         }
       }
     },
+    "Move to Other Storage…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déplacer vers un autre rangement…"
+          }
+        }
+      }
+    },
     "Moved to %@ · %@": {
       "localizations": {
         "fr": {
