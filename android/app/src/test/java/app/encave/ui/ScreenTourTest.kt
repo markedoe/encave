@@ -482,7 +482,8 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         compose.waitForIdle()
         compose.onAllNodes(hasText("Rosé de Provence", substring = true)).onFirst().performClick()
         compose.waitForIdle()
-        compose.onAllNodesWithTag("action.bottle.put_away").onFirst().assertExists()
+        // The banner above the bottles (the rows may be below the fold at large text sizes).
+        compose.onAllNodesWithTag("wine.put_away_banner").onFirst().assertExists()
         capture("wine-put-away")
     }
 
