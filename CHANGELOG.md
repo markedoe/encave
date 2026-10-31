@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- Putting bottles away: a bottle without a position (added without a storage,
+  received, put back from the Journal, taken out) shows Put Away beside it on
+  the wine's page, and Put Away… in the wine's menu in the Cellar, Tonight and
+  the table picks that bottle, not the one Drink would open. Storage opens with
+  "N bottles not in storage", their list; a free position tapped meanwhile
+  offers Put a Bottle Here. On the Mac, Not in Storage sits in the sidebar and
+  its bottles drag onto a storage. On Apple devices, the banner after Received
+  or Put Back offers Put Away
 - Honest AI fields: the label request asks, for each detail, whether it was
   read on the label or comes from the model's knowledge, and to leave a detail
   empty when unsure. The form and the scan summary mark estimates "Estimated by
@@ -73,6 +81,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
   in the alcohol and classification printed on the label
 
 ### Changed
+- One presentation of a wine and its bottles on every screen and both apps:
+  the wine's picture (else its bottle end), name, vintage, style, producer in
+  the same order; a place that is never blank ("Not in storage", with one
+  symbol per kind of place); the same bottle actions in the same order (Drink,
+  Move or Put Away, Show in Storage, Keep, documents, Show Wine, Take Out, No
+  Longer in Cellar, Delete), on the wine's page, the rack card and its places;
+  one Move sheet that names the bottle and opens on its storage, else on the
+  one holding its wine; one wording in English and French (Show Wine / Voir le
+  vin, Put Away / Ranger, Take Out of Storage / Sortir du rangement). Android
+  lists a wine's bottles in place order, as on Apple devices
 - A bare rating above 5 in an imported spreadsheet is a score out of 100 read
   with the new conversion: 92 is now 4 stars (it was 5), 50 is 1 star (it was 3)
 - Storage: the rack now sits at the top of the screen, and empty places are quiet

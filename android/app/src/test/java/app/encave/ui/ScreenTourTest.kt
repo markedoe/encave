@@ -10,6 +10,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.isRoot
@@ -104,10 +105,10 @@ class ScreenTourTest(private val device: String, private val variant: String) {
             "cellar", "cellar-drink-soon", "cellar-tag", "cellar-occasion", "cellar-menu", "save-search",
             "saved-search", "cellar-on-order", "cellar-select", "cellar-select-delete", "cellar-table",
             "cellar-table-wine", "insights", "insights-drink-down", "my-palate",
-            "wine", "wine-critic-scores", "wine-expected", "game-result", "drink-sheet", "tasting-expected", "tasting-comparison", "wine-on-order", "wine-occasion", "wine-explore", "wine-edit-window",
+            "wine", "wine-critic-scores", "wine-expected", "game-result", "drink-sheet", "tasting-expected", "tasting-comparison", "wine-on-order", "wine-occasion", "wine-put-away", "wine-explore", "wine-edit-window",
             "wine-tags", "more-photos",
             "add-bottle", "add-bottle-end", "add-bottle-on-order", "barcode-scanner", "barcode-match",
-            "racks", "rack", "rack-place-sheet", "rack-card", "rack-key", "rack-zoomed", "rack-bottle-list",
+            "racks", "not-in-storage", "put-away-sheet", "rack", "rack-place-sheet", "rack-card", "rack-key", "rack-zoomed", "rack-bottle-list",
             "rack-list-picked", "rack-head-to-tail", "rack-back-bottle", "rack-head-to-tail-zoomed",
             "rack-check", "rack-check-missing", "rack-dragging", "rack-dropped", "rack-editor", "rack-editor-end",
             "rack-diamond-triangles",
@@ -448,6 +449,29 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         val drink = bounds("action.surprise_drink")!!
         val next = bounds("action.surprise_next")!!
         assertTrue("$device-$variant: Tonight's buttons are not stacked at 200 %", next.top >= drink.bottom - 1f)
+    }
+
+    @Test
+    fun notInStorage() {
+        // The sample's rosé is in the kitchen, not in a storage: Storage lists it, and Put away
+        // opens the Move sheet on it.
+        tab(RACKS)
+        tap("racks.not_in_storage")
+        capture("not-in-storage")
+        tap("not_in_storage.put_away")
+        compose.onNodeWithTag("move.sheet").assertExists()
+        capture("put-away-sheet")
+    }
+
+    @Test
+    fun wineWithABottleNotInStorage() {
+        // Its wine page says where the rosé is and offers Put away beside it.
+        compose.onNodeWithTag("cellar.list").performScrollToNode(hasText("Rosé de Provence", substring = true))
+        compose.waitForIdle()
+        compose.onAllNodes(hasText("Rosé de Provence", substring = true)).onFirst().performClick()
+        compose.waitForIdle()
+        compose.onAllNodesWithTag("action.bottle.put_away").onFirst().assertExists()
+        capture("wine-put-away")
     }
 
     @Test

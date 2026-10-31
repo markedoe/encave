@@ -28,6 +28,8 @@ def widget_sources():
     return glob.glob(str(ROOT / "EncaveWidgets" / "**" / "*.swift"), recursive=True) + [str(p) for p in WIDGET_SHARED]
 
 FR = {
+    'Putting bottles away': 'Ranger des bouteilles',
+    'A bottle without a position (added with **No storage**, received from an order, put back from the Journal or taken out of storage) says **Not in storage**. To put it away, tap **Put Away** beside it on the wine\'s page, or choose **Put Away…** in the wine\'s menu in the Cellar or Tonight: the storage holding the wine\'s other bottles opens; tap a position. Storage lists every bottle without a position under **Not in Storage**, and a free position tapped while some are waiting offers **Put a Bottle Here…**. On the Mac, drag one onto a storage in the sidebar. **Undo** puts it back.': 'Une bouteille sans position (ajoutée avec **Aucun rangement**, reçue d’une commande, remise en cave depuis le Journal ou sortie d’un rangement) indique **Hors rangement**. Pour la ranger, touchez **Ranger** à côté d’elle sur la fiche du vin, ou choisissez **Ranger…** dans le menu du vin dans la Cave ou Ce soir : le rangement qui tient les autres bouteilles du vin s’ouvre ; touchez une position. Rangements liste toutes les bouteilles sans position sous **Hors rangement**, et une position libre touchée pendant que certaines attendent propose **Ranger une bouteille ici…**. Sur le Mac, faites-en glisser une sur un rangement de la barre latérale. **Annuler** la remet où elle était.',
     'Take Out': 'Sortir',
     'Move to Other Storage…': 'Déplacer vers un autre rangement…',
     'Not in Storage': 'Hors rangement',

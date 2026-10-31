@@ -227,6 +227,7 @@ final class ScreenTourTests: XCTestCase {
         // Storage: the list, every rack, fridge and set of bins, the editor.
         openSection(1, "racks")
         snapshot("racks")
+        checkNotInStorage()
         // The sample cellar has one rack of every kind: open each one.
         for index in 0..<8 {
             let card = element("rack.card.\(index)")
@@ -1393,6 +1394,27 @@ final class ScreenTourTests: XCTestCase {
             #endif
             tries += 1
         }
+    }
+
+    /// The sample's rosé is in the kitchen, not in a storage: Storage lists it (a card on
+    /// iPhone and iPad, a sidebar row on the Mac), and Put Away opens the Move sheet on it.
+    private func checkNotInStorage() {
+        #if os(macOS)
+        let entry = "section.notInStorage"
+        #else
+        let entry = "racks.notInStorage"
+        #endif
+        guard let card = require(entry, "storage: nothing leads to the bottles not in storage", timeout: 10) else { return }
+        card.press()
+        snapshot("not-in-storage")
+        if let putAway = require("notInStorage.putAway", "not in storage: no Put Away button") {
+            putAway.press()
+            snapshot("put-away-sheet")
+            closeSheet()
+        }
+        #if os(iOS)
+        goBack()
+        #endif
     }
 
     // MARK: Screenshots and checks
