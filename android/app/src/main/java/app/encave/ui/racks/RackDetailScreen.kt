@@ -1,5 +1,7 @@
 package app.encave.ui.racks
 
+import app.encave.ui.components.styleLine
+import app.encave.ui.components.WineThumbnail
 import androidx.compose.material.icons.outlined.CardGiftcard
 import app.encave.ui.components.BottlePlaceIcons
 import app.encave.core.Slot
@@ -620,7 +622,8 @@ private fun SelectedBottleCard(
                 wine?.displayName ?: stringResource(R.string.unknown_wine),
                 style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis,
             )
-            wine?.producer?.let {
+            // The style in words, then the producer and appellation, as in the list and on Apple.
+            wine?.styleLine()?.takeIf { it.isNotEmpty() }?.let {
                 Text(it, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.m), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -708,7 +711,7 @@ private fun SelectedBottleCard(
             if (large) {
                 // Large font sizes: the bottle and its buttons on a row, the text and the actions full width below.
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    BottleEnd(wine?.color, size = 40.dp)
+                    WineThumbnail(wine, width = 40.dp)
                     Spacer(Modifier.weight(1f))
                     headerButtons()
                 }
@@ -719,7 +722,7 @@ private fun SelectedBottleCard(
                 }
             } else {
                 Row(horizontalArrangement = Arrangement.spacedBy(Dimens.m)) {
-                    BottleEnd(wine?.color, size = 40.dp)
+                    WineThumbnail(wine, width = 40.dp)
                     details(Modifier.weight(1f))
                     headerButtons()
                 }
@@ -947,7 +950,7 @@ private fun CellSheet(
             cellar.bottlesIn(cell).forEach { bottle ->
                 val wine = cellar.wines[bottle.wineId]
                 ListItem(
-                    leadingContent = { app.encave.ui.components.WineColorDot(wine?.color, size = 28.dp) },
+                    leadingContent = { WineThumbnail(wine, width = 28.dp) },
                     headlineContent = { Text(wine?.displayName ?: stringResource(R.string.unknown_wine)) },
                     supportingContent = { Text(bottle.slot?.let { rack.displayLabel(it, resources) }.orEmpty()) },
                     trailingContent = bottle.attachments?.size?.let { { DocumentCount(it) } },

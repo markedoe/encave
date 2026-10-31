@@ -510,7 +510,7 @@ struct BottleDocumentsView: View {
                     let wine = model.cellar.wines[bottle.wineID]
                     Section {
                         HStack(spacing: 12) {
-                            BottleEnd(color: wine?.color, size: 32)
+                            WineThumbnail(wine: wine, width: 32)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(wine?.displayName ?? String(localized: "Unknown wine"))
                                     .font(.headline)

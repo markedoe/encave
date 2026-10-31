@@ -368,7 +368,7 @@ private struct TonightPick: View {
 
     private func header(_ wine: Wine) -> some View {
         HStack(spacing: 16) {
-            BottleEnd(color: wine.color, size: 64)
+            WineThumbnail(wine: wine, width: 56)
             VStack(alignment: .leading, spacing: 4) {
                 Text(wine.displayName)
                     .font(.title2.weight(.semibold))

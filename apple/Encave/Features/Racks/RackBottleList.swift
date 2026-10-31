@@ -147,7 +147,7 @@ private struct RackBottleRow: View {
     var body: some View {
         let wine = model.cellar.wines[bottle.wineID]
         HStack(spacing: 10) {
-            BottleEnd(color: wine?.color, size: 20)
+            WineThumbnail(wine: wine, width: 24)
             VStack(alignment: .leading, spacing: 1) {
                 Text(wine?.displayName ?? String(localized: "Unknown wine"))
                     .lineLimit(1)

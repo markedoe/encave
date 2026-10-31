@@ -1,5 +1,6 @@
 package app.encave.ui.cellar
 
+import app.encave.ui.components.BottleEnd
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material.icons.outlined.Outbox
 import app.encave.ui.components.placeLabel
@@ -258,7 +259,7 @@ fun WineDetailScreen(
                         inset = 18.dp,
                     )
                 }
-                Box(Modifier.onGloballyPositioned { heroEnd = it.positionInParent().y + it.size.height }) { Hero(wine) }
+                Box(Modifier.onGloballyPositioned { heroEnd = it.positionInParent().y + it.size.height }) { Hero(wine, hasPicture = viewModel.photos.hasPicture(wine)) }
                 if (webSearch.isEnabled || wine.coverPhotoId != null) {
                     TextButton(
                         onClick = { choosingPicture = true },
@@ -479,19 +480,25 @@ fun WineDetailScreen(
     }
 }
 
+/**
+ * The wine's name, vintage and style, producer and origin, in the order of the Apple app;
+ * its bottle end above when it has no picture (the picture is shown above otherwise).
+ */
 @Composable
-private fun Hero(wine: Wine) {
+private fun Hero(wine: Wine, hasPicture: Boolean) {
     Column(Modifier.fillMaxWidth().padding(Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.s), verticalAlignment = Alignment.CenterVertically) {
-            StyleLabel(wine.color)
-            Text(
-                wine.vintage?.toString() ?: stringResource(R.string.non_vintage),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        if (!hasPicture) BottleEnd(wine.color, size = 56.dp)
         Text(wine.name, style = SerifDisplay, modifier = Modifier.semantics { heading() })
-        val origin = listOfNotNull(wine.producer, wine.appellation, wine.region, wine.country).filter { it.isNotBlank() }
+        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.s), verticalAlignment = Alignment.CenterVertically) {
+            wine.vintage?.let {
+                Text(it.toString(), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            StyleLabel(wine.color)
+        }
+        wine.producer?.takeIf { it.isNotBlank() }?.let {
+            Text(it, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        val origin = listOfNotNull(wine.appellation, wine.region, wine.country).filter { it.isNotBlank() }
         if (origin.isNotEmpty()) {
             Text(origin.joinToString(app.encave.ui.components.SEPARATOR), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }

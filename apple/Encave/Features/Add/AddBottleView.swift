@@ -173,7 +173,7 @@ struct AddBottleView: View {
     private func existingWineSection(_ wine: Wine) -> some View {
         Section {
             HStack(spacing: 12) {
-                BottleEnd(color: wine.color, size: 36)
+                WineThumbnail(wine: wine, width: 36)
                 VStack(alignment: .leading) {
                     Text(wine.displayName).font(.headline)
                     if let producer = wine.producer {
@@ -224,7 +224,7 @@ struct AddBottleView: View {
                         withAnimation { existingWine = wine }
                     } label: {
                         HStack(spacing: 10) {
-                            BottleEnd(color: wine.color, size: 22)
+                            WineThumbnail(wine: wine, width: 24)
                             Text(wine.displayName)
                             Spacer()
                             Image(systemName: "plus.circle.fill").foregroundStyle(Color.accentColor)
@@ -245,7 +245,7 @@ struct AddBottleView: View {
     private func sameWineSection(_ wine: Wine) -> some View {
         Section {
             HStack(spacing: 12) {
-                BottleEnd(color: wine.color, size: 36)
+                WineThumbnail(wine: wine, width: 36)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(verbatim: wine.displayName).font(.headline)
                     Text("\(model.cellar.bottles(of: wine.id).count) bottles in the cellar")

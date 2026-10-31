@@ -133,7 +133,7 @@ private struct DrinkForm: View {
                     Form {
                         Section {
                             HStack(spacing: 14) {
-                                BottleEnd(color: wine.color, size: 44)
+                                WineThumbnail(wine: wine, width: 44)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(wine.displayName)
                                         .font(.title3.weight(.semibold))

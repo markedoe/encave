@@ -451,7 +451,7 @@ private struct SelectedBottleCard: View {
         let wine = model.cellar.wines[bottle.wineID]
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
-                BottleEnd(color: wine?.color, size: 40)
+                WineThumbnail(wine: wine, width: 40)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(wine?.displayName ?? String(localized: "Unknown wine"))
                         .font(.headline)
@@ -740,7 +740,7 @@ private struct BottleInCellRow: View {
         let wine = model.cellar.wines[bottle.wineID]
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
-                BottleEnd(color: wine?.color, size: 40)
+                WineThumbnail(wine: wine, width: 40)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(wine?.displayName ?? String(localized: "Unknown wine"))
                         .font(.headline)

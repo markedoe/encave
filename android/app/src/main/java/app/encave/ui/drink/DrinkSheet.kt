@@ -1,5 +1,6 @@
 package app.encave.ui.drink
 
+import app.encave.ui.components.WineThumbnail
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material.icons.filled.Check
 import app.encave.ui.components.ActionContent
@@ -400,10 +401,13 @@ fun DrinkSheet(
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.semantics { heading() },
             )
-            Text(
-                wine?.displayName ?: stringResource(R.string.unknown_wine),
-                style = MaterialTheme.typography.headlineSmall.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Serif),
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.m), verticalAlignment = Alignment.CenterVertically) {
+                WineThumbnail(wine, width = 44.dp)
+                Text(
+                    wine?.displayName ?: stringResource(R.string.unknown_wine),
+                    style = MaterialTheme.typography.headlineSmall.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Serif),
+                )
+            }
             if (choices.size > 1) {
                 Text(stringResource(R.string.drink_which), style = MaterialTheme.typography.titleSmall)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.s), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {

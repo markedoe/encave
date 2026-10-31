@@ -1,5 +1,6 @@
 package app.encave.ui.tonight
 
+import app.encave.ui.components.WineThumbnail
 import app.encave.ui.cellar.WineMenuBox
 import android.content.Intent
 import androidx.compose.foundation.selection.toggleable
@@ -540,11 +541,18 @@ private fun SurpriseCard(
                     modifier = Modifier.padding(start = Dimens.s).semantics { heading() },
                 )
             }
-            Column(Modifier.clickable(onClick = onOpen).semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }) {
-                Text(group.wine.displayName, style = SerifDisplay)
-                // The style in words, not only by the bottle's color.
-                Text(group.wine.styleLine(), style = MaterialTheme.typography.bodyMedium)
-                MaturityLabel(Maturity.of(group.wine, year), Modifier.padding(top = Dimens.xs))
+            // Its picture (else its bottle end) beside the wine, as on Apple.
+            Row(
+                Modifier.clickable(onClick = onOpen).semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+                horizontalArrangement = Arrangement.spacedBy(Dimens.l), verticalAlignment = Alignment.CenterVertically,
+            ) {
+                WineThumbnail(group.wine, width = 56.dp)
+                Column {
+                    Text(group.wine.displayName, style = SerifDisplay)
+                    // The style in words, not only by the bottle's color.
+                    Text(group.wine.styleLine(), style = MaterialTheme.typography.bodyMedium)
+                    MaturityLabel(Maturity.of(group.wine, year), Modifier.padding(top = Dimens.xs))
+                }
             }
             val location = bottle?.let { cellar.displayLocation(it) } ?: stringResource(R.string.location_none)
             val rackLabel = stringResource(R.string.action_show_in_rack)

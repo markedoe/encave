@@ -95,17 +95,19 @@ struct WineRow: View {
 
 /// The wine's picture in a row (its cover, else its label photo, in the studio look when
 /// it is on), or its bottle end when it has none. The row says the wine in words.
+/// The same in rows, cards and sheets (as on Android); `width` is 34 in rows, larger in cards.
 struct WineThumbnail: View {
     let wine: Wine?
+    var width: CGFloat = 34
 
     var body: some View {
         if let wine, wine.hasShownPhoto {
-            WineImage(wine: wine, maxPixelSize: 200, inset: 2)
-                .frame(width: 34, height: 46)
-                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+            WineImage(wine: wine, maxPixelSize: width > 40 ? 300 : 200, inset: 2)
+                .frame(width: width, height: width * 46 / 34)
+                .clipShape(RoundedRectangle(cornerRadius: width > 40 ? 10 : 7, style: .continuous))
                 .accessibilityHidden(true)
         } else {
-            BottleEnd(color: wine?.color, size: 34)
+            BottleEnd(color: wine?.color, size: width)
                 .accessibilityHidden(true)
         }
     }
