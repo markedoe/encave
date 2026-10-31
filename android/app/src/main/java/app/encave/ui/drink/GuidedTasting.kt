@@ -127,7 +127,7 @@ internal fun AppearanceFields(state: TastingFormState, color: WineColor?) {
 }
 
 @Composable
-private fun ShowMoreButton(expanded: Boolean, more: Int, fewer: Int, modifier: Modifier = Modifier, onClick: () -> Unit) {
+internal fun ShowMoreButton(expanded: Boolean, more: Int, fewer: Int, modifier: Modifier = Modifier, onClick: () -> Unit) {
     TextButton(onClick = onClick, modifier = modifier) {
         Icon(if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore, contentDescription = null)
         Text(stringResource(if (expanded) fewer else more), Modifier.padding(start = Dimens.s))

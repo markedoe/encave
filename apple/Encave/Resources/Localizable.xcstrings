@@ -11289,6 +11289,16 @@
         }
       }
     },
+    "Nose, palate and structure the wine should show. Guess the aromas first if you like: just for fun, kept on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le nez, la bouche et la structure que le vin devrait montrer. Devinez d’abord les arômes si vous voulez : juste pour le plaisir, gardé sur cet appareil."
+          }
+        }
+      }
+    },
     "Not Now": {
       "localizations": {
         "fr": {

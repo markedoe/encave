@@ -12,6 +12,7 @@ struct DiscoveryEditor: View {
 
     @State private var draft = WineDraft()
     @State private var scan = LabelScan()
+    @State private var showsExpected = false
     @State private var searchingOnline = false
     @State private var newPhoto: Data?
     @State private var photoRemoved = false
@@ -102,16 +103,29 @@ struct DiscoveryEditor: View {
 
                 // The same tasting as for a bottle of the cellar, with the game before it.
                 let wine = draft.makeWine()
-                if !(wine.expectedOrBundledProfile?.aromas ?? []).isEmpty {
+                // What the AI (or the bundled profile) expects from the wine: one tap away,
+                // so it does not give the game away, with the game next to it.
+                if let profile = wine.expectedOrBundledProfile {
                     Section {
-                        Button {
-                            playingGame = true
+                        DisclosureGroup(isExpanded: $showsExpected) {
+                            ExpectedProfileRows(profile: profile)
+                            ExpectedSourceLabel(profile: profile)
                         } label: {
-                            Label("Guess the Aromas", systemImage: "nose")
+                            Label("Show What to Expect", systemImage: "eye")
                         }
-                        .accessibilityIdentifier("discovery.aromaGame")
+                        .accessibilityIdentifier("discovery.expected")
+                        if !(profile.aromas ?? []).isEmpty {
+                            Button {
+                                playingGame = true
+                            } label: {
+                                Label("Guess the Aromas", systemImage: "nose")
+                            }
+                            .accessibilityIdentifier("discovery.aromaGame")
+                        }
+                    } header: {
+                        Text("What to expect")
                     } footer: {
-                        Text("Pick the aromas you expect before tasting, then compare. Just for fun: kept on this device.")
+                        Text("Nose, palate and structure the wine should show. Guess the aromas first if you like: just for fun, kept on this device.")
                     }
                 }
                 TastingFormSections(draft: $tasting, startsExpanded: discoveryID != nil, color: draft.color,

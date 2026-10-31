@@ -28,6 +28,7 @@ def widget_sources():
     return glob.glob(str(ROOT / "EncaveWidgets" / "**" / "*.swift"), recursive=True) + [str(p) for p in WIDGET_SHARED]
 
 FR = {
+    'Nose, palate and structure the wine should show. Guess the aromas first if you like: just for fun, kept on this device.': 'Le nez, la bouche et la structure que le vin devrait montrer. Devinez d’abord les arômes si vous voulez : juste pour le plaisir, gardé sur cet appareil.',
     'Put All Away': 'Tout ranger',
     'First Free Position': 'Première position libre',
     'Adds your aromas and structure to the tasting you are writing; nothing is saved until you tap Save.': 'Ajoute vos arômes et la structure à la dégustation en cours ; rien n’est enregistré avant de toucher Enregistrer.',

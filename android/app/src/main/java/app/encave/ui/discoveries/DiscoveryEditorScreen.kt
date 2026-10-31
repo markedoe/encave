@@ -237,6 +237,15 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
             Hint(stringResource(R.string.help_where_footer))
 
             Header(R.string.discovery_impression)
+            // What the AI (or the bundled profile) expects from the wine: one tap away, so it
+            // does not give the game away, as on Apple.
+            if (expected != null && (!expected.aromas.isNullOrEmpty() || expected.structure != null)) {
+                var showsExpected by rememberSaveable { mutableStateOf(false) }
+                app.encave.ui.drink.ShowMoreButton(
+                    showsExpected, R.string.expected_show, R.string.expected_hide, Modifier.testTag("discovery.show_expected"),
+                ) { showsExpected = !showsExpected }
+                if (showsExpected) app.encave.ui.cellar.ExpectedProfileContent(expected, language = "")
+            }
             // The same tasting as for a bottle of the cellar, with the game before it.
             if (!expected?.aromas.isNullOrEmpty()) {
                 OutlinedButton(onClick = { playingGame = true }, modifier = Modifier.testTag("discovery.aroma_game")) {
