@@ -139,6 +139,8 @@ private struct LooseBottleRow: View {
             Divider()
             NoLongerInCellarButton { model.markGone(bottle.id) }
         }
+        // A container: its own identifier would otherwise replace the Put Away button's.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("notInStorage.row")
     }
 }

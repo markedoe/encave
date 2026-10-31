@@ -1200,7 +1200,8 @@ final class ScreenTourTests: XCTestCase {
     private func sectionAnchor(_ name: String) -> XCUIElement {
         let identifiers: [String: [String]] = [
             "cellar": ["wine.row", "cellar.select"],
-            "racks": ["rack.card.0", "racks.add"],
+            // Or the list of bottles not in storage, open in Storage.
+            "racks": ["rack.card.0", "racks.add", "notInStorage.row", "notInStorage.putAll"],
             "tonight": ["action.tonight.drink", "tonight.ask"],
             "journal": ["journal.add", "journal.row.cellar", "journal.row.cellar.picture"],
         ]
@@ -1550,7 +1551,7 @@ final class ScreenTourTests: XCTestCase {
     #endif
 
     /// A free position tapped while the sample's rosé is out of storage: Put a Bottle Here or
-    /// Add a Bottle Here. Closed again without choosing, so the tour's cellar stays as it is.
+    /// Add a Bottle Here. Left through Add a Bottle Here's Cancel, so the cellar stays as it is.
     private func checkFreePlaceChoice() {
         let empty = app.descendants(matching: .any).matching(NSPredicate(
             format: "identifier BEGINSWITH %@ AND (label ENDSWITH %@ OR label ENDSWITH %@)", "rack.cell.", ", empty", ", vide"))
@@ -1565,16 +1566,15 @@ final class ScreenTourTests: XCTestCase {
             return
         }
         snapshot("rack-free-position")
-        let cancel = app.buttons.matching(NSPredicate(format: "label == %@ OR label == %@", "Cancel", "Annuler")).firstMatch
-        if cancel.exists, cancel.isHittable {
-            cancel.press()
+        // Closed through Add a Bottle Here and its Cancel: the same on iPhone, iPad (a popover
+        // with no Cancel button) and Mac, and the tour's cellar does not change.
+        let add = app.buttons.matching(NSPredicate(format: "label == %@ OR label == %@",
+                                                   "Add a Bottle Here", "Ajouter une bouteille ici")).firstMatch
+        if add.waitForExistence(timeout: 3) {
+            add.press()
+            closeSheet()
         } else {
-            #if os(macOS)
-            app.typeKey(.escape, modifierFlags: [])
-            #else
-            // A popover on the iPad: a tap outside closes it.
-            app.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.02)).tap()
-            #endif
+            XCTFail("main rack: a free position offers no Add a Bottle Here")
         }
         sleep(1)
     }
