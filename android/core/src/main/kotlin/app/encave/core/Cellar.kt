@@ -171,6 +171,37 @@ class Cellar(
     /** Bottles of a wine still in the cellar. */
     fun bottlesOf(wineId: UUID): List<Bottle> = bottlesInCellar.filter { it.wineId == wineId }.sortedWith(bottleAddedOrder)
 
+    /**
+     * Bottles as their places read: storage in its order, then shelf or row, depth (front
+     * first), layer, position, then id; bottles without a position last, oldest first. A
+     * total order, as CaveKit's `inPlaceOrder` (`fixtures/bottle-place-vectors.json`).
+     */
+    fun inPlaceOrder(bottles: List<Bottle>): List<Bottle> {
+        val rackIndex = HashMap<UUID, Int>().apply { racks.forEachIndexed { index, rack -> putIfAbsent(rack.id, index) } }
+        fun key(bottle: Bottle): List<Int>? {
+            val slot = bottle.slot ?: return null
+            val index = rackIndex[slot.rackId] ?: return null
+            val place = racks[index].shelfPlace(slot.row)
+            return if (place != null) listOf(index, place.shelf, slot.depth, place.layer, slot.column)
+            else listOf(index, slot.row, slot.depth, 0, slot.column)
+        }
+        val keyed = bottles.map { key(it) to it }
+        return keyed.sortedWith { a, b ->
+            val ka = a.first
+            val kb = b.first
+            when {
+                ka != null && kb != null && ka != kb -> ka.zip(kb).first { (x, y) -> x != y }.let { (x, y) -> x.compareTo(y) }
+                ka != null && kb == null -> -1
+                ka == null && kb != null -> 1
+                ka == null && a.second.addedAt != b.second.addedAt -> a.second.addedAt.compareTo(b.second.addedAt)
+                else -> a.second.id.toString().compareTo(b.second.id.toString())
+            }
+        }.map { it.second }
+    }
+
+    /** Bottles in the cellar without a position, to put away: oldest first. */
+    val bottlesNotInStorage: List<Bottle> get() = bottlesInCellar.filter { it.slot == null }.sortedWith(bottleAddedOrder)
+
     /** Past tastings of a wine, most recent first. */
     fun tastingsOf(wineId: UUID): List<Bottle> = consumedBottles.filter { it.wineId == wineId }
 

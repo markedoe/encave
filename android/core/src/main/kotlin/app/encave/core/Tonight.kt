@@ -19,6 +19,18 @@ val bottleExpectedOrder: Comparator<Bottle> =
 val List<Bottle>.bottleToOpen: Bottle? get() = firstOrNull { it.reservedFor == null } ?: firstOrNull()
 
 /**
+ * The bottle "Put away" places: one in the cellar without a position, one not kept for an
+ * occasion first, then [bottleAddedOrder]; null when each bottle has a position. Shared with
+ * CaveKit (`fixtures/bottle-place-vectors.json`).
+ */
+val List<Bottle>.bottleToPutAway: Bottle?
+    get() = filter { it.status == Bottle.Status.InCellar && it.slot == null }
+        .minWithOrNull(compareBy<Bottle> { it.reservedFor != null }.then(bottleAddedOrder))
+
+/** Whether one of these bottles is in the cellar without a position. */
+val List<Bottle>.hasBottleToPutAway: Boolean get() = any { it.status == Bottle.Status.InCellar && it.slot == null }
+
+/**
  * One bottle per place to choose from when opening a wine, the free ones first. Bottles
  * without a rack position, with the same storage note and kept for the same occasion (or
  * none) are interchangeable, so only the first is listed.

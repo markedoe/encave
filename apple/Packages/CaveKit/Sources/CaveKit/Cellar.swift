@@ -91,6 +91,19 @@ public extension Bottle {
 public extension Collection where Element == Bottle {
     /// The bottle a quick "Drink" opens: one not kept for an occasion when there is one.
     var bottleToOpen: Bottle? { first { $0.reservedFor == nil } ?? first }
+
+    /// The bottle "Put Away" places: one in the cellar without a position, one not kept for
+    /// an occasion first, then the oldest (ties by id); nil when each bottle has a position.
+    /// Shared with the Android core (`fixtures/bottle-place-vectors.json`).
+    var bottleToPutAway: Bottle? {
+        filter { $0.status == .inCellar && $0.slot == nil }.min { a, b in
+            if (a.reservedFor == nil) != (b.reservedFor == nil) { return a.reservedFor == nil }
+            return Bottle.addedOrder(a, b)
+        }
+    }
+
+    /// Whether one of these bottles is in the cellar without a position.
+    var hasBottleToPutAway: Bool { contains { $0.status == .inCellar && $0.slot == nil } }
 }
 
 public struct MaturitySection: Identifiable, Hashable, Sendable {
@@ -338,6 +351,11 @@ public extension Cellar {
     /// Bottles of a wine still in the cellar.
     func bottles(of wineID: UUID) -> [Bottle] {
         bottlesInCellar.filter { $0.wineID == wineID }.sorted(by: Bottle.addedOrder)
+    }
+
+    /// Bottles in the cellar without a position, to put away: oldest first.
+    var bottlesNotInStorage: [Bottle] {
+        bottlesInCellar.filter { $0.slot == nil }.sorted(by: Bottle.addedOrder)
     }
 
     /// Bottles as their places read: storage in its order, then shelf or row, depth (front

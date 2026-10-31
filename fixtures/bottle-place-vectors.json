@@ -1,0 +1,157 @@
+{
+  "about": "How bottles are listed and which one Put Away places, shared by CaveKit (BottlePlaceTests.swift) and the Android core (BottlePlaceTest.kt). All bottles are of one wine and in the cellar. A bottle with 'rack' has that position (row, column, depth default 0). placeOrder is Cellar.inPlaceOrder: storages in their order, then shelf (wine fridge with layers) or row, depth front first, layer from the bottom, position; bottles without a position last, oldest first (addedAt), then by id compared as text ignoring case. putAway is bottleToPutAway: among bottles without a position, one not kept for an occasion first, then the oldest, then by id; null when every bottle has a position.",
+  "cases": [
+    {
+      "about": "Two racks: the first rack's bottles first, by row, depth (front first) and position; bottles without a position last, oldest first. Put Away takes the oldest bottle not kept for an occasion.",
+      "racks": [
+        {
+          "id": "00000000-0000-4000-8000-0000000000a1",
+          "kind": "grid",
+          "rows": 3,
+          "columns": 4,
+          "depth": 2
+        },
+        {
+          "id": "00000000-0000-4000-8000-0000000000a2",
+          "kind": "grid",
+          "rows": 2,
+          "columns": 2
+        }
+      ],
+      "bottles": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "rack": "00000000-0000-4000-8000-0000000000a2",
+          "row": 0,
+          "column": 0,
+          "addedAt": "2026-01-01T00:00:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "rack": "00000000-0000-4000-8000-0000000000a1",
+          "row": 1,
+          "column": 1,
+          "depth": 1,
+          "addedAt": "2026-01-02T00:00:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000003",
+          "rack": "00000000-0000-4000-8000-0000000000a1",
+          "row": 1,
+          "column": 1,
+          "depth": 0,
+          "addedAt": "2026-01-03T00:00:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "rack": "00000000-0000-4000-8000-0000000000a1",
+          "row": 0,
+          "column": 2,
+          "addedAt": "2026-01-04T00:00:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000005",
+          "addedAt": "2026-02-01T00:00:00Z",
+          "reservedFor": "Birthday"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000006",
+          "addedAt": "2026-03-01T00:00:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000007",
+          "addedAt": "2026-04-01T00:00:00Z"
+        }
+      ],
+      "placeOrder": [
+        "00000000-0000-4000-8000-000000000004",
+        "00000000-0000-4000-8000-000000000003",
+        "00000000-0000-4000-8000-000000000002",
+        "00000000-0000-4000-8000-000000000001",
+        "00000000-0000-4000-8000-000000000005",
+        "00000000-0000-4000-8000-000000000006",
+        "00000000-0000-4000-8000-000000000007"
+      ],
+      "putAway": "00000000-0000-4000-8000-000000000006"
+    },
+    {
+      "about": "A wine fridge whose shelves hold two layers each (rows 0 and 1 on the top shelf, row 1 its bottom layer): shelf, then depth, then layer from the bottom, then position.",
+      "racks": [
+        {
+          "id": "00000000-0000-4000-8000-0000000000f1",
+          "kind": "staggered",
+          "rows": 4,
+          "columns": 5,
+          "shelfLayers": [
+            2,
+            2
+          ]
+        }
+      ],
+      "bottles": [
+        {
+          "id": "00000000-0000-4000-8000-00000000000b",
+          "rack": "00000000-0000-4000-8000-0000000000f1",
+          "row": 0,
+          "column": 0,
+          "addedAt": "2026-01-01T00:00:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-00000000000c",
+          "rack": "00000000-0000-4000-8000-0000000000f1",
+          "row": 1,
+          "column": 3,
+          "addedAt": "2026-01-01T00:00:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-00000000000d",
+          "rack": "00000000-0000-4000-8000-0000000000f1",
+          "row": 2,
+          "column": 1,
+          "addedAt": "2026-01-01T00:00:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-00000000000e",
+          "rack": "00000000-0000-4000-8000-0000000000f1",
+          "row": 3,
+          "column": 0,
+          "addedAt": "2026-01-01T00:00:00Z"
+        }
+      ],
+      "placeOrder": [
+        "00000000-0000-4000-8000-00000000000c",
+        "00000000-0000-4000-8000-00000000000b",
+        "00000000-0000-4000-8000-00000000000e",
+        "00000000-0000-4000-8000-00000000000d"
+      ],
+      "putAway": null
+    },
+    {
+      "about": "Every bottle without a position is kept for an occasion: Put Away takes the oldest of them; added the same day, the id decides (compared as text ignoring case, digits before letters).",
+      "racks": [],
+      "bottles": [
+        {
+          "id": "00000000-0000-4000-8000-00000000002a",
+          "addedAt": "2026-05-01T00:00:00Z",
+          "reservedFor": "Wedding"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000029",
+          "addedAt": "2026-05-01T00:00:00Z",
+          "reservedFor": "Wedding"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000030",
+          "addedAt": "2026-06-01T00:00:00Z",
+          "reservedFor": "Wedding"
+        }
+      ],
+      "placeOrder": [
+        "00000000-0000-4000-8000-000000000029",
+        "00000000-0000-4000-8000-00000000002a",
+        "00000000-0000-4000-8000-000000000030"
+      ],
+      "putAway": "00000000-0000-4000-8000-000000000029"
+    }
+  ]
+}
