@@ -22,6 +22,7 @@
     <string name="action_add_bottles">Ajouter des bouteilles</string>
     <string name="action_show_in_rack">Voir dans le rangement</string>
     <string name="action_put_away">Ranger</string>
+    <string name="action_put_away_ellipsis">Ranger…</string>
     <string name="action_move">Déplacer</string>
     <string name="action_mark_gone">Plus en cave</string>
     <string name="action_sort">Trier</string>
@@ -1815,6 +1816,11 @@
         <item quantity="one">%1$s, %2$d bouteille</item>
         <item quantity="many">%1$s, %2$d bouteilles</item>
         <item quantity="other">%1$s, %2$d bouteilles</item>
+    </plurals>
+    <plurals name="detail_bottles_count">
+        <item quantity="one">%d bouteille en cave</item>
+        <item quantity="many">%d bouteilles en cave</item>
+        <item quantity="other">%d bouteilles en cave</item>
     </plurals>
     <plurals name="detail_on_order">
         <item quantity="one">%d bouteille en commande</item>

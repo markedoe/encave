@@ -604,11 +604,13 @@ struct BottleRow: View {
                 .buttonStyle(.borderless)
                 .accessibilityLabel(Text("Show in Storage"))
             } else if !model.cellar.racks.isEmpty {
+                // Out of storage: put away, said in words, not only by a symbol.
                 Button(action: openPlace) {
-                    Image(systemName: BottlePlace.putAwayIcon)
+                    ActionLabel("Put Away", systemImage: BottlePlace.putAwayIcon)
                 }
-                .buttonStyle(.borderless)
-                .accessibilityLabel(Text("Put Away"))
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .accessibilityIdentifier("action.bottle.putAway")
             }
         }
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
@@ -628,9 +630,13 @@ struct BottleRow: View {
             }
             .tint(Color.destructive)
             Button {
-                router?.sheet = .moveBottle(bottleID: bottle.id)
+                if bottle.slot == nil { openPlace() } else { router?.sheet = .moveBottle(bottleID: bottle.id) }
             } label: {
-                Label("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right")
+                if bottle.slot == nil {
+                    Label("Put Away", systemImage: BottlePlace.putAwayIcon)
+                } else {
+                    Label("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right")
+                }
             }
             .tint(Color.action)
             Button {
@@ -641,8 +647,14 @@ struct BottleRow: View {
             .tint(Color.neutral)
         }
         .contextMenu {
+            // The same actions, in the same order, as every bottle's (and as on Android).
             Button("Drink", systemImage: "wineglass") { router?.sheet = .drink(bottleID: bottle.id) }
-            Button("Move…", systemImage: "arrow.up.and.down.and.arrow.left.and.right") { router?.sheet = .moveBottle(bottleID: bottle.id) }
+            if bottle.slot != nil {
+                Button("Move…", systemImage: "arrow.up.and.down.and.arrow.left.and.right") { router?.sheet = .moveBottle(bottleID: bottle.id) }
+                Button("Show in Storage", systemImage: BottlePlace.showIcon) { router?.showInRack(bottle) }
+            } else {
+                Button("Put Away…", systemImage: BottlePlace.putAwayIcon) { openPlace() }
+            }
             if bottle.reservedFor == nil {
                 Button("Keep for an Occasion…", systemImage: "gift") {
                     occasion = model.cellar.reservations.first ?? ""
@@ -651,13 +663,11 @@ struct BottleRow: View {
             } else {
                 Button("Free This Bottle", systemImage: "gift.slash") { model.reserve([bottle.id], for: nil) }
             }
-            if bottle.slot != nil {
-                Button("Show in Storage", systemImage: BottlePlace.showIcon) { router?.showInRack(bottle) }
-            } else if !model.cellar.racks.isEmpty {
-                Button("Put Away…", systemImage: BottlePlace.putAwayIcon) { openPlace() }
-            }
             BottleDocumentButtons(bottle: bottle) { router?.sheet = $0 }
             Divider()
+            if bottle.slot != nil {
+                Button("Take Out of Storage", systemImage: "tray.and.arrow.up") { model.takeOutOfRack(bottle.id, note: nil) }
+            }
             NoLongerInCellarButton { model.markGone(bottle.id) }
             Button(role: .destructive) {
                 model.deleteBottle(bottle.id)
