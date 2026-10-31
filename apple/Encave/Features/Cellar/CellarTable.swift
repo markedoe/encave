@@ -120,7 +120,7 @@ struct CellarTable: View {
             .width(min: 50, ideal: 60)
             .customizationID("bottles")
             if !isNarrow {
-                TableColumn("Storage", value: \.location) { row in
+                TableColumn("Location", value: \.location) { row in
                     Text(row.location).foregroundStyle(.secondary)
                 }
                 .width(min: 120, ideal: 200)
@@ -184,7 +184,7 @@ struct CellarTable: View {
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         // Add Bottle and the List/Table picker always stay in the toolbar; the filter and
-        // Show Wine go to the overflow menu, so the iPad toolbar (beside the tabs) never
+        // Show Inspector go to the overflow menu, so the iPad toolbar (beside the tabs) never
         // hides Add Bottle.
         ToolbarItem(placement: .primaryAction) {
             Button {
@@ -203,7 +203,7 @@ struct CellarTable: View {
             Button {
                 showsInspector.toggle()
             } label: {
-                Label("Show Wine", systemImage: "sidebar.trailing")
+                Label("Show Inspector", systemImage: "sidebar.trailing")
             }
             .help(Text("Show or hide the selected wine"))
         }
@@ -331,7 +331,7 @@ private struct SeveralWinesMenu: View {
 
     var body: some View {
         if !model.cellar.racks.isEmpty {
-            Menu("Put in Storage", systemImage: "square.grid.3x3") {
+            Menu("Put Away in", systemImage: BottlePlace.putAwayIcon) {
                 ForEach(model.cellar.racks) { rack in
                     Button(rack.name) { model.place(bottles: bottleIDs, inRack: rack.id) }
                 }

@@ -44,7 +44,7 @@ struct WineDetailView: View {
                         Button {
                             router?.sheet = .addBottle(AddBottleContext(wine: wine))
                         } label: {
-                            ActionLabel("Add", systemImage: "plus").frame(maxWidth: .infinity)
+                            ActionLabel("Add Bottles", systemImage: "plus").frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
                         .accessibilityIdentifier("action.wine.add")
@@ -599,13 +599,13 @@ struct BottleRow: View {
                 Button {
                     router?.showInRack(bottle)
                 } label: {
-                    Image(systemName: "scope")
+                    Image(systemName: BottlePlace.showIcon)
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel(Text("Show in Storage"))
             } else if !model.cellar.racks.isEmpty {
                 Button(action: openPlace) {
-                    Image(systemName: "tray.and.arrow.down")
+                    Image(systemName: BottlePlace.putAwayIcon)
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel(Text("Put Away"))
@@ -652,9 +652,9 @@ struct BottleRow: View {
                 Button("Free This Bottle", systemImage: "gift.slash") { model.reserve([bottle.id], for: nil) }
             }
             if bottle.slot != nil {
-                Button("Show in Storage", systemImage: "scope") { router?.showInRack(bottle) }
+                Button("Show in Storage", systemImage: BottlePlace.showIcon) { router?.showInRack(bottle) }
             } else if !model.cellar.racks.isEmpty {
-                Button("Put Away…", systemImage: "tray.and.arrow.down") { openPlace() }
+                Button("Put Away…", systemImage: BottlePlace.putAwayIcon) { openPlace() }
             }
             BottleDocumentButtons(bottle: bottle) { router?.sheet = $0 }
             Divider()

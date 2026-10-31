@@ -300,7 +300,7 @@ struct OpenedBottleActions: ViewModifier {
             }
             .contextMenu {
                 if let wine {
-                    Button("Show Wine", systemImage: "wineglass") { router?.perform(.openWineFromJournal(wine.id)) }
+                    Button("Show Wine", systemImage: "info.circle") { router?.perform(.openWineFromJournal(wine.id)) }
                         .accessibilityIdentifier("journal.menu.showWine")
                 }
                 Button("Edit Note", systemImage: "pencil") { router?.sheet = .editTasting(bottleID: bottle.id, fromJournal: true) }

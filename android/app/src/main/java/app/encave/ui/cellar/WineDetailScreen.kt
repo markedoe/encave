@@ -1,5 +1,6 @@
 package app.encave.ui.cellar
 
+import app.encave.ui.components.BottlePlaceIcons
 import app.encave.ui.components.ActionButtonPair
 import app.encave.ui.components.ActionContent
 import androidx.compose.ui.graphics.Color
@@ -25,11 +26,9 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.OpenWith
 import androidx.compose.material.icons.outlined.LocalBar
 import androidx.compose.material.icons.outlined.Thermostat
-import androidx.compose.material.icons.outlined.VolunteerActivism
 import androidx.compose.material.icons.outlined.WineBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -759,7 +758,7 @@ private fun BottleRow(
                         if (onShowInRack != null) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.action_show_in_rack)) },
-                                leadingIcon = { Icon(Icons.Outlined.GridView, contentDescription = null) },
+                                leadingIcon = { Icon(BottlePlaceIcons.Show, contentDescription = null) },
                                 onClick = { menu = false; onShowInRack() },
                             )
                         }
@@ -786,7 +785,7 @@ private fun BottleRow(
                         BottleDocumentMenuItems(bottle.attachments != null, onDocuments) { menu = false }
                         DropdownMenuItem(
                             text = { MenuText(stringResource(R.string.action_mark_gone), stringResource(R.string.action_mark_gone_detail)) },
-                            leadingIcon = { Icon(Icons.Outlined.VolunteerActivism, contentDescription = null) },
+                            leadingIcon = { Icon(Icons.Outlined.RemoveCircleOutline, contentDescription = null) },
                             onClick = { menu = false; onGone() },
                             modifier = Modifier.testTag("action.bottle.gone"),
                         )

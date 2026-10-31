@@ -25,7 +25,6 @@
     <string name="action_put_away">Put away</string>
     <string name="action_move">Move</string>
     <string name="action_mark_gone">No longer in cellar</string>
-    <string name="action_open_wine">Open</string>
     <string name="action_sort">Sort</string>
     <string name="action_clear_search">Clear search</string>
     <string name="action_load_sample">Load sample cellar</string>
@@ -37,7 +36,6 @@
     <string name="action_move_down">Move %1$s down</string>
     <string name="action_insights">Insights</string>
     <string name="action_surprise">Another idea</string>
-    <string name="action_remove_from_rack">Take out of storage</string>
     <string name="action_clear_filters">Clear filters</string>
     <string name="action_change">Change</string>
     <string name="action_put_back">Put back in the cellar</string>
@@ -104,7 +102,7 @@
     <string name="detail_window_description">Drinking window from %1$d to %2$d. %3$s.</string>
     <string name="detail_window_missing">Add a vintage or a drinking window to know when to open it.</string>
     <string name="detail_bottles">In the cellar</string>
-    <string name="detail_tastings">Past tastings</string>
+    <string name="detail_tastings">Tastings</string>
     <string name="detail_details">Details</string>
     <string name="detail_added">Added %1$s</string>
     <string name="detail_no_bottles">No bottle left in the cellar.</string>
@@ -621,7 +619,6 @@
     <string name="rack_non_vintage">NV</string>
     <string name="rack_key_count">%1$d of %2$d bottles</string>
     <string name="action_bottle_list">Bottle list</string>
-    <string name="action_wine_page">Wine page</string>
     <string name="rack_list_empty_title">Empty</string>
     <string name="rack_list_empty">Tap a position in the storage to add a bottle there.</string>
     <string name="sample_bins">Diamond bins</string>
@@ -1083,12 +1080,10 @@
     <string name="help_tonight_reminders">Turn on **Reminders** in Settings, or with **Turn on** when Tonight offers it: at the start of each month (around 10:00 on the 1st), if bottles should be drunk this year, have just become ready or are past their peak, a notification says how many; another comes on the morning bottles on order are expected. It is worked out on this device. If notifications are off for Encave, **Open settings** takes you to the system settings to turn them on.</string>
     <string name="shortcut_scan">Scan a bottle</string>
     <string name="shortcut_tonight">What to open tonight</string>
-    <string name="action_select_wines">Select bottles</string>
     <string name="action_select">Select</string>
     <string name="selection_count">Selected: %1$d</string>
     <string name="action_end_selection">End selection</string>
-    <string name="action_place_in_rack">Put in storage</string>
-    <string name="action_take_out_of_racks">Take out of storage</string>
+    <string name="action_place_in_rack">Put away in</string>
     <string name="confirm_delete_wines_title">Delete these wines?</string>
     <string name="confirm_delete_wines_body">Their bottles and tastings are deleted too. You can undo right after.</string>
     <string name="action_delete_wines">Delete bottles</string>

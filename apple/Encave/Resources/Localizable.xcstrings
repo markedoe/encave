@@ -9949,6 +9949,16 @@
         }
       }
     },
+    "Location": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rangement"
+          }
+        }
+      }
+    },
     "Long": {
       "localizations": {
         "fr": {
@@ -13385,6 +13395,16 @@
         }
       }
     },
+    "Put Away in": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ranger dans"
+          }
+        }
+      }
+    },
     "Put Away…": {
       "localizations": {
         "fr": {
@@ -13401,16 +13421,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Remettre en cave"
-          }
-        }
-      }
-    },
-    "Put in Storage": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mettre dans un rangement"
           }
         }
       }
@@ -15441,6 +15451,16 @@
         }
       }
     },
+    "Show Inspector": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher l’inspecteur"
+          }
+        }
+      }
+    },
     "Show Photo": {
       "localizations": {
         "fr": {
@@ -15506,7 +15526,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Afficher le vin"
+            "value": "Voir le vin"
           }
         }
       }
@@ -16566,7 +16586,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sortir des rangements"
+            "value": "Sortir du rangement"
           }
         }
       }
@@ -19477,16 +19497,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vin"
-          }
-        }
-      }
-    },
-    "Wine Page": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fiche du vin"
           }
         }
       }

@@ -1,5 +1,7 @@
 package app.encave.ui.cellar
 
+import androidx.compose.material.icons.outlined.RemoveCircleOutline
+import app.encave.ui.components.BottlePlaceIcons
 import app.encave.ui.components.measure
 import app.encave.ui.components.rememberFabSpace
 import androidx.compose.material3.ButtonDefaults
@@ -58,7 +60,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.LocalBar
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.Grass
@@ -67,7 +68,6 @@ import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Deselect
 import androidx.compose.material.icons.outlined.SelectAll
-import androidx.compose.material.icons.outlined.VolunteerActivism
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.BookmarkAdd
 import androidx.compose.material.icons.outlined.BookmarkBorder
@@ -707,7 +707,7 @@ private fun FilterBar(
                     )
                 }
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.action_select_wines)) },
+                    text = { Text(stringResource(R.string.action_select)) },
                     onClick = { sortMenu = false; onSelect() },
                     leadingIcon = { Icon(Icons.Outlined.Checklist, contentDescription = null) },
                     modifier = Modifier.testTag("cellar.select"),
@@ -936,7 +936,7 @@ private fun SelectionTopBar(
                 IconButton(
                     onClick = { rackMenu = true }, enabled = count > 0 && racks.isNotEmpty(),
                     modifier = Modifier.testTag("cellar.select.place"),
-                ) { Icon(Icons.Outlined.GridView, contentDescription = stringResource(R.string.action_place_in_rack)) }
+                ) { Icon(BottlePlaceIcons.PutAway, contentDescription = stringResource(R.string.action_place_in_rack)) }
                 DropdownMenu(expanded = rackMenu, onDismissRequest = { rackMenu = false }) {
                     racks.forEach { rack ->
                         DropdownMenuItem(text = { Text(rack.name) }, onClick = { rackMenu = false; onPlace(rack) })
@@ -952,7 +952,7 @@ private fun SelectionTopBar(
                 }
                 DropdownMenu(expanded = moreMenu, onDismissRequest = { moreMenu = false }) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_take_out_of_racks)) },
+                        text = { Text(stringResource(R.string.action_take_out_of_rack)) },
                         leadingIcon = { Icon(Icons.Outlined.Outbox, contentDescription = null) },
                         onClick = { moreMenu = false; onTakeOut() },
                     )
@@ -964,7 +964,7 @@ private fun SelectionTopBar(
                     )
                     DropdownMenuItem(
                         text = { MenuText(stringResource(R.string.action_mark_gone), stringResource(R.string.action_mark_gone_detail)) },
-                        leadingIcon = { Icon(Icons.Outlined.VolunteerActivism, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Outlined.RemoveCircleOutline, contentDescription = null) },
                         onClick = { moreMenu = false; onGone() },
                         modifier = Modifier.testTag("cellar.select.gone"),
                     )

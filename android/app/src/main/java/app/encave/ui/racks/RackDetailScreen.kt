@@ -1,5 +1,7 @@
 package app.encave.ui.racks
 
+import androidx.compose.material.icons.outlined.RemoveCircleOutline
+import androidx.compose.material.icons.outlined.Outbox
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
@@ -35,8 +37,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
-import androidx.compose.material.icons.automirrored.outlined.Logout
-import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.AttachFile
@@ -47,7 +47,6 @@ import androidx.compose.material.icons.outlined.LocalBar
 import androidx.compose.material.icons.outlined.OpenWith
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.UploadFile
-import androidx.compose.material.icons.outlined.VolunteerActivism
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
@@ -286,7 +285,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
             val moveLabel = stringResource(R.string.action_move)
             val checkLabel = stringResource(R.string.rack_check_one_by_one)
             val drinkLabel = stringResource(R.string.action_drink)
-            val winePageLabel = stringResource(R.string.action_wine_page)
+            val winePageLabel = stringResource(R.string.action_show_wine)
             ZoomableRack(rack, zoom, Modifier.weight(1f).fillMaxWidth()) { cellSize, zoomHere ->
                 RackGrid(
                     rack = rack,
@@ -588,12 +587,12 @@ private fun SelectedBottleCard(
                 )
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.action_take_out_of_rack)) },
-                    leadingIcon = { Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null) },
+                    leadingIcon = { Icon(Icons.Outlined.Outbox, contentDescription = null) },
                     onClick = { menu = false; onTakeOut() },
                 )
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.action_mark_gone)) },
-                    leadingIcon = { Icon(Icons.Outlined.VolunteerActivism, contentDescription = null) },
+                    leadingIcon = { Icon(Icons.Outlined.RemoveCircleOutline, contentDescription = null) },
                     onClick = { menu = false; onGone() },
                 )
             }
@@ -629,7 +628,7 @@ private fun SelectedBottleCard(
             }
         }
         FilledTonalIconButton(onClick = onWinePage, modifier = Modifier.testTag("rack.selection.wine")) {
-            Icon(Icons.Outlined.Info, contentDescription = stringResource(R.string.action_wine_page))
+            Icon(Icons.Outlined.Info, contentDescription = stringResource(R.string.action_show_wine))
         }
     }
     Surface(
@@ -832,12 +831,12 @@ private fun BottleActionsSheet(
                 supportingContent = { Text("${rack.name} · ${bottle.slot?.let { rack.displayLabel(it, LocalResources.current) }.orEmpty()}") },
             )
             listOf(
-                Triple(Icons.AutoMirrored.Outlined.OpenInNew, R.string.action_open_wine, onOpen),
+                Triple(Icons.Outlined.Info, R.string.action_show_wine, onOpen),
                 Triple(Icons.Outlined.LocalBar, R.string.action_drink, onDrink),
                 Triple(Icons.Outlined.OpenWith, R.string.action_move, onMove),
                 Triple(Icons.Outlined.OpenWith, R.string.action_move_other_rack, onMoveElsewhere),
-                Triple(Icons.AutoMirrored.Outlined.Logout, R.string.action_remove_from_rack, onTakeOut),
-                Triple(Icons.Outlined.VolunteerActivism, R.string.action_mark_gone, onGone),
+                Triple(Icons.Outlined.Outbox, R.string.action_take_out_of_rack, onTakeOut),
+                Triple(Icons.Outlined.RemoveCircleOutline, R.string.action_mark_gone, onGone),
             ).let { actions ->
                 // The documents before the bottle leaves: "Documents…" when it has some.
                 val documents = listOfNotNull(

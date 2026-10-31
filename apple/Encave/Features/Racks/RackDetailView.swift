@@ -453,12 +453,12 @@ private struct SelectedBottleCard: View {
                                     : Text("\(bottle.attachments?.count ?? 0) documents"))
                 .accessibilityIdentifier("rack.selection.documents")
                 NavigationLink(value: WineRoute(id: bottle.wineID)) {
-                    Label("Wine Page", systemImage: "info.circle")
+                    Label("Show Wine", systemImage: "info.circle")
                         .labelStyle(.iconOnly)
                         .font(.title3)
                 }
                 .buttonStyle(.bordered)
-                .accessibilityLabel(Text("Wine Page"))
+                .accessibilityLabel(Text("Show Wine"))
                 .accessibilityIdentifier("rack.selection.wine")
             }
         }

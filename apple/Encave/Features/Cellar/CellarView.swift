@@ -383,7 +383,7 @@ extension CellarList {
                     }
                 }
             } label: {
-                Label("Put in Storage", systemImage: "square.grid.3x3")
+                Label("Put Away in", systemImage: BottlePlace.putAwayIcon)
             }
             .disabled(picked.isEmpty || model.cellar.racks.isEmpty)
             Button {
@@ -716,7 +716,7 @@ struct WineContextMenu: View {
         if let bottle = group.bottles.bottleToOpen {
             Button("Drink a Bottle", systemImage: "wineglass") { router?.sheet = .drink(bottleID: bottle.id) }
             if bottle.slot != nil {
-                Button("Show in Storage", systemImage: "square.grid.3x3") { router?.showInRack(bottle) }
+                Button("Show in Storage", systemImage: BottlePlace.showIcon) { router?.showInRack(bottle) }
             }
             Button("Move…", systemImage: "arrow.up.and.down.and.arrow.left.and.right") {
                 router?.sheet = .moveBottle(bottleID: bottle.id)

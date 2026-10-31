@@ -24,7 +24,6 @@
     <string name="action_put_away">Ranger</string>
     <string name="action_move">Déplacer</string>
     <string name="action_mark_gone">Plus en cave</string>
-    <string name="action_open_wine">Ouvrir</string>
     <string name="action_sort">Trier</string>
     <string name="action_clear_search">Effacer la recherche</string>
     <string name="action_load_sample">Charger une cave d’exemple</string>
@@ -36,7 +35,6 @@
     <string name="action_move_down">Descendre %1$s</string>
     <string name="action_insights">Statistiques</string>
     <string name="action_surprise">Autre idée</string>
-    <string name="action_remove_from_rack">Sortir du rangement</string>
     <string name="action_clear_filters">Effacer les filtres</string>
     <string name="action_change">Changer</string>
     <string name="action_put_back">Remettre en cave</string>
@@ -103,7 +101,7 @@
     <string name="detail_window_description">Fenêtre de dégustation de %1$d à %2$d. %3$s.</string>
     <string name="detail_window_missing">Ajoutez un millésime ou une fenêtre de dégustation pour savoir quand l’ouvrir.</string>
     <string name="detail_bottles">En cave</string>
-    <string name="detail_tastings">Dégustations passées</string>
+    <string name="detail_tastings">Dégustations</string>
     <string name="detail_details">Détails</string>
     <string name="detail_added">Ajoutée le %1$s</string>
     <string name="detail_no_bottles">Plus aucune bouteille en cave.</string>
@@ -620,7 +618,6 @@
     <string name="rack_non_vintage">NM</string>
     <string name="rack_key_count">%1$d sur %2$d bouteilles</string>
     <string name="action_bottle_list">Liste des bouteilles</string>
-    <string name="action_wine_page">Fiche du vin</string>
     <string name="rack_list_empty_title">Vide</string>
     <string name="rack_list_empty">Touchez une position du rangement pour y ajouter une bouteille.</string>
     <string name="sample_bins">Cases en losange</string>
@@ -1082,12 +1079,10 @@
     <string name="help_tonight_reminders">Activez **Rappels** dans les réglages, ou avec **Activer** quand Ce soir le propose : au début de chaque mois (vers 10 h le 1ᵉʳ), si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, une notification indique combien ; une autre arrive le matin du jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil. Si les notifications sont désactivées pour Encave, **Ouvrir les réglages** mène aux réglages du système pour les activer.</string>
     <string name="shortcut_scan">Scanner une bouteille</string>
     <string name="shortcut_tonight">Que boire ce soir</string>
-    <string name="action_select_wines">Sélectionner des bouteilles</string>
     <string name="action_select">Sélectionner</string>
     <string name="selection_count">Sélection : %1$d</string>
     <string name="action_end_selection">Terminer la sélection</string>
-    <string name="action_place_in_rack">Mettre dans un rangement</string>
-    <string name="action_take_out_of_racks">Sortir des rangements</string>
+    <string name="action_place_in_rack">Ranger dans</string>
     <string name="confirm_delete_wines_title">Supprimer ces vins ?</string>
     <string name="confirm_delete_wines_body">Leurs bouteilles et dégustations sont aussi supprimées. Vous pouvez annuler juste après.</string>
     <string name="action_delete_wines">Supprimer les bouteilles</string>
@@ -1402,7 +1397,7 @@
     <string name="drink_choice_kept">%1$s · Gardée pour %2$s</string>
     <string name="action_turn_on">Activer</string>
     <string name="action_not_now">Plus tard</string>
-    <string name="action_show_wine">Afficher le vin</string>
+    <string name="action_show_wine">Voir le vin</string>
     <string name="action_edit_note">Modifier la note</string>
     <string name="tonight_all_reserved">Toutes vos bouteilles sont réservées pour une occasion</string>
     <string name="tonight_reserved_left_out">Bouteilles réservées pour une occasion, non suggérées : %1$d</string>

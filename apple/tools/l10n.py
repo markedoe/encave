@@ -28,6 +28,9 @@ def widget_sources():
     return glob.glob(str(ROOT / "EncaveWidgets" / "**" / "*.swift"), recursive=True) + [str(p) for p in WIDGET_SHARED]
 
 FR = {
+    'Put Away in': 'Ranger dans',
+    'Show Inspector': 'Afficher l’inspecteur',
+    'Location': 'Rangement',
     'Put Away': 'Ranger',
     'Put Away…': 'Ranger…',
     'Put Away Bottle': 'Ranger la bouteille',
@@ -86,8 +89,7 @@ FR = {
     'Edit the selected wine': 'Modifier le vin sélectionné',
     'Drink a bottle of the selected wine': 'Boire une bouteille du vin sélectionné',
     'Delete the selected wine': 'Supprimer le vin sélectionné',
-    'Put in Storage': 'Mettre dans un rangement',
-    'Take Out of Storage': 'Sortir des rangements',
+    'Take Out of Storage': 'Sortir du rangement',
     'Delete Wines': 'Supprimer les vins',
     'Delete Bottles': 'Supprimer les bouteilles',
     'Delete %@ (%@)?': 'Supprimer %@ (%@) ?',
@@ -485,7 +487,7 @@ FR = {
     'Table': 'Tableau',
     'View': 'Affichage',
     'No bottles': 'Aucune bouteille',
-    'Show Wine': 'Afficher le vin',
+    'Show Wine': 'Voir le vin',
     'Show or hide the selected wine': 'Afficher ou masquer le vin sélectionné',
     'Show the cellar as a list or a table': 'Afficher la cave en liste ou en tableau',
     'When to drink': 'Quand boire',
@@ -719,7 +721,6 @@ FR = {
     "NV": "NM",
     'Shows where its bottles are in this storage.': 'Montre où sont ses bouteilles dans ce rangement.',
     'Tap a free position to add a bottle there.': 'Touchez une position libre pour y ajouter une bouteille.',
-    "Wine Page": "Fiche du vin",
     "%@, %lld bottles": "%1$@, %2$lld bouteilles",
     "About": "À propos",
     "Add": "Ajouter",

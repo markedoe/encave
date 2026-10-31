@@ -15,7 +15,7 @@ enum RackCellQuickAction {
 /// How the rack screen reacts to its places beyond a tap.
 struct RackInteraction {
     var mode: RackMode = .none
-    /// Move, Drink, Wine Page on a place holding one bottle, when browsing.
+    /// Move, Drink, Show Wine on a place holding one bottle, when browsing.
     var perform: ((RackCellQuickAction, Bottle) -> Void)?
     /// While checking: the bottles of a place, to check them one by one.
     var checkOneByOne: ((RackCell) -> Void)?
@@ -798,7 +798,7 @@ struct RackCellView: View {
            let perform = interaction.perform {
             Button("Move") { perform(.move, bottle) }
             Button("Drink") { perform(.drink, bottle) }
-            Button("Wine Page") { perform(.winePage, bottle) }
+            Button("Show Wine") { perform(.winePage, bottle) }
         }
         if canCheckOneByOne {
             Button("Check One by One…") { interaction.checkOneByOne?(cell) }

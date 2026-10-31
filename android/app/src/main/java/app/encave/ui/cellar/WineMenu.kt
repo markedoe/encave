@@ -1,12 +1,13 @@
 package app.encave.ui.cellar
 
+import app.encave.ui.racks.icon
+import app.encave.ui.components.BottlePlaceIcons
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.LocalBar
 import androidx.compose.material.icons.outlined.OpenWith
 import androidx.compose.material3.DropdownMenu
@@ -84,7 +85,7 @@ fun WineMenuBox(
     val actions = listOfNotNull(
         WineAction(stringResource(R.string.action_drink), Icons.Outlined.LocalBar, "drink", run = onDrink).takeIf { bottle != null },
         placed?.let { (shown, at) ->
-            WineAction(stringResource(R.string.action_show_in_rack), Icons.Outlined.GridView, "show_in_rack") {
+            WineAction(stringResource(R.string.action_show_in_rack), BottlePlaceIcons.Show, "show_in_rack") {
                 navigator.open(RackDetailRoute(at.rackId.toString(), shown.id.toString()))
             }
         },
@@ -115,7 +116,7 @@ fun WineMenuBox(
                     DropdownMenuItem(
                         text = { Text(rack.name) },
                         onClick = { dismiss(); moveIn(rack.id.toString()) },
-                        leadingIcon = { Icon(Icons.Outlined.GridView, contentDescription = null) },
+                        leadingIcon = { Icon(rack.icon, contentDescription = null) },
                     )
                 }
             } else {
