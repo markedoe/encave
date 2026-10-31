@@ -520,12 +520,24 @@ final class CellarModel {
         }
     }
 
+    /// Put Away in the banner after bottles joined the cellar without a position, when there
+    /// is a storage: one bottle opens its Move sheet, several the Storage section, which
+    /// lists them.
+    private func putAwayAction(_ bottleIDs: [UUID]) -> ToastAction? {
+        guard !cellar.racks.isEmpty else { return nil }
+        let loose = bottleIDs.filter { cellar.bottles[$0]?.status == .inCellar && cellar.bottles[$0]?.slot == nil }
+        guard let first = loose.first else { return nil }
+        return ToastAction(title: String(localized: "Put Away")) { [weak self] in
+            if loose.count == 1 { self?.sheet = .moveBottle(bottleID: first) } else { self?.request(.show(.racks)) }
+        }
+    }
+
     /// Ordered bottles that arrived. They join the cellar without a place.
     func receive(_ bottleIDs: [UUID]) {
         let previous = bottleIDs.compactMap { cellar.bottles[$0] }
         guard !previous.isEmpty, update({ try $0.receive(bottleIDs) }) else { return }
         successCount += 1
-        showToast(String(localized: "Bottles received: \(previous.count)")) { [weak self] in
+        showToast(String(localized: "Bottles received: \(previous.count)"), action: putAwayAction(bottleIDs)) { [weak self] in
             self?.update { cellar in previous.forEach { cellar.bottles[$0.id] = $0 } }
         }
     }
@@ -740,7 +752,7 @@ final class CellarModel {
     func putBack(_ bottleID: UUID) {
         guard let bottle = cellar.bottles[bottleID], bottle.status == .consumed,
               update({ $0.undoDrink(bottleID, previousSlot: nil) }) else { return }
-        showToast(String(localized: "Bottle put back in the cellar")) { [weak self] in
+        showToast(String(localized: "Bottle put back in the cellar"), action: putAwayAction([bottleID])) { [weak self] in
             self?.update { cellar in
                 // As it was, unless it changed meanwhile.
                 guard cellar.bottles[bottleID]?.status == .inCellar else { return }
