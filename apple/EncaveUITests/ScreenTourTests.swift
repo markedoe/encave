@@ -1434,6 +1434,10 @@ final class ScreenTourTests: XCTestCase {
                 if require("wine.putAwayBanner", "wine page: no banner for its bottle out of storage", timeout: 10) != nil {
                     snapshot("wine-put-away")
                 }
+                // The Cellar back on its list (on iPhone the wine page was pushed on it).
+                #if os(iOS)
+                if app.horizontalSizeClassIsCompact { goBack() }
+                #endif
                 openSection(1, "racks")
             } else {
                 #if os(macOS)
