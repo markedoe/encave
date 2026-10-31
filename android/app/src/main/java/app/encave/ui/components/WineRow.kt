@@ -99,7 +99,13 @@ fun LocationLine(cellar: Cellar, bottles: List<Bottle>) {
     val resources = LocalResources.current
     val none = stringResource(R.string.location_none)
     val ordered = cellar.inPlaceOrder(bottles)
-    val labels = ordered.map { cellar.displayLocation(it, resources) ?: none }
+    // The storage and its place kept together on one line (a no-break space before the dot).
+    val labels = ordered.map { bottle ->
+        val slot = bottle.slot
+        val rack = slot?.let { cellar.rack(it.rackId) }
+        if (slot != null && rack != null) "${rack.name}$SEPARATOR${rack.displayLabel(slot, resources)}"
+        else bottle.storageNote?.takeIf(String::isNotBlank) ?: none
+    }
     val place = FirstPlace.of(labels) ?: return
     val text = if (place.others == 0) place.first
     else stringResource(R.string.location_and_more, place.first, pluralStringResource(R.plurals.cell_bin_more, place.others, place.others))
