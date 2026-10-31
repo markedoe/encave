@@ -1,5 +1,10 @@
 package app.encave.ui.racks
 
+import androidx.compose.material.icons.outlined.VerticalAlignBottom
+import androidx.compose.material.icons.Icons
+import app.encave.ui.components.ActionContent
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.res.pluralStringResource
 import app.encave.ui.components.placeLabel
 import app.encave.ui.components.locationIcon
 import app.encave.ui.components.WineThumbnail
@@ -63,7 +68,7 @@ fun MoveBottleSheet(viewModel: AppViewModel, cellar: Cellar, bottle: Bottle, onD
     // The bottle's rack first, then the others in their order.
     val racks = cellar.racks.sortedBy { if (it.id == bottle.slot?.rackId) 0 else 1 }
     // Its own storage; out of storage, where its wine's other bottles are.
-    var rackId by rememberSaveable { mutableStateOf(cellar.storageToOpen(bottle)?.id?.toString() ?: NO_RACK) }
+    var rackId by rememberSaveable { mutableStateOf(cellar.storageToOpen(bottle, viewModel.preferences.lastStorageId)?.id?.toString() ?: NO_RACK) }
     var note by rememberSaveable { mutableStateOf(bottle.storageNote.orEmpty()) }
     var expanded by rememberSaveable { mutableStateOf(false) }
     val rack = racks.firstOrNull { it.id.toString() == rackId }
@@ -109,13 +114,25 @@ fun MoveBottleSheet(viewModel: AppViewModel, cellar: Cellar, bottle: Bottle, onD
                     modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).testTag("move.rack"),
                 )
                 ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    // Each storage with its free positions, to choose one with room at a glance.
                     racks.forEach { option ->
-                        DropdownMenuItem(text = { Text(option.name) }, onClick = { rackId = option.id.toString(); expanded = false })
+                        val free = cellar.freeSlots(option).size
+                        DropdownMenuItem(
+                            text = { Text("${option.name} · ${pluralStringResource(R.plurals.free_positions, free, free)}") },
+                            onClick = { rackId = option.id.toString(); expanded = false },
+                        )
                     }
                     DropdownMenuItem(text = { Text(noRack) }, onClick = { rackId = NO_RACK; expanded = false })
                 }
             }
             if (rack != null) {
+                // One tap: the first free position, in the order the storage fills.
+                val firstFree = cellar.freeSlots(rack).firstOrNull()
+                OutlinedButton(
+                    onClick = { firstFree?.let { viewModel.move(bottle.id, it); onDismiss() } },
+                    enabled = firstFree != null,
+                    modifier = Modifier.testTag("move.first_free"),
+                ) { ActionContent(stringResource(R.string.move_first_free), Icons.Outlined.VerticalAlignBottom) }
                 // Pinch or double-tap to zoom in on a large rack, as on the rack screen.
                 key(rack.id) {
                     ZoomableRack(rack, rememberRackZoomState(rack), Modifier.fillMaxWidth().height(360.dp), padding = Dimens.xs) { cellSize, zoomHere ->

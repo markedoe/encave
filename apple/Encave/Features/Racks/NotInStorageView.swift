@@ -9,13 +9,18 @@ struct NotInStorageRoute: Hashable {}
 /// its first free position. The same list as Android's.
 struct NotInStorageView: View {
     @Environment(CellarModel.self) private var model
+    @State private var query = ""
 
     var body: some View {
-        let bottles = model.cellar.looseBottlesByWine
+        let all = model.cellar.looseBottlesByWine
+        let bottles = model.cellar.looseBottles(all, matching: query)
         List {
-            if bottles.isEmpty {
+            if all.isEmpty {
                 ContentUnavailableView("Every bottle is in storage", systemImage: BottlePlace.notInStorageIcon,
                                        description: Text("Bottles without a position appear here, to put them away."))
+                    .listRowBackground(Color.clear)
+            } else if bottles.isEmpty {
+                ContentUnavailableView.search(text: query)
                     .listRowBackground(Color.clear)
             } else {
                 Section {
@@ -30,10 +35,31 @@ struct NotInStorageView: View {
             }
         }
         .navigationTitle("Not in Storage")
+        .searchable(text: $query, prompt: Text("Wine, producer, region, grape, vintage"))
+        .toolbar {
+            // All at once: each beside its wine's other bottles, else where there is most room.
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    model.putAllAway()
+                } label: {
+                    Label("Put All Away", systemImage: BottlePlace.putAwayIcon)
+                }
+                .disabled(all.isEmpty || model.cellar.racks.isEmpty)
+                .accessibilityIdentifier("notInStorage.putAll")
+            }
+        }
     }
 }
 
 extension Cellar {
+    /// Those of `bottles` whose wine matches every word of `query` (all when it is empty).
+    func looseBottles(_ bottles: [Bottle], matching query: String) -> [Bottle] {
+        let needle = query.trimmingCharacters(in: .whitespaces)
+        guard !needle.isEmpty else { return bottles }
+        let ids = Set(groups(matching: needle).map(\.wine.id))
+        return bottles.filter { ids.contains($0.wineID) }
+    }
+
     /// The bottles not in storage, wine by wine (by name), oldest first within a wine.
     var looseBottlesByWine: [Bottle] {
         bottlesNotInStorage.sorted { a, b in
@@ -153,11 +179,12 @@ struct PutBottleHereView: View {
     @Environment(CellarModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     let slot: Slot
+    @State private var query = ""
 
     var body: some View {
         NavigationStack {
             List {
-                ForEach(model.cellar.looseBottlesByWine) { bottle in
+                ForEach(model.cellar.looseBottles(model.cellar.looseBottlesByWine, matching: query)) { bottle in
                     Button {
                         // Taken meanwhile (sync, another window): nothing moves.
                         if model.cellar.bottle(at: slot) == nil { model.move(bottle.id, to: slot) }
@@ -172,6 +199,7 @@ struct PutBottleHereView: View {
             }
             .navigationTitle(Text(placeName))
             .inlineTitle()
+            .searchable(text: $query, prompt: Text("Wine, producer, region, grape, vintage"))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }

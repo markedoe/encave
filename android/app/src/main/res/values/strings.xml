@@ -24,6 +24,7 @@
     <string name="action_add_bottles">Add bottles</string>
     <string name="action_show_in_rack">Show in storage</string>
     <string name="action_put_away">Put away</string>
+    <string name="action_put_all_away">Put all away</string>
     <string name="not_in_storage_title">Not in storage</string>
     <string name="not_in_storage_empty_title">Every bottle is in storage</string>
     <string name="not_in_storage_empty_body">Bottles without a position appear here, to put them away.</string>
@@ -746,7 +747,7 @@
     <string name="help_racks_moving_title">Moving bottles</string>
     <string name="help_racks_moving">Tap a bottle, then **Move**, then the new position (or touch and hold a bottle); Back cancels. From the Cellar, touch and hold a wine and choose **Move…**. A position with room takes the bottle; where each position holds one bottle, tapping another bottle swaps them. To put it in other storage, or out of storage with a note on where it is, choose **Move to other storage…** in the bottle’s menu, or **Move…** on the wine’s page. **Undo** puts it back.</string>
     <string name="help_racks_put_away_title">Putting bottles away</string>
-    <string name="help_racks_put_away">A bottle without a position (added with **Somewhere else**, received from an order, put back from the Journal or taken out of storage) says **Not in storage**. To put it away, tap **Put away** beside it on the wine’s page, or choose **Put away…** in the wine’s menu in the Cellar or Tonight: the storage holding the wine’s other bottles opens; tap a position. Storage lists every bottle without a position under **Not in storage**, its first row, and a free position tapped while some are waiting offers **Put a bottle here…**. **Undo** puts it back.</string>
+    <string name="help_racks_put_away">A bottle without a position (added with **Somewhere else**, received from an order, put back from the Journal or taken out of storage) says **Not in storage**, and its wine’s page says how many above the bottles. To put it away, tap **Put away** beside it on the wine’s page, or choose **Put away…** in the wine’s menu in the Cellar or Tonight: the storage holding the wine’s other bottles opens, with the free positions of each storage; tap a position, or **First free position**. Storage lists every bottle without a position under **Not in storage**, its first row, where **Put all away** puts each beside its wine’s other bottles, else where there is most room; a free position tapped while some are waiting offers **Put a bottle here…**. **Undo** puts it back.</string>
     <string name="help_racks_irregular_title">Rows and shelves that differ</string>
     <string name="help_racks_irregular">Rows need not all be the same: when creating or editing a storage, turn on **Rows are not all the same** (**Shelves are not all the same** for a wine fridge), then set each row or shelf on its own: its positions, its **Rows deep** (bottles one behind the other) and, on a fridge in layers, its layers and **Back bottles head-to-tail**. For storage under a sloped ceiling or a staircase, a single row between rows two deep, or a fridge with one shelf two deep head-to-tail and another single. A row one bottle deep has no front or back: its positions read like **B3**.</string>
     <string name="help_tonight_title">Tonight and drinking windows</string>
@@ -1186,6 +1187,7 @@
     <string name="rack_displaced_confirm">Take them out and save</string>
     <string name="move_title">Move bottle</string>
     <string name="move_title_put_away">Put away bottle</string>
+    <string name="move_first_free">First free position</string>
     <string name="move_rack">Storage</string>
     <string name="move_no_rack">No storage</string>
     <string name="move_grid_hint">Tap a position. A position with room takes the bottle; where each position holds one bottle, tapping another bottle swaps them.</string>
@@ -1814,6 +1816,10 @@
     <plurals name="detail_bottles_count">
         <item quantity="one">%d bottle in the cellar</item>
         <item quantity="other">%d bottles in the cellar</item>
+    </plurals>
+    <plurals name="free_positions">
+        <item quantity="one">%d free position</item>
+        <item quantity="other">%d free positions</item>
     </plurals>
     <plurals name="not_in_storage_count">
         <item quantity="one">%d bottle not in storage</item>

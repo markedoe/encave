@@ -1,5 +1,6 @@
 package app.encave.ui.racks
 
+import androidx.compose.material3.HorizontalDivider
 import app.encave.ui.components.styleLine
 import app.encave.ui.components.WineThumbnail
 import androidx.compose.material.icons.outlined.CardGiftcard
@@ -642,14 +643,10 @@ private fun SelectedBottleCard(
             IconButton(onClick = { menu = true }, modifier = Modifier.testTag("rack.selection.more")) {
                 Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
             }
-            // The bottle's other actions, in the same order as everywhere (and on Apple).
+            // The bottle's other actions, in the order every bottle lists them (docs/PRESENTATION.md):
+            // the storage ones, Keep, then No longer in cellar behind a divider. Show in storage is
+            // left out: the bottle is already shown in its storage.
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(if (bottle.reservedFor == null) R.string.action_keep_for_occasion else R.string.action_free_bottle)) },
-                    leadingIcon = { Icon(Icons.Outlined.CardGiftcard, contentDescription = null) },
-                    onClick = { menu = false; onReserve() },
-                    modifier = Modifier.testTag("rack.selection.reserve"),
-                )
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.action_move_other_rack)) },
                     leadingIcon = { Icon(Icons.Outlined.OpenWith, contentDescription = null) },
@@ -661,6 +658,13 @@ private fun SelectedBottleCard(
                     leadingIcon = { Icon(Icons.Outlined.Outbox, contentDescription = null) },
                     onClick = { menu = false; onTakeOut() },
                 )
+                DropdownMenuItem(
+                    text = { Text(stringResource(if (bottle.reservedFor == null) R.string.action_keep_for_occasion else R.string.action_free_bottle)) },
+                    leadingIcon = { Icon(Icons.Outlined.CardGiftcard, contentDescription = null) },
+                    onClick = { menu = false; onReserve() },
+                    modifier = Modifier.testTag("rack.selection.reserve"),
+                )
+                HorizontalDivider()
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.action_mark_gone)) },
                     leadingIcon = { Icon(Icons.Outlined.RemoveCircleOutline, contentDescription = null) },
@@ -902,8 +906,8 @@ private fun BottleActionsSheet(
                 headlineContent = { Text(title, style = MaterialTheme.typography.titleLarge) },
                 supportingContent = { Text("${rack.name} · ${bottle.slot?.let { rack.displayLabel(it, LocalResources.current) }.orEmpty()}") },
             )
-            // The bottle's actions in the same order as everywhere (and on Apple): Drink, Move,
-            // Keep, its documents, Show wine, then Take out and No longer in cellar.
+            // The bottle's actions in the same order as everywhere (and on Apple): Drink, the
+            // storage ones, Keep, its documents, Show wine, then No longer in cellar.
             run {
                 val documents = listOfNotNull(
                     if (bottle.attachments != null) Triple(Icons.Outlined.AttachFile, R.string.action_documents, { onDocuments(false) }) else null,
@@ -913,11 +917,10 @@ private fun BottleActionsSheet(
                     Triple(Icons.Outlined.LocalBar, R.string.action_drink, onDrink),
                     Triple(Icons.Outlined.OpenWith, R.string.action_move, onMove),
                     Triple(Icons.Outlined.OpenWith, R.string.action_move_other_rack, onMoveElsewhere),
+                    Triple(Icons.Outlined.Outbox, R.string.action_take_out_of_rack, onTakeOut),
                     Triple(Icons.Outlined.CardGiftcard, if (bottle.reservedFor == null) R.string.action_keep_for_occasion else R.string.action_free_bottle, onReserve),
                 ) + documents + listOf(
                     Triple(Icons.Outlined.Info, R.string.action_show_wine, onOpen),
-                    Triple(Icons.Outlined.Outbox, R.string.action_take_out_of_rack, onTakeOut),
-                    Triple(Icons.Outlined.RemoveCircleOutline, R.string.action_mark_gone, onGone),
                 )
             }.forEach { (icon, label, action) ->
                 ListItem(
@@ -926,6 +929,13 @@ private fun BottleActionsSheet(
                     modifier = Modifier.clickable { onDismiss(); action() },
                 )
             }
+            // The destructive action last, behind a divider.
+            HorizontalDivider()
+            ListItem(
+                leadingContent = { Icon(Icons.Outlined.RemoveCircleOutline, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.action_mark_gone)) },
+                modifier = Modifier.clickable { onDismiss(); onGone() },
+            )
         }
     }
 }

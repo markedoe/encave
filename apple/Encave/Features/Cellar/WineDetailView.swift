@@ -54,6 +54,29 @@ struct WineDetailView: View {
                     .listRowBackground(Color.clear)
                 }
 
+                // Bottles out of storage: said once above the list, one tap from putting one away.
+                let loose = bottles.filter { $0.slot == nil }
+                if let first = bottles.bottleToPutAway {
+                    Section {
+                        Button {
+                            if model.cellar.racks.isEmpty { router?.selectedTab = .racks } else { router?.sheet = .moveBottle(bottleID: first.id) }
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: BottlePlace.notInStorageIcon)
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 24)
+                                    .accessibilityHidden(true)
+                                Text("\(loose.count) bottles not in storage")
+                                    .foregroundStyle(.primary)
+                                Spacer(minLength: 8)
+                                ActionLabel("Put Away", systemImage: BottlePlace.putAwayIcon)
+                                    .foregroundStyle(Color.accentColor)
+                            }
+                        }
+                        .accessibilityIdentifier("wine.putAwayBanner")
+                    }
+                }
+
                 // Where the bottles are, and what to do with each, right under Drink and Add.
                 let orders = model.cellar.bottlesOnOrder.filter { $0.wineID == wineID }
                     .sorted { ($0.expectedAt ?? .distantFuture) < ($1.expectedAt ?? .distantFuture) }
@@ -567,10 +590,17 @@ struct BottleRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 // The place opens the storage at this bottle; "Not in storage", the
                 // storages to put it away in one.
+                // A link, shown by its chevron too, not only by its color.
                 Button(action: openPlace) {
-                    Text(model.placeLabel(for: bottle))
-                        .font(.body)
-                        .multilineTextAlignment(.leading)
+                    HStack(spacing: 4) {
+                        Text(model.placeLabel(for: bottle))
+                            .font(.body)
+                            .multilineTextAlignment(.leading)
+                        Image(systemName: "chevron.forward")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                            .accessibilityHidden(true)
+                    }
                 }
                 .buttonStyle(.borderless)
                 .accessibilityHint(bottle.slot == nil ? Text("Puts this bottle away in a storage.") : Text("Shows this bottle in its storage."))
@@ -621,7 +651,8 @@ struct BottleRow: View {
             }
             .tint(.accentColor)
         }
-        // No full swipe: the bottle leaves the cellar only on purpose.
+        // The first button revealed is Put Away or Move; the destructive one is outermost,
+        // with no full swipe: the bottle leaves the cellar only on purpose.
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button {
                 model.markGone(bottle.id)
@@ -629,6 +660,12 @@ struct BottleRow: View {
                 Label("No Longer in Cellar", systemImage: "minus.circle")
             }
             .tint(Color.destructive)
+            Button {
+                router?.sheet = .bottleDocuments(bottleID: bottle.id, importing: bottle.attachments == nil)
+            } label: {
+                Label("Documents", systemImage: "paperclip")
+            }
+            .tint(Color.neutral)
             Button {
                 if bottle.slot == nil { openPlace() } else { router?.sheet = .moveBottle(bottleID: bottle.id) }
             } label: {
@@ -639,12 +676,6 @@ struct BottleRow: View {
                 }
             }
             .tint(Color.action)
-            Button {
-                router?.sheet = .bottleDocuments(bottleID: bottle.id, importing: bottle.attachments == nil)
-            } label: {
-                Label("Documents", systemImage: "paperclip")
-            }
-            .tint(Color.neutral)
         }
         .contextMenu {
             // The same actions, in the same order, as every bottle's (and as on Android).
@@ -652,6 +683,8 @@ struct BottleRow: View {
             if bottle.slot != nil {
                 Button("Move…", systemImage: "arrow.up.and.down.and.arrow.left.and.right") { router?.sheet = .moveBottle(bottleID: bottle.id) }
                 Button("Show in Storage", systemImage: BottlePlace.showIcon) { router?.showInRack(bottle) }
+                // Not destructive: the bottle stays in the cellar, without a position.
+                Button("Take Out of Storage", systemImage: "tray.and.arrow.up") { model.takeOutOfRack(bottle.id, note: nil) }
             } else {
                 Button("Put Away…", systemImage: BottlePlace.putAwayIcon) { openPlace() }
             }
@@ -665,9 +698,6 @@ struct BottleRow: View {
             }
             BottleDocumentButtons(bottle: bottle) { router?.sheet = $0 }
             Divider()
-            if bottle.slot != nil {
-                Button("Take Out of Storage", systemImage: "tray.and.arrow.up") { model.takeOutOfRack(bottle.id, note: nil) }
-            }
             NoLongerInCellarButton { model.markGone(bottle.id) }
             Button(role: .destructive) {
                 model.deleteBottle(bottle.id)
@@ -679,6 +709,11 @@ struct BottleRow: View {
                     Image(systemName: "trash")
                 }
             }
+        }
+        // VoiceOver: the two most used actions of a bottle, without the menu.
+        .accessibilityAction(named: Text("Drink")) { router?.sheet = .drink(bottleID: bottle.id) }
+        .accessibilityAction(named: bottle.slot == nil ? Text("Put Away") : Text("Move")) {
+            if bottle.slot == nil { openPlace() } else { router?.sheet = .moveBottle(bottleID: bottle.id) }
         }
         .alert("Keep for an Occasion", isPresented: $reserving) {
             TextField("Occasion", text: $occasion)

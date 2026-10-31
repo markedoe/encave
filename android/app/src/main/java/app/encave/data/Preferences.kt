@@ -94,7 +94,13 @@ class Preferences(context: Context) {
         get() = prefs.getString(KEY_LAST_ADD_LOCATION, null)
         set(value) = prefs.edit { putString(KEY_LAST_ADD_LOCATION, value) }
 
+    /** The storage a bottle was last put in on this device: the Move sheet opens on it (never synced). */
+    var lastStorageId: java.util.UUID?
+        get() = prefs.getString(KEY_LAST_STORAGE, null)?.let { runCatching { java.util.UUID.fromString(it) }.getOrNull() }
+        set(value) = prefs.edit { if (value == null) remove(KEY_LAST_STORAGE) else putString(KEY_LAST_STORAGE, value.toString()) }
+
     private companion object {
+        const val KEY_LAST_STORAGE = "last_storage"
         const val KEY_PAIRING_DISH = "pairing_dish"
         const val KEY_RATING_SCALE = "rating_scale"
         const val KEY_LAST_ADD_LOCATION = "last_add_location"

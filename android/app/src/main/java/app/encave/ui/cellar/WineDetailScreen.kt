@@ -1,5 +1,8 @@
 package app.encave.ui.cellar
 
+import androidx.compose.material3.ListItemDefaults
+import app.encave.ui.navigation.RacksRoute
+import app.encave.core.bottleToPutAway
 import app.encave.ui.components.BottleEnd
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material.icons.outlined.Outbox
@@ -284,6 +287,28 @@ fun WineDetailScreen(
                         ) { ActionContent(stringResource(R.string.action_add_bottles), Icons.Filled.Add) }
                     },
                 )
+            }
+            // Bottles out of storage: said once above the list, one tap from putting one away.
+            bottles.bottleToPutAway?.let { first ->
+                val looseCount = bottles.count { it.slot == null }
+                item {
+                    ListItem(
+                        modifier = Modifier
+                            .clickable(onClickLabel = stringResource(R.string.action_put_away)) {
+                                if (cellar.racks.isEmpty()) navigator.open(RacksRoute) else movingBottle = first.id
+                            }
+                            .testTag("wine.put_away_banner"),
+                        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                        leadingContent = { Icon(BottlePlaceIcons.NotInStorage, contentDescription = null) },
+                        headlineContent = { Text(pluralStringResource(R.plurals.not_in_storage_count, looseCount, looseCount)) },
+                        trailingContent = {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
+                                Icon(BottlePlaceIcons.PutAway, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                Text(stringResource(R.string.action_put_away), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+                            }
+                        },
+                    )
+                }
             }
             if (bottles.isNotEmpty() || orders.isEmpty()) {
                 item { SectionHeader(pluralStringResource(R.plurals.detail_bottles_count, bottles.size, bottles.size)) }
@@ -730,21 +755,36 @@ private fun BottleRow(
         if (bottle.sizeML != 750) add(sizeLabel(bottle.sizeML))
     }.ifEmpty { listOf(stringResource(R.string.detail_added, Formats.day(bottle.addedAt))) }
     val putAway = stringResource(R.string.action_put_away)
+    val drinkLabel = stringResource(R.string.action_drink)
+    val moveLabel = if (stored) stringResource(R.string.action_move) else putAway
     ListItem(
-        modifier = if (bottle.reservedFor != null) Modifier.testTag("bottle.reserved") else Modifier,
+        // TalkBack: the two most used actions of a bottle, without the menu.
+        modifier = (if (bottle.reservedFor != null) Modifier.testTag("bottle.reserved") else Modifier).semantics {
+            customActions = listOf(
+                CustomAccessibilityAction(drinkLabel) { onDrink(); true },
+                CustomAccessibilityAction(moveLabel) { onMove(); true },
+            )
+        },
         leadingContent = {
             Icon(cellar.locationIcon(bottle), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         },
         // The place opens the storage at this bottle; "Not in storage" puts it away in one.
+        // A link, shown by its chevron too, not only by its color.
         headlineContent = {
-            Text(
-                cellar.placeLabel(bottle),
-                modifier = Modifier
+            Row(
+                Modifier
                     .clickable(onClickLabel = if (stored) stringResource(R.string.action_show_in_rack) else putAway) {
                         (onShowInRack ?: onMove)()
                     }
                     .testTag(if (stored) "bottle.place" else "bottle.put_away"),
-            )
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(cellar.placeLabel(bottle), Modifier.weight(1f, fill = false))
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp),
+                )
+            }
         },
         supportingContent = {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -771,8 +811,15 @@ private fun BottleRow(
                         Icon(BottlePlaceIcons.Show, contentDescription = stringResource(R.string.action_show_in_rack))
                     }
                 } else if (cellar.racks.isNotEmpty()) {
-                    OutlinedButton(onClick = onMove, modifier = Modifier.testTag("action.bottle.put_away")) {
-                        ActionContent(putAway, BottlePlaceIcons.PutAway)
+                    // In words; from 150 % font scale, the symbol alone so the place keeps its room.
+                    if (LocalDensity.current.fontScale >= 1.5f) {
+                        IconButton(onClick = onMove, modifier = Modifier.testTag("action.bottle.put_away")) {
+                            Icon(BottlePlaceIcons.PutAway, contentDescription = putAway)
+                        }
+                    } else {
+                        OutlinedButton(onClick = onMove, modifier = Modifier.testTag("action.bottle.put_away")) {
+                            ActionContent(putAway, BottlePlaceIcons.PutAway)
+                        }
                     }
                 }
                 Box {
@@ -808,6 +855,14 @@ private fun BottleRow(
                                 onClick = { menu = false; onShowInRack() },
                             )
                         }
+                        // Not destructive: the bottle stays in the cellar, without a position.
+                        if (stored) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.action_take_out_of_rack)) },
+                                leadingIcon = { Icon(Icons.Outlined.Outbox, contentDescription = null) },
+                                onClick = { menu = false; onTakeOut() },
+                            )
+                        }
                         if (bottle.reservedFor == null) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.action_keep_for_occasion)) },
@@ -824,13 +879,6 @@ private fun BottleRow(
                         }
                         BottleDocumentMenuItems(bottle.attachments != null, onDocuments) { menu = false }
                         HorizontalDivider()
-                        if (stored) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.action_take_out_of_rack)) },
-                                leadingIcon = { Icon(Icons.Outlined.Outbox, contentDescription = null) },
-                                onClick = { menu = false; onTakeOut() },
-                            )
-                        }
                         DropdownMenuItem(
                             text = { MenuText(stringResource(R.string.action_mark_gone), stringResource(R.string.action_mark_gone_detail)) },
                             leadingIcon = { Icon(Icons.Outlined.RemoveCircleOutline, contentDescription = null) },

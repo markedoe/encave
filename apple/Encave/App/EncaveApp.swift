@@ -108,10 +108,9 @@ struct CellarCommands: Commands {
             HelpMenuButton()
         }
         #endif
+        // In the order of the wine's menu everywhere (docs/PRESENTATION.md): Drink, Put Away or
+        // Move, Show in Storage, Add Bottles, Edit Wine, Open in New Window, then Delete Wine.
         CommandMenu("Wine") {
-            Button("Edit Wine…") { withWine { act(.present(.editWine(wineID: $0.id))) } }
-                .keyboardShortcut("e")
-                .disabled(selectedWineID == nil)
             Button("Drink a Bottle…") {
                 withWine { wine in
                     if let bottle = bottleToOpen(of: wine.id) { act(.present(.drink(bottleID: bottle.id))) }
@@ -119,14 +118,31 @@ struct CellarCommands: Commands {
             }
             .keyboardShortcut("d")
             .disabled(selectedWineID == nil)
+            Button("Put Away…") {
+                withWine { wine in
+                    if let loose = model.cellar.bottles(of: wine.id).bottleToPutAway { act(.present(.moveBottle(bottleID: loose.id))) }
+                }
+            }
+            .keyboardShortcut("p", modifiers: [.command, .option])
+            .disabled(!selectedWineHasBottleToPutAway || model.cellar.racks.isEmpty)
+            Button("Move…") {
+                withWine { wine in
+                    if let bottle = bottleToOpen(of: wine.id), bottle.slot != nil { act(.present(.moveBottle(bottleID: bottle.id))) }
+                }
+            }
+            // No shortcut: ⌥⌘M is the system's Minimize All.
+            .disabled(selectedWineID == nil)
             Button("Show in Storage") {
                 withWine { wine in
-                    guard let bottle = model.cellar.bottlesInCellar.first(where: { $0.wineID == wine.id && $0.slot != nil }) else { return }
+                    guard let bottle = model.cellar.bottleToShow(of: model.cellar.bottles(of: wine.id)) else { return }
                     if let router { router.showInRack(bottle) } else { model.showInRack(bottle) }
                 }
             }
             .disabled(selectedWineID == nil)
             Button("Add Bottles…") { withWine { act(.present(.addBottle(AddBottleContext(wine: $0)))) } }
+                .disabled(selectedWineID == nil)
+            Button("Edit Wine…") { withWine { act(.present(.editWine(wineID: $0.id))) } }
+                .keyboardShortcut("e")
                 .disabled(selectedWineID == nil)
             Button("Open in New Window") { withWine { openWindow(id: WineWindow.id, value: $0.id) } }
                 .keyboardShortcut("o", modifiers: [.command, .option])
@@ -163,6 +179,11 @@ struct CellarCommands: Commands {
             MainWindow.show(openWindow)
             #endif
         }
+    }
+
+    /// The selected wine has a bottle in the cellar without a position.
+    private var selectedWineHasBottleToPutAway: Bool {
+        selectedWineID.map { model.cellar.bottles(of: $0).hasBottleToPutAway } ?? false
     }
 
     private func withWine(_ body: (Wine) -> Void) {

@@ -108,7 +108,7 @@ class ScreenTourTest(private val device: String, private val variant: String) {
             "wine", "wine-critic-scores", "wine-expected", "game-result", "drink-sheet", "tasting-expected", "tasting-comparison", "wine-on-order", "wine-occasion", "wine-put-away", "wine-explore", "wine-edit-window",
             "wine-tags", "more-photos",
             "add-bottle", "add-bottle-end", "add-bottle-on-order", "barcode-scanner", "barcode-match",
-            "racks", "not-in-storage", "put-away-sheet", "rack", "rack-place-sheet", "rack-card", "rack-key", "rack-zoomed", "rack-bottle-list",
+            "racks", "not-in-storage", "put-away-sheet", "rack", "rack-place-sheet", "rack-free-position", "rack-card", "rack-key", "rack-zoomed", "rack-bottle-list",
             "rack-list-picked", "rack-head-to-tail", "rack-back-bottle", "rack-head-to-tail-zoomed",
             "rack-check", "rack-check-missing", "rack-dragging", "rack-dropped", "rack-editor", "rack-editor-end",
             "rack-diamond-triangles",
@@ -461,6 +461,18 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         tap("not_in_storage.put_away")
         compose.onNodeWithTag("move.sheet").assertExists()
         capture("put-away-sheet")
+    }
+
+    @Test
+    fun freePositionChoice() {
+        // A free position of the main rack while the rosé is out of storage: put it there, or add a bottle.
+        tab(RACKS)
+        scrollIn("racks.list", "rack.row.0")
+        compose.onAllNodesWithTag("rack.row.0").onFirst().performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        tap("cell.5.0")
+        compose.onNodeWithTag("rack.free.put_here").assertExists()
+        capture("rack-free-position")
     }
 
     @Test

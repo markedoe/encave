@@ -520,6 +520,27 @@ final class CellarModel {
         }
     }
 
+    /// Every bottle without a position put away at once (`Cellar.putAllAway`), with one Undo.
+    func putAllAway() {
+        let snapshot = cellar
+        let preferred = lastStorageID
+        var total = 0
+        guard update({ total = try $0.putAllAway(preferred: preferred) }) else { return }
+        guard total > 0 else {
+            showToast(String(localized: "No free position"))
+            return
+        }
+        successCount += 1
+        showToast(String(localized: "Bottles placed: \(total)")) { [weak self] in self?.update { $0 = snapshot } }
+    }
+
+    static let lastStorageKey = "storage.lastUsed"
+
+    /// The storage a bottle was last put in on this device.
+    var lastStorageID: UUID? {
+        UserDefaults.standard.string(forKey: Self.lastStorageKey).flatMap(UUID.init(uuidString:))
+    }
+
     /// Put Away in the banner after bottles joined the cellar without a position, when there
     /// is a storage: one bottle opens its Move sheet, several the Storage section, which
     /// lists them.
@@ -825,6 +846,8 @@ final class CellarModel {
     func move(_ bottleID: UUID, to slot: Slot) {
         guard let before = cellar.bottles[bottleID], update({ try $0.move(bottleID, to: slot) }) else { return }
         successCount += 1
+        // The Move sheet opens on it next time (on this device only, never synced).
+        UserDefaults.standard.set(slot.rackID.uuidString, forKey: Self.lastStorageKey)
         guard let rack = cellar.rack(slot.rackID) else { return }
         let rackName = rack.name
         let place = rack.displayLabel(for: slot)

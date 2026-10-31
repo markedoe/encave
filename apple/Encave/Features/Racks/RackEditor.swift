@@ -886,13 +886,30 @@ struct MoveBottleView: View {
                         .accessibilityElement(children: .combine)
                         .padding(.horizontal)
                         .padding(.top)
+                        // Each storage with its free positions, to choose one with room at a glance.
                         Picker("Store in", selection: $rackID) {
-                            ForEach(model.cellar.racks) { Text($0.name).tag(UUID?.some($0.id)) }
+                            ForEach(model.cellar.racks) { rack in
+                                (Text(verbatim: "\(rack.name) · ") + Text("\(model.cellar.freeSlots(in: rack).count) free positions"))
+                                    .tag(UUID?.some(rack.id))
+                            }
                             Text("No storage").tag(UUID?.none)
                         }
                         .pickerStyle(.menu)
-                        .padding()
+                        .padding([.horizontal, .top])
                         if let rack = rackID.flatMap({ model.cellar.rack($0) }) {
+                            // One tap: the first free position, in the order the storage fills.
+                            Button {
+                                if let free = model.cellar.firstFreeSlot(in: rack) {
+                                    model.move(bottleID, to: free)
+                                    dismiss()
+                                }
+                            } label: {
+                                ActionLabel("First Free Position", systemImage: "arrow.down.to.line")
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(model.cellar.firstFreeSlot(in: rack) == nil)
+                            .padding(.vertical, 8)
+                            .accessibilityIdentifier("move.firstFree")
                             FittedRackGrid(rack: rack, highlighted: bottle.slot) { place, _ in
                                     // As it is now: opened meanwhile (sync, another window), it takes no place.
                                     guard let bottle = model.cellar.bottles[bottleID], bottle.status == .inCellar else {
@@ -928,7 +945,7 @@ struct MoveBottleView: View {
                     }
                     .onAppear {
                         // Its own storage; out of storage, where its wine's other bottles are.
-                        rackID = model.cellar.storageToOpen(for: bottle)?.id
+                        rackID = model.cellar.storageToOpen(for: bottle, preferred: model.lastStorageID)?.id
                         storageNote = bottle.storageNote ?? ""
                     }
                 } else {

@@ -746,7 +746,8 @@ struct WineContextMenu: View {
                 router?.sheet = .moveBottle(bottleID: bottle.id)
             }
         }
-        if let placed = model.cellar.inPlaceOrder(group.bottles).first(where: { $0.slot != nil }) {
+        // Spread over several storages: the one holding most of them.
+        if let placed = model.cellar.bottleToShow(of: group.bottles) {
             Button("Show in Storage", systemImage: BottlePlace.showIcon) { router?.showInRack(placed) }
         }
         Button("Add Bottles", systemImage: "plus") { router?.sheet = .addBottle(AddBottleContext(wine: group.wine)) }

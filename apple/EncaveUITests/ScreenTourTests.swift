@@ -46,6 +46,12 @@ final class ScreenTourTests: XCTestCase {
         }
         openSection(1, "racks")
         snapshot("racks")
+        // The bottles out of storage at this size: the list and its Put Away buttons.
+        if let card = require("racks.notInStorage", "large text: no card for the bottles not in storage", timeout: 5) {
+            card.press()
+            snapshot("not-in-storage")
+            goBack()
+        }
         openSection(2, "tonight")
         snapshot("tonight")
         openSection(3, "journal")
@@ -879,6 +885,7 @@ final class ScreenTourTests: XCTestCase {
             return
         }
         checkEmptyPlacesAreQuiet()
+        checkFreePlaceChoice()
         cell.press()
         XCTAssertTrue(element("rack.selection").waitForExistence(timeout: 3), "main rack: no card for the tapped bottle")
         snapshot("rack-bottle-card")
@@ -1412,6 +1419,29 @@ final class ScreenTourTests: XCTestCase {
             snapshot("put-away-sheet")
             closeSheet()
         }
+        // Its wine's page says it too, above the bottles: Show Wine in the bottle's menu.
+        let row = element("notInStorage.row")
+        if row.exists {
+            #if os(macOS)
+            row.rightClick()
+            #else
+            row.press(forDuration: 1.2)
+            #endif
+            let show = app.buttons.matching(NSPredicate(format: "label == %@ OR label == %@", "Show Wine", "Voir le vin")).firstMatch
+            if show.waitForExistence(timeout: 3) {
+                show.press()
+                if require("wine.putAwayBanner", "wine page: no banner for its bottle out of storage", timeout: 10) != nil {
+                    snapshot("wine-put-away")
+                }
+                openSection(1, "racks")
+            } else {
+                #if os(macOS)
+                app.typeKey(.escape, modifierFlags: [])
+                #else
+                app.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.02)).tap()
+                #endif
+            }
+        }
         #if os(iOS)
         goBack()
         #endif
@@ -1518,6 +1548,36 @@ final class ScreenTourTests: XCTestCase {
         return (Int(rgba[0]), Int(rgba[1]), Int(rgba[2]))
     }
     #endif
+
+    /// A free position tapped while the sample's rosé is out of storage: Put a Bottle Here or
+    /// Add a Bottle Here. Closed again without choosing, so the tour's cellar stays as it is.
+    private func checkFreePlaceChoice() {
+        let empty = app.descendants(matching: .any).matching(NSPredicate(
+            format: "identifier BEGINSWITH %@ AND (label ENDSWITH %@ OR label ENDSWITH %@)", "rack.cell.", ", empty", ", vide"))
+        guard empty.count > 0 else { return }
+        let place = empty.element(boundBy: 0)
+        guard place.isHittable else { return }
+        place.press()
+        let putHere = app.buttons.matching(NSPredicate(format: "label == %@ OR label == %@",
+                                                       "Put a Bottle Here…", "Ranger une bouteille ici…")).firstMatch
+        guard putHere.waitForExistence(timeout: 5) else {
+            XCTFail("main rack: a free position offers no Put a Bottle Here while a bottle is out of storage")
+            return
+        }
+        snapshot("rack-free-position")
+        let cancel = app.buttons.matching(NSPredicate(format: "label == %@ OR label == %@", "Cancel", "Annuler")).firstMatch
+        if cancel.exists, cancel.isHittable {
+            cancel.press()
+        } else {
+            #if os(macOS)
+            app.typeKey(.escape, modifierFlags: [])
+            #else
+            // A popover on the iPad: a tap outside closes it.
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.02)).tap()
+            #endif
+        }
+        sleep(1)
+    }
 
     /// Browsing a rack, an empty place shows no name ("B1"), but VoiceOver still reads
     /// "B1, empty" (checkRackFits covers the places' size).

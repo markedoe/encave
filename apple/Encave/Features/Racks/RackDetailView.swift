@@ -815,9 +815,10 @@ private struct BottleInCellRow: View {
     }
 }
 
-/// A stored bottle's actions beyond Drink and Move, in the order every bottle lists them:
-/// Keep, (its documents,) Show Wine, then Move to Other Storage, Take Out of Storage and
-/// No Longer in Cellar.
+/// A stored bottle's actions beyond Drink and Move, in the order every bottle lists them
+/// (docs/PRESENTATION.md): the storage ones (Move to Other Storage, Take Out of Storage), then
+/// Keep, (its documents,) Show Wine, and No Longer in Cellar behind a divider. Show in
+/// Storage is left out: the bottle is already shown in its storage.
 private struct BottleMoreActions: View {
     let bottle: Bottle
     let onAction: (CellAction) -> Void
@@ -825,6 +826,8 @@ private struct BottleMoreActions: View {
     var showsDocuments = false
 
     var body: some View {
+        Button("Move to Other Storage…", systemImage: "arrow.up.and.down.and.arrow.left.and.right") { onAction(.moveElsewhere(bottle)) }
+        Button("Take Out of Storage", systemImage: "tray.and.arrow.up") { onAction(.takeOut(bottle)) }
         if bottle.reservedFor == nil {
             Button("Keep for an Occasion…", systemImage: "gift") { onAction(.reserve(bottle)) }
         } else {
@@ -838,8 +841,6 @@ private struct BottleMoreActions: View {
         }
         Button("Show Wine", systemImage: "info.circle") { onAction(.showWine(bottle)) }
         Divider()
-        Button("Move to Other Storage…", systemImage: "arrow.up.and.down.and.arrow.left.and.right") { onAction(.moveElsewhere(bottle)) }
-        Button("Take Out of Storage", systemImage: "tray.and.arrow.up") { onAction(.takeOut(bottle)) }
         NoLongerInCellarButton { onAction(.remove(bottle)) }
     }
 }

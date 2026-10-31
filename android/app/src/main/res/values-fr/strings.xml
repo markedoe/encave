@@ -23,6 +23,7 @@
     <string name="action_add_bottles">Ajouter des bouteilles</string>
     <string name="action_show_in_rack">Voir dans le rangement</string>
     <string name="action_put_away">Ranger</string>
+    <string name="action_put_all_away">Tout ranger</string>
     <string name="not_in_storage_title">Hors rangement</string>
     <string name="not_in_storage_empty_title">Toutes les bouteilles sont rangées</string>
     <string name="not_in_storage_empty_body">Les bouteilles sans position apparaissent ici, pour les ranger.</string>
@@ -745,7 +746,7 @@
     <string name="help_racks_moving_title">Déplacer des bouteilles</string>
     <string name="help_racks_moving">Touchez une bouteille, puis **Déplacer**, puis la nouvelle position (ou maintenez le doigt sur une bouteille) ; Retour annule. Depuis la Cave, maintenez le doigt sur un vin et choisissez **Déplacer…**. Une position libre prend la bouteille ; là où chaque position tient une bouteille, toucher une autre bouteille les échange. Pour la mettre dans un autre rangement, ou hors des rangements avec une note sur l’endroit où elle est, choisissez **Déplacer vers un autre rangement…** dans le menu de la bouteille, ou **Déplacer…** sur la fiche du vin. **Annuler** la remet où elle était.</string>
     <string name="help_racks_put_away_title">Ranger des bouteilles</string>
-    <string name="help_racks_put_away">Une bouteille sans position (ajoutée avec **Ailleurs**, reçue d’une commande, remise en cave depuis le Journal ou sortie d’un rangement) indique **Hors rangement**. Pour la ranger, touchez **Ranger** à côté d’elle sur la fiche du vin, ou choisissez **Ranger…** dans le menu du vin dans la Cave ou Ce soir : le rangement qui tient les autres bouteilles du vin s’ouvre ; touchez une position. Rangements liste toutes les bouteilles sans position sous **Hors rangement**, sa première ligne, et une position libre touchée pendant que certaines attendent propose **Ranger une bouteille ici…**. **Annuler** la remet où elle était.</string>
+    <string name="help_racks_put_away">Une bouteille sans position (ajoutée avec **Ailleurs**, reçue d’une commande, remise en cave depuis le Journal ou sortie d’un rangement) indique **Hors rangement**, et la fiche de son vin dit combien au-dessus des bouteilles. Pour la ranger, touchez **Ranger** à côté d’elle sur la fiche du vin, ou choisissez **Ranger…** dans le menu du vin dans la Cave ou Ce soir : le rangement qui tient les autres bouteilles du vin s’ouvre, avec les positions libres de chaque rangement ; touchez une position, ou **Première position libre**. Rangements liste toutes les bouteilles sans position sous **Hors rangement**, sa première ligne, où **Tout ranger** met chacune à côté des autres bouteilles de son vin, sinon là où il y a le plus de place ; une position libre touchée pendant que certaines attendent propose **Ranger une bouteille ici…**. **Annuler** la remet où elle était.</string>
     <string name="help_racks_irregular_title">Rangées et étagères qui diffèrent</string>
     <string name="help_racks_irregular">Les rangées n’ont pas à être toutes pareilles : en créant ou en modifiant un rangement, activez **Les rangées ne sont pas toutes pareilles** (**Les étagères ne sont pas toutes pareilles** pour une cave à vin réfrigérée), puis réglez chaque rangée ou étagère : ses positions, ses **Rangées en profondeur** (bouteilles l’une derrière l’autre) et, sur une cave à vin réfrigérée en couches, ses couches et **Bouteilles du fond tête-bêche**. Pour un rangement sous pente ou sous un escalier, une rangée simple entre des rangées doubles, ou une cave à vin réfrigérée avec une étagère sur deux rangs tête-bêche et une autre simple. Une rangée d’une seule bouteille de profondeur n’a ni devant ni fond : ses positions se lisent comme **B3**.</string>
     <string name="help_tonight_title">Ce soir et fenêtres de dégustation</string>
@@ -1185,6 +1186,7 @@
     <string name="rack_displaced_confirm">Les retirer et enregistrer</string>
     <string name="move_title">Déplacer la bouteille</string>
     <string name="move_title_put_away">Ranger la bouteille</string>
+    <string name="move_first_free">Première position libre</string>
     <string name="move_rack">Rangement</string>
     <string name="move_no_rack">Aucun rangement</string>
     <string name="move_grid_hint">Touchez une position. Une position libre prend la bouteille ; là où chaque position tient une bouteille, toucher une autre bouteille les échange.</string>
@@ -1830,6 +1832,11 @@
         <item quantity="one">%d bouteille en cave</item>
         <item quantity="many">%d bouteilles en cave</item>
         <item quantity="other">%d bouteilles en cave</item>
+    </plurals>
+    <plurals name="free_positions">
+        <item quantity="one">%d position libre</item>
+        <item quantity="many">%d positions libres</item>
+        <item quantity="other">%d positions libres</item>
     </plurals>
     <plurals name="not_in_storage_count">
         <item quantity="one">%d bouteille hors rangement</item>

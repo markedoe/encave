@@ -76,7 +76,8 @@ fun WineMenuBox(
     // The bottle Drink would suggest first: one not kept for an occasion.
     val bottle = group.bottles.bottleToOpen
     val loose = group.bottles.bottleToPutAway
-    val placed = cellar.inPlaceOrder(group.bottles).firstOrNull { it.slot != null }
+    // Spread over several storages: the one holding most of them.
+    val placed = cellar.bottleToShow(group.bottles)
     val move: WineAction? = when {
         // A bottle out of storage: put it away (with no storage yet, the Storage section).
         loose != null -> WineAction(stringResource(R.string.action_put_away_ellipsis), BottlePlaceIcons.PutAway, "put_away") {

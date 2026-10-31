@@ -496,6 +496,19 @@ class AppViewModel(
 
     private fun bottlesOfWines(wineIds: Set<UUID>) = cellar.value.bottles.values.filter { it.wineId in wineIds }
 
+    /** Every bottle without a position put away at once ([Cellar.putAllAway]), with one Undo. */
+    fun putAllAway() {
+        val before = cellar.value.bottlesNotInStorage
+        if (before.isEmpty()) return
+        change<Int>({ placed ->
+            if (placed == 0) post(UiText.Res(R.string.msg_no_free_place))
+            else {
+                confirm()
+                post(UiText.Res(R.string.msg_bottles_placed, listOf(placed))) { restore(before) }
+            }
+        }) { c -> c.putAllAway(preferences.lastStorageId) }
+    }
+
     fun placeWines(wineIds: Set<UUID>, rackId: UUID) {
         val before = bottlesOfWines(wineIds)
         change<Int>({ placed ->
@@ -572,6 +585,8 @@ class AppViewModel(
         }) { c ->
             c.move(bottleId, slot)
             if (slot == null) c.bottles[bottleId]?.let { c.updateBottle(it.copy(storageNote = storageNote?.trim()?.ifEmpty { null })) }
+            // The Move sheet opens on it next time (on this device only).
+            slot?.let { preferences.lastStorageId = it.rackId }
             slot?.let { c.rack(it.rackId) }
         }
     }

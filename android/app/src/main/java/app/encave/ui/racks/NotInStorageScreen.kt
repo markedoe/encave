@@ -1,5 +1,9 @@
 package app.encave.ui.racks
 
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -70,6 +74,13 @@ import app.encave.ui.navigation.WineDetailRoute
 import app.encave.ui.theme.Dimens
 import java.util.UUID
 
+/** Those of [bottles] whose wine matches every word of [query] (all when it is blank). */
+fun Cellar.looseBottles(bottles: List<Bottle>, query: String): List<Bottle> {
+    val needle = query.trim()
+    if (needle.isEmpty()) return bottles
+    return bottles.filter { wines[it.wineId]?.matches(needle) == true }
+}
+
 /** The bottles not in storage, wine by wine (by name), oldest first within a wine. */
 val Cellar.looseBottlesByWine: List<Bottle>
     get() = bottlesNotInStorage.sortedWith(
@@ -88,7 +99,9 @@ fun NotInStorageScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     var moving by rememberSaveable { mutableStateOf<String?>(null) }
     var drinking by rememberDrinking()
-    val bottles = cellar.looseBottlesByWine
+    var query by rememberSaveable { mutableStateOf("") }
+    val all = cellar.looseBottlesByWine
+    val bottles = cellar.looseBottles(all, query)
     Scaffold(
         topBar = {
             TopAppBar(
@@ -98,11 +111,18 @@ fun NotInStorageScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
+                // All at once: each beside its wine's other bottles, else where there is most room.
+                actions = {
+                    TextButton(
+                        onClick = { viewModel.putAllAway() }, enabled = all.isNotEmpty() && cellar.racks.isNotEmpty(),
+                        modifier = Modifier.testTag("not_in_storage.put_all"),
+                    ) { Text(stringResource(R.string.action_put_all_away)) }
+                },
             )
         },
         snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
     ) { padding ->
-        if (bottles.isEmpty()) {
+        if (all.isEmpty()) {
             EmptyState(
                 icon = BottlePlaceIcons.NotInStorage,
                 title = stringResource(R.string.not_in_storage_empty_title),
@@ -112,6 +132,9 @@ fun NotInStorageScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             return@Scaffold
         }
         LazyColumn(Modifier.fillMaxSize().testTag("not_in_storage.list"), contentPadding = padding) {
+            item {
+                LooseSearchField(query, onChange = { query = it }, Modifier.padding(horizontal = Dimens.l, vertical = Dimens.s))
+            }
             items(bottles, key = { it.id.toString() }) { bottle ->
                 LooseBottleRow(
                     cellar, bottle,
@@ -137,6 +160,17 @@ fun NotInStorageScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     drinking?.let { id ->
         DrinkSheet(cellar, id, onDismiss = { drinking = null }, onDrink = { b, t -> viewModel.drink(b.id, t) })
     }
+}
+
+/** Searches the bottles out of storage by their wine, as the Cellar's search does. */
+@Composable
+private fun LooseSearchField(query: String, onChange: (String) -> Unit, modifier: Modifier = Modifier) {
+    OutlinedTextField(
+        value = query, onValueChange = onChange, singleLine = true,
+        placeholder = { Text(stringResource(R.string.search_hint_short)) },
+        leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+        modifier = modifier.fillMaxWidth().testTag("not_in_storage.search"),
+    )
 }
 
 /** A bottle out of storage: the wine, where it is (its note or "Not in storage"), the occasion it is kept for. */
@@ -217,14 +251,16 @@ private fun LooseBottleRow(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PutBottleHereSheet(viewModel: AppViewModel, cellar: Cellar, slot: Slot, title: String, onDismiss: () -> Unit) {
+    var query by rememberSaveable { mutableStateOf("") }
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.navigationBarsPadding().padding(bottom = Dimens.l)) {
             Text(
                 title, style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = Dimens.l, vertical = Dimens.s).semantics { heading() },
             )
+            LooseSearchField(query, onChange = { query = it }, Modifier.padding(horizontal = Dimens.l, vertical = Dimens.s))
             LazyColumn {
-                items(cellar.looseBottlesByWine, key = { it.id.toString() }) { bottle ->
+                items(cellar.looseBottles(cellar.looseBottlesByWine, query), key = { it.id.toString() }) { bottle ->
                     ListItem(
                         modifier = Modifier.clickable {
                             // Taken meanwhile (sync): nothing moves.
