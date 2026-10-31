@@ -28,6 +28,7 @@ def widget_sources():
     return glob.glob(str(ROOT / "EncaveWidgets" / "**" / "*.swift"), recursive=True) + [str(p) for p in WIDGET_SHARED]
 
 FR = {
+    'Take Out': 'Sortir',
     'Move to Other Storage…': 'Déplacer vers un autre rangement…',
     'Not in Storage': 'Hors rangement',
     'Every bottle is in storage': 'Toutes les bouteilles sont rangées',

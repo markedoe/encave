@@ -383,15 +383,17 @@ extension CellarList {
                     }
                 }
             } label: {
-                Label("Put Away in", systemImage: BottlePlace.putAwayIcon)
+                SelectionActionLabel(title: "Put Away", systemImage: BottlePlace.putAwayIcon)
             }
+            .accessibilityLabel(Text("Put Away in"))
             .disabled(picked.isEmpty || model.cellar.racks.isEmpty)
             Button {
                 model.unplace(bottles: Set(pickedBottles(groups).map(\.id)))
                 endSelection()
             } label: {
-                Label("Take Out of Storage", systemImage: "tray.and.arrow.up")
+                SelectionActionLabel(title: "Take Out", systemImage: "tray.and.arrow.up")
             }
+            .accessibilityLabel(Text("Take Out of Storage"))
             .disabled(picked.isEmpty)
             Menu {
                 Button("Keep for an Occasion…", systemImage: "gift") {
@@ -421,7 +423,7 @@ extension CellarList {
                 }
                 .accessibilityIdentifier("cellar.select.delete")
             } label: {
-                Label("More", systemImage: "ellipsis.circle")
+                SelectionActionLabel(title: "More", systemImage: "ellipsis.circle")
             }
             .disabled(picked.isEmpty)
             .accessibilityIdentifier("cellar.select.more")
@@ -450,6 +452,21 @@ extension CellarList {
     func endSelection() {
         withAnimation { isSelecting = false }
         picked = []
+    }
+}
+
+/// An action of the selection bar: in words at the bottom of iPhone and iPad (as Mail's Move
+/// and Archive), never an icon alone; icon and title in the Mac toolbar.
+private struct SelectionActionLabel: View {
+    let title: LocalizedStringKey
+    let systemImage: String
+
+    var body: some View {
+        #if os(iOS)
+        Text(title)
+        #else
+        Label(title, systemImage: systemImage)
+        #endif
     }
 }
 

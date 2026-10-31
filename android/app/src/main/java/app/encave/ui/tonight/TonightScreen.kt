@@ -551,7 +551,7 @@ private fun SurpriseCard(
                     Text(group.wine.displayName, style = SerifDisplay)
                     // The style in words, not only by the bottle's color.
                     Text(group.wine.styleLine(), style = MaterialTheme.typography.bodyMedium)
-                    MaturityLabel(Maturity.of(group.wine, year), Modifier.padding(top = Dimens.xs))
+                    MaturityLabel(Maturity.of(group.wine, year), short = true, modifier = Modifier.padding(top = Dimens.xs))
                 }
             }
             val location = bottle?.let { cellar.displayLocation(it) } ?: stringResource(R.string.location_none)

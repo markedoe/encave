@@ -110,7 +110,7 @@ struct CellarTable: View {
                     .customizationID("region")
             }
             TableColumn("When to drink", value: \.maturity) { row in
-                if row.maturity != .unknown { MaturityLabel(maturity: row.maturity) }
+                if row.maturity != .unknown { MaturityLabel(maturity: row.maturity, short: true) }
             }
             .width(min: 140, ideal: 160)
             .customizationID("maturity")

@@ -933,10 +933,12 @@ private fun SelectionTopBar(
                 )
             }
             Box {
-                IconButton(
+                // In words, not an icon alone: the action the selection is most often for.
+                val placeLabel = stringResource(R.string.action_place_in_rack)
+                TextButton(
                     onClick = { rackMenu = true }, enabled = count > 0 && racks.isNotEmpty(),
-                    modifier = Modifier.testTag("cellar.select.place"),
-                ) { Icon(BottlePlaceIcons.PutAway, contentDescription = stringResource(R.string.action_place_in_rack)) }
+                    modifier = Modifier.testTag("cellar.select.place").semantics { contentDescription = placeLabel },
+                ) { Text(stringResource(R.string.action_put_away)) }
                 DropdownMenu(expanded = rackMenu, onDismissRequest = { rackMenu = false }) {
                     racks.forEach { rack ->
                         DropdownMenuItem(text = { Text(rack.name) }, onClick = { rackMenu = false; onPlace(rack) })

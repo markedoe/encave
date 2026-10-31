@@ -112,10 +112,11 @@ fun StyleLabel(color: WineColor?, modifier: Modifier = Modifier) {
 
 /** A tinted icon and words in the text color: never color alone, and the words stay readable. */
 @Composable
-fun MaturityLabel(maturity: Maturity, modifier: Modifier = Modifier) {
+fun MaturityLabel(maturity: Maturity, modifier: Modifier = Modifier, short: Boolean = false) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
         Icon(maturity.icon, contentDescription = null, tint = maturity.tint, modifier = Modifier.size(18.dp))
-        Text(stringResource(maturity.labelRes), style = MaterialTheme.typography.labelLarge)
+        // Short in rows, cards and the table ("Ready"), in full on the wine page, as on Apple.
+        Text(stringResource(if (short) maturity.shortLabelRes else maturity.labelRes), style = MaterialTheme.typography.labelLarge)
     }
 }
 

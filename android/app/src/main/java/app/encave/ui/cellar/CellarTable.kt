@@ -1,5 +1,7 @@
 package app.encave.ui.cellar
 
+import app.encave.core.bottleToOpen
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -147,6 +149,7 @@ fun CellarTableScreen(viewModel: AppViewModel, navigator: AppNavigator, onShowLi
     var sortColumn by rememberSaveable { mutableStateOf(Column.Wine) }
     var ascending by rememberSaveable { mutableStateOf(true) }
     var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
+    var drinking by app.encave.ui.drink.rememberDrinking()
     val year = viewModel.year
     // The list's search and filters, as on Apple: switching between them keeps both.
     val rows = remember(cellar, filter, sortColumn, ascending) {
@@ -214,7 +217,10 @@ fun CellarTableScreen(viewModel: AppViewModel, navigator: AppNavigator, onShowLi
                         LazyColumn(Modifier.fillMaxSize().testTag("cellar.table")) {
                             items(rows, key = { it.group.id.toString() }) { row ->
                                 val id = row.group.id.toString()
-                                DataRow(row, cellar, horizontal, selected = id == selectedId, onClick = { selectedId = id })
+                                // Touch and hold: the wine's menu, as in the list (and on Apple).
+                                WineMenuBox(row.group, cellar, viewModel, navigator, onDrink = { drinking = row.group.bottles.bottleToOpen?.id?.toString() }) { rowModifier, openMenu ->
+                                    DataRow(row, cellar, horizontal, selected = id == selectedId, onClick = { selectedId = id }, onLongClick = openMenu, modifier = rowModifier)
+                                }
                                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                             }
                         }
@@ -238,6 +244,9 @@ fun CellarTableScreen(viewModel: AppViewModel, navigator: AppNavigator, onShowLi
                 }
             }
         }
+    }
+    drinking?.let { id ->
+        app.encave.ui.drink.DrinkSheet(cellar, id, onDismiss = { drinking = null }, onDrink = { b, t -> viewModel.drink(b.id, t) })
     }
 }
 
@@ -281,11 +290,22 @@ private fun HeaderRow(scroll: ScrollState, sortColumn: Column, ascending: Boolea
 }
 
 @Composable
-private fun DataRow(row: TableRow, cellar: Cellar, scroll: ScrollState, selected: Boolean, onClick: () -> Unit) {
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+private fun DataRow(
+    row: TableRow,
+    cellar: Cellar,
+    scroll: ScrollState,
+    selected: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val wine = row.group.wine
     Surface(
         color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
-        modifier = Modifier.fillMaxWidth().semantics { this.selected = selected }.clickable(onClick = onClick).testTag("table.row"),
+        modifier = modifier.fillMaxWidth().semantics { this.selected = selected }
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick, onLongClickLabel = stringResource(R.string.action_more))
+            .testTag("table.row"),
     ) {
         Row(
             Modifier.horizontalScroll(scroll).heightIn(min = 52.dp).padding(horizontal = Dimens.s),
@@ -308,7 +328,7 @@ private fun DataRow(row: TableRow, cellar: Cellar, scroll: ScrollState, selected
                         Column.Producer -> Text(wine.producer.orEmpty(), maxLines = 2, overflow = TextOverflow.Ellipsis)
                         Column.Style -> wine.color?.let { Text(stringResource(it.labelRes)) }
                         Column.Region -> Text(row.region, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        Column.When -> if (row.maturity != Maturity.Unknown) MaturityLabel(row.maturity)
+                        Column.When -> if (row.maturity != Maturity.Unknown) MaturityLabel(row.maturity, short = true)
                         Column.Bottles -> Text(row.group.count.toString())
                         Column.Location -> Text(
                             locationsText(cellar, row.group.bottles), maxLines = 2, overflow = TextOverflow.Ellipsis,

@@ -382,7 +382,7 @@ private struct TonightPick: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear))
+                MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear), short: true)
                     .font(.footnote.weight(.medium))
                     .labelStyle(CompactLabelStyle())
             }

@@ -16711,6 +16711,16 @@
         }
       }
     },
+    "Take Out": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sortir"
+          }
+        }
+      }
+    },
     "Take Out of Storage": {
       "localizations": {
         "fr": {

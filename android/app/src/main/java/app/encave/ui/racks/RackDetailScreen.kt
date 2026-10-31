@@ -633,7 +633,7 @@ private fun SelectedBottleCard(
                         Text(rack.displayLabel(slot, resources), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant)
                     }
                 }
-                wine?.let { MaturityLabel(Maturity.of(it, year)) }
+                wine?.let { MaturityLabel(Maturity.of(it, year), short = true) }
             }
         }
     }

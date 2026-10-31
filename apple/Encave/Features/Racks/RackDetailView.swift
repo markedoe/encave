@@ -542,7 +542,7 @@ extension SelectedBottleCard {
             Label(rack.displayLabel(for: slot), systemImage: "mappin.and.ellipse")
         }
         if let wine {
-            MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear))
+            MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear), short: true)
                 .labelStyle(CompactLabelStyle())
         }
     }
@@ -756,7 +756,7 @@ private struct BottleInCellRow: View {
                             .foregroundStyle(.secondary)
                     }
                     if let wine {
-                        MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear))
+                        MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear), short: true)
                             .font(.caption)
                             .labelStyle(CompactLabelStyle())
                     }
