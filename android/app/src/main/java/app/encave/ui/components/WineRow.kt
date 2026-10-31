@@ -10,6 +10,11 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Checkbox
 import androidx.compose.ui.semantics.Role
 import androidx.compose.material.icons.outlined.LocalShipping
+import androidx.compose.material.icons.outlined.Inbox
+import androidx.compose.material.icons.outlined.MoveToInbox
+import androidx.compose.material.icons.outlined.MyLocation
+import androidx.compose.material.icons.outlined.Place
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.ui.text.TextStyle
 import java.time.Instant
@@ -38,7 +43,6 @@ import app.encave.core.Cellar
 import app.encave.core.Maturity
 import app.encave.core.WineGroup
 import app.encave.core.FirstPlace
-import app.encave.core.RackKind
 import app.encave.ui.racks.icon
 import androidx.compose.ui.platform.testTag
 
@@ -60,24 +64,46 @@ fun locationsText(cellar: Cellar, bottles: List<Bottle>): String {
 }
 
 /**
- * Up to two lines: the symbol of the first placed bottle's storage, then its place
- * ("Wine fridge · Shelf 1, place 5"), or "… and 2 more" when the bottles are in several places.
+ * The symbol next to a bottle's place: its storage's, a pin for a note of where it is, a
+ * tray when it is not in storage. The same on every screen, as on Apple.
+ */
+fun Cellar.locationIcon(bottle: Bottle): ImageVector {
+    bottle.slot?.let { rack(it.rackId) }?.let { return it.icon }
+    if (!bottle.storageNote.isNullOrBlank()) return Icons.Outlined.Place
+    return BottlePlaceIcons.NotInStorage
+}
+
+/** "Main rack · B3", the storage note, or "Not in storage": never blank. */
+@Composable
+fun Cellar.placeLabel(bottle: Bottle): String = displayLocation(bottle) ?: stringResource(R.string.location_none)
+
+/** The symbols of a bottle's place and of putting it away, shared by every screen (as on Apple). */
+object BottlePlaceIcons {
+    /** "Not in storage": a tray. */
+    val NotInStorage: ImageVector get() = Icons.Outlined.Inbox
+    /** Put away: into a tray. */
+    val PutAway: ImageVector get() = Icons.Outlined.MoveToInbox
+    /** Show in storage. */
+    val Show: ImageVector get() = Icons.Outlined.MyLocation
+}
+
+/**
+ * Up to two lines: the symbol of the first bottle's place, then that place ("Wine fridge ·
+ * Shelf 1, place 5"), or "… and 2 more" when the bottles are in several places, "Not in
+ * storage" counted as a place of its own. Bottles in the order their places read.
  */
 @Composable
 fun LocationLine(cellar: Cellar, bottles: List<Bottle>) {
     val resources = LocalResources.current
-    val placed = bottles.filter { it.slot != null }
-        .sortedWith(compareBy({ it.slot!!.rackId.toString() }, { it.slot!!.row }, { it.slot!!.column }, { it.slot!!.depth }))
-    val labels = placed.mapNotNull { bottle ->
-        cellar.rack(bottle.slot!!.rackId)?.let { "${it.name}$SEPARATOR${it.displayLabel(bottle.slot!!, resources)}" }
-    } + bottles.filter { it.slot == null }.map { it.storageNote?.takeIf(String::isNotBlank) ?: stringResource(R.string.location_none) }
+    val none = stringResource(R.string.location_none)
+    val ordered = cellar.inPlaceOrder(bottles)
+    val labels = ordered.map { cellar.displayLocation(it, resources) ?: none }
     val place = FirstPlace.of(labels) ?: return
     val text = if (place.others == 0) place.first
     else stringResource(R.string.location_and_more, place.first, pluralStringResource(R.plurals.cell_bin_more, place.others, place.others))
-    val rack = placed.firstNotNullOfOrNull { cellar.rack(it.slot!!.rackId) }
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         Icon(
-            rack?.icon ?: RackKind.Grid.icon, contentDescription = null,
+            cellar.locationIcon(ordered.first()), contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp),
         )
         // Up to two lines, so a long place never cuts off "… and 2 more".

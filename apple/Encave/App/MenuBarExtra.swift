@@ -42,8 +42,9 @@ struct CellarMenuBarContent: View {
                                 HStack(spacing: 6) {
                                     let maturity = Maturity.of(group.wine, year: model.currentYear)
                                     MaturityLabel(maturity: maturity, short: true)
-                                    if let place = group.bottles.first.flatMap({ model.locationLabel(for: $0) }) {
-                                        Text(verbatim: place).foregroundStyle(.secondary).lineLimit(1)
+                                    // The bottle Drink would open, where it is (never blank).
+                                    if let bottle = group.bottles.bottleToOpen {
+                                        Text(verbatim: model.placeLabel(for: bottle)).foregroundStyle(.secondary).lineLimit(1)
                                     }
                                 }
                                 .font(.caption)

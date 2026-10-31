@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.CardGiftcard
-import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material3.DropdownMenu
@@ -111,6 +110,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
 import app.encave.ui.components.displayLocation
+import app.encave.ui.components.locationIcon
+import app.encave.ui.components.BottlePlaceIcons
 import app.encave.core.Cellar
 import app.encave.core.DishCategory
 import app.encave.core.Maturity
@@ -427,7 +428,7 @@ private fun TonightRow(
                 onClick = { menu = false; onDrink() }, modifier = Modifier.testTag("tonight.menu.drink"),
             )
             onShowInRack?.let { show ->
-                DropdownMenuItem(text = { Text(rackLabel) }, leadingIcon = { Icon(Icons.Outlined.GridView, null) }, onClick = { menu = false; show() })
+                DropdownMenuItem(text = { Text(rackLabel) }, leadingIcon = { Icon(BottlePlaceIcons.Show, null) }, onClick = { menu = false; show() })
             }
             DropdownMenuItem(text = { Text(reserveLabel) }, leadingIcon = { Icon(Icons.Outlined.CardGiftcard, null) }, onClick = { menu = false; onReserve() })
         }
@@ -586,13 +587,13 @@ private fun SurpriseCard(
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onPrimaryContainer),
                     modifier = Modifier.semantics { onClick(label = rackLabel) { onShowInRack(bottle); true } }.testTag("action.surprise_rack"),
                 ) {
-                    Icon(Icons.Outlined.GridView, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(cellar.locationIcon(bottle), contentDescription = null, modifier = Modifier.size(18.dp))
                     Text(location, Modifier.padding(start = Dimens.s), style = MaterialTheme.typography.bodyMedium)
                 }
             } else {
                 // Not a button: the same icon, in the card's text color, as on Apple.
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Outlined.GridView, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(bottle?.let { cellar.locationIcon(it) } ?: BottlePlaceIcons.NotInStorage, contentDescription = null, modifier = Modifier.size(18.dp))
                     Text(location, Modifier.padding(start = Dimens.s), style = MaterialTheme.typography.bodyMedium)
                 }
             }

@@ -12,13 +12,16 @@ struct WineRow: View {
     /// The bottles as their places read, so "A1 and 6 more" names the same place every time.
     private var placed: [Bottle] { model.cellar.inPlaceOrder(group.bottles) }
 
+    /// Where the bottles are, "Not in storage" counted as a place of its own, so a wine
+    /// with bottles to put away never reads as all stored.
     private var location: String? {
-        Self.places(placed.compactMap { model.locationLabel(for: $0) })
+        // Bottles on order are not in the cellar yet: when they arrive is said instead.
+        isOrder ? nil : Self.places(placed.map { model.placeLabel(for: $0) })
     }
 
-    /// The symbol of the first placed bottle's rack.
+    /// The symbol of the first bottle's place (the stored ones come first).
     private var locationIcon: String {
-        placed.first { $0.slot != nil }.map(model.locationIcon(for:)) ?? RackKind.grid.systemImage
+        placed.first.map(model.locationIcon(for:)) ?? BottlePlace.notInStorageIcon
     }
 
     /// "A1", or "A1 and 2 more" when the bottles are in several places (each place counted once).

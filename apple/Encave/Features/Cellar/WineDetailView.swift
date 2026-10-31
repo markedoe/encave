@@ -561,14 +561,14 @@ struct BottleRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: bottle.slot == nil ? "shippingbox" : model.locationIcon(for: bottle))
+            Image(systemName: model.locationIcon(for: bottle))
                 .foregroundStyle(.secondary)
                 .frame(width: 24)
             VStack(alignment: .leading, spacing: 2) {
                 // The place opens the storage at this bottle; "Not in storage", the
                 // storages to put it away in one.
                 Button(action: openPlace) {
-                    Text(model.locationLabel(for: bottle) ?? String(localized: "Not in storage"))
+                    Text(model.placeLabel(for: bottle))
                         .font(.body)
                         .multilineTextAlignment(.leading)
                 }

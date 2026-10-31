@@ -320,7 +320,7 @@ private struct TonightPick: View {
             // The bottle Drink opens first: a free one, as in the drink sheet.
             if let bottle = group.bottles.bottleToOpen {
                 // Not in a rack and no storage note: said, as on Android.
-                let location = model.locationLabel(for: bottle) ?? String(localized: "Not in storage")
+                let location = model.placeLabel(for: bottle)
                 if bottle.slot != nil {
                     Button {
                         router?.showInRack(bottle)

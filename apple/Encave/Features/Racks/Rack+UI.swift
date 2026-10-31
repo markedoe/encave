@@ -244,10 +244,28 @@ extension Cellar {
     }
 }
 
+/// The words and symbols of a bottle's place and of putting it away, shared by every screen.
+enum BottlePlace {
+    /// "Not in storage": a tray.
+    static let notInStorageIcon = "tray"
+    /// Put Away: into a tray.
+    static let putAwayIcon = "tray.and.arrow.down"
+    /// Show in Storage.
+    static let showIcon = "scope"
+}
+
 extension CellarModel {
-    /// The symbol of the bottle's rack ("square.grid.3x3" when it has none), next to its place.
+    /// The symbol next to a bottle's place: its storage's, a pin for a note of where it is,
+    /// a tray when it is not in storage. The same on every screen (and on Android).
     func locationIcon(for bottle: Bottle) -> String {
-        bottle.slot.flatMap { cellar.rack($0.rackID) }?.systemImage ?? RackKind.grid.systemImage
+        if let rack = bottle.slot.flatMap({ cellar.rack($0.rackID) }) { return rack.systemImage }
+        if let note = bottle.storageNote, !note.isEmpty { return "mappin" }
+        return BottlePlace.notInStorageIcon
+    }
+
+    /// "Main rack · B3", the storage note, or "Not in storage": never blank.
+    func placeLabel(for bottle: Bottle) -> String {
+        locationLabel(for: bottle) ?? String(localized: "Not in storage")
     }
 
     /// "Main rack · B3", the storage note, or nil.

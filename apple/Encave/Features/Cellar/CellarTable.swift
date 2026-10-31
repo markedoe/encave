@@ -384,7 +384,7 @@ struct CellarTableRow: Identifiable, Sendable {
         valueText = totals.keys.sorted().map { code in
             (totals[code] ?? 0).formatted(.currency(code: code).precision(.fractionLength(0)))
         }.joined(separator: " + ")
-        location = WineRow.places(group.bottles.compactMap { model.locationLabel(for: $0) }) ?? ""
+        location = WineRow.places(model.cellar.inPlaceOrder(group.bottles).map { model.placeLabel(for: $0) }) ?? ""
     }
 }
 

@@ -66,6 +66,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import app.encave.R
 import app.encave.ui.components.displayLocation
+import app.encave.ui.components.locationIcon
+import app.encave.ui.components.placeLabel
 import app.encave.core.Bottle
 import app.encave.core.Cellar
 import app.encave.core.Tasting
@@ -428,10 +430,17 @@ fun DrinkSheet(
                     }
                 }
             } else {
-                Text(
-                    cellar.displayLocation(chosen) ?: stringResource(R.string.location_none),
-                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary,
-                )
+                // Where the bottle is, with the same symbol as everywhere else.
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
+                    Icon(
+                        cellar.locationIcon(chosen), contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp),
+                    )
+                    Text(
+                        cellar.placeLabel(chosen),
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary,
+                    )
+                }
             }
             val expected = wine?.expectedOrBundledProfile
             if (wine != null && !expected?.aromas.isNullOrEmpty()) {

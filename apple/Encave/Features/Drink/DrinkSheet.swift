@@ -138,8 +138,10 @@ private struct DrinkForm: View {
                                     Text(wine.displayName)
                                         .font(.title3.weight(.semibold))
                                         .fontDesign(.serif)
-                                    if choices.count < 2, let location = model.locationLabel(for: bottle) {
-                                        Text(location).font(.subheadline).foregroundStyle(.secondary)
+                                    if choices.count < 2 {
+                                        Label(model.placeLabel(for: bottle), systemImage: model.locationIcon(for: bottle))
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
                                     }
                                 }
                             }
@@ -238,7 +240,7 @@ private struct BottleChoiceLabel: View {
     let bottle: Bottle
 
     var body: some View {
-        let location = model.locationLabel(for: bottle) ?? String(localized: "Not in storage")
+        let location = model.placeLabel(for: bottle)
         if let occasionName = bottle.reservedFor {
             Label("\(location) · Kept for \(occasionName)", systemImage: "gift")
         } else {

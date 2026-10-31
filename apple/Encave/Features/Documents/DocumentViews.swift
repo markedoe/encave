@@ -514,7 +514,7 @@ struct BottleDocumentsView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(wine?.displayName ?? String(localized: "Unknown wine"))
                                     .font(.headline)
-                                Text(model.locationLabel(for: bottle) ?? String(localized: "Not in storage"))
+                                Text(model.placeLabel(for: bottle))
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                             }
