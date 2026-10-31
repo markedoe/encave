@@ -199,6 +199,13 @@ BUILD_NUMBER=2 ENCAVE_KEYSTORE_PATH=path/to/encave-upload.jks ENCAVE_KEY_ALIAS=u
 # app/build/outputs/bundle/release/app-release.aab and app/build/outputs/mapping/release/mapping.txt
 ```
 
+## How wines and bottles are shown
+
+[PRESENTATION.md](PRESENTATION.md) is the reference for every screen that shows a
+wine or a bottle, on both apps: what each shows and in which order, the actions
+and their order (what is left out where), putting bottles away, and the wording
+and symbols in English and French. Change it first, then the screens.
+
 ## Testing navigation
 
 The screen tours (`apple/EncaveUITests/ScreenTourTests.swift`, `testNavigationLinks`,

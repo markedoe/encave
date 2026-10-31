@@ -15,11 +15,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 - Putting bottles away: a bottle without a position (added without a storage,
   received, put back from the Journal, taken out) shows Put Away beside it on
   the wine's page, and Put Away… in the wine's menu in the Cellar, Tonight and
-  the table picks that bottle, not the one Drink would open. Storage opens with
-  "N bottles not in storage", their list; a free position tapped meanwhile
-  offers Put a Bottle Here. On the Mac, Not in Storage sits in the sidebar and
-  its bottles drag onto a storage. On Apple devices, the banner after Received
-  or Put Back offers Put Away
+  the table picks that bottle, not the one Drink would open (⌥⌘P in the Wine
+  menu on the Mac and iPad). The wine's page says above its bottles how many
+  are not in storage. The Move sheet lists each storage with its free
+  positions, opens on the wine's storage, else the last one used, else the one
+  with most room, and has First Free Position. Storage opens with "N bottles
+  not in storage", their searchable list with Put All Away; a free position
+  tapped meanwhile offers Put a Bottle Here. On the Mac, Not in Storage sits in
+  the sidebar and its bottles drag onto a storage. On Apple devices, the
+  banner after Received or Put Back offers Put Away
+- docs/PRESENTATION.md: how a wine and its bottles are shown on every screen,
+  the actions and their order, and the wording and symbols in both languages
 - Honest AI fields: the label request asks, for each detail, whether it was
   read on the label or comes from the model's knowledge, and to leave a detail
   empty when unsure. The form and the scan summary mark estimates "Estimated by
